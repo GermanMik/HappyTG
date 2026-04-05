@@ -1,0 +1,17 @@
+installers:
+  git:
+    darwin: brew install git
+    linux-debian: apt-get install -y git
+    linux-fedora: dnf install -y git
+  nodejs:
+    darwin: brew install node@22
+    linux-debian: apt-get install -y nodejs npm
+    linux-fedora: dnf install -y nodejs npm
+  pnpm:
+    all: npm install -g pnpm
+  codex-cli:
+    all: npm install -g @openai/codex
+  docker:
+    darwin: brew install --cask docker
+    linux-debian: apt-get install -y docker.io docker-compose-plugin
+    linux-fedora: dnf install -y docker docker-compose

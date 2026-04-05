@@ -1,0 +1,4 @@
+id: custom
+description: Rule-based selection from explicit requested capabilities.
+requiresQuestionnaire: true
+selectionStrategy: rule-engine

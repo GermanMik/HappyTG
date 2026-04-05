@@ -1,0 +1,14 @@
+id: minimal
+description: Smallest supported Codex-first setup for HappyTG.
+includes:
+  - git
+  - nodejs
+  - npm
+  - codex-cli
+  - codex-config
+verify:
+  - git.version
+  - node.version
+  - npm.version
+  - codex.version
+  - codex.smoke
