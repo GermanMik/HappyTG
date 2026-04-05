@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+build/
+.next/
+coverage/
+.turbo/
+
+# env and secrets
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+logs/
+
+# os/editor
+.DS_Store
+.idea/
+.vscode/
+
+# runtime state
+.happytg/
+.happytg-dev/
+.codex/cache/
+
+# proof raw outputs
+.agent/tasks/**/raw/*.tmp

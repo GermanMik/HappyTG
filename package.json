@@ -1,0 +1,30 @@
+{
+  "name": "happytg",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:api": "pnpm --filter @happytg/api run dev",
+    "dev:bot": "pnpm --filter @happytg/bot run dev",
+    "dev:miniapp": "pnpm --filter @happytg/miniapp run dev",
+    "dev:worker": "pnpm --filter @happytg/worker run dev",
+    "dev:daemon": "pnpm --filter @happytg/host-daemon run dev",
+    "daemon:pair": "pnpm --filter @happytg/host-daemon run pair",
+    "daemon:once": "pnpm --filter @happytg/host-daemon run once",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "bootstrap:doctor": "pnpm --filter @happytg/bootstrap run doctor",
+    "bootstrap:setup": "pnpm --filter @happytg/bootstrap run setup",
+    "bootstrap:repair": "pnpm --filter @happytg/bootstrap run repair",
+    "bootstrap:verify": "pnpm --filter @happytg/bootstrap run verify"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "turbo": "^2.0.0",
+    "typescript": "^5.7.0"
+  }
+}

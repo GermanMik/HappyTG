@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "types": ["node"],
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@happytg/protocol": ["packages/protocol/src"],
+      "@happytg/shared": ["packages/shared/src"],
+      "@happytg/runtime-adapters": ["packages/runtime-adapters/src"],
+      "@happytg/repo-proof": ["packages/repo-proof/src"],
+      "@happytg/policy-engine": ["packages/policy-engine/src"],
+      "@happytg/approval-engine": ["packages/approval-engine/src"],
+      "@happytg/bootstrap": ["packages/bootstrap/src"],
+      "@happytg/hooks": ["packages/hooks/src"]
+    }
+  }
+}

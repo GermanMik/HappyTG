@@ -1,0 +1,14 @@
+{
+  "name": "@happytg/miniapp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo \"TODO: lint miniapp\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"TODO: test miniapp\""
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@happytg/host-daemon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "run": "tsx src/index.ts run",
+    "pair": "tsx src/index.ts pair",
+    "once": "tsx src/index.ts once",
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo \"TODO: lint host-daemon\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"TODO: test host-daemon\""
+  }
+}

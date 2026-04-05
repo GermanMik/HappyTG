@@ -1,0 +1,23 @@
+{
+  "name": "@happytg/bootstrap",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "happytg-bootstrap": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "doctor": "tsx src/index.ts doctor",
+    "setup": "tsx src/index.ts setup",
+    "repair": "tsx src/index.ts repair",
+    "verify": "tsx src/index.ts verify",
+    "status": "tsx src/index.ts status",
+    "config:init": "tsx src/index.ts config-init",
+    "env:snapshot": "tsx src/index.ts env-snapshot",
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo \"TODO: lint bootstrap\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"TODO: test bootstrap\""
+  }
+}

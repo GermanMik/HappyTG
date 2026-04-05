@@ -1,0 +1,13 @@
+{
+  "name": "@happytg/policy-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo \"TODO: lint policy-engine\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"TODO: test policy-engine\""
+  }
+}
