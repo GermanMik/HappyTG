@@ -71,6 +71,15 @@ const server = createJsonServer(
     route("GET", "/api/v1/tasks/:id/artifacts", async ({ res, params }) => {
       json(res, 200, await service.listTaskArtifacts(params.id));
     }),
+    route("GET", "/api/v1/tasks/:id/artifact", async ({ res, params, url }) => {
+      const relativePath = url.searchParams.get("path");
+      if (!relativePath) {
+        json(res, 400, { error: "Missing artifact path" });
+        return;
+      }
+
+      json(res, 200, await service.readTaskArtifact(params.id, relativePath));
+    }),
     route("GET", "/api/v1/approvals/:id", async ({ res, params }) => {
       const approval = await service.getApproval(params.id);
       if (!approval) {
@@ -86,6 +95,9 @@ const server = createJsonServer(
     }),
     route("GET", "/api/v1/miniapp/bootstrap", async ({ res, url }) => {
       json(res, 200, await service.getMiniAppOverview(url.searchParams.get("userId") ?? undefined));
+    }),
+    route("GET", "/api/v1/miniapp/session/:id/timeline", async ({ res, params }) => {
+      json(res, 200, await service.getSessionTimeline(params.id));
     }),
     route("POST", "/api/v1/daemon/hello", async ({ req, res }) => {
       const body = await readJsonBody<HostHelloRequest>(req);

@@ -61,6 +61,9 @@ function renderPage(title: string, body: string): string {
       a {
         color: var(--accent);
       }
+      ul {
+        padding-left: 20px;
+      }
       .muted {
         color: var(--muted);
       }
@@ -97,7 +100,7 @@ const server = createJsonServer(
         </section>
         <section class="panel">
           <h2>Sessions</h2>
-          <pre>${overview.sessions.map((session) => `${session.id} state=${session.state} title=${session.title}${session.taskId ? ` task=${session.taskId}` : ""}`).join("\n") || "No sessions found."}</pre>
+          <ul>${overview.sessions.map((session) => `<li><a href="/session/${session.id}">${session.id}</a> state=${session.state} title=${session.title}${session.taskId ? ` task=${session.taskId}` : ""}</li>`).join("") || "<li>No sessions found.</li>"}</ul>
         </section>
         <section class="panel">
           <h2>Approvals</h2>
@@ -105,7 +108,7 @@ const server = createJsonServer(
         </section>
         <section class="panel">
           <h2>Tasks</h2>
-          <pre>${overview.tasks.map((task) => `${task.id} phase=${task.phase} verify=${task.verificationState}`).join("\n") || "No tasks found."}</pre>
+          <ul>${overview.tasks.map((task) => `<li><a href="/task/${task.id}">${task.id}</a> phase=${task.phase} verify=${task.verificationState}</li>`).join("") || "<li>No tasks found.</li>"}</ul>
         </section>
       `;
 
@@ -118,6 +121,12 @@ const server = createJsonServer(
       }>(`/api/v1/tasks/${params.id}`);
 
       const artifacts = await fetchJson<{ artifacts: string[] }>(`/api/v1/tasks/${params.id}/artifacts`);
+      const artifactSections = await Promise.all(
+        ["spec.md", "evidence.md", "problems.md", "verdict.json"].map(async (artifact) => {
+          const response = await fetchJson<{ path: string; content: string }>(`/api/v1/tasks/${params.id}/artifact?path=${encodeURIComponent(artifact)}`);
+          return `<section class="panel"><h2>${artifact}</h2><pre>${response.content.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</pre></section>`;
+        })
+      );
       const body = `
         <section class="panel">
           <h1>Task ${task.task.id}</h1>
@@ -130,9 +139,36 @@ const server = createJsonServer(
           <h2>Artifacts</h2>
           <pre>${artifacts.artifacts.join("\n")}</pre>
         </section>
+        ${artifactSections.join("\n")}
       `;
 
       text(res, 200, renderPage(`Task ${task.task.id}`, body));
+    }),
+    route("GET", "/session/:id", async ({ res, params }) => {
+      const timeline = await fetchJson<{
+        session: { id: string; title: string; state: string; currentSummary?: string; lastError?: string };
+        task?: { id: string; phase: string; verificationState: string };
+        approval?: { id: string; state: string; reason: string };
+        events: Array<{ sequence: number; type: string; occurredAt: string; payload: unknown }>;
+      }>(`/api/v1/miniapp/session/${params.id}/timeline`);
+
+      const body = `
+        <section class="panel">
+          <h1>Session ${timeline.session.id}</h1>
+          <p>Title: ${timeline.session.title}</p>
+          <p>State: ${timeline.session.state}</p>
+          <p>Summary: ${timeline.session.currentSummary ?? "n/a"}</p>
+          <p>Error: ${timeline.session.lastError ?? "n/a"}</p>
+          <p>Task: ${timeline.task ? `<a href="/task/${timeline.task.id}">${timeline.task.id}</a> phase=${timeline.task.phase} verify=${timeline.task.verificationState}` : "n/a"}</p>
+          <p>Approval: ${timeline.approval ? `${timeline.approval.id} state=${timeline.approval.state} reason=${timeline.approval.reason}` : "n/a"}</p>
+        </section>
+        <section class="panel">
+          <h2>Timeline</h2>
+          <pre>${timeline.events.map((event) => `${event.sequence}. ${event.occurredAt} ${event.type} ${JSON.stringify(event.payload)}`).join("\n") || "No events recorded."}</pre>
+        </section>
+      `;
+
+      text(res, 200, renderPage(`Session ${timeline.session.id}`, body));
     })
   ],
   logger

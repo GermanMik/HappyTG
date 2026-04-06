@@ -111,3 +111,52 @@ test("quick session dispatches immediately without approval", async () => {
   assert.ok(sessionResult.dispatch);
   assert.equal(sessionResult.approval, undefined);
 });
+
+test("session timeline and task artifact reads are available for mini app inspection", async () => {
+  const { tempDir, service } = await createServiceWithTempStore();
+  const workspaceDir = await mkdtemp(path.join(tempDir, "workspace-"));
+
+  const pairing = await service.startPairing({
+    hostLabel: "test-host",
+    fingerprint: "fp-3"
+  });
+
+  const claim = await service.claimPairing({
+    pairingCode: pairing.pairingCode,
+    telegramUserId: "1003",
+    chatId: "2003",
+    displayName: "Test User"
+  });
+
+  const hello = await service.hostHello({
+    hostId: pairing.hostId,
+    fingerprint: "fp-3",
+    capabilities: ["codex-cli"],
+    workspaces: [
+      {
+        path: workspaceDir,
+        repoName: "workspace"
+      }
+    ]
+  });
+
+  const created = await service.createSession({
+    userId: claim.user.id,
+    hostId: pairing.hostId,
+    workspaceId: hello.workspaces[0]!.id,
+    mode: "proof",
+    runtime: "codex-cli",
+    title: "proof",
+    prompt: "proof prompt",
+    acceptanceCriteria: ["criterion"]
+  });
+
+  const timeline = await service.getSessionTimeline(created.session.id);
+  assert.equal(timeline.events.length >= 3, true);
+  assert.equal(timeline.task?.id, created.task?.id);
+
+  const spec = await service.readTaskArtifact(created.task!.id, "spec.md");
+  assert.match(spec.content, /# Task Spec/);
+
+  await assert.rejects(() => service.readTaskArtifact(created.task!.id, "../escape.txt"), /escapes task bundle root/i);
+});

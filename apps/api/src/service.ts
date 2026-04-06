@@ -1,4 +1,5 @@
 import path from "node:path";
+import { readFile } from "node:fs/promises";
 
 import { createApprovalRequest, resolveApprovalRequest } from "../../../packages/approval-engine/src/index.js";
 import { createDefaultPolicies, evaluatePolicies } from "../../../packages/policy-engine/src/index.js";
@@ -28,7 +29,7 @@ import type {
   User,
   Workspace
 } from "../../../packages/protocol/src/index.js";
-import { createId, FileStateStore, nowIso } from "../../../packages/shared/src/index.js";
+import { createId, FileStateStore, fileExists, nowIso } from "../../../packages/shared/src/index.js";
 
 function nextSequence(store: HappyTGStore, sessionId: string): number {
   const last = store.sessionEvents
@@ -629,6 +630,28 @@ export class HappyTGControlPlaneService {
     };
   }
 
+  async readTaskArtifact(taskId: string, relativePath: string): Promise<{ path: string; content: string }> {
+    const task = await this.getTask(taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    const targetPath = path.resolve(task.task.rootPath, relativePath);
+    const bundleRoot = path.resolve(task.task.rootPath);
+    if (!targetPath.startsWith(`${bundleRoot}${path.sep}`) && targetPath !== bundleRoot) {
+      throw new Error("Artifact path escapes task bundle root");
+    }
+
+    if (!(await fileExists(targetPath))) {
+      throw new Error("Artifact file not found");
+    }
+
+    return {
+      path: targetPath,
+      content: await readFile(targetPath, "utf8")
+    };
+  }
+
   async getApproval(approvalId: string): Promise<ApprovalRequest | undefined> {
     const store = await this.store.read();
     return store.approvals.find((item) => item.id === approvalId);
@@ -649,6 +672,28 @@ export class HappyTGControlPlaneService {
       sessions,
       approvals: store.approvals.filter((item) => sessionIds.has(item.sessionId)),
       tasks: store.tasks.filter((item) => sessionIds.has(item.sessionId))
+    };
+  }
+
+  async getSessionTimeline(sessionId: string): Promise<{
+    session: Session;
+    task?: TaskBundle;
+    approval?: ApprovalRequest;
+    events: SessionEvent[];
+  }> {
+    const store = await this.store.read();
+    const session = store.sessions.find((item) => item.id === sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
+
+    return {
+      session,
+      task: session.taskId ? store.tasks.find((item) => item.id === session.taskId) : undefined,
+      approval: session.approvalId ? store.approvals.find((item) => item.id === session.approvalId) : undefined,
+      events: store.sessionEvents
+        .filter((item) => item.sessionId === sessionId)
+        .sort((left, right) => left.sequence - right.sequence)
     };
   }
 }
