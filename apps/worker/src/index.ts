@@ -1,30 +1,24 @@
 import { refreshExpiredApproval } from "../../../packages/approval-engine/src/index.js";
 import { FileStateStore, createLogger } from "../../../packages/shared/src/index.js";
 
+import {
+  markExpiredApprovalSessions,
+  reconcileSessionsAndDispatches,
+  summarizeReconcileResult,
+  updateHostStatuses
+} from "./reconcile.js";
+
 const logger = createLogger("worker");
 const store = new FileStateStore();
 const staleAfterMs = Number(process.env.HOST_STALE_AFTER_MS ?? 20_000);
+const orphanAfterMs = Number(process.env.DISPATCH_ORPHAN_AFTER_MS ?? 300_000);
 const tickMs = Number(process.env.WORKER_TICK_MS ?? 5_000);
 
 async function runTick(): Promise<void> {
   const now = Date.now();
   await store.update((state) => {
-    let updatedHosts = 0;
+    const updatedHosts = updateHostStatuses(state, now, staleAfterMs);
     let updatedApprovals = 0;
-
-    for (const host of state.hosts) {
-      if (!host.lastSeenAt) {
-        continue;
-      }
-
-      const ageMs = now - new Date(host.lastSeenAt).getTime();
-      const nextStatus = ageMs > staleAfterMs ? "stale" : host.pairedUserId ? "active" : host.status;
-      if (host.status !== nextStatus) {
-        host.status = nextStatus;
-        host.updatedAt = new Date(now).toISOString();
-        updatedHosts += 1;
-      }
-    }
 
     for (const approval of state.approvals) {
       const refreshed = refreshExpiredApproval(approval, new Date(now));
@@ -34,8 +28,25 @@ async function runTick(): Promise<void> {
       }
     }
 
-    if (updatedHosts > 0 || updatedApprovals > 0) {
-      logger.info("Worker projection maintenance tick", { updatedHosts, updatedApprovals });
+    const pausedSessions = markExpiredApprovalSessions(state, now);
+    const reconcileResult = reconcileSessionsAndDispatches(state, now, {
+      staleAfterMs,
+      orphanAfterMs
+    });
+
+    const summary = summarizeReconcileResult({
+      updatedHosts,
+      updatedApprovals,
+      pausedSessions,
+      sessionsMovedToReconnecting: reconcileResult.sessionsMovedToReconnecting,
+      sessionsFailed: reconcileResult.sessionsFailed,
+      dispatchesFailed: reconcileResult.dispatchesFailed
+    });
+
+    if (summary) {
+      logger.info("Worker projection maintenance tick", {
+        summary
+      });
     }
   });
 }
@@ -45,4 +56,4 @@ setInterval(() => {
 }, tickMs);
 
 void runTick();
-logger.info("Worker started", { tickMs, staleAfterMs });
+logger.info("Worker started", { tickMs, staleAfterMs, orphanAfterMs });

@@ -25,6 +25,7 @@ import {
 const logger = createLogger("host-daemon");
 const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
 const heartbeatMs = Number(process.env.HOST_DAEMON_DEFAULT_POLL_MS ?? 2_000);
+const journalRetentionMs = Number(process.env.HOST_DAEMON_JOURNAL_RETENTION_MS ?? 86_400_000);
 const stateDir = getLocalStateDir();
 const stateFile = path.join(stateDir, "daemon-state.json");
 const journalFile = path.join(stateDir, "daemon-journal.json");
@@ -85,6 +86,19 @@ async function loadJournal(): Promise<DaemonJournal> {
 async function saveJournal(journal: DaemonJournal): Promise<void> {
   await ensureDir(stateDir);
   await writeJsonFileAtomic(journalFile, journal);
+}
+
+function compactJournal(journal: DaemonJournal): DaemonJournal {
+  const now = Date.now();
+  return {
+    entries: journal.entries.filter((entry) => {
+      if (entry.state !== "completed" && entry.state !== "failed") {
+        return true;
+      }
+
+      return now - new Date(entry.lastUpdatedAt).getTime() <= journalRetentionMs;
+    })
+  };
 }
 
 async function apiFetch<T>(pathname: string, init?: RequestInit): Promise<T> {
@@ -423,6 +437,8 @@ async function processDispatch(state: DaemonState, dispatch: PendingDispatch): P
   }
 
   const journal = await loadJournal();
+  const compacted = compactJournal(journal);
+  journal.entries = compacted.entries;
   const existing = journal.entries.find((entry) => entry.dispatchId === dispatch.id);
   if (existing?.state === "running") {
     logger.warn("Dispatch already running, skipping duplicate start", { dispatchId: dispatch.id });
