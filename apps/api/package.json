@@ -9,6 +9,6 @@
     "build": "tsc -p tsconfig.json",
     "lint": "echo \"TODO: lint api\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo \"TODO: test api\""
+    "test": "tsx --test src/*.test.ts"
   }
 }

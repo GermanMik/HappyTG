@@ -8,6 +8,6 @@
     "build": "tsc -p tsconfig.json",
     "lint": "echo \"TODO: lint repo-proof\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo \"TODO: test repo-proof\""
+    "test": "tsx --test src/*.test.ts"
   }
 }

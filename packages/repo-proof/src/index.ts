@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import type { EvidenceArtifact, TaskBundle, TaskPhase, VerificationRun, VerificationState } from "../../protocol/src/index.js";
-import { createId, ensureDir, nowIso, readJsonFile, readTextFileOrEmpty, writeJsonFileAtomic, writeTextFileAtomic } from "../../shared/src/index.js";
+import { createId, ensureDir, fileExists, nowIso, writeJsonFileAtomic, writeTextFileAtomic } from "../../shared/src/index.js";
 
 const REQUIRED_FILES = [
   "spec.md",
@@ -234,10 +234,8 @@ export async function validateTaskBundle(rootPath: string): Promise<{ ok: boolea
   await Promise.all(
     REQUIRED_FILES.map(async (relativePath) => {
       const fullPath = path.join(rootPath, relativePath);
-      const content = await readTextFileOrEmpty(fullPath);
-      const jsonCandidate = relativePath.endsWith(".json") ? await readJsonFile(fullPath, null) : null;
-
-      if (!content && !jsonCandidate) {
+      const exists = await fileExists(fullPath);
+      if (!exists) {
         missing.push(relativePath);
       }
     })
