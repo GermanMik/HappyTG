@@ -8,6 +8,6 @@
     "build": "tsc -p tsconfig.json",
     "lint": "echo \"TODO: lint hooks\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo \"TODO: test hooks\""
+    "test": "tsx --test src/*.test.ts"
   }
 }
