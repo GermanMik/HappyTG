@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { runBootstrapCommand } from "../../../packages/bootstrap/src/index.js";
 import { freezeTaskSpec, updateEvidence, writeRawArtifact, writeVerificationVerdict } from "../../../packages/repo-proof/src/index.js";
@@ -53,13 +54,13 @@ interface DaemonJournal {
   entries: LocalJournalEntry[];
 }
 
-function defaultFingerprint(): string {
+export function defaultFingerprint(): string {
   return `${os.hostname()}-${os.platform()}-${os.arch()}`;
 }
 
-function defaultWorkspaces(): DaemonWorkspace[] {
-  const configured = process.env.HAPPYTG_WORKSPACES?.split(",").map((item) => item.trim()).filter(Boolean) ?? [];
-  const paths = configured.length > 0 ? configured : [process.cwd()];
+export function defaultWorkspaces(env = process.env, cwd = process.cwd()): DaemonWorkspace[] {
+  const configured = env.HAPPYTG_WORKSPACES?.split(",").map((item) => item.trim()).filter(Boolean) ?? [];
+  const paths = configured.length > 0 ? configured : [cwd];
   return paths.map((workspacePath) => ({
     path: workspacePath,
     repoName: path.basename(workspacePath)
@@ -89,15 +90,22 @@ async function saveJournal(journal: DaemonJournal): Promise<void> {
   await writeJsonFileAtomic(journalFile, journal);
 }
 
-function compactJournal(journal: DaemonJournal): DaemonJournal {
-  const now = Date.now();
+export function compactJournal(
+  journal: DaemonJournal,
+  options?: {
+    nowMs?: number;
+    retentionMs?: number;
+  }
+): DaemonJournal {
+  const now = options?.nowMs ?? Date.now();
+  const retentionMs = options?.retentionMs ?? journalRetentionMs;
   return {
     entries: journal.entries.filter((entry) => {
       if (entry.state !== "completed" && entry.state !== "failed") {
         return true;
       }
 
-      return now - new Date(entry.lastUpdatedAt).getTime() <= journalRetentionMs;
+      return now - new Date(entry.lastUpdatedAt).getTime() <= retentionMs;
     })
   };
 }
@@ -119,7 +127,7 @@ async function apiFetch<T>(pathname: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
-function sandboxForDispatch(dispatch: PendingDispatch): SandboxMode {
+export function sandboxForDispatch(dispatch: PendingDispatch): SandboxMode {
   switch (dispatch.actionKind) {
     case "workspace_read":
     case "read_status":
@@ -282,12 +290,12 @@ function proofFixerPrompt(task: TaskBundle, workspacePath: string): string {
   ].join("\n");
 }
 
-function parseVerifierVerdict(summary: string): "passed" | "failed" {
+export function parseVerifierVerdict(summary: string): "passed" | "failed" {
   const firstLine = summary.split("\n")[0]?.trim().toUpperCase() ?? "";
   return firstLine.includes("PASS") ? "passed" : "failed";
 }
 
-function summarizeBootstrapReport(report: Awaited<ReturnType<typeof runBootstrapCommand>>): string {
+export function summarizeBootstrapReport(report: Awaited<ReturnType<typeof runBootstrapCommand>>): string {
   if (report.findings.length === 0) {
     return `Bootstrap ${report.command} ${report.status}: no findings.`;
   }
@@ -556,4 +564,6 @@ async function main(): Promise<void> {
   }
 }
 
-void main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  void main();
+}
