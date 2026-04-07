@@ -38,6 +38,8 @@ It is designed around one hard constraint: Telegram is a render surface for comm
 - [docs/proof-loop.md](./docs/proof-loop.md): repo-local proof loop.
 - [docs/bootstrap-doctor.md](./docs/bootstrap-doctor.md): deterministic bootstrap and doctor subsystem.
 - [infra/docker-compose.example.yml](./infra/docker-compose.example.yml): local self-hosted composition example.
+- [infra/Dockerfile.app](./infra/Dockerfile.app): reusable runtime image for API, worker, bot, and Mini App surfaces.
+- [.github/workflows/ci.yml](./.github/workflows/ci.yml): repository verification pipeline for typecheck, test, and build.
 
 ## Fast Start
 
@@ -46,8 +48,10 @@ It is designed around one hard constraint: Telegram is a render surface for comm
 3. Read [docs/installation.md](./docs/installation.md).
 4. Run `pnpm install`.
 5. Run `pnpm bootstrap:doctor`.
-6. Start the control plane with `pnpm dev`.
-7. Pair a host through the Telegram bot and run the first smoke task.
+6. Start the local control-plane stack with `docker compose -f infra/docker-compose.example.yml up --build`.
+7. In a separate shell, run `pnpm dev` for live-reload development or use the container stack as-is for smoke testing.
+8. Run `apps/host-daemon` on the execution host outside Docker Compose.
+9. Pair a host through the Telegram bot and run the first smoke task.
 
 ## Monorepo Commands
 
@@ -56,10 +60,22 @@ pnpm install
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm build
 pnpm dev
 pnpm bootstrap:doctor
 pnpm bootstrap:verify
 ```
+
+## CI Baseline
+
+The repository ships with a single verification workflow in `.github/workflows/ci.yml`. Every branch under `codex/**`, plus `main`, runs the same baseline gates:
+
+- `pnpm install --frozen-lockfile`
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build`
+
+Any local self-hosted packaging or feature work should keep those commands green before it is considered merge-ready.
 
 ## Recommended Stack
 
