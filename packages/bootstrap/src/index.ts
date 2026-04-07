@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type { BootstrapFinding, BootstrapReport } from "../../protocol/src/index.js";
 import { checkCodexReadiness } from "../../runtime-adapters/src/index.js";
@@ -11,7 +12,14 @@ interface DoctorContext {
   command: BootstrapCommand;
 }
 
-async function detectFindings(): Promise<{ findings: BootstrapFinding[]; planPreview: string[]; profileRecommendation: BootstrapReport["profileRecommendation"]; reportJson: Record<string, unknown> }> {
+export interface DoctorDetection {
+  findings: BootstrapFinding[];
+  planPreview: string[];
+  profileRecommendation: BootstrapReport["profileRecommendation"];
+  reportJson: Record<string, unknown>;
+}
+
+export async function detectFindings(): Promise<DoctorDetection> {
   const findings: BootstrapFinding[] = [];
   const planPreview: string[] = [];
 
@@ -102,7 +110,7 @@ async function writeReport(command: BootstrapCommand, report: Omit<BootstrapRepo
   return completeReport;
 }
 
-async function runDoctorLike(command: BootstrapCommand): Promise<BootstrapReport> {
+export async function runDoctorLike(command: BootstrapCommand): Promise<BootstrapReport> {
   const detected = await detectFindings();
   const status: BootstrapReport["status"] = detected.findings.some((item) => item.severity === "error")
     ? "fail"
@@ -120,7 +128,7 @@ async function runDoctorLike(command: BootstrapCommand): Promise<BootstrapReport
   });
 }
 
-async function runConfigInit(): Promise<BootstrapReport> {
+export async function runConfigInit(): Promise<BootstrapReport> {
   const codexConfigPath = path.join(getLocalStateDir().replace(/\.happytg$/, ".codex"), "config.toml");
   return writeReport("config-init", {
     hostFingerprint: `${os.hostname()}-${os.platform()}-${os.arch()}`,
@@ -143,7 +151,7 @@ async function runConfigInit(): Promise<BootstrapReport> {
   });
 }
 
-async function runEnvSnapshot(): Promise<BootstrapReport> {
+export async function runEnvSnapshot(): Promise<BootstrapReport> {
   return writeReport("env-snapshot", {
     hostFingerprint: `${os.hostname()}-${os.platform()}-${os.arch()}`,
     status: "pass",
@@ -160,27 +168,25 @@ async function runEnvSnapshot(): Promise<BootstrapReport> {
   });
 }
 
-async function main(command: BootstrapCommand): Promise<void> {
-  let report: BootstrapReport;
+export async function runBootstrapCommand(command: BootstrapCommand): Promise<BootstrapReport> {
   switch (command) {
     case "doctor":
     case "setup":
     case "repair":
     case "verify":
     case "status":
-      report = await runDoctorLike(command);
-      break;
+      return runDoctorLike(command);
     case "config-init":
-      report = await runConfigInit();
-      break;
+      return runConfigInit();
     case "env-snapshot":
-      report = await runEnvSnapshot();
-      break;
+      return runEnvSnapshot();
     default:
-      report = await runDoctorLike("status");
-      break;
+      return runDoctorLike("status");
   }
+}
 
+async function main(command: BootstrapCommand): Promise<void> {
+  const report = await runBootstrapCommand(command);
   console.log(JSON.stringify(report, null, 2));
 }
 
@@ -197,4 +203,6 @@ const commandMap: Record<string, BootstrapCommand> = {
   "env-snapshot": "env-snapshot"
 };
 
-void main(commandMap[rawCommand] ?? "status");
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  void main(commandMap[rawCommand] ?? "status");
+}
