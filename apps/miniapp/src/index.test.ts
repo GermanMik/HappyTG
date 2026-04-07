@@ -3,9 +3,38 @@ import test from "node:test";
 
 import { createMiniAppServer } from "./index.js";
 
+test("mini app ready endpoint returns 503 when api health fails", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      assert.equal(pathname, "/health");
+      throw new Error("api unavailable");
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+    const payload = await response.json() as { ok: boolean; detail: string };
+
+    assert.equal(response.status, 503);
+    assert.equal(payload.ok, false);
+    assert.match(payload.detail, /api unavailable/);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
 test("overview page renders hosts, sessions, approvals, and tasks", async () => {
   const server = createMiniAppServer({
     async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
       if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_1") {
         return {
           hosts: [{ id: "host_1", label: "devbox", status: "active" }],
@@ -41,6 +70,9 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
 test("task page renders canonical artifacts and escapes file content", async () => {
   const server = createMiniAppServer({
     async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
       if (pathname === "/api/v1/tasks/HTG-0001") {
         return {
           task: {
@@ -93,6 +125,9 @@ test("task page renders canonical artifacts and escapes file content", async () 
 test("session page renders timeline, summary, and task link", async () => {
   const server = createMiniAppServer({
     async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
       if (pathname === "/api/v1/miniapp/session/ses_2/timeline") {
         return {
           session: {

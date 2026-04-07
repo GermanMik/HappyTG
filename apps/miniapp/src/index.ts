@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 
-import { createJsonServer, createLogger, route, text } from "../../../packages/shared/src/index.js";
+import { createJsonServer, createLogger, json, route, text } from "../../../packages/shared/src/index.js";
 
 const logger = createLogger("miniapp");
 const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
@@ -86,6 +86,19 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     [
       route("GET", "/health", async ({ res }) => {
         text(res, 200, "ok");
+      }),
+      route("GET", "/ready", async ({ res }) => {
+        try {
+          await dependencies.fetchJson<{ ok: boolean }>("/health");
+          json(res, 200, { ok: true, service: "miniapp", apiBaseUrl });
+        } catch (error) {
+          json(res, 503, {
+            ok: false,
+            service: "miniapp",
+            apiBaseUrl,
+            detail: error instanceof Error ? error.message : "Unknown error"
+          });
+        }
       }),
       route("GET", "/", async ({ res, url }) => {
         const userId = url.searchParams.get("userId");

@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 
 import { createJsonServer, createLogger, json, readJsonBody, route } from "../../../packages/shared/src/index.js";
 
-import type { TelegramUpdate } from "./handlers.js";
+import type { BotDependencies, TelegramUpdate } from "./handlers.js";
 import { createBotHandlers } from "./handlers.js";
 
 const logger = createLogger("bot");
@@ -57,16 +57,32 @@ function createDefaultSendTelegramMessage() {
   };
 }
 
-export function createBotServer() {
+export function createBotServer(dependencies: Partial<BotDependencies> = {}) {
+  const apiFetch = dependencies.apiFetch ?? createDefaultApiFetch();
+  const sendTelegramMessage = dependencies.sendTelegramMessage ?? createDefaultSendTelegramMessage();
   const handlers = createBotHandlers({
-    apiFetch: createDefaultApiFetch(),
-    sendTelegramMessage: createDefaultSendTelegramMessage()
+    apiFetch,
+    sendTelegramMessage,
+    resolveInternalUserId: dependencies.resolveInternalUserId
   });
 
   return createJsonServer(
     [
       route("GET", "/health", async ({ res }) => {
         json(res, 200, { ok: true, service: "bot" });
+      }),
+      route("GET", "/ready", async ({ res }) => {
+        try {
+          await apiFetch<{ ok: boolean }>("/health");
+          json(res, 200, { ok: true, service: "bot", apiBaseUrl });
+        } catch (error) {
+          json(res, 503, {
+            ok: false,
+            service: "bot",
+            apiBaseUrl,
+            detail: error instanceof Error ? error.message : "Unknown error"
+          });
+        }
       }),
       route("POST", "/telegram/webhook", async ({ req, res }) => {
         const update = await readJsonBody<TelegramUpdate>(req);
