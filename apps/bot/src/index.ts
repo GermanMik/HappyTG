@@ -1,487 +1,92 @@
-import type { CreateSessionRequest, ResolveApprovalRequest } from "../../../packages/protocol/src/index.js";
+import { fileURLToPath } from "node:url";
+
 import { createJsonServer, createLogger, json, readJsonBody, route } from "../../../packages/shared/src/index.js";
+
+import type { TelegramUpdate } from "./handlers.js";
+import { createBotHandlers } from "./handlers.js";
 
 const logger = createLogger("bot");
 const botToken = process.env.TELEGRAM_BOT_TOKEN;
 const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
 const port = Number(process.env.PORT ?? 4100);
 
-interface TelegramUser {
-  id: number;
-  username?: string;
-  first_name?: string;
-  last_name?: string;
-}
-
-interface TelegramChat {
-  id: number;
-}
-
-interface TelegramMessage {
-  message_id: number;
-  text?: string;
-  chat: TelegramChat;
-  from?: TelegramUser;
-}
-
-interface TelegramCallbackQuery {
-  id: string;
-  data?: string;
-  message?: TelegramMessage;
-  from: TelegramUser;
-}
-
-interface TelegramUpdate {
-  update_id: number;
-  message?: TelegramMessage;
-  callback_query?: TelegramCallbackQuery;
-}
-
-async function apiFetch<T>(pathname: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(new URL(pathname, apiBaseUrl), {
-    ...init,
-    headers: {
-      "content-type": "application/json",
-      ...(init?.headers ?? {})
-    }
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`API ${pathname} failed with ${response.status}: ${text}`);
-  }
-
-  return (await response.json()) as T;
-}
-
-async function resolveInternalUserId(user: TelegramUser): Promise<string | undefined> {
-  try {
-    const result = await apiFetch<{ id: string }>(`/api/v1/users/by-telegram/${user.id}`);
-    return result.id;
-  } catch {
-    return undefined;
-  }
-}
-
-async function sendTelegramMessage(chatId: number, text: string, replyMarkup?: Record<string, unknown>): Promise<void> {
-  if (!botToken) {
-    logger.info("Telegram token missing, logging reply instead", { chatId, text, replyMarkup });
-    return;
-  }
-
-  const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json"
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      ...(replyMarkup ? { reply_markup: replyMarkup } : {})
-    })
-  });
-
-  if (!response.ok) {
-    logger.error("Telegram sendMessage failed", {
-      status: response.status,
-      body: await response.text()
+function createDefaultApiFetch() {
+  return async function apiFetch<T>(pathname: string, init?: RequestInit): Promise<T> {
+    const response = await fetch(new URL(pathname, apiBaseUrl), {
+      ...init,
+      headers: {
+        "content-type": "application/json",
+        ...(init?.headers ?? {})
+      }
     });
-  }
-}
 
-function inlineApprovalKeyboard(approvalId: string) {
-  return {
-    inline_keyboard: [
-      [
-        { text: "Approve", callback_data: `approval:approve:${approvalId}` },
-        { text: "Reject", callback_data: `approval:reject:${approvalId}` }
-      ]
-    ]
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`API ${pathname} failed with ${response.status}: ${text}`);
+    }
+
+    return (await response.json()) as T;
   };
 }
 
-async function handleStart(message: TelegramMessage): Promise<void> {
-  await sendTelegramMessage(
-    message.chat.id,
+function createDefaultSendTelegramMessage() {
+  return async function sendTelegramMessage(chatId: number, text: string, replyMarkup?: Record<string, unknown>): Promise<void> {
+    if (!botToken) {
+      logger.info("Telegram token missing, logging reply instead", { chatId, text, replyMarkup });
+      return;
+    }
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        ...(replyMarkup ? { reply_markup: replyMarkup } : {})
+      })
+    });
+
+    if (!response.ok) {
+      logger.error("Telegram sendMessage failed", {
+        status: response.status,
+        body: await response.text()
+      });
+    }
+  };
+}
+
+export function createBotServer() {
+  const handlers = createBotHandlers({
+    apiFetch: createDefaultApiFetch(),
+    sendTelegramMessage: createDefaultSendTelegramMessage()
+  });
+
+  return createJsonServer(
     [
-      "HappyTG bot is ready.",
-      "Commands:",
-      "/pair <PAIRING_CODE>",
-      "/hosts",
-      "/status <SESSION_ID>",
-      "/resume <SESSION_ID>",
-      "/doctor <HOST_ID>",
-      "/verify <HOST_ID>",
-      "/approve <APPROVAL_ID> <approve|reject> [reason]",
-      "/session quick <HOST_ID> <WORKSPACE_ID> <PROMPT>",
-      "/session proof <HOST_ID> <WORKSPACE_ID> <TITLE> || <PROMPT> || <criterion1;criterion2>"
-    ].join("\n")
+      route("GET", "/health", async ({ res }) => {
+        json(res, 200, { ok: true, service: "bot" });
+      }),
+      route("POST", "/telegram/webhook", async ({ req, res }) => {
+        const update = await readJsonBody<TelegramUpdate>(req);
+        if (update.message) {
+          await handlers.handleMessage(update.message);
+        }
+        if (update.callback_query) {
+          await handlers.handleCallbackQuery(update.callback_query);
+        }
+
+        json(res, 200, { ok: true });
+      })
+    ],
+    logger
   );
 }
 
-async function handlePair(message: TelegramMessage, pairingCode: string): Promise<void> {
-  if (!message.from) {
-    await sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
-    return;
-  }
-
-  const result = await apiFetch<{ user: { id: string; displayName: string }; host: { id: string; label: string } }>("/api/v1/pairing/claim", {
-    method: "POST",
-    body: JSON.stringify({
-      pairingCode,
-      telegramUserId: String(message.from.id),
-      chatId: String(message.chat.id),
-      username: message.from.username,
-      displayName: [message.from.first_name, message.from.last_name].filter(Boolean).join(" ") || message.from.username || `tg-${message.from.id}`
-    })
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const server = createBotServer();
+  server.listen(port, () => {
+    logger.info("Bot listening", { port, apiBaseUrl, telegramConfigured: Boolean(botToken) });
   });
-
-  await sendTelegramMessage(message.chat.id, `Host paired: ${result.host.label} (${result.host.id}) is now linked to ${result.user.displayName}.`);
 }
-
-async function handleHosts(message: TelegramMessage): Promise<void> {
-  if (!message.from) {
-    await sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
-    return;
-  }
-
-  const userId = await resolveInternalUserId(message.from);
-  if (!userId) {
-    await sendTelegramMessage(message.chat.id, "No HappyTG user is linked to this Telegram account yet. Pair a host first.");
-    return;
-  }
-
-  const result = await apiFetch<{ hosts: Array<{ id: string; label: string; status: string; lastSeenAt?: string }> }>(`/api/v1/hosts?userId=${encodeURIComponent(userId)}`);
-  if (result.hosts.length === 0) {
-    await sendTelegramMessage(message.chat.id, "No hosts linked to this Telegram account yet.");
-    return;
-  }
-
-  await sendTelegramMessage(
-    message.chat.id,
-    result.hosts.map((host) => `- ${host.label} (${host.id}) status=${host.status}${host.lastSeenAt ? ` lastSeen=${host.lastSeenAt}` : ""}`).join("\n")
-  );
-}
-
-async function handleStatus(message: TelegramMessage, sessionId: string): Promise<void> {
-  const session = await apiFetch<{
-    id: string;
-    state: string;
-    title: string;
-    currentSummary?: string;
-    lastError?: string;
-    approval?: { id: string; state: string; reason: string };
-    task?: { id: string; phase: string; verificationState: string };
-  }>(`/api/v1/sessions/${sessionId}`);
-
-  const lines = [
-    `Session ${session.id}`,
-    `State: ${session.state}`,
-    `Title: ${session.title}`
-  ];
-  if (session.task) {
-    lines.push(`Task: ${session.task.id} phase=${session.task.phase} verify=${session.task.verificationState}`);
-  }
-  if (session.approval) {
-    lines.push(`Approval: ${session.approval.id} state=${session.approval.state}`);
-  }
-  if (session.currentSummary) {
-    lines.push(`Summary: ${session.currentSummary}`);
-  }
-  if (session.lastError) {
-    lines.push(`Error: ${session.lastError}`);
-  }
-
-  await sendTelegramMessage(message.chat.id, lines.join("\n"));
-}
-
-async function handleResume(message: TelegramMessage, sessionId: string): Promise<void> {
-  const session = await apiFetch<{
-    id: string;
-    state: string;
-    currentSummary?: string;
-    lastError?: string;
-  }>(`/api/v1/sessions/${sessionId}/resume`, {
-    method: "POST"
-  });
-
-  const lines = [`Session ${session.id} moved to ${session.state}.`];
-  if (session.currentSummary) {
-    lines.push(`Summary: ${session.currentSummary}`);
-  }
-  if (session.lastError) {
-    lines.push(`Last error: ${session.lastError}`);
-  }
-  await sendTelegramMessage(message.chat.id, lines.join("\n"));
-}
-
-async function handleApprovalCommand(message: TelegramMessage, approvalId: string, decisionWord: string, reason?: string): Promise<void> {
-  if (!message.from) {
-    await sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
-    return;
-  }
-
-  const userId = await resolveInternalUserId(message.from);
-  if (!userId) {
-    await sendTelegramMessage(message.chat.id, "No HappyTG user is linked to this Telegram account yet.");
-    return;
-  }
-
-  const decision = decisionWord === "approve" ? "approved" : "rejected";
-  const payload: ResolveApprovalRequest = {
-    userId,
-    decision,
-    reason
-  };
-  const result = await apiFetch<{ approval: { id: string; state: string }; session: { id: string; state: string } }>(`/api/v1/approvals/${approvalId}/resolve`, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-
-  await sendTelegramMessage(message.chat.id, `Approval ${result.approval.id} is now ${result.approval.state}. Session ${result.session.id} -> ${result.session.state}.`);
-}
-
-async function handleSessionCommand(message: TelegramMessage, parts: string[]): Promise<void> {
-  if (!message.from) {
-    await sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
-    return;
-  }
-
-  const userId = await resolveInternalUserId(message.from);
-  if (!userId) {
-    await sendTelegramMessage(message.chat.id, "No HappyTG user is linked to this Telegram account yet. Pair a host first.");
-    return;
-  }
-
-  const mode = parts[0];
-  if (mode === "quick") {
-    const [hostId, workspaceId, ...promptParts] = parts.slice(1);
-    const prompt = promptParts.join(" ").trim();
-    const payload: CreateSessionRequest = {
-      userId,
-      hostId,
-      workspaceId,
-      mode: "quick",
-      runtime: "codex-cli",
-      title: `Quick task: ${prompt.slice(0, 40) || "untitled"}`,
-      prompt
-    };
-    const result = await apiFetch<{
-      session: { id: string; state: string };
-      approval?: { id: string; reason: string; state: string };
-      dispatch?: { id: string };
-    }>("/api/v1/sessions", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    if (result.approval) {
-      await sendTelegramMessage(
-        message.chat.id,
-        `Approval required for session ${result.session.id}: ${result.approval.reason}`,
-        inlineApprovalKeyboard(result.approval.id)
-      );
-      return;
-    }
-
-    await sendTelegramMessage(message.chat.id, `Session ${result.session.id} created with state ${result.session.state}.`);
-    return;
-  }
-
-  if (mode === "proof") {
-    const [hostId, workspaceId, ...rest] = parts.slice(1);
-    const joined = rest.join(" ");
-    const [title, prompt, criteriaRaw] = joined.split("||").map((item) => item.trim());
-    const acceptanceCriteria = (criteriaRaw ?? "Prompt satisfied;Independent verifier passed")
-      .split(";")
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    const payload: CreateSessionRequest = {
-      userId,
-      hostId,
-      workspaceId,
-      mode: "proof",
-      runtime: "codex-cli",
-      title: title || "Proof task",
-      prompt: prompt || title || "Proof task",
-      acceptanceCriteria
-    };
-
-    const result = await apiFetch<{
-      session: { id: string; state: string };
-      task?: { id: string };
-      approval?: { id: string; reason: string; state: string };
-    }>("/api/v1/sessions", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    if (result.approval) {
-      await sendTelegramMessage(
-        message.chat.id,
-        `Proof session ${result.session.id} created. Approval required: ${result.approval.reason}. Task: ${result.task?.id ?? "pending"}`,
-        inlineApprovalKeyboard(result.approval.id)
-      );
-      return;
-    }
-
-    await sendTelegramMessage(message.chat.id, `Proof session ${result.session.id} created. Task: ${result.task?.id ?? "n/a"}.`);
-    return;
-  }
-
-  await sendTelegramMessage(message.chat.id, "Usage: /session quick ... or /session proof ...");
-}
-
-async function handleBootstrapCommand(message: TelegramMessage, hostId: string, command: "doctor" | "verify"): Promise<void> {
-  if (!message.from) {
-    await sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
-    return;
-  }
-
-  const userId = await resolveInternalUserId(message.from);
-  if (!userId) {
-    await sendTelegramMessage(message.chat.id, "No HappyTG user is linked to this Telegram account yet. Pair a host first.");
-    return;
-  }
-
-  const result = await apiFetch<{
-    session: { id: string; state: string; title: string };
-    approval?: { id: string; reason: string; state: string };
-  }>(`/api/v1/hosts/${hostId}/bootstrap/${command}`, {
-    method: "POST",
-    body: JSON.stringify({ userId })
-  });
-
-  if (result.approval) {
-    await sendTelegramMessage(
-      message.chat.id,
-      `${result.session.title} requires approval: ${result.approval.reason}`,
-      inlineApprovalKeyboard(result.approval.id)
-    );
-    return;
-  }
-
-  await sendTelegramMessage(message.chat.id, `${result.session.title} created as session ${result.session.id}. State: ${result.session.state}.`);
-}
-
-async function handleMessage(message: TelegramMessage): Promise<void> {
-  const text = message.text?.trim();
-  if (!text) {
-    return;
-  }
-
-  const [command, ...rest] = text.split(" ");
-  switch (command) {
-    case "/start":
-    case "/help":
-      await handleStart(message);
-      return;
-    case "/pair":
-      if (!rest[0]) {
-        await sendTelegramMessage(message.chat.id, "Usage: /pair <PAIRING_CODE>");
-        return;
-      }
-      await handlePair(message, rest[0]);
-      return;
-    case "/hosts":
-      await handleHosts(message);
-      return;
-    case "/status":
-      if (!rest[0]) {
-        await sendTelegramMessage(message.chat.id, "Usage: /status <SESSION_ID>");
-        return;
-      }
-      await handleStatus(message, rest[0]);
-      return;
-    case "/resume":
-      if (!rest[0]) {
-        await sendTelegramMessage(message.chat.id, "Usage: /resume <SESSION_ID>");
-        return;
-      }
-      await handleResume(message, rest[0]);
-      return;
-    case "/doctor":
-      if (!rest[0]) {
-        await sendTelegramMessage(message.chat.id, "Usage: /doctor <HOST_ID>");
-        return;
-      }
-      await handleBootstrapCommand(message, rest[0], "doctor");
-      return;
-    case "/verify":
-      if (!rest[0]) {
-        await sendTelegramMessage(message.chat.id, "Usage: /verify <HOST_ID>");
-        return;
-      }
-      await handleBootstrapCommand(message, rest[0], "verify");
-      return;
-    case "/approve":
-      if (!rest[0] || !rest[1]) {
-        await sendTelegramMessage(message.chat.id, "Usage: /approve <APPROVAL_ID> <approve|reject> [reason]");
-        return;
-      }
-      await handleApprovalCommand(message, rest[0], rest[1], rest.slice(2).join(" "));
-      return;
-    case "/session":
-      if (rest.length < 4) {
-        await sendTelegramMessage(message.chat.id, "Usage: /session quick <HOST_ID> <WORKSPACE_ID> <PROMPT> OR /session proof <HOST_ID> <WORKSPACE_ID> <TITLE> || <PROMPT> || <criterion1;criterion2>");
-        return;
-      }
-      await handleSessionCommand(message, rest);
-      return;
-    default:
-      await sendTelegramMessage(message.chat.id, `Unknown command: ${command}`);
-  }
-}
-
-async function handleCallbackQuery(callback: TelegramCallbackQuery): Promise<void> {
-  const data = callback.data ?? "";
-  const [prefix, decision, approvalId] = data.split(":");
-  if (prefix !== "approval" || !approvalId) {
-    return;
-  }
-
-  const payload: ResolveApprovalRequest = {
-    userId: (await resolveInternalUserId(callback.from)) ?? "",
-    decision: decision === "approve" ? "approved" : "rejected"
-  };
-
-  if (!payload.userId) {
-    await sendTelegramMessage(callback.message?.chat.id ?? callback.from.id, "No HappyTG user is linked to this Telegram account yet.");
-    return;
-  }
-
-  const result = await apiFetch<{ approval: { id: string; state: string }; session: { id: string; state: string } }>(`/api/v1/approvals/${approvalId}/resolve`, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-
-  await sendTelegramMessage(
-    callback.message?.chat.id ?? callback.from.id,
-    `Approval ${result.approval.id} is now ${result.approval.state}. Session ${result.session.id} -> ${result.session.state}.`
-  );
-}
-
-const server = createJsonServer(
-  [
-    route("GET", "/health", async ({ res }) => {
-      json(res, 200, { ok: true, service: "bot" });
-    }),
-    route("POST", "/telegram/webhook", async ({ req, res }) => {
-      const update = await readJsonBody<TelegramUpdate>(req);
-      if (update.message) {
-        await handleMessage(update.message);
-      }
-      if (update.callback_query) {
-        await handleCallbackQuery(update.callback_query);
-      }
-
-      json(res, 200, { ok: true });
-    })
-  ],
-  logger
-);
-
-server.listen(port, () => {
-  logger.info("Bot listening", { port, apiBaseUrl, telegramConfigured: Boolean(botToken) });
-});
