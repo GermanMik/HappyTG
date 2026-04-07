@@ -141,6 +141,7 @@ function makeDispatch(session: Session, actionKind: PendingDispatch["actionKind"
     sessionId: session.id,
     hostId: session.hostId,
     workspaceId: session.workspaceId,
+    executionKind: "runtime_session",
     mode: session.mode,
     runtime: session.runtime,
     actionKind,
@@ -153,6 +154,26 @@ function makeDispatch(session: Session, actionKind: PendingDispatch["actionKind"
     createdAt: now,
     updatedAt: now
   };
+}
+
+function getHostWorkspace(store: HappyTGStore, hostId: string, workspaceId?: string): Workspace {
+  const workspace = workspaceId
+    ? store.workspaces.find((item) => item.id === workspaceId && item.hostId === hostId)
+    : store.workspaces.find((item) => item.hostId === hostId && item.status === "active");
+  if (!workspace) {
+    throw new Error("Workspace not found on selected host");
+  }
+
+  return workspace;
+}
+
+function getHostRecord(store: HappyTGStore, hostId: string): Host {
+  const host = store.hosts.find((item) => item.id === hostId);
+  if (!host) {
+    throw new Error("Host not found");
+  }
+
+  return host;
 }
 
 export class HappyTGControlPlaneService {
@@ -315,15 +336,8 @@ export class HappyTGControlPlaneService {
     return this.store.update(async (store) => {
       ensurePolicies(store);
 
-      const workspace = store.workspaces.find((item) => item.id === input.workspaceId && item.hostId === input.hostId);
-      if (!workspace) {
-        throw new Error("Workspace not found on selected host");
-      }
-
-      const host = store.hosts.find((item) => item.id === input.hostId);
-      if (!host) {
-        throw new Error("Host not found");
-      }
+      const workspace = getHostWorkspace(store, input.hostId, input.workspaceId);
+      const host = getHostRecord(store, input.hostId);
 
       const now = nowIso();
       const session: Session = {
@@ -415,6 +429,103 @@ export class HappyTGControlPlaneService {
       session.updatedAt = nowIso();
       appendAudit(store, "user", input.userId, "session.dispatched", session.id, { dispatchId: dispatch.id });
       return { session, task, dispatch };
+    });
+  }
+
+  async createBootstrapSession(input: {
+    userId: string;
+    hostId: string;
+    command: "doctor" | "verify";
+  }): Promise<{ session: Session; approval?: ApprovalRequest; dispatch?: PendingDispatch }> {
+    return this.store.update((store) => {
+      ensurePolicies(store);
+
+      const host = getHostRecord(store, input.hostId);
+      const workspace = getHostWorkspace(store, input.hostId);
+      const now = nowIso();
+      const actionKind = input.command === "doctor" ? "read_status" : "verification_run";
+      const session: Session = {
+        id: createId("ses"),
+        userId: input.userId,
+        hostId: input.hostId,
+        workspaceId: workspace.id,
+        mode: "quick",
+        runtime: "codex-cli",
+        state: "created",
+        title: `Bootstrap ${input.command}: ${host.label}`,
+        prompt: `Run happytg ${input.command} on host ${host.label}`,
+        createdAt: now,
+        updatedAt: now
+      };
+      store.sessions.push(session);
+      appendEvent(store, session.id, "session.created", {
+        mode: session.mode,
+        runtime: session.runtime,
+        executionKind: input.command === "doctor" ? "bootstrap_doctor" : "bootstrap_verify"
+      });
+      session.state = "prefetching";
+      appendEvent(store, session.id, "session.prefetch.completed", {
+        sources: ["user", "host", "policy", "bootstrap", "resume"]
+      });
+
+      const policyDecision = evaluatePolicies({
+        actionKind,
+        scopeRefs: {
+          global: "global",
+          workspace: workspace.id,
+          session: session.id,
+          command: input.command
+        },
+        policies: store.policies
+      });
+
+      appendEvent(store, session.id, "policy.evaluated", {
+        outcome: policyDecision.outcome,
+        effectiveLayer: policyDecision.effectiveLayer,
+        reason: policyDecision.reason
+      });
+
+      if (policyDecision.outcome === "deny") {
+        session.state = "failed";
+        session.lastError = policyDecision.reason;
+        appendEvent(store, session.id, "session.failed", { reason: policyDecision.reason });
+        appendAudit(store, "user", input.userId, "bootstrap.denied", session.id, { actionKind, command: input.command });
+        return { session };
+      }
+
+      if (policyDecision.outcome === "require_approval") {
+        const approval = createApprovalRequest({
+          sessionId: session.id,
+          actionKind,
+          risk: "medium",
+          reason: policyDecision.reason
+        });
+        store.approvals.push(approval);
+        session.approvalId = approval.id;
+        session.state = "awaiting_approval";
+        session.updatedAt = nowIso();
+        appendEvent(store, session.id, "approval.requested", {
+          approvalId: approval.id,
+          risk: approval.risk,
+          reason: approval.reason
+        });
+        appendAudit(store, "user", input.userId, "bootstrap.approval.requested", approval.id, {
+          sessionId: session.id,
+          command: input.command
+        });
+        return { session, approval };
+      }
+
+      const dispatch = makeDispatch(session, actionKind);
+      dispatch.executionKind = input.command === "doctor" ? "bootstrap_doctor" : "bootstrap_verify";
+      store.pendingDispatches.push(dispatch);
+      session.state = "pending_dispatch";
+      session.updatedAt = nowIso();
+      appendAudit(store, "user", input.userId, "bootstrap.dispatched", session.id, {
+        dispatchId: dispatch.id,
+        command: input.command
+      });
+      return { session, dispatch };
     });
   }
 

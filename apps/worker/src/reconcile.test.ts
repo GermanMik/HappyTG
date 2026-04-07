@@ -38,6 +38,7 @@ test("reconcileSessionsAndDispatches moves active sessions to reconnecting when 
     sessionId: "ses_1",
     hostId: "host_1",
     workspaceId: "ws_1",
+    executionKind: "runtime_session",
     mode: "quick",
     runtime: "codex-cli",
     actionKind: "workspace_read",

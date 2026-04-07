@@ -1,6 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 
+import { runBootstrapCommand } from "../../../packages/bootstrap/src/index.js";
 import { freezeTaskSpec, updateEvidence, writeRawArtifact, writeVerificationVerdict } from "../../../packages/repo-proof/src/index.js";
 import { checkCodexReadiness, runCodexExec } from "../../../packages/runtime-adapters/src/index.js";
 import type {
@@ -286,6 +287,29 @@ function parseVerifierVerdict(summary: string): "passed" | "failed" {
   return firstLine.includes("PASS") ? "passed" : "failed";
 }
 
+function summarizeBootstrapReport(report: Awaited<ReturnType<typeof runBootstrapCommand>>): string {
+  if (report.findings.length === 0) {
+    return `Bootstrap ${report.command} ${report.status}: no findings.`;
+  }
+
+  return `Bootstrap ${report.command} ${report.status}: ${report.findings.slice(0, 3).map((item) => item.code).join(", ")}`;
+}
+
+async function processBootstrapDispatch(state: DaemonState, dispatch: PendingDispatch): Promise<DaemonCompleteRequest> {
+  const command = dispatch.executionKind === "bootstrap_doctor" ? "doctor" : "verify";
+  await updateSessionEvent(state.hostId!, dispatch.sessionId, `Bootstrap ${command} running on ${state.hostLabel}`, "running");
+  const report = await runBootstrapCommand(command);
+
+  return {
+    hostId: state.hostId!,
+    dispatchId: dispatch.id,
+    sessionId: dispatch.sessionId,
+    ok: report.status !== "fail",
+    summary: summarizeBootstrapReport(report),
+    stdoutArtifactPath: path.join(stateDir, "state", `${command}-last.json`)
+  };
+}
+
 async function processQuickDispatch(state: DaemonState, dispatch: PendingDispatch, workspace: DaemonWorkspace): Promise<DaemonCompleteRequest> {
   const sandbox = sandboxForDispatch(dispatch);
   await updateSessionEvent(state.hostId!, dispatch.sessionId, `Quick task running in ${workspace.repoName}`, "running");
@@ -431,11 +455,6 @@ async function processDispatch(state: DaemonState, dispatch: PendingDispatch): P
     throw new Error("Host is not paired");
   }
 
-  const workspace = state.workspaces.find((item) => item.id === dispatch.workspaceId);
-  if (!workspace) {
-    throw new Error(`Workspace ${dispatch.workspaceId} is not registered on this host`);
-  }
-
   const journal = await loadJournal();
   const compacted = compactJournal(journal);
   journal.entries = compacted.entries;
@@ -458,9 +477,18 @@ async function processDispatch(state: DaemonState, dispatch: PendingDispatch): P
   await ackDispatch(dispatch, state.hostId);
   let completion: DaemonCompleteRequest;
   try {
-    completion = dispatch.mode === "proof"
-      ? await processProofDispatch(state, dispatch, workspace)
-      : await processQuickDispatch(state, dispatch, workspace);
+    if (dispatch.executionKind === "bootstrap_doctor" || dispatch.executionKind === "bootstrap_verify") {
+      completion = await processBootstrapDispatch(state, dispatch);
+    } else {
+      const workspace = state.workspaces.find((item) => item.id === dispatch.workspaceId);
+      if (!workspace) {
+        throw new Error(`Workspace ${dispatch.workspaceId} is not registered on this host`);
+      }
+
+      completion = dispatch.mode === "proof"
+        ? await processProofDispatch(state, dispatch, workspace)
+        : await processQuickDispatch(state, dispatch, workspace);
+    }
     entry.state = completion.ok ? "completed" : "failed";
     entry.lastUpdatedAt = nowIso();
     await saveJournal(journal);

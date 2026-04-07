@@ -109,6 +109,9 @@ async function handleStart(message: TelegramMessage): Promise<void> {
       "/pair <PAIRING_CODE>",
       "/hosts",
       "/status <SESSION_ID>",
+      "/resume <SESSION_ID>",
+      "/doctor <HOST_ID>",
+      "/verify <HOST_ID>",
       "/approve <APPROVAL_ID> <approve|reject> [reason]",
       "/session quick <HOST_ID> <WORKSPACE_ID> <PROMPT>",
       "/session proof <HOST_ID> <WORKSPACE_ID> <TITLE> || <PROMPT> || <criterion1;criterion2>"
@@ -189,6 +192,26 @@ async function handleStatus(message: TelegramMessage, sessionId: string): Promis
     lines.push(`Error: ${session.lastError}`);
   }
 
+  await sendTelegramMessage(message.chat.id, lines.join("\n"));
+}
+
+async function handleResume(message: TelegramMessage, sessionId: string): Promise<void> {
+  const session = await apiFetch<{
+    id: string;
+    state: string;
+    currentSummary?: string;
+    lastError?: string;
+  }>(`/api/v1/sessions/${sessionId}/resume`, {
+    method: "POST"
+  });
+
+  const lines = [`Session ${session.id} moved to ${session.state}.`];
+  if (session.currentSummary) {
+    lines.push(`Summary: ${session.currentSummary}`);
+  }
+  if (session.lastError) {
+    lines.push(`Last error: ${session.lastError}`);
+  }
   await sendTelegramMessage(message.chat.id, lines.join("\n"));
 }
 
@@ -310,6 +333,38 @@ async function handleSessionCommand(message: TelegramMessage, parts: string[]): 
   await sendTelegramMessage(message.chat.id, "Usage: /session quick ... or /session proof ...");
 }
 
+async function handleBootstrapCommand(message: TelegramMessage, hostId: string, command: "doctor" | "verify"): Promise<void> {
+  if (!message.from) {
+    await sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
+    return;
+  }
+
+  const userId = await resolveInternalUserId(message.from);
+  if (!userId) {
+    await sendTelegramMessage(message.chat.id, "No HappyTG user is linked to this Telegram account yet. Pair a host first.");
+    return;
+  }
+
+  const result = await apiFetch<{
+    session: { id: string; state: string; title: string };
+    approval?: { id: string; reason: string; state: string };
+  }>(`/api/v1/hosts/${hostId}/bootstrap/${command}`, {
+    method: "POST",
+    body: JSON.stringify({ userId })
+  });
+
+  if (result.approval) {
+    await sendTelegramMessage(
+      message.chat.id,
+      `${result.session.title} requires approval: ${result.approval.reason}`,
+      inlineApprovalKeyboard(result.approval.id)
+    );
+    return;
+  }
+
+  await sendTelegramMessage(message.chat.id, `${result.session.title} created as session ${result.session.id}. State: ${result.session.state}.`);
+}
+
 async function handleMessage(message: TelegramMessage): Promise<void> {
   const text = message.text?.trim();
   if (!text) {
@@ -338,6 +393,27 @@ async function handleMessage(message: TelegramMessage): Promise<void> {
         return;
       }
       await handleStatus(message, rest[0]);
+      return;
+    case "/resume":
+      if (!rest[0]) {
+        await sendTelegramMessage(message.chat.id, "Usage: /resume <SESSION_ID>");
+        return;
+      }
+      await handleResume(message, rest[0]);
+      return;
+    case "/doctor":
+      if (!rest[0]) {
+        await sendTelegramMessage(message.chat.id, "Usage: /doctor <HOST_ID>");
+        return;
+      }
+      await handleBootstrapCommand(message, rest[0], "doctor");
+      return;
+    case "/verify":
+      if (!rest[0]) {
+        await sendTelegramMessage(message.chat.id, "Usage: /verify <HOST_ID>");
+        return;
+      }
+      await handleBootstrapCommand(message, rest[0], "verify");
       return;
     case "/approve":
       if (!rest[0] || !rest[1]) {

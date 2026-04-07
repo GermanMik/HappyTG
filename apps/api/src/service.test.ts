@@ -160,3 +160,45 @@ test("session timeline and task artifact reads are available for mini app inspec
 
   await assert.rejects(() => service.readTaskArtifact(created.task!.id, "../escape.txt"), /escapes task bundle root/i);
 });
+
+test("bootstrap sessions dispatch deterministic doctor runs and support resume state transitions", async () => {
+  const { tempDir, service } = await createServiceWithTempStore();
+  const workspaceDir = await mkdtemp(path.join(tempDir, "workspace-"));
+
+  const pairing = await service.startPairing({
+    hostLabel: "doctor-host",
+    fingerprint: "fp-4"
+  });
+
+  const claim = await service.claimPairing({
+    pairingCode: pairing.pairingCode,
+    telegramUserId: "1004",
+    chatId: "2004",
+    displayName: "Doctor User"
+  });
+
+  await service.hostHello({
+    hostId: pairing.hostId,
+    fingerprint: "fp-4",
+    capabilities: ["codex-cli", "resume"],
+    workspaces: [
+      {
+        path: workspaceDir,
+        repoName: "workspace"
+      }
+    ]
+  });
+
+  const diagnostic = await service.createBootstrapSession({
+    userId: claim.user.id,
+    hostId: pairing.hostId,
+    command: "doctor"
+  });
+
+  assert.equal(diagnostic.session.state, "pending_dispatch");
+  assert.equal(diagnostic.dispatch?.executionKind, "bootstrap_doctor");
+  assert.equal(diagnostic.dispatch?.actionKind, "read_status");
+
+  const resumed = await service.resumeSession(diagnostic.session.id);
+  assert.equal(resumed.state, "reconnecting");
+});

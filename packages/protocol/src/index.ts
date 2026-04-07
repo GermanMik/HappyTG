@@ -90,6 +90,12 @@ export const DAEMON_MESSAGE_TYPES = [
   "approval.blocked"
 ] as const;
 
+export const DISPATCH_EXECUTION_KINDS = [
+  "runtime_session",
+  "bootstrap_doctor",
+  "bootstrap_verify"
+] as const;
+
 export type SessionState = (typeof SESSION_STATES)[number];
 export type TaskPhase = (typeof TASK_PHASES)[number];
 export type ApprovalState = (typeof APPROVAL_STATES)[number];
@@ -98,6 +104,7 @@ export type VerificationState = (typeof VERIFICATION_STATES)[number];
 export type ActionKind = (typeof ACTION_KINDS)[number];
 export type EventName = (typeof EVENT_NAMES)[number];
 export type DaemonMessageType = (typeof DAEMON_MESSAGE_TYPES)[number];
+export type DispatchExecutionKind = (typeof DISPATCH_EXECUTION_KINDS)[number];
 
 export interface User {
   id: string;
@@ -327,6 +334,7 @@ export interface PendingDispatch {
   sessionId: string;
   hostId: string;
   workspaceId: string;
+  executionKind: DispatchExecutionKind;
   mode: "quick" | "proof";
   runtime: "codex-cli";
   actionKind: ActionKind;

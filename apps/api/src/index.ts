@@ -34,6 +34,19 @@ const server = createJsonServer(
     route("GET", "/api/v1/hosts", async ({ res, url }) => {
       json(res, 200, { hosts: await service.listHosts(url.searchParams.get("userId") ?? undefined) });
     }),
+    route("POST", "/api/v1/hosts/:id/bootstrap/:command", async ({ req, res, params }) => {
+      const body = await readJsonBody<{ userId: string }>(req);
+      if (params.command !== "doctor" && params.command !== "verify") {
+        json(res, 400, { error: "Unsupported bootstrap command" });
+        return;
+      }
+
+      json(res, 200, await service.createBootstrapSession({
+        userId: body.userId,
+        hostId: params.id,
+        command: params.command
+      }));
+    }),
     route("GET", "/api/v1/users/by-telegram/:telegramUserId", async ({ res, params }) => {
       const user = await service.getUserByTelegram(params.telegramUserId);
       if (!user) {
