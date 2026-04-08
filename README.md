@@ -47,7 +47,7 @@ It is designed around one hard constraint: Telegram is a render surface for comm
 2. Copy `.env.example` to `.env` and fill Telegram/OpenAI/backend secrets.
 3. Read [docs/installation.md](./docs/installation.md).
 4. Run `pnpm install`.
-5. Run `pnpm bootstrap:doctor`.
+5. Run `pnpm happytg doctor`.
 6. Start the local control-plane stack with `docker compose -f infra/docker-compose.example.yml up --build`.
 7. In a separate shell, run `pnpm dev` for live-reload development or use the container stack as-is for smoke testing.
 8. Run `apps/host-daemon` on the execution host outside Docker Compose.
@@ -62,9 +62,12 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm dev
-pnpm bootstrap:doctor
-pnpm bootstrap:verify
+pnpm happytg doctor
+pnpm happytg verify
+pnpm happytg task status --repo . --task HTG-0001
 ```
+
+`pnpm happytg ...` is the repo-local CLI entrypoint. If you later install or publish the bootstrap package as a binary, the same commands are available as `happytg ...`.
 
 ## CI Baseline
 

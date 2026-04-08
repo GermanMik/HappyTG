@@ -2,13 +2,20 @@
 
 ## Commands
 
-- `happytg doctor`
-- `happytg setup`
-- `happytg repair`
-- `happytg verify`
-- `happytg status`
-- `happytg config init`
-- `happytg env snapshot`
+- repo-local: `pnpm happytg doctor`
+- repo-local: `pnpm happytg setup`
+- repo-local: `pnpm happytg repair`
+- repo-local: `pnpm happytg verify`
+- repo-local: `pnpm happytg status`
+- repo-local: `pnpm happytg config init`
+- repo-local: `pnpm happytg env snapshot`
+- installed binary: `happytg ...` with the same subcommands
+
+## Task Bundle Commands
+
+- `pnpm happytg task init --repo <path> --task <TASK_ID> --session <SESSION_ID> --workspace <WORKSPACE_ID> --title <TITLE> --criterion <TEXT>`
+- `pnpm happytg task status --repo <path> --task <TASK_ID>`
+- `pnpm happytg task validate --repo <path> --task <TASK_ID>`
 
 ## Principles
 

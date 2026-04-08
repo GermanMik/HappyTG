@@ -9,7 +9,7 @@ Get from an empty machine to a paired HappyTG host that can run a first Codex-ba
 1. Install Git, Node.js 22+, `pnpm`, and Codex CLI.
 2. Copy `.env.example` to `.env` and fill required values.
 3. Run `pnpm install`.
-4. Run `pnpm bootstrap:doctor`.
+4. Run `pnpm happytg doctor`.
 5. Start the packaged control-plane services:
 
    ```bash
@@ -26,6 +26,7 @@ Get from an empty machine to a paired HappyTG host that can run a first Codex-ba
    pnpm typecheck
    pnpm test
    pnpm build
+   pnpm happytg verify
    ```
 
 ## What to Expect

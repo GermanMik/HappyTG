@@ -14,7 +14,7 @@
 - verify `codex` is in `PATH`,
 - verify `~/.codex/config.toml` exists and is readable,
 - verify network access required by Codex,
-- rerun `happytg doctor` and `happytg verify`.
+- rerun `pnpm happytg doctor` and `pnpm happytg verify` in the repository, or `happytg doctor` / `happytg verify` if the CLI is installed globally.
 
 ### Resume does not restore session
 

@@ -66,8 +66,8 @@ Standard repo commands:
 pnpm lint
 pnpm typecheck
 pnpm test
-pnpm bootstrap:doctor
-pnpm bootstrap:verify
+pnpm happytg doctor
+pnpm happytg verify
 ```
 
 Task-local verification should be recorded in `.agent/tasks/<TASK_ID>/raw/`.

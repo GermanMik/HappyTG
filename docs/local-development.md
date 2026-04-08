@@ -27,7 +27,15 @@ Standard verification commands:
 pnpm lint
 pnpm typecheck
 pnpm test
-pnpm bootstrap:verify
+pnpm happytg verify
 ```
 
 Store command output in task bundle raw artifacts for proof-loop tasks.
+
+Useful repo-local task commands:
+
+```bash
+pnpm happytg task init --repo . --task HTG-0001 --session ses_manual --workspace ws_manual --title "Proof task" --criterion "criterion one"
+pnpm happytg task status --repo . --task HTG-0001
+pnpm happytg task validate --repo . --task HTG-0001
+```

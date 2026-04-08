@@ -30,10 +30,10 @@
 ## Execution Host Bring-Up
 
 1. Install Git, Node.js 22+, `pnpm`, and Codex CLI on the execution host.
-2. Run `pnpm bootstrap:doctor` and resolve blocking findings.
+2. Run `pnpm happytg doctor` and resolve blocking findings.
 3. Start `apps/host-daemon` directly on the execution host.
 4. Pair the host through Telegram and wait for the control plane to record the host heartbeat.
-5. Run `pnpm bootstrap:verify` and one quick Codex smoke session before allowing proof-loop tasks.
+5. Run `pnpm happytg verify` and one quick Codex smoke session before allowing proof-loop tasks.
 
 ## Telegram Delivery
 
