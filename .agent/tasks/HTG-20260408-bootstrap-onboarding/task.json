@@ -1,0 +1,21 @@
+{
+  "id": "HTG-20260408-bootstrap-onboarding",
+  "sessionId": "ses_codex_20260408",
+  "workspaceId": "HappyTG",
+  "rootPath": "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-20260408-bootstrap-onboarding",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Windows bootstrap/install/onboarding fixes",
+  "acceptanceCriteria": [
+    "pnpm test passes including @happytg/shared Windows home resolution cases",
+    "Codex detection handles Windows PATH/Path, PATHEXT, codex.cmd shims, and doctor/verify stop reporting false negatives when codex --version works",
+    "Bootstrap/onboarding explicitly handles Telegram bot token setup, invalid token guidance, and fast path to /pair without exposing secrets",
+    "Bootstrap/onboarding reports Redis absent/stopped/running states and explains the 6379 compose conflict path without unsafe auto-actions",
+    "Bootstrap/onboarding checks critical ports including 3001, 4000, 4100, 4200, 6379 and gives actionable override guidance including Windows PowerShell examples",
+    "README and install/quickstart/bootstrap docs reflect the new first-start flow and supported alternative port selection",
+    "Versioning is bumped using the existing repo scheme with a structured release summary aligned to actual scope"
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-08T14:29:54.251Z",
+  "updatedAt": "2026-04-08T16:25:00.000Z"
+}

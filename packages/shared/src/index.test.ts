@@ -10,11 +10,14 @@ import {
   FileStateStore,
   createJsonServer,
   findExecutable,
+  loadHappyTGEnv,
   json,
+  normalizeSpawnEnv,
   readJsonFile,
   readTextFileOrEmpty,
   resolveHome,
   route,
+  telegramTokenStatus,
   writeJsonFileAtomic,
   writeTextFileAtomic
 } from "./index.js";
@@ -27,14 +30,16 @@ const silentLogger: Logger = {
 
 test("resolveHome and atomic file helpers round-trip data", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-files-"));
-  const originalHome = process.env.HOME;
   try {
-    process.env.HOME = tempDir;
-
     const jsonPath = path.join(tempDir, "nested", "data.json");
     const textPath = path.join(tempDir, "nested", "notes.txt");
 
-    assert.equal(resolveHome("~/workspace"), path.join(tempDir, "workspace"));
+    assert.equal(resolveHome("~/workspace", {
+      env: { HOME: tempDir }
+    }), path.join(tempDir, "workspace"));
+    assert.equal(resolveHome("~", {
+      env: { HOME: tempDir }
+    }), tempDir);
 
     await writeJsonFileAtomic(jsonPath, { ok: true, count: 2 });
     await writeTextFileAtomic(textPath, "hello");
@@ -44,13 +49,35 @@ test("resolveHome and atomic file helpers round-trip data", async () => {
     assert.equal(await readTextFileOrEmpty(path.join(tempDir, "missing.txt")), "");
     assert.equal((await readFile(jsonPath, "utf8")).endsWith("\n"), true);
   } finally {
-    if (originalHome === undefined) {
-      delete process.env.HOME;
-    } else {
-      process.env.HOME = originalHome;
-    }
     await rm(tempDir, { recursive: true, force: true });
   }
+});
+
+test("resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides", () => {
+  const windowsHomeOverride = resolveHome("~/workspace", {
+    env: {
+      HOME: "/tmp/windows-home",
+      USERPROFILE: "C:\\Users\\fallback"
+    },
+    platform: "win32"
+  });
+  const windowsUserProfile = resolveHome("~/workspace", {
+    env: {
+      USERPROFILE: "C:\\Users\\profile"
+    },
+    platform: "win32"
+  });
+  const windowsHomeDrive = resolveHome("~/workspace", {
+    env: {
+      HOMEDRIVE: "C:",
+      HOMEPATH: "\\Users\\drive-home"
+    },
+    platform: "win32"
+  });
+
+  assert.equal(windowsHomeOverride, path.join("/tmp/windows-home", "workspace"));
+  assert.equal(windowsUserProfile, "C:\\Users\\profile\\workspace");
+  assert.equal(windowsHomeDrive, "C:\\Users\\drive-home\\workspace");
 });
 
 test("findExecutable searches PATH and appends Windows executable extensions", async () => {
@@ -82,6 +109,50 @@ test("findExecutable searches PATH and appends Windows executable extensions", a
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
+});
+
+test("loadHappyTGEnv fills missing values without overriding existing env", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-env-"));
+  try {
+    const envFilePath = path.join(tempDir, ".env");
+    await writeFile(envFilePath, "TELEGRAM_BOT_TOKEN=123:test_token_value_1234567890\nLOG_LEVEL=debug\n", "utf8");
+
+    const env: NodeJS.ProcessEnv = {
+      LOG_LEVEL: "info"
+    };
+    const loaded = loadHappyTGEnv({
+      cwd: tempDir,
+      env
+    });
+
+    assert.equal(loaded.envFilePath, envFilePath);
+    assert.deepEqual(loaded.loadedKeys, ["TELEGRAM_BOT_TOKEN"]);
+    assert.equal(env.TELEGRAM_BOT_TOKEN, "123:test_token_value_1234567890");
+    assert.equal(env.LOG_LEVEL, "info");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT", () => {
+  const normalized = normalizeSpawnEnv({
+    PATH: "C:\\wrong",
+    Path: "C:\\Users\\tester\\AppData\\Roaming\\npm",
+    PATHEXT: ".COM;.EXE;.BAT;.CMD",
+    HOME: "C:\\Users\\tester"
+  }, "win32");
+
+  assert.equal(normalized.Path, "C:\\Users\\tester\\AppData\\Roaming\\npm");
+  assert.equal(normalized.PATHEXT, ".COM;.EXE;.BAT;.CMD");
+  assert.equal(normalized.PATH, undefined);
+  assert.equal(normalized.HOME, "C:\\Users\\tester");
+});
+
+test("telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values", () => {
+  assert.equal(telegramTokenStatus({}).status, "missing");
+  assert.equal(telegramTokenStatus({ TELEGRAM_BOT_TOKEN: "replace-me" }).status, "placeholder");
+  assert.equal(telegramTokenStatus({ TELEGRAM_BOT_TOKEN: "abc" }).status, "invalid");
+  assert.equal(telegramTokenStatus({ TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx" }).status, "configured");
 });
 
 test("FileStateStore serializes concurrent updates through its queue", async () => {

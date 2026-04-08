@@ -13,11 +13,21 @@ import type {
   HostPollRequest,
   ResolveApprovalRequest
 } from "../../../packages/protocol/src/index.js";
-import { createJsonServer, createLogger, getControlPlaneStorePath, json, readJsonBody, route } from "../../../packages/shared/src/index.js";
+import {
+  createJsonServer,
+  createLogger,
+  getControlPlaneStorePath,
+  json,
+  loadHappyTGEnv,
+  readJsonBody,
+  readPort,
+  route
+} from "../../../packages/shared/src/index.js";
 
 import { HappyTGControlPlaneService } from "./service.js";
 
 const logger = createLogger("api");
+loadHappyTGEnv();
 
 export function createApiServer(service = new HappyTGControlPlaneService()) {
   return createJsonServer(
@@ -154,7 +164,7 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
   );
 }
 
-const port = Number(process.env.PORT ?? 4000);
+const port = readPort(process.env, ["HAPPYTG_API_PORT", "PORT"], 4000);
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const server = createApiServer();
   server.listen(port, () => {

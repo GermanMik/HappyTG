@@ -1,0 +1,46 @@
+{
+  "taskId": "HTG-20260408-bootstrap-onboarding",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "vrf_20260408_fresh_pass"
+  },
+  "checks": [
+    {
+      "name": "pnpm lint",
+      "ok": true,
+      "detail": "Recorded in raw/lint.txt"
+    },
+    {
+      "name": "pnpm typecheck",
+      "ok": true,
+      "detail": "Recorded in raw/build.txt"
+    },
+    {
+      "name": "pnpm build",
+      "ok": true,
+      "detail": "Recorded in raw/build.txt"
+    },
+    {
+      "name": "pnpm test",
+      "ok": true,
+      "detail": "Recorded in raw/test-unit.txt"
+    },
+    {
+      "name": "pnpm happytg doctor",
+      "ok": true,
+      "detail": "Recorded in raw/test-integration.txt"
+    },
+    {
+      "name": "pnpm happytg verify",
+      "ok": true,
+      "detail": "Recorded in raw/test-integration.txt"
+    },
+    {
+      "name": "fresh-verifier-review",
+      "ok": true,
+      "detail": "Independent task-verifier pass reported no actionable findings."
+    }
+  ],
+  "generatedAt": "2026-04-08T16:25:00.000Z"
+}

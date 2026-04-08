@@ -201,6 +201,7 @@ test("startMiniAppServer returns an actionable message when the port is already 
   });
 
   try {
+    assert.match(formatMiniAppPortConflictMessage(address.port), /HAPPYTG_MINIAPP_PORT/);
     await assert.rejects(
       () => startMiniAppServer(server, { port: address.port, logger: { info() {} } }),
       new RegExp(formatMiniAppPortConflictMessage(address.port).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))

@@ -37,6 +37,7 @@ It is designed around one hard constraint: Telegram is a render surface for comm
 - [docs/runtime-codex.md](./docs/runtime-codex.md): Codex-first runtime model.
 - [docs/proof-loop.md](./docs/proof-loop.md): repo-local proof loop.
 - [docs/bootstrap-doctor.md](./docs/bootstrap-doctor.md): deterministic bootstrap and doctor subsystem.
+- [docs/releases/0.2.0.md](./docs/releases/0.2.0.md): current release notes.
 - [infra/docker-compose.example.yml](./infra/docker-compose.example.yml): local self-hosted composition example.
 - [infra/Dockerfile.app](./infra/Dockerfile.app): reusable runtime image for API, worker, bot, and Mini App surfaces.
 - [.github/workflows/ci.yml](./.github/workflows/ci.yml): repository verification pipeline for typecheck, test, and build.
@@ -44,24 +45,45 @@ It is designed around one hard constraint: Telegram is a render surface for comm
 ## Fast Start
 
 1. Install Node.js 22+, `pnpm`, Git, and Codex CLI.
-2. Copy `.env.example` to `.env` and fill Telegram/OpenAI/backend secrets.
-3. Read [docs/installation.md](./docs/installation.md).
-4. Run the first-start commands:
+2. Create `.env`:
 
    ```bash
    cp .env.example .env
-   pnpm install
-   pnpm happytg doctor
-   docker compose -f infra/docker-compose.example.yml up --build
    ```
 
-5. In a second shell, start the development stack:
+   PowerShell:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+3. Set `TELEGRAM_BOT_TOKEN` in `.env`.
+4. Run the guided preflight:
+
+   ```bash
+   pnpm install
+   pnpm happytg setup
+   ```
+
+5. Start shared infra. If Redis is already running on `localhost:6379`, reuse it and skip compose `redis`:
+
+   ```bash
+   docker compose -f infra/docker-compose.example.yml up postgres minio
+   ```
+
+   If Redis is not running yet:
+
+   ```bash
+   docker compose -f infra/docker-compose.example.yml up postgres redis minio
+   ```
+
+6. In a second shell, start the development stack:
 
    ```bash
    pnpm dev
    ```
 
-6. In a third shell on the execution host, request pairing and then start the daemon:
+7. In a third shell on the execution host, request pairing and then start the daemon:
 
    ```bash
    pnpm daemon:pair
@@ -69,13 +91,19 @@ It is designed around one hard constraint: Telegram is a render surface for comm
    pnpm dev:daemon
    ```
 
-7. If the Mini App port is already in use, restart it with a different port:
+8. If a port is already in use, override it explicitly. Example for the Mini App:
 
    ```bash
-   PORT=3002 pnpm dev:miniapp
+   HAPPYTG_MINIAPP_PORT=3002 pnpm dev:miniapp
    ```
 
-8. After pairing succeeds, run the first smoke task, then the first proof-loop task.
+   PowerShell:
+
+   ```powershell
+   $env:HAPPYTG_MINIAPP_PORT=3002; pnpm dev:miniapp
+   ```
+
+9. After pairing succeeds, run the first smoke task, then the first proof-loop task.
 
 ## Monorepo Commands
 

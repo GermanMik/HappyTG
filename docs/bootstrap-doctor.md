@@ -2,6 +2,7 @@
 
 ## Commands
 
+- guided first start: `pnpm happytg setup`
 - repo-local: `pnpm happytg doctor`
 - repo-local JSON diagnostics: `pnpm happytg doctor --json`
 - repo-local: `pnpm happytg setup`
@@ -27,7 +28,28 @@
 - verify after install
 - idempotent runs
 - persisted reports for repair
-- keep the plain-text path short; detailed Codex stderr belongs in `--json`
+- keep the plain-text path short; detailed Codex stderr, Redis state, and port diagnostics belong in `--json`
+
+## Guided First Start
+
+`pnpm happytg setup` is the compact onboarding path.
+
+It checks:
+
+- `.env` presence,
+- `TELEGRAM_BOT_TOKEN` presence and obvious format errors,
+- Codex CLI availability and config,
+- Redis state: absent, installed-but-stopped, running, or conflicting on the configured port,
+- critical ports such as `3001`, `4000`, `4100`, `4200`, and `6379`.
+
+The plain-text output stays short:
+
+- preflight summary,
+- findings,
+- first-start checklist,
+- JSON diagnostics hint.
+
+Use `--json` when you need raw paths, detailed port classifications, or full Codex stderr.
 
 ## State Files
 

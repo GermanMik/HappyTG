@@ -1,14 +1,28 @@
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 
 import type { BootstrapFinding, BootstrapReport } from "../../protocol/src/index.js";
 import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage } from "../../runtime-adapters/src/index.js";
-import { createId, ensureDir, getLocalStateDir, nowIso, resolveExecutable, writeJsonFileAtomic } from "../../shared/src/index.js";
+import {
+  createId,
+  ensureDir,
+  findUpwardFile,
+  getLocalStateDir,
+  nowIso,
+  readPort,
+  resolveExecutable,
+  telegramTokenStatus,
+  writeJsonFileAtomic
+} from "../../shared/src/index.js";
 
 export type BootstrapCommand = "doctor" | "setup" | "repair" | "verify" | "status" | "config-init" | "env-snapshot";
 
 interface DoctorContext {
   command: BootstrapCommand;
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  platform?: NodeJS.Platform;
 }
 
 export interface DoctorDetection {
@@ -18,65 +32,741 @@ export interface DoctorDetection {
   reportJson: Record<string, unknown>;
 }
 
+interface PortCheckDefinition {
+  id: string;
+  label: string;
+  envKeys: string[];
+  defaultPort: number;
+  command?: string;
+  overrideEnv?: string;
+  expectedService?: string;
+  probe: "http" | "redis" | "tcp";
+}
+
+type PortCheckState = "free" | "occupied_expected" | "occupied_external";
+
+interface PortCheckResult {
+  id: string;
+  label: string;
+  port: number;
+  probe: PortCheckDefinition["probe"];
+  state: PortCheckState;
+  detail: string;
+  overrideEnv?: string;
+  command?: string;
+  service?: string;
+}
+
+type RedisState = "absent" | "installed_stopped" | "running" | "port_conflict" | "remote";
+
+interface RedisDetection {
+  state: RedisState;
+  url: string;
+  host: string;
+  port: number;
+  local: boolean;
+  installed: boolean;
+  detail: string;
+  executablePaths: {
+    redisCli: string | null;
+    redisServer: string | null;
+  };
+}
+
+const criticalPortDefinitions: PortCheckDefinition[] = [
+  {
+    id: "miniapp",
+    label: "Mini App",
+    envKeys: ["HAPPYTG_MINIAPP_PORT"],
+    defaultPort: 3001,
+    probe: "http",
+    expectedService: "miniapp",
+    command: "pnpm dev:miniapp",
+    overrideEnv: "HAPPYTG_MINIAPP_PORT"
+  },
+  {
+    id: "api",
+    label: "API",
+    envKeys: ["HAPPYTG_API_PORT"],
+    defaultPort: 4000,
+    probe: "http",
+    expectedService: "api",
+    command: "pnpm dev:api",
+    overrideEnv: "HAPPYTG_API_PORT"
+  },
+  {
+    id: "bot",
+    label: "Bot",
+    envKeys: ["HAPPYTG_BOT_PORT"],
+    defaultPort: 4100,
+    probe: "http",
+    expectedService: "bot",
+    command: "pnpm dev:bot",
+    overrideEnv: "HAPPYTG_BOT_PORT"
+  },
+  {
+    id: "worker",
+    label: "Worker probe",
+    envKeys: ["HAPPYTG_WORKER_PORT"],
+    defaultPort: 4200,
+    probe: "http",
+    expectedService: "worker",
+    command: "pnpm dev:worker",
+    overrideEnv: "HAPPYTG_WORKER_PORT"
+  },
+  {
+    id: "redis",
+    label: "Redis host port",
+    envKeys: ["HAPPYTG_REDIS_HOST_PORT"],
+    defaultPort: 6379,
+    probe: "redis",
+    overrideEnv: "HAPPYTG_REDIS_HOST_PORT"
+  },
+  {
+    id: "postgres",
+    label: "Postgres host port",
+    envKeys: [],
+    defaultPort: 5432,
+    probe: "tcp"
+  },
+  {
+    id: "minio-api",
+    label: "MinIO API host port",
+    envKeys: [],
+    defaultPort: 9000,
+    probe: "tcp"
+  },
+  {
+    id: "minio-console",
+    label: "MinIO console host port",
+    envKeys: [],
+    defaultPort: 9001,
+    probe: "tcp"
+  }
+] as const;
+
 function pushPlanStep(planPreview: string[], step: string): void {
   if (!planPreview.includes(step)) {
     planPreview.push(step);
   }
 }
 
-export async function detectFindings(): Promise<DoctorDetection> {
-  const findings: BootstrapFinding[] = [];
-  const planPreview: string[] = [];
+function pushFinding(findings: BootstrapFinding[], finding: BootstrapFinding): void {
+  if (!findings.some((item) => item.code === finding.code && item.message === finding.message)) {
+    findings.push(finding);
+  }
+}
 
-  const platform = `${os.platform()}-${os.arch()}`;
-  const gitBinaryPath = await resolveExecutable("git");
+function platformCommands(platform: NodeJS.Platform = process.platform): {
+  copyEnv: string;
+  inlineEnvExample: (key: string, value: string | number, command: string) => string;
+} {
+  if (platform === "win32") {
+    return {
+      copyEnv: "Copy-Item .env.example .env",
+      inlineEnvExample: (key, value, command) => `$env:${key}=${JSON.stringify(String(value))}; ${command}`
+    };
+  }
+
+  return {
+    copyEnv: "cp .env.example .env",
+    inlineEnvExample: (key, value, command) => `${key}=${value} ${command}`
+  };
+}
+
+function defaultInfraComposeCommand(redis: RedisDetection, platform: NodeJS.Platform): string {
+  const services = redis.state === "running" ? "postgres minio" : "postgres redis minio";
+  const command = `docker compose -f infra/docker-compose.example.yml up ${services}`;
+
+  if (platform === "win32") {
+    return command;
+  }
+
+  return command;
+}
+
+function formatCodexSummary(version: string | undefined): string {
+  if (!version) {
+    return "not found";
+  }
+
+  return version.split("\n")[0]?.trim() ?? "available";
+}
+
+function formatPortStateForSummary(results: PortCheckResult[]): string {
+  const relevant = results.filter((item) => ["miniapp", "api", "bot", "worker", "redis"].includes(item.id));
+  const busy = relevant.filter((item) => item.state !== "free");
+  if (busy.length === 0) {
+    return "all critical ports free";
+  }
+
+  const busyDescriptions = busy.map((item) => `${item.port} ${item.state === "occupied_expected" ? "busy (HappyTG)" : "busy"}`);
+  return `${busyDescriptions.join(", ")}; others free`;
+}
+
+function envPresenceSummary(envFilePath: string | undefined): string {
+  return envFilePath ? `.env found` : `.env missing`;
+}
+
+function redisSummary(redis: RedisDetection): string {
+  switch (redis.state) {
+    case "running":
+      return `running on ${redis.host}:${redis.port}`;
+    case "installed_stopped":
+      return `installed but not running on ${redis.host}:${redis.port}`;
+    case "absent":
+      return `not detected on ${redis.host}:${redis.port}`;
+    case "port_conflict":
+      return `port ${redis.port} is occupied by a non-Redis process`;
+    case "remote":
+      return `remote URL ${redis.url}`;
+    default:
+      return redis.detail;
+  }
+}
+
+function isLocalRedisHost(host: string): boolean {
+  return ["localhost", "127.0.0.1", "::1", ""].includes(host);
+}
+
+function safeUrlPort(url: URL, fallback: number): number {
+  if (!url.port) {
+    return fallback;
+  }
+
+  const parsed = Number(url.port);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+async function canConnect(host: string, port: number, timeoutMs = 400): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = net.createConnection({
+      host,
+      port
+    });
+    const finish = (result: boolean) => {
+      socket.removeAllListeners();
+      socket.destroy();
+      resolve(result);
+    };
+
+    socket.setTimeout(timeoutMs);
+    socket.once("connect", () => finish(true));
+    socket.once("timeout", () => finish(false));
+    socket.once("error", () => finish(false));
+  });
+}
+
+async function detectHappyTGServiceOnPort(port: number): Promise<string | undefined> {
+  const urls = [
+    `http://127.0.0.1:${port}/ready`,
+    `http://127.0.0.1:${port}/health`
+  ];
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(750)
+      });
+      if (!response.ok) {
+        continue;
+      }
+
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        continue;
+      }
+
+      const body = await response.json() as { service?: string };
+      if (body.service) {
+        return body.service;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return undefined;
+}
+
+async function probeRedis(host: string, port: number, timeoutMs = 500): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = net.createConnection({
+      host,
+      port
+    });
+    let settled = false;
+    const finish = (result: boolean) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      socket.removeAllListeners();
+      socket.destroy();
+      resolve(result);
+    };
+
+    socket.setTimeout(timeoutMs);
+    socket.once("connect", () => {
+      socket.write("*1\r\n$4\r\nPING\r\n");
+    });
+    socket.on("data", (chunk) => {
+      finish(chunk.toString("utf8").includes("PONG"));
+    });
+    socket.once("timeout", () => finish(false));
+    socket.once("error", () => finish(false));
+  });
+}
+
+async function detectPortCheck(definition: PortCheckDefinition, env: NodeJS.ProcessEnv): Promise<PortCheckResult> {
+  const port = definition.envKeys.length > 0
+    ? readPort(env, definition.envKeys, definition.defaultPort)
+    : definition.defaultPort;
+  const connected = await canConnect("127.0.0.1", port);
+  if (!connected) {
+    return {
+      id: definition.id,
+      label: definition.label,
+      port,
+      probe: definition.probe,
+      state: "free",
+      detail: `${definition.label} port ${port} is free.`,
+      overrideEnv: definition.overrideEnv,
+      command: definition.command
+    };
+  }
+
+  if (definition.probe === "http") {
+    const service = await detectHappyTGServiceOnPort(port);
+    if (service && service === definition.expectedService) {
+      return {
+        id: definition.id,
+        label: definition.label,
+        port,
+        probe: definition.probe,
+        state: "occupied_expected",
+        detail: `${definition.label} is already running on port ${port}.`,
+        overrideEnv: definition.overrideEnv,
+        command: definition.command,
+        service
+      };
+    }
+
+    return {
+      id: definition.id,
+      label: definition.label,
+      port,
+      probe: definition.probe,
+      state: "occupied_external",
+      detail: service
+        ? `Port ${port} is occupied by HappyTG ${service}, not ${definition.label}.`
+        : `Port ${port} is occupied by another process.`,
+      overrideEnv: definition.overrideEnv,
+      command: definition.command,
+      service
+    };
+  }
+
+  if (definition.probe === "redis") {
+    const redisRunning = await probeRedis("127.0.0.1", port);
+    return {
+      id: definition.id,
+      label: definition.label,
+      port,
+      probe: definition.probe,
+      state: "occupied_external",
+      detail: redisRunning
+        ? `Redis is already listening on port ${port}.`
+        : `Port ${port} is occupied by another process.`,
+      overrideEnv: definition.overrideEnv,
+      command: definition.command,
+      service: redisRunning ? "redis" : undefined
+    };
+  }
+
+  return {
+    id: definition.id,
+    label: definition.label,
+    port,
+    probe: definition.probe,
+    state: "occupied_external",
+    detail: `Port ${port} is occupied.`,
+    overrideEnv: definition.overrideEnv,
+    command: definition.command
+  };
+}
+
+async function detectCriticalPorts(env: NodeJS.ProcessEnv): Promise<PortCheckResult[]> {
+  return Promise.all(criticalPortDefinitions.map((definition) => detectPortCheck(definition, env)));
+}
+
+async function detectRedis(
+  env: NodeJS.ProcessEnv,
+  options?: {
+    cwd?: string;
+    platform?: NodeJS.Platform;
+  }
+): Promise<RedisDetection> {
+  const redisUrl = env.REDIS_URL ?? "redis://localhost:6379";
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(redisUrl);
+  } catch {
+    return {
+      state: "remote",
+      url: redisUrl,
+      host: "",
+      port: 6379,
+      local: false,
+      installed: false,
+      detail: `REDIS_URL (${redisUrl}) is not a valid URL.`,
+      executablePaths: {
+        redisCli: null,
+        redisServer: null
+      }
+    };
+  }
+
+  const host = parsedUrl.hostname;
+  const port = safeUrlPort(parsedUrl, 6379);
+  const local = isLocalRedisHost(host);
+  const [redisCli, redisServer] = await Promise.all([
+    resolveExecutable("redis-cli", {
+      cwd: options?.cwd,
+      env,
+      platform: options?.platform
+    }),
+    resolveExecutable("redis-server", {
+      cwd: options?.cwd,
+      env,
+      platform: options?.platform
+    })
+  ]);
+  const installed = Boolean(redisCli || redisServer);
+
+  if (!local) {
+    return {
+      state: "remote",
+      url: redisUrl,
+      host,
+      port,
+      local,
+      installed,
+      detail: `Redis is configured to use ${redisUrl}. Local host-port checks are skipped.`,
+      executablePaths: {
+        redisCli: redisCli ?? null,
+        redisServer: redisServer ?? null
+      }
+    };
+  }
+
+  const redisRunning = await probeRedis(host || "127.0.0.1", port);
+  if (redisRunning) {
+    return {
+      state: "running",
+      url: redisUrl,
+      host,
+      port,
+      local,
+      installed,
+      detail: `Redis responded to PING on ${host}:${port}.`,
+      executablePaths: {
+        redisCli: redisCli ?? null,
+        redisServer: redisServer ?? null
+      }
+    };
+  }
+
+  const occupied = await canConnect(host || "127.0.0.1", port);
+  if (occupied) {
+    return {
+      state: "port_conflict",
+      url: redisUrl,
+      host,
+      port,
+      local,
+      installed,
+      detail: `Port ${port} is occupied, but it did not answer a Redis PING.`,
+      executablePaths: {
+        redisCli: redisCli ?? null,
+        redisServer: redisServer ?? null
+      }
+    };
+  }
+
+  return {
+    state: installed ? "installed_stopped" : "absent",
+    url: redisUrl,
+    host,
+    port,
+    local,
+    installed,
+    detail: installed
+      ? `Redis executables were found, but Redis is not running on ${host}:${port}.`
+      : `Redis executables were not found and nothing is listening on ${host}:${port}.`,
+    executablePaths: {
+      redisCli: redisCli ?? null,
+      redisServer: redisServer ?? null
+    }
+  };
+}
+
+function buildTokenMessage(tokenStatus: ReturnType<typeof telegramTokenStatus>, envFilePath: string | undefined, platform: NodeJS.Platform): string {
+  const commands = platformCommands(platform);
+
+  switch (tokenStatus.status) {
+    case "missing":
+    case "placeholder":
+      return envFilePath
+        ? "Telegram bot token is not configured. Set `TELEGRAM_BOT_TOKEN` in `.env`, then rerun `pnpm happytg setup`."
+        : `Telegram bot token is not configured. Create \`.env\` with \`${commands.copyEnv}\`, set \`TELEGRAM_BOT_TOKEN\`, then rerun \`pnpm happytg setup\`.`;
+    case "invalid":
+      return "Telegram bot token format looks invalid. Update `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.";
+    case "configured":
+    default:
+      return "Telegram bot token is configured.";
+  }
+}
+
+function buildPortConflictMessage(result: PortCheckResult, platform: NodeJS.Platform): string {
+  if (!result.overrideEnv || !result.command) {
+    return result.detail;
+  }
+
+  const suggestedPort = result.port + 1;
+  const commands = platformCommands(platform);
+  return `${result.detail} Reuse the running service if it is yours, or pick a new port with \`${commands.inlineEnvExample(result.overrideEnv, suggestedPort, result.command)}\`.`;
+}
+
+function buildSetupPlan(
+  context: DoctorContext,
+  redis: RedisDetection,
+  portResults: PortCheckResult[],
+  envFilePath: string | undefined,
+  tokenState: ReturnType<typeof telegramTokenStatus>
+): string[] {
+  const platform = context.platform ?? process.platform;
+  const commands = platformCommands(platform);
+  const steps: string[] = [];
+
+  if (!envFilePath) {
+    steps.push(`Create \`.env\`: \`${commands.copyEnv}\`.`);
+  }
+
+  if (tokenState.status !== "configured") {
+    steps.push("Set `TELEGRAM_BOT_TOKEN` in `.env` or the shell before you start the bot.");
+  }
+
+  switch (redis.state) {
+    case "running":
+      steps.push("Redis is already running locally. Reuse it and start compose infra without `redis`.");
+      break;
+    case "installed_stopped":
+      steps.push("Start your local Redis service, or include `redis` when you bring up infra.");
+      break;
+    case "absent":
+      steps.push("Bring up local infra with Redis included, or point `REDIS_URL` at an existing Redis instance.");
+      break;
+    case "port_conflict":
+      steps.push("Port `6379` is busy. Reuse the existing system Redis if supported, or set `HAPPYTG_REDIS_HOST_PORT` before starting compose `redis`.");
+      break;
+    case "remote":
+      steps.push("Redis points to a remote URL. Verify it is reachable before first start.");
+      break;
+  }
+
+  const infraCommand = defaultInfraComposeCommand(redis, platform);
+  if (redis.state === "running") {
+    steps.push(`Start shared infra: \`${infraCommand}\`.`);
+  } else if (redis.state === "port_conflict") {
+    steps.push(`If you need container Redis, use \`${commands.inlineEnvExample("HAPPYTG_REDIS_HOST_PORT", 6380, "docker compose -f infra/docker-compose.example.yml up redis")}\`.`);
+    steps.push(`Then start the remaining shared infra: \`docker compose -f infra/docker-compose.example.yml up postgres minio\`.`);
+  } else {
+    steps.push(`Start shared infra: \`${infraCommand}\`.`);
+  }
+
+  const occupiedHappyTGPorts = portResults.filter((item) => item.state === "occupied_expected" && ["miniapp", "api", "bot", "worker"].includes(item.id));
+  if (occupiedHappyTGPorts.length > 0) {
+    steps.push("Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.");
+  } else {
+    steps.push("Start repo services: `pnpm dev`.");
+  }
+
+  steps.push("Request a pairing code on the execution host: `pnpm daemon:pair`.");
+  steps.push("Send `/pair <CODE>` in Telegram, then start the daemon with `pnpm dev:daemon`.");
+
+  return steps.slice(0, 6);
+}
+
+export async function detectFindings(context: DoctorContext): Promise<DoctorDetection> {
+  const findings: BootstrapFinding[] = [];
+  const platform = context.platform ?? process.platform;
+  const cwd = context.cwd ?? process.cwd();
+  const env = context.env ?? process.env;
+  const commands = platformCommands(platform);
+
+  const platformLabel = `${platform}-${os.arch()}`;
+  const envFilePath = findUpwardFile(cwd, ".env");
+  const envExamplePath = findUpwardFile(cwd, ".env.example");
+  const gitBinaryPath = await resolveExecutable("git", {
+    cwd,
+    env,
+    platform
+  });
   const hasGit = Boolean(gitBinaryPath);
-  const codex = await checkCodexReadiness();
+  const codex = await checkCodexReadiness({
+    cwd,
+    env,
+    platform
+  });
   const actionableSmokeWarnings = classifyCodexSmokeStderr(codex.smokeError ?? "").actionableLines;
+  const tokenState = telegramTokenStatus(env);
+  const [redis, portResults] = await Promise.all([
+    detectRedis(env, {
+      cwd,
+      platform
+    }),
+    detectCriticalPorts(env)
+  ]);
+
+  const preflight = [
+    `Env: ${envPresenceSummary(envFilePath)}`,
+    `Codex: ${codex.available ? formatCodexSummary(codex.version) : "not found"}`,
+    `Telegram: ${tokenState.status === "configured" ? "configured" : tokenState.status.replaceAll("_", " ")}`,
+    `Redis: ${redisSummary(redis)}`,
+    `Ports: ${formatPortStateForSummary(portResults)}`
+  ];
+
+  if (!envFilePath && envExamplePath) {
+    pushFinding(findings, {
+      code: "ENV_FILE_MISSING",
+      severity: "warn",
+      message: `\`.env\` was not found. Create it with \`${commands.copyEnv}\`, or export the required variables before first start.`
+    });
+  }
 
   if (!hasGit) {
-    findings.push({
+    pushFinding(findings, {
       code: "GIT_MISSING",
       severity: "warn",
       message: "Git was not found in PATH. Install Git, verify `git --version`, then rerun `pnpm happytg doctor`."
     });
-    pushPlanStep(planPreview, "Install Git and verify `git --version`.");
   }
 
   if (!codex.available) {
-    findings.push({
+    pushFinding(findings, {
       code: "CODEX_MISSING",
       severity: "error",
       message: codexCliMissingMessage()
     });
-    pushPlanStep(planPreview, "Install Codex CLI and verify `codex --version`.");
   }
 
   if (!codex.configExists) {
-    findings.push({
+    pushFinding(findings, {
       code: "CODEX_CONFIG_MISSING",
       severity: "warn",
       message: "Codex config was not found. Create `~/.codex/config.toml`, then rerun `pnpm happytg doctor`."
     });
-    pushPlanStep(planPreview, "Create `~/.codex/config.toml`, then rerun `pnpm happytg doctor`.");
   }
 
   if (codex.available && codex.configExists && !codex.smokeOk) {
-    findings.push({
+    pushFinding(findings, {
       code: "CODEX_SMOKE_FAILED",
       severity: "warn",
       message: "Codex CLI started, but the smoke check did not complete. Review Codex auth/config, then rerun `pnpm happytg doctor --json`."
     });
-    pushPlanStep(planPreview, "Review Codex auth/config and rerun `pnpm happytg doctor --json`.");
   }
 
   if (codex.available && codex.configExists && codex.smokeOk && actionableSmokeWarnings.length > 0) {
-    findings.push({
+    pushFinding(findings, {
       code: "CODEX_SMOKE_WARNINGS",
       severity: "warn",
       message: "Codex CLI completed the smoke check with warnings. Run `pnpm happytg doctor --json` for the detailed stderr output."
     });
-    pushPlanStep(planPreview, "Inspect Codex warnings with `pnpm happytg doctor --json`.");
+  }
+
+  if (tokenState.status !== "configured") {
+    pushFinding(findings, {
+      code: tokenState.status === "invalid" ? "TELEGRAM_TOKEN_INVALID" : "TELEGRAM_TOKEN_MISSING",
+      severity: "error",
+      message: buildTokenMessage(tokenState, envFilePath, platform)
+    });
+  }
+
+  switch (redis.state) {
+    case "installed_stopped":
+      pushFinding(findings, {
+        code: "REDIS_STOPPED",
+        severity: "warn",
+        message: "Redis appears to be installed but not running. Start Redis, or include `redis` when you bring up shared infra."
+      });
+      break;
+    case "absent":
+      pushFinding(findings, {
+        code: "REDIS_MISSING",
+        severity: "warn",
+        message: "Redis was not detected locally. Start system Redis, or include `redis` when you bring up shared infra."
+      });
+      break;
+    case "port_conflict":
+      pushFinding(findings, {
+        code: "REDIS_PORT_CONFLICT",
+        severity: "warn",
+        message: "Port `6379` is already allocated by a non-Redis process. Free it, use an existing Redis instance, or set `HAPPYTG_REDIS_HOST_PORT` for compose Redis."
+      });
+      break;
+    default:
+      break;
+  }
+
+  const occupiedHappyTGServices = portResults.filter((item) => item.state === "occupied_expected" && ["miniapp", "api", "bot", "worker"].includes(item.id));
+  if (occupiedHappyTGServices.length > 0) {
+    pushFinding(findings, {
+      code: "SERVICES_ALREADY_RUNNING",
+      severity: "info",
+      message: `HappyTG services already appear to be running on ${occupiedHappyTGServices.map((item) => item.port).join(", ")}. Reuse the running stack or stop it before starting another copy.`
+    });
+  }
+
+  for (const portResult of portResults) {
+    if (portResult.state !== "occupied_external" || portResult.id === "redis") {
+      continue;
+    }
+
+    pushFinding(findings, {
+      code: `${portResult.id.toUpperCase()}_PORT_BUSY`,
+      severity: "warn",
+      message: buildPortConflictMessage(portResult, platform)
+    });
+  }
+
+  const planPreview = context.command === "setup"
+    ? buildSetupPlan(context, redis, portResults, envFilePath, tokenState)
+    : [];
+
+  if (findings.some((item) => item.code === "ENV_FILE_MISSING")) {
+    pushPlanStep(planPreview, `Create \`.env\`: \`${commands.copyEnv}\`.`);
+  }
+  if (tokenState.status !== "configured") {
+    pushPlanStep(planPreview, "Set `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.");
+  }
+  if (!codex.available) {
+    pushPlanStep(planPreview, "Install Codex CLI and verify `codex --version`.");
+  }
+  if (redis.state === "running") {
+    pushPlanStep(planPreview, "Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port.");
+  }
+  if (occupiedHappyTGServices.length > 0) {
+    pushPlanStep(planPreview, "Do not run the full compose app stack and `pnpm dev` at the same time.");
+  }
+  for (const portResult of portResults.filter((item) => item.state === "occupied_external" && item.overrideEnv && item.command)) {
+    const example = commands.inlineEnvExample(portResult.overrideEnv!, portResult.port + 1, portResult.command!);
+    pushPlanStep(planPreview, `If you keep ${portResult.label.toLowerCase()} on a different port, use \`${example}\`.`);
+  }
+
+  if (context.command !== "setup" && planPreview.length === 0) {
+    pushPlanStep(planPreview, "Run `pnpm happytg setup` for the guided first-start checklist.");
   }
 
   const profileRecommendation = findings.some((item) => item.severity === "error") ? "minimal" : "recommended";
@@ -86,17 +776,51 @@ export async function detectFindings(): Promise<DoctorDetection> {
     planPreview,
     profileRecommendation,
     reportJson: {
-      platform,
+      platform: platformLabel,
+      env: {
+        envFilePath: envFilePath ?? null,
+        envExamplePath: envExamplePath ?? null
+      },
+      preflight,
       git: {
         available: hasGit,
         binaryPath: gitBinaryPath ?? null
       },
-      codex
+      codex,
+      telegram: {
+        status: tokenState.status,
+        configured: tokenState.configured,
+        message: buildTokenMessage(tokenState, envFilePath, platform)
+      },
+      redis,
+      ports: portResults,
+      onboarding: {
+        copyEnvCommand: commands.copyEnv,
+        defaultInfraCommand: defaultInfraComposeCommand(redis, platform),
+        pairCommand: "pnpm daemon:pair",
+        daemonCommand: "pnpm dev:daemon",
+        steps: context.command === "setup" ? planPreview : buildSetupPlan(context, redis, portResults, envFilePath, tokenState),
+        overrideExamples: criticalPortDefinitions
+          .filter((item) => item.overrideEnv && item.command)
+          .map((item) => ({
+            service: item.label,
+            defaultPort: item.defaultPort,
+            overrideEnv: item.overrideEnv,
+            command: item.command,
+            shellExample: commands.inlineEnvExample(item.overrideEnv!, item.defaultPort + 1, item.command!)
+          }))
+      }
     }
   };
 }
 
-async function writeReport(command: BootstrapCommand, report: Omit<BootstrapReport, "id" | "command" | "createdAt">): Promise<BootstrapReport> {
+async function writeReport(
+  command: BootstrapCommand,
+  report: Omit<BootstrapReport, "id" | "command" | "createdAt">,
+  context?: {
+    env?: NodeJS.ProcessEnv;
+  }
+): Promise<BootstrapReport> {
   const createdAt = nowIso();
   const completeReport: BootstrapReport = {
     id: createId("btr"),
@@ -105,7 +829,7 @@ async function writeReport(command: BootstrapCommand, report: Omit<BootstrapRepo
     ...report
   };
 
-  const stateDir = path.join(getLocalStateDir(), "state");
+  const stateDir = path.join(getLocalStateDir(context?.env), "state");
   await ensureDir(stateDir);
   const fileMap: Record<BootstrapCommand, string> = {
     doctor: "doctor-last.json",
@@ -121,11 +845,23 @@ async function writeReport(command: BootstrapCommand, report: Omit<BootstrapRepo
   return completeReport;
 }
 
-export async function runDoctorLike(command: BootstrapCommand): Promise<BootstrapReport> {
-  const detected = await detectFindings();
+export async function runDoctorLike(
+  command: BootstrapCommand,
+  context?: {
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    platform?: NodeJS.Platform;
+  }
+): Promise<BootstrapReport> {
+  const detected = await detectFindings({
+    command,
+    cwd: context?.cwd,
+    env: context?.env,
+    platform: context?.platform
+  });
   const status: BootstrapReport["status"] = detected.findings.some((item) => item.severity === "error")
     ? "fail"
-    : detected.findings.length > 0
+    : detected.findings.some((item) => item.severity === "warn")
       ? "warn"
       : "pass";
 
@@ -136,11 +872,15 @@ export async function runDoctorLike(command: BootstrapCommand): Promise<Bootstra
     findings: detected.findings,
     planPreview: detected.planPreview,
     reportJson: detected.reportJson
+  }, {
+    env: context?.env
   });
 }
 
-export async function runConfigInit(): Promise<BootstrapReport> {
-  const codexConfigPath = path.join(getLocalStateDir().replace(/\.happytg$/, ".codex"), "config.toml");
+export async function runConfigInit(context?: {
+  env?: NodeJS.ProcessEnv;
+}): Promise<BootstrapReport> {
+  const codexConfigPath = path.join(getLocalStateDir(context?.env).replace(/\.happytg$/, ".codex"), "config.toml");
   return writeReport("config-init", {
     hostFingerprint: `${os.hostname()}-${os.platform()}-${os.arch()}`,
     status: "warn",
@@ -159,7 +899,7 @@ export async function runConfigInit(): Promise<BootstrapReport> {
     reportJson: {
       targetPath: codexConfigPath
     }
-  });
+  }, context);
 }
 
 export async function runEnvSnapshot(): Promise<BootstrapReport> {
@@ -174,24 +914,33 @@ export async function runEnvSnapshot(): Promise<BootstrapReport> {
       arch: os.arch(),
       cwd: process.cwd(),
       node: process.version,
-      shell: process.env.SHELL ?? null
+      shell: process.env.SHELL ?? process.env.ComSpec ?? null
     }
   });
 }
 
-export async function runBootstrapCommand(command: BootstrapCommand): Promise<BootstrapReport> {
+export async function runBootstrapCommand(
+  command: BootstrapCommand,
+  context?: {
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    platform?: NodeJS.Platform;
+  }
+): Promise<BootstrapReport> {
   switch (command) {
     case "doctor":
     case "setup":
     case "repair":
     case "verify":
     case "status":
-      return runDoctorLike(command);
+      return runDoctorLike(command, context);
     case "config-init":
-      return runConfigInit();
+      return runConfigInit({
+        env: context?.env
+      });
     case "env-snapshot":
       return runEnvSnapshot();
     default:
-      return runDoctorLike("status");
+      return runDoctorLike("status", context);
   }
 }

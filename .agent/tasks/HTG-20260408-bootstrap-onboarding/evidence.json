@@ -1,0 +1,98 @@
+{
+  "taskId": "HTG-20260408-bootstrap-onboarding",
+  "criteria": [
+    {
+      "criterion": "pnpm test passes including @happytg/shared Windows home resolution cases",
+      "artifacts": [
+        "packages/shared/src/index.ts",
+        "packages/shared/src/index.test.ts",
+        ".agent/tasks/HTG-20260408-bootstrap-onboarding/raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Codex detection handles Windows PATH/Path, PATHEXT, codex.cmd shims, and doctor/verify stop reporting false negatives when codex --version works",
+      "artifacts": [
+        "packages/runtime-adapters/src/index.ts",
+        "packages/runtime-adapters/src/index.test.ts",
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        ".agent/tasks/HTG-20260408-bootstrap-onboarding/raw/test-unit.txt",
+        ".agent/tasks/HTG-20260408-bootstrap-onboarding/raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Bootstrap/onboarding explicitly handles Telegram bot token setup, invalid token guidance, and fast path to /pair without exposing secrets",
+      "artifacts": [
+        "packages/bootstrap/src/index.ts",
+        "apps/bot/src/index.ts",
+        "apps/bot/src/index.test.ts",
+        "apps/host-daemon/src/index.ts",
+        "apps/host-daemon/src/index.test.ts",
+        "docs/quickstart.md",
+        "docs/installation.md"
+      ]
+    },
+    {
+      "criterion": "Bootstrap/onboarding reports Redis absent/stopped/running states and explains the 6379 compose conflict path without unsafe auto-actions",
+      "artifacts": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        ".env.example",
+        "infra/docker-compose.example.yml",
+        "docs/installation.md",
+        "docs/troubleshooting.md"
+      ]
+    },
+    {
+      "criterion": "Bootstrap/onboarding checks critical ports including 3001, 4000, 4100, 4200, 6379 and gives actionable override guidance including Windows PowerShell examples",
+      "artifacts": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "apps/miniapp/src/index.ts",
+        "apps/miniapp/src/index.test.ts",
+        ".env.example",
+        "docs/quickstart.md",
+        "docs/configuration.md"
+      ]
+    },
+    {
+      "criterion": "README and install/quickstart/bootstrap docs reflect the new first-start flow and supported alternative port selection",
+      "artifacts": [
+        "README.md",
+        "docs/quickstart.md",
+        "docs/installation.md",
+        "docs/bootstrap-doctor.md",
+        "docs/troubleshooting.md"
+      ]
+    },
+    {
+      "criterion": "Versioning is bumped using the existing repo scheme with a structured release summary aligned to actual scope",
+      "artifacts": [
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/shared/package.json",
+        "docs/releases/0.2.0.md"
+      ]
+    }
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-20260408-bootstrap-onboarding/spec.md",
+    ".agent/tasks/HTG-20260408-bootstrap-onboarding/raw/lint.txt",
+    ".agent/tasks/HTG-20260408-bootstrap-onboarding/raw/build.txt",
+    ".agent/tasks/HTG-20260408-bootstrap-onboarding/raw/test-unit.txt",
+    ".agent/tasks/HTG-20260408-bootstrap-onboarding/raw/test-integration.txt",
+    "docs/releases/0.2.0.md"
+  ],
+  "generatedAt": "2026-04-08T16:15:00.000Z"
+}

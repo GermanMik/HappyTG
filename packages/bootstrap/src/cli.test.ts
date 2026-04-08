@@ -64,11 +64,11 @@ test("executeHappyTG initializes and inspects repo-local task bundles", async ()
   }
 });
 
-test("renderText returns a compact bootstrap summary with diagnostics hints", () => {
+test("renderText returns a compact bootstrap summary with preflight and diagnostics hints", () => {
   const output = renderText({
     id: "btr_1",
     hostFingerprint: "fp",
-    command: "status",
+    command: "setup",
     status: "warn",
     profileRecommendation: "recommended",
     findings: [
@@ -82,6 +82,10 @@ test("renderText returns a compact bootstrap summary with diagnostics hints", ()
       "Install Codex CLI and verify `codex --version`."
     ],
     reportJson: {
+      preflight: [
+        "Env: .env found",
+        "Codex: codex-cli 0.115.0"
+      ],
       codex: {
         binaryPath: "/tmp/codex"
       }
@@ -89,10 +93,11 @@ test("renderText returns a compact bootstrap summary with diagnostics hints", ()
     createdAt: "2026-04-08T00:00:00.000Z"
   });
 
-  assert.match(output, /HappyTG status \[WARN\]/);
+  assert.match(output, /HappyTG setup \[WARN\]/);
   assert.match(output, /Summary: 1 error found\./);
-  assert.match(output, /Next steps:/);
+  assert.match(output, /Preflight:/);
+  assert.match(output, /First start:/);
   assert.match(output, /Diagnostics:/);
-  assert.match(output, /pnpm happytg status --json/);
+  assert.match(output, /pnpm happytg setup --json/);
   assert.doesNotMatch(output, /\/tmp\/codex/);
 });

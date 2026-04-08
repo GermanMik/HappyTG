@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { constants as fsConstants, promises as fs } from "node:fs";
+import { constants as fsConstants, existsSync, promises as fs, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -14,13 +14,52 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function resolveHome(inputPath: string): string {
-  if (inputPath.startsWith("~/")) {
-    return path.join(os.homedir(), inputPath.slice(2));
+function effectiveHomeDirectory(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform
+): string {
+  const homeOverride = stripWrappedQuotes(env.HOME ?? "").trim();
+  if (homeOverride) {
+    return homeOverride;
   }
 
+  if (platform === "win32") {
+    const userProfile = stripWrappedQuotes(env.USERPROFILE ?? "").trim();
+    if (userProfile) {
+      return userProfile;
+    }
+
+    const homeDrive = stripWrappedQuotes(env.HOMEDRIVE ?? "").trim();
+    const homePath = stripWrappedQuotes(env.HOMEPATH ?? "").trim();
+    if (homeDrive && homePath) {
+      return path.win32.join(homeDrive, homePath);
+    }
+  }
+
+  return os.homedir() || process.cwd();
+}
+
+export function resolveHome(
+  inputPath: string,
+  options?: {
+    env?: NodeJS.ProcessEnv;
+    platform?: NodeJS.Platform;
+  }
+): string {
+  if (!inputPath.startsWith("~")) {
+    return inputPath;
+  }
+
+  const homeDirectory = effectiveHomeDirectory(options?.env, options?.platform);
   if (inputPath === "~") {
-    return os.homedir();
+    return homeDirectory;
+  }
+
+  if (inputPath.startsWith("~/") || inputPath.startsWith("~\\")) {
+    const pathModule = options?.platform === "win32" && (/^[A-Za-z]:/u.test(homeDirectory) || homeDirectory.includes("\\"))
+      ? path.win32
+      : path;
+    return pathModule.join(homeDirectory, inputPath.slice(2));
   }
 
   return inputPath;
@@ -68,8 +107,13 @@ function envPathValue(env: NodeJS.ProcessEnv, platform: NodeJS.Platform = proces
     return env.PATH ?? "";
   }
 
-  const pathKey = Object.keys(env).find((key) => key.toLowerCase() === "path");
+  const pathKey = ["Path", "PATH"].find((key) => env[key] !== undefined)
+    ?? Object.keys(env).find((key) => key.toLowerCase() === "path");
   return pathKey ? env[pathKey] ?? "" : "";
+}
+
+function pathDelimiterForPlatform(platform: NodeJS.Platform): string {
+  return platform === "win32" ? ";" : path.delimiter;
 }
 
 function executableExtensions(env: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform, command = ""): string[] {
@@ -113,7 +157,7 @@ export async function resolveExecutable(command: string, options?: {
   const searchRoots = hasExplicitPath
     ? [path.isAbsolute(normalized) ? normalized : path.resolve(cwd, normalized)]
     : envPathValue(env, platform)
-      .split(path.delimiter)
+      .split(pathDelimiterForPlatform(platform))
       .map((entry) => stripWrappedQuotes(entry.trim()))
       .filter(Boolean)
       .map((entry) => path.join(entry, normalized));
@@ -136,6 +180,189 @@ export async function findExecutable(command: string, env = process.env, platfor
 
 export async function findExecutableOnPath(command: string, env = process.env, cwd = process.cwd()): Promise<string | undefined> {
   return resolveExecutable(command, { env, cwd });
+}
+
+function unescapeQuotedEnvValue(value: string): string {
+  return value
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\\"/g, "\"")
+    .replace(/\\\\/g, "\\");
+}
+
+export function parseDotEnv(source: string): Record<string, string> {
+  const values: Record<string, string> = {};
+
+  for (const rawLine of source.split(/\r?\n/u)) {
+    const trimmed = rawLine.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const withoutExport = trimmed.startsWith("export ") ? trimmed.slice("export ".length).trim() : trimmed;
+    const separatorIndex = withoutExport.indexOf("=");
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const key = withoutExport.slice(0, separatorIndex).trim();
+    if (!key) {
+      continue;
+    }
+
+    let value = withoutExport.slice(separatorIndex + 1).trim();
+    if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = unescapeQuotedEnvValue(value.slice(1, -1));
+    } else {
+      value = value.replace(/\s+#.*$/u, "").trim();
+    }
+
+    values[key] = value;
+  }
+
+  return values;
+}
+
+export function findUpwardFile(startDir: string, fileName: string): string | undefined {
+  let currentDir = path.resolve(startDir);
+
+  while (true) {
+    const candidate = path.join(currentDir, fileName);
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      return undefined;
+    }
+    currentDir = parentDir;
+  }
+}
+
+export function loadHappyTGEnv(options?: {
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  envFilePath?: string;
+}): {
+  envFilePath?: string;
+  loadedKeys: string[];
+} {
+  const env = options?.env ?? process.env;
+  const envFilePath = options?.envFilePath ?? findUpwardFile(options?.cwd ?? process.cwd(), ".env");
+
+  if (!envFilePath || !existsSync(envFilePath)) {
+    return {
+      envFilePath,
+      loadedKeys: []
+    };
+  }
+
+  const parsed = parseDotEnv(readFileSync(envFilePath, "utf8"));
+  const loadedKeys: string[] = [];
+  for (const [key, value] of Object.entries(parsed)) {
+    if (env[key] !== undefined) {
+      continue;
+    }
+
+    env[key] = value;
+    loadedKeys.push(key);
+  }
+
+  return {
+    envFilePath,
+    loadedKeys
+  };
+}
+
+export function normalizeSpawnEnv(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform
+): NodeJS.ProcessEnv {
+  if (platform !== "win32") {
+    return {
+      ...env
+    };
+  }
+
+  const normalized: NodeJS.ProcessEnv = {};
+  for (const [key, value] of Object.entries(env)) {
+    const lowered = key.toLowerCase();
+    if (lowered === "path" || lowered === "pathext") {
+      continue;
+    }
+
+    normalized[key] = value;
+  }
+
+  const resolvedPath = envPathValue(env, platform);
+  if (resolvedPath) {
+    normalized.Path = resolvedPath;
+  }
+
+  const pathextKey = Object.keys(env).find((key) => key.toLowerCase() === "pathext");
+  if (pathextKey && env[pathextKey] !== undefined) {
+    normalized.PATHEXT = env[pathextKey];
+  }
+
+  return normalized;
+}
+
+export type TelegramTokenStatus = "missing" | "placeholder" | "invalid" | "configured";
+
+export function telegramTokenStatus(
+  env: NodeJS.ProcessEnv = process.env
+): {
+  status: TelegramTokenStatus;
+  configured: boolean;
+} {
+  const token = (env.TELEGRAM_BOT_TOKEN ?? "").trim();
+  if (!token) {
+    return {
+      status: "missing",
+      configured: false
+    };
+  }
+
+  if (["replace-me", "changeme", "<token>"].includes(token.toLowerCase())) {
+    return {
+      status: "placeholder",
+      configured: false
+    };
+  }
+
+  if (!/^\d+:[A-Za-z0-9_-]{20,}$/u.test(token)) {
+    return {
+      status: "invalid",
+      configured: false
+    };
+  }
+
+  return {
+    status: "configured",
+    configured: true
+  };
+}
+
+export function readPort(
+  env: NodeJS.ProcessEnv,
+  keys: string[],
+  fallback: number
+): number {
+  for (const key of keys) {
+    const rawValue = env[key];
+    if (!rawValue) {
+      continue;
+    }
+
+    const parsed = Number(rawValue);
+    if (Number.isInteger(parsed) && parsed > 0 && parsed <= 65_535) {
+      return parsed;
+    }
+  }
+
+  return fallback;
 }
 
 export async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {

@@ -1,106 +1,178 @@
 import assert from "node:assert/strict";
 import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer as createHttpServer } from "node:http";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
 import { runBootstrapCommand } from "./index.js";
 
-async function writeNodeEntrypoint(filePath: string, source: string): Promise<void> {
+async function writeExecutable(filePath: string, source: string): Promise<void> {
   await writeFile(filePath, `${source.trim()}\n`, "utf8");
+  await chmod(filePath, 0o755);
 }
 
 async function writeFakeGitBinary(filePath: string): Promise<void> {
-  await writeFile(
-    filePath,
-    process.platform === "win32" ? "@echo off\r\necho git test\r\n" : "#!/bin/sh\necho git test\n",
-    "utf8"
-  );
-
-  if (process.platform !== "win32") {
-    await chmod(filePath, 0o755);
-  }
+  await writeExecutable(filePath, "#!/bin/sh\necho git test\n");
 }
 
-function restoreEnv(snapshot: Record<string, string | undefined>): void {
-  for (const [key, value] of Object.entries(snapshot)) {
-    if (value === undefined) {
-      delete process.env[key];
-    } else {
-      process.env[key] = value;
-    }
+async function reserveFreePort(): Promise<number> {
+  const server = net.createServer();
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Failed to reserve a free port");
   }
+  const { port } = address;
+  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  return port;
 }
 
-test("doctor writes a report, detects Git via PATH, and flags missing Codex config as warn", async () => {
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-doctor-"));
-  const envSnapshot = {
-    CODEX_CLI_BIN: process.env.CODEX_CLI_BIN,
-    CODEX_CONFIG_PATH: process.env.CODEX_CONFIG_PATH,
-    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR,
-    PATH: process.env.PATH
+async function createRedisLikeServer(): Promise<{
+  server: net.Server;
+  port: number;
+}> {
+  const server = net.createServer((socket) => {
+    socket.on("data", () => {
+      socket.write("+PONG\r\n");
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Redis test server did not bind to a TCP port");
+  }
+  return {
+    server,
+    port: address.port
   };
+}
 
+async function createHappyTGService(service: string): Promise<{
+  server: ReturnType<typeof createHttpServer>;
+  port: number;
+}> {
+  const server = createHttpServer((req, res) => {
+    if (req.url === "/ready" || req.url === "/health") {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true, service }));
+      return;
+    }
+
+    res.writeHead(404).end();
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("HTTP test server did not bind to a TCP port");
+  }
+  return {
+    server,
+    port: address.port
+  };
+}
+
+async function createGenericHttpService(): Promise<{
+  server: ReturnType<typeof createHttpServer>;
+  port: number;
+}> {
+  const server = createHttpServer((_req, res) => {
+    res.writeHead(200, { "content-type": "text/plain" });
+    res.end("busy");
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("HTTP test server did not bind to a TCP port");
+  }
+  return {
+    server,
+    port: address.port
+  };
+}
+
+async function closeServer(server: net.Server | ReturnType<typeof createHttpServer>): Promise<void> {
+  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+}
+
+test("doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-win-codex-"));
   try {
-    const binaryPath = path.join(tempDir, "codex-doctor.mjs");
-    const gitBinaryPath = path.join(tempDir, process.platform === "win32" ? "git.cmd" : "git");
+    const configPath = path.join(tempDir, "config.toml");
+    const stateDir = path.join(tempDir, ".happytg-state");
+    const gitBinaryPath = path.join(tempDir, "git.cmd");
+    const codexShimPath = path.join(tempDir, "codex.cmd");
     await Promise.all([
-      writeNodeEntrypoint(
-        binaryPath,
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeFakeGitBinary(gitBinaryPath),
+      writeExecutable(
+        codexShimPath,
         `
-          const args = process.argv.slice(2);
-          if (args[0] === "--version") {
-            console.log("codex test 1.0");
-            process.exit(0);
-          }
-          console.error("unexpected invocation");
-          process.exit(1);
+          #!/bin/sh
+          if [ "$1" = "--version" ]; then
+            echo "codex shim 0.115.0"
+            exit 0
+          fi
+          if [ "$1" = "exec" ]; then
+            echo '{"type":"message","text":"OK"}'
+            exit 0
+          fi
+          echo "unexpected invocation" >&2
+          exit 1
         `
-      ),
-      writeFakeGitBinary(gitBinaryPath)
+      )
     ]);
 
-    process.env.CODEX_CLI_BIN = binaryPath;
-    process.env.CODEX_CONFIG_PATH = path.join(tempDir, "missing-config.toml");
-    process.env.HAPPYTG_STATE_DIR = path.join(tempDir, ".happytg-state");
-    process.env.PATH = tempDir;
-
-    const report = await runBootstrapCommand("doctor");
-    const stored = JSON.parse(await readFile(path.join(process.env.HAPPYTG_STATE_DIR, "state", "doctor-last.json"), "utf8")) as typeof report;
+    const report = await runBootstrapCommand("doctor", {
+      cwd: tempDir,
+      platform: "win32",
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: stateDir,
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: "C:\\wrong-path",
+        Path: tempDir,
+        PATHEXT: ".COM;.EXE;.BAT;.CMD"
+      }
+    });
+    const stored = JSON.parse(await readFile(path.join(stateDir, "state", "doctor-last.json"), "utf8")) as typeof report;
 
     assert.equal(report.command, "doctor");
-    assert.equal(report.status, "warn");
     assert.equal(stored.id, report.id);
-    assert.ok(report.findings.some((item) => item.code === "CODEX_CONFIG_MISSING"));
-    assert.deepEqual(report.reportJson.git, {
+    assert.ok(!report.findings.some((item) => item.code === "CODEX_MISSING"));
+    assert.deepEqual((report.reportJson.git as { available: boolean; binaryPath: string | null }), {
       available: true,
       binaryPath: gitBinaryPath
     });
-    assert.ok(report.planPreview.includes("Create `~/.codex/config.toml`, then rerun `pnpm happytg doctor`."));
+    assert.equal((report.reportJson.telegram as { configured: boolean }).configured, true);
   } finally {
-    restoreEnv(envSnapshot);
     await rm(tempDir, { recursive: true, force: true });
   }
 });
 
 test("verify surfaces Codex smoke warnings as warn when config exists", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-verify-"));
-  const envSnapshot = {
-    CODEX_CLI_BIN: process.env.CODEX_CLI_BIN,
-    CODEX_CONFIG_PATH: process.env.CODEX_CONFIG_PATH,
-    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR,
-    PATH: process.env.PATH
-  };
-
   try {
     const binaryPath = path.join(tempDir, "codex-verify.mjs");
     const configPath = path.join(tempDir, "config.toml");
-    const gitBinaryPath = path.join(tempDir, process.platform === "win32" ? "git.cmd" : "git");
+    const gitBinaryPath = path.join(tempDir, "git");
     await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
       writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
-      writeNodeEntrypoint(
+      writeExecutable(
         binaryPath,
         `
+          #!/usr/bin/env node
           const args = process.argv.slice(2);
           if (args[0] === "--version") {
             console.log("codex test 1.0");
@@ -118,142 +190,233 @@ test("verify surfaces Codex smoke warnings as warn when config exists", async ()
       writeFakeGitBinary(gitBinaryPath)
     ]);
 
-    process.env.CODEX_CLI_BIN = binaryPath;
-    process.env.CODEX_CONFIG_PATH = configPath;
-    process.env.HAPPYTG_STATE_DIR = path.join(tempDir, ".happytg-state");
-    process.env.PATH = tempDir;
-
-    const report = await runBootstrapCommand("verify");
+    const report = await runBootstrapCommand("verify", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: binaryPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir
+      }
+    });
 
     assert.equal(report.command, "verify");
     assert.equal(report.status, "warn");
     assert.ok(report.findings.some((item) => item.code === "CODEX_SMOKE_WARNINGS"));
-    assert.match(report.reportJson.platform as string, /-/);
+    assert.match(String(report.reportJson.platform), /-/);
   } finally {
-    restoreEnv(envSnapshot);
     await rm(tempDir, { recursive: true, force: true });
   }
 });
 
-test("doctor ignores known benign Codex internal smoke warnings while keeping raw diagnostics", async () => {
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-benign-"));
-  const envSnapshot = {
-    CODEX_CLI_BIN: process.env.CODEX_CLI_BIN,
-    CODEX_CONFIG_PATH: process.env.CODEX_CONFIG_PATH,
-    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR,
-    PATH: process.env.PATH
-  };
-
+test("setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-setup-"));
+  const redis = await createRedisLikeServer();
   try {
-    const binaryPath = path.join(tempDir, "codex-benign.mjs");
     const configPath = path.join(tempDir, "config.toml");
-    const gitBinaryPath = path.join(tempDir, process.platform === "win32" ? "git.cmd" : "git");
+    const codexPath = path.join(tempDir, "codex.mjs");
+    const gitPath = path.join(tempDir, "git");
     await Promise.all([
+      writeFile(path.join(tempDir, ".env.example"), "TELEGRAM_BOT_TOKEN=\n", "utf8"),
       writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
-      writeNodeEntrypoint(
-        binaryPath,
+      writeExecutable(
+        codexPath,
         `
+          #!/usr/bin/env node
           const args = process.argv.slice(2);
           if (args[0] === "--version") {
-            console.log("codex test 1.0");
+            console.log("codex 0.115.0");
             process.exit(0);
           }
           if (args[0] === "exec") {
             console.log('{"type":"message","text":"OK"}');
-            console.error("2026-04-08T00:00:00.000Z WARN codex_state::runtime: failed to open state db at /tmp/state.sqlite: migration 21 was previously applied but is missing in the resolved migrations");
-            console.error("2026-04-08T00:00:00.000Z WARN codex_core::rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back");
-            console.error("2026-04-08T00:00:00.000Z WARN codex_core::shell_snapshot: Failed to delete shell snapshot at \\"/tmp/snapshot\\": Os { code: 2, kind: NotFound, message: \\"No such file or directory\\" }");
             process.exit(0);
           }
-          console.error("unexpected invocation");
           process.exit(1);
         `
       ),
-      writeFakeGitBinary(gitBinaryPath)
+      writeFakeGitBinary(gitPath)
     ]);
 
-    process.env.CODEX_CLI_BIN = binaryPath;
-    process.env.CODEX_CONFIG_PATH = configPath;
-    process.env.HAPPYTG_STATE_DIR = path.join(tempDir, ".happytg-state");
-    process.env.PATH = tempDir;
+    const report = await runBootstrapCommand("setup", {
+      cwd: tempDir,
+      env: {
+        CODEX_CLI_BIN: codexPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(redis.port),
+        REDIS_URL: `redis://127.0.0.1:${redis.port}`,
+        PATH: tempDir
+      }
+    });
 
-    const report = await runBootstrapCommand("doctor");
-
-    assert.equal(report.status, "pass");
-    assert.equal(report.findings.length, 0);
-    assert.match(String((report.reportJson.codex as { smokeError?: string }).smokeError ?? ""), /failed to open state db/);
+    assert.equal(report.status, "fail");
+    assert.ok(report.findings.some((item) => item.code === "TELEGRAM_TOKEN_MISSING"));
+    assert.equal((report.reportJson.telegram as { configured: boolean }).configured, false);
+    assert.match((report.reportJson.preflight as string[]).join("\n"), /Redis: running on 127\.0\.0\.1:/);
+    assert.match(report.planPreview.join("\n"), /pnpm daemon:pair/);
+    assert.match(report.planPreview.join("\n"), /postgres minio/);
+    assert.match(report.planPreview.join("\n"), /Set `TELEGRAM_BOT_TOKEN`/);
   } finally {
-    restoreEnv(envSnapshot);
+    await closeServer(redis.server);
     await rm(tempDir, { recursive: true, force: true });
   }
 });
 
-test("doctor stays green when smoke stderr contains only known benign Codex internal warnings", async () => {
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-benign-"));
-  const envSnapshot = {
-    CODEX_CLI_BIN: process.env.CODEX_CLI_BIN,
-    CODEX_CONFIG_PATH: process.env.CODEX_CONFIG_PATH,
-    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR,
-    PATH: process.env.PATH
-  };
-
+test("doctor reports Redis installed but stopped", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-redis-stopped-"));
   try {
-    const binaryPath = path.join(tempDir, "codex-benign.mjs");
     const configPath = path.join(tempDir, "config.toml");
-    const gitBinaryPath = path.join(tempDir, process.platform === "win32" ? "git.cmd" : "git");
+    const codexPath = path.join(tempDir, "codex.mjs");
+    const gitPath = path.join(tempDir, "git");
+    const redisCliPath = path.join(tempDir, "redis-cli");
+    const redisPort = await reserveFreePort();
     await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
       writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
-      writeNodeEntrypoint(
-        binaryPath,
+      writeExecutable(
+        codexPath,
         `
+          #!/usr/bin/env node
           const args = process.argv.slice(2);
           if (args[0] === "--version") {
-            console.log("codex test 1.0");
+            console.log("codex 0.115.0");
             process.exit(0);
           }
           if (args[0] === "exec") {
             console.log('{"type":"message","text":"OK"}');
-            console.error("2026-04-08T14:03:06Z  WARN codex_state::runtime: failed to open state db at /Users/example/.codex/state_5.sqlite: migration 21 was previously applied but is missing in the resolved migrations");
-            console.error("2026-04-08T14:03:06Z  WARN codex_core::state_db: failed to initialize state runtime at /Users/example/.codex: migration 21 was previously applied but is missing in the resolved migrations");
-            console.error("2026-04-08T14:03:06Z  WARN codex_core::rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back");
-            console.error("2026-04-08T14:03:06Z  WARN codex_core::shell_snapshot: Failed to delete shell snapshot at \\"/tmp/example\\": Os { code: 2, kind: NotFound, message: \\"No such file or directory\\" }");
-            console.error("2026-04-08T14:03:06Z ERROR codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit");
             process.exit(0);
           }
-          console.error("unexpected invocation");
           process.exit(1);
         `
       ),
-      writeFakeGitBinary(gitBinaryPath)
+      writeFakeGitBinary(gitPath),
+      writeExecutable(redisCliPath, "#!/bin/sh\necho redis-cli\n")
     ]);
 
-    process.env.CODEX_CLI_BIN = binaryPath;
-    process.env.CODEX_CONFIG_PATH = configPath;
-    process.env.HAPPYTG_STATE_DIR = path.join(tempDir, ".happytg-state");
-    process.env.PATH = tempDir;
+    const report = await runBootstrapCommand("doctor", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: codexPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(redisPort),
+        REDIS_URL: `redis://127.0.0.1:${redisPort}`,
+        PATH: tempDir
+      }
+    });
 
-    const report = await runBootstrapCommand("doctor");
-
-    assert.equal(report.status, "pass");
-    assert.ok(!report.findings.some((item) => item.code === "CODEX_SMOKE_WARNINGS"));
-    assert.match(String(report.reportJson.codex && (report.reportJson.codex as Record<string, unknown>).smokeError), /failed to open state db/);
-    assert.match(String(report.reportJson.codex && (report.reportJson.codex as Record<string, unknown>).smokeError), /failed to refresh available models/);
+    assert.ok(report.findings.some((item) => item.code === "REDIS_STOPPED"));
+    assert.equal((report.reportJson.redis as { state: string }).state, "installed_stopped");
   } finally {
-    restoreEnv(envSnapshot);
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-ports-"));
+  const busyPort = await createGenericHttpService();
+  const happyMiniApp = await createHappyTGService("miniapp");
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const codexPath = path.join(tempDir, "codex.mjs");
+    const gitPath = path.join(tempDir, "git");
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeExecutable(
+        codexPath,
+        `
+          #!/usr/bin/env node
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex 0.115.0");
+            process.exit(0);
+          }
+          if (args[0] === "exec") {
+            console.log('{"type":"message","text":"OK"}');
+            process.exit(0);
+          }
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitPath)
+    ]);
+
+    const report = await runBootstrapCommand("doctor", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: codexPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(busyPort.port),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir
+      }
+    });
+    const setupReport = await runBootstrapCommand("setup", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: codexPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(happyMiniApp.port),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir
+      }
+    });
+
+    assert.ok(report.findings.some((item) => item.code === "MINIAPP_PORT_BUSY"));
+    assert.match(report.findings.find((item) => item.code === "MINIAPP_PORT_BUSY")?.message ?? "", /HAPPYTG_MINIAPP_PORT/);
+    assert.equal(
+      (setupReport.reportJson.ports as Array<{ id: string; state: string }>).find((item) => item.id === "miniapp")?.state,
+      "occupied_expected"
+    );
+    assert.ok(setupReport.findings.some((item) => item.code === "SERVICES_ALREADY_RUNNING"));
+    assert.match(setupReport.planPreview.join("\n"), /Reuse the current stack/);
+  } finally {
+    await Promise.all([
+      closeServer(busyPort.server),
+      closeServer(happyMiniApp.server)
+    ]);
     await rm(tempDir, { recursive: true, force: true });
   }
 });
 
 test("config-init and env-snapshot remain deterministic plan-only commands", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-config-"));
-  const envSnapshot = {
-    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR
-  };
-
   try {
-    process.env.HAPPYTG_STATE_DIR = path.join(tempDir, ".happytg-state");
-
-    const configReport = await runBootstrapCommand("config-init");
+    const configReport = await runBootstrapCommand("config-init", {
+      env: {
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state")
+      }
+    });
     const envReport = await runBootstrapCommand("env-snapshot");
 
     assert.equal(configReport.status, "warn");
@@ -262,7 +425,6 @@ test("config-init and env-snapshot remain deterministic plan-only commands", asy
     assert.equal(typeof envReport.reportJson.node, "string");
     assert.equal(envReport.reportJson.cwd, process.cwd());
   } finally {
-    restoreEnv(envSnapshot);
     await rm(tempDir, { recursive: true, force: true });
   }
 });

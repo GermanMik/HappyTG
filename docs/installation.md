@@ -14,35 +14,53 @@
 ## Before You Start
 
 1. Clone the repository.
-2. Copy `.env.example` to `.env`:
+2. Create `.env` from `.env.example`.
 
    ```bash
    cp .env.example .env
    ```
-3. Fill at least the Telegram token, webhook secret, API signing key, database URL, Redis URL, artifact storage settings, and Codex paths.
+
+   PowerShell:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+3. Set a real `TELEGRAM_BOT_TOKEN` in `.env`. HappyTG no longer assumes you edited `.env` correctly ahead of time; `pnpm happytg setup` will stop and tell you if the token is missing or obviously invalid.
 4. Run `pnpm install`.
-5. Run `pnpm happytg doctor` on the execution host that will run Codex.
-6. If doctor reports a finding, inspect the detailed JSON report with `pnpm happytg doctor --json`.
+5. Run `pnpm happytg setup` on the execution host that will run Codex.
+6. Use `pnpm happytg doctor --json` or `pnpm happytg verify --json` only when you need the detailed diagnostics.
 
-## First-Start Commands
+## First Start
 
-Run the first start in separate terminals so pairing and daemon startup stay explicit:
+Run the first start in separate terminals so infra, pairing, and daemon startup stay explicit.
 
-### Terminal 1: install and control plane
+### Terminal 1: guided preflight and shared infra
 
 ```bash
 pnpm install
-pnpm happytg doctor
-docker compose -f infra/docker-compose.example.yml up --build
+pnpm happytg setup
 ```
 
-### Terminal 2: development stack
+If Redis is already running on `localhost:6379`, reuse it:
+
+```bash
+docker compose -f infra/docker-compose.example.yml up postgres minio
+```
+
+If Redis is missing or stopped:
+
+```bash
+docker compose -f infra/docker-compose.example.yml up postgres redis minio
+```
+
+### Terminal 2: repo services
 
 ```bash
 pnpm dev
 ```
 
-### Terminal 3: execution host pairing and daemon
+### Terminal 3: pairing and daemon
 
 ```bash
 pnpm daemon:pair
@@ -50,10 +68,40 @@ pnpm daemon:pair
 pnpm dev:daemon
 ```
 
-If the Mini App port is busy, restart it explicitly:
+### Important
 
-```bash
-PORT=3002 pnpm dev:miniapp
+- Do not run the full compose app stack and `pnpm dev` together on the same machine unless you intentionally changed the ports.
+- If the bot logs `telegramConfigured: false`, set `TELEGRAM_BOT_TOKEN` in `.env` and restart `pnpm dev:bot`.
+- If pairing is not complete yet, the normal next step is always `pnpm daemon:pair` -> `/pair <CODE>` in Telegram -> `pnpm dev:daemon`.
+
+## Redis and Port Decisions
+
+HappyTG checks Redis state and critical ports during `pnpm happytg setup`, `pnpm happytg doctor`, and `pnpm happytg verify`.
+
+Redis states:
+
+- absent: no Redis executable was found and nothing answered on the configured port;
+- installed but stopped: Redis binaries were found, but the configured port did not answer;
+- running: Redis answered `PING` and can usually be reused directly.
+
+If `6379` is already occupied:
+
+- use the existing system Redis and skip compose `redis`;
+- or change the compose host port with `HAPPYTG_REDIS_HOST_PORT`;
+- or remove the published Redis port from the compose file if host access is unnecessary.
+
+If `3001` is already occupied:
+
+- reuse the already-running HappyTG Mini App if it is yours;
+- or pick a new `HAPPYTG_MINIAPP_PORT`;
+- or free the existing process and restart the Mini App.
+
+PowerShell examples:
+
+```powershell
+$env:HAPPYTG_MINIAPP_PORT=3002; pnpm dev:miniapp
+$env:HAPPYTG_API_PORT=4001; pnpm dev:api
+$env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.example.yml up redis
 ```
 
 ## Developer Install
@@ -61,7 +109,7 @@ PORT=3002 pnpm dev:miniapp
 1. Start local infrastructure:
 
    ```bash
-   docker compose -f infra/docker-compose.example.yml up --build
+   docker compose -f infra/docker-compose.example.yml up postgres redis minio
    ```
 
 2. In a separate terminal, run the monorepo in watch mode:
@@ -99,14 +147,14 @@ PORT=3002 pnpm dev:miniapp
 
 1. Provision one control-plane host and one or more execution hosts.
 2. On the control-plane host, copy `.env.example` to `.env` and set production secrets and storage endpoints.
-3. Build and start the packaged services:
+3. Start the packaged compose stack without `pnpm dev`:
 
    ```bash
    docker compose -f infra/docker-compose.example.yml up --build -d
    ```
 
 4. Put a reverse proxy with TLS in front of the API and Mini App.
-5. On each execution host, install Codex CLI and run `pnpm happytg doctor`.
+5. On each execution host, install Codex CLI and run `pnpm happytg setup`.
 6. Request pairing on the execution host:
 
    ```bash
@@ -130,6 +178,7 @@ PORT=3002 pnpm dev:miniapp
 - JWT signing key
 - Codex binary path and config path
 - public API and Mini App URLs for Telegram callbacks
+- service-specific port overrides such as `HAPPYTG_MINIAPP_PORT`, `HAPPYTG_API_PORT`, `HAPPYTG_BOT_PORT`, `HAPPYTG_WORKER_PORT`, and `HAPPYTG_REDIS_HOST_PORT` when defaults conflict
 
 ## Notes
 
@@ -137,4 +186,4 @@ PORT=3002 pnpm dev:miniapp
 - The host daemon is intentionally excluded from Docker Compose because it must run where the target repositories and local Codex configuration live.
 - The CI baseline in `.github/workflows/ci.yml` matches the expected local verification gates.
 - `pnpm happytg ...` is the repo-local wrapper around the same CLI surface exposed as `happytg ...` when installed as a binary.
-- `pnpm happytg doctor --json` is the detailed diagnostics path for raw Codex stderr, binary paths, and config paths when the plain-text doctor output asks for deeper inspection.
+- `pnpm happytg setup` is the short first-run path; `pnpm happytg doctor --json` and `pnpm happytg verify --json` are the detailed diagnostics paths.

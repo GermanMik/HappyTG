@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { BotDependencies } from "./handlers.js";
-import { createBotServer } from "./index.js";
+import { botConfigurationMessage, createBotServer } from "./index.js";
 
 test("bot ready endpoint returns healthy when api is reachable", async () => {
   const dependencies: Partial<BotDependencies> = {
@@ -57,4 +57,10 @@ test("bot ready endpoint returns 503 when api is unreachable", async () => {
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
+});
+
+test("botConfigurationMessage stays actionable without exposing secrets", () => {
+  assert.match(botConfigurationMessage({}) ?? "", /TELEGRAM_BOT_TOKEN/);
+  assert.match(botConfigurationMessage({ TELEGRAM_BOT_TOKEN: "abc" }) ?? "", /format looks invalid/);
+  assert.equal(botConfigurationMessage({ TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx" }), undefined);
 });

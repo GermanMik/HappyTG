@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 import type { RuntimeExecutionResult, RuntimeReadiness } from "../../protocol/src/index.js";
-import { ensureDir, fileExists, nowIso, readTextFileOrEmpty, resolveExecutable, resolveHome } from "../../shared/src/index.js";
+import { ensureDir, fileExists, normalizeSpawnEnv, nowIso, readTextFileOrEmpty, resolveExecutable, resolveHome } from "../../shared/src/index.js";
 
 export interface RuntimeAdapter {
   id: string;
@@ -79,8 +79,20 @@ export function classifyCodexSmokeStderr(stderr: string): {
   };
 }
 
-async function resolveCommandInvocation(command: string, args: string[], cwd?: string): Promise<{ command: string; args: string[] }> {
-  const resolvedPath = await resolveExecutable(command, { cwd });
+async function resolveCommandInvocation(
+  command: string,
+  args: string[],
+  options?: {
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    platform?: NodeJS.Platform;
+  }
+): Promise<{ command: string; args: string[] }> {
+  const resolvedPath = await resolveExecutable(command, {
+    cwd: options?.cwd,
+    env: options?.env,
+    platform: options?.platform
+  });
   const commandPath = resolvedPath ?? command;
 
   if (isJavaScriptEntrypoint(commandPath)) {
@@ -96,13 +108,31 @@ async function resolveCommandInvocation(command: string, args: string[], cwd?: s
   };
 }
 
-async function runCommand(command: string, args: string[], cwd?: string, timeoutMs = Number(process.env.HAPPYTG_CODEX_EXEC_TIMEOUT_MS ?? 120_000)): Promise<{ stdout: string; stderr: string; exitCode: number; timedOut: boolean }> {
-  const invocation = await resolveCommandInvocation(command, args, cwd);
-  const useWindowsShell = process.platform === "win32" && /\.(cmd|bat)$/i.test(invocation.command);
+async function runCommand(
+  command: string,
+  args: string[],
+  options?: {
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    platform?: NodeJS.Platform;
+    timeoutMs?: number;
+  }
+): Promise<{ stdout: string; stderr: string; exitCode: number; timedOut: boolean }> {
+  const cwd = options?.cwd;
+  const env = options?.env ?? process.env;
+  const platform = options?.platform ?? process.platform;
+  const timeoutMs = options?.timeoutMs ?? Number(env.HAPPYTG_CODEX_EXEC_TIMEOUT_MS ?? 120_000);
+  const invocation = await resolveCommandInvocation(command, args, {
+    cwd,
+    env,
+    platform
+  });
+  const useWindowsShell = platform === "win32" && /\.(cmd|bat)$/i.test(invocation.command);
+  const spawnEnv = normalizeSpawnEnv(env, platform);
   return new Promise((resolve, reject) => {
     const child = spawn(invocation.command, invocation.args, {
       cwd,
-      env: process.env,
+      env: spawnEnv,
       shell: useWindowsShell
     });
 
@@ -143,22 +173,35 @@ export async function checkCodexReadiness(input?: {
   binaryArgs?: string[];
   configPath?: string;
   smokePrompt?: string;
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  platform?: NodeJS.Platform;
 }): Promise<RuntimeReadiness> {
-  const binaryPath = input?.binaryPath ?? process.env.CODEX_CLI_BIN ?? "codex";
+  const env = input?.env ?? process.env;
+  const platform = input?.platform ?? process.platform;
+  const binaryPath = input?.binaryPath ?? env.CODEX_CLI_BIN ?? "codex";
   const binaryArgs = input?.binaryArgs ?? [];
-  const configPath = homeExpanded(input?.configPath ?? process.env.CODEX_CONFIG_PATH ?? "~/.codex/config.toml");
-  const smokePrompt = input?.smokePrompt ?? process.env.CODEX_SMOKE_PROMPT ?? "Print exactly OK and exit.";
+  const configPath = homeExpanded(input?.configPath ?? env.CODEX_CONFIG_PATH ?? "~/.codex/config.toml");
+  const smokePrompt = input?.smokePrompt ?? env.CODEX_SMOKE_PROMPT ?? "Print exactly OK and exit.";
   const configExists = await fileExists(configPath);
 
   try {
-    const versionRun = await runCommand(binaryPath, [...binaryArgs, "--version"]);
+    const versionRun = await runCommand(binaryPath, [...binaryArgs, "--version"], {
+      cwd: input?.cwd,
+      env,
+      platform
+    });
     const available = versionRun.exitCode === 0;
     let smokeOk = false;
     let smokeOutput = "";
     let smokeError = "";
 
     if (available && configExists) {
-      const smokeRun = await runCommand(binaryPath, [...binaryArgs, "exec", "--skip-git-repo-check", "--json", smokePrompt]);
+      const smokeRun = await runCommand(binaryPath, [...binaryArgs, "exec", "--skip-git-repo-check", "--json", smokePrompt], {
+        cwd: input?.cwd,
+        env,
+        platform
+      });
       smokeOk = smokeRun.exitCode === 0;
       smokeOutput = smokeRun.stdout.trim();
       smokeError = smokeRun.stderr.trim();
@@ -227,7 +270,10 @@ export async function runCodexExec(input: {
   args.push(input.prompt);
 
   try {
-    const result = await runCommand(binaryPath, args, input.cwd, input.timeoutMs);
+    const result = await runCommand(binaryPath, args, {
+      cwd: input.cwd,
+      timeoutMs: input.timeoutMs
+    });
     const finishedAt = nowIso();
     const lastMessage = await readTextFileOrEmpty(lastMessagePath);
 
