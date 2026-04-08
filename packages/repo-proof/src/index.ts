@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import type { EvidenceArtifact, TaskBundle, TaskPhase, VerificationRun, VerificationState } from "../../protocol/src/index.js";
-import { createId, ensureDir, fileExists, nowIso, writeJsonFileAtomic, writeTextFileAtomic } from "../../shared/src/index.js";
+import { createId, ensureDir, fileExists, nowIso, readJsonFile, writeJsonFileAtomic, writeTextFileAtomic } from "../../shared/src/index.js";
 
 const REQUIRED_FILES = [
   "spec.md",
@@ -15,8 +15,23 @@ const REQUIRED_FILES = [
   path.join("raw", "lint.txt")
 ] as const;
 
-function bundlePath(repoRoot: string, taskId: string): string {
+export const TASK_METADATA_FILE = "task.json";
+
+export function taskBundlePath(repoRoot: string, taskId: string): string {
   return path.join(repoRoot, ".agent", "tasks", taskId);
+}
+
+async function writeTaskMetadata(task: TaskBundle): Promise<void> {
+  await writeJsonFileAtomic(path.join(task.rootPath, TASK_METADATA_FILE), task);
+}
+
+export async function readTaskBundle(rootPath: string): Promise<TaskBundle | undefined> {
+  const metadataPath = path.join(rootPath, TASK_METADATA_FILE);
+  if (!(await fileExists(metadataPath))) {
+    return undefined;
+  }
+
+  return readJsonFile<TaskBundle | undefined>(metadataPath, undefined);
 }
 
 export async function initTaskBundle(input: {
@@ -28,9 +43,22 @@ export async function initTaskBundle(input: {
   acceptanceCriteria: string[];
   mode: "quick" | "proof";
 }): Promise<TaskBundle> {
-  const rootPath = bundlePath(input.repoRoot, input.taskId);
+  const rootPath = taskBundlePath(input.repoRoot, input.taskId);
   await ensureDir(path.join(rootPath, "raw"));
   const createdAt = nowIso();
+  const task: TaskBundle = {
+    id: input.taskId,
+    sessionId: input.sessionId,
+    workspaceId: input.workspaceId,
+    rootPath,
+    phase: input.mode === "proof" ? "init" : "complete",
+    mode: input.mode,
+    title: input.title,
+    acceptanceCriteria: input.acceptanceCriteria,
+    verificationState: input.mode === "proof" ? "not_started" : "passed",
+    createdAt,
+    updatedAt: createdAt
+  };
 
   const specContent = [
     "# Task Spec",
@@ -89,22 +117,11 @@ export async function initTaskBundle(input: {
     writeTextFileAtomic(path.join(rootPath, "raw", "build.txt"), ""),
     writeTextFileAtomic(path.join(rootPath, "raw", "test-unit.txt"), ""),
     writeTextFileAtomic(path.join(rootPath, "raw", "test-integration.txt"), ""),
-    writeTextFileAtomic(path.join(rootPath, "raw", "lint.txt"), "")
+    writeTextFileAtomic(path.join(rootPath, "raw", "lint.txt"), ""),
+    writeTaskMetadata(task)
   ]);
 
-  return {
-    id: input.taskId,
-    sessionId: input.sessionId,
-    workspaceId: input.workspaceId,
-    rootPath,
-    phase: input.mode === "proof" ? "init" : "complete",
-    mode: input.mode,
-    title: input.title,
-    acceptanceCriteria: input.acceptanceCriteria,
-    verificationState: input.mode === "proof" ? "not_started" : "passed",
-    createdAt,
-    updatedAt: createdAt
-  };
+  return task;
 }
 
 export async function freezeTaskSpec(task: TaskBundle, details: {
@@ -142,11 +159,13 @@ export async function freezeTaskSpec(task: TaskBundle, details: {
 
   await writeTextFileAtomic(path.join(task.rootPath, "spec.md"), `${lines.join("\n")}\n`);
 
-  return {
+  const updatedTask: TaskBundle = {
     ...task,
     phase: "spec_frozen",
     updatedAt: nowIso()
   };
+  await writeTaskMetadata(updatedTask);
+  return updatedTask;
 }
 
 export async function writeRawArtifact(task: TaskBundle, name: string, content: string): Promise<EvidenceArtifact> {
@@ -177,11 +196,13 @@ export async function updateEvidence(task: TaskBundle, summary: string, artifact
     generatedAt: nowIso()
   });
 
-  return {
+  const updatedTask: TaskBundle = {
     ...task,
     phase: "evidence",
     updatedAt: nowIso()
   };
+  await writeTaskMetadata(updatedTask);
+  return updatedTask;
 }
 
 export async function writeVerificationVerdict(input: {
@@ -210,13 +231,15 @@ export async function writeVerificationVerdict(input: {
   );
 
   const phase: TaskPhase = input.status === "passed" ? "complete" : "fix";
+  const updatedTask: TaskBundle = {
+    ...input.task,
+    phase,
+    verificationState: input.status,
+    updatedAt: now
+  };
+  await writeTaskMetadata(updatedTask);
   return {
-    task: {
-      ...input.task,
-      phase,
-      verificationState: input.status,
-      updatedAt: now
-    },
+    task: updatedTask,
     verificationRun: {
       id: input.runId,
       taskId: input.task.id,

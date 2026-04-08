@@ -1,12 +1,11 @@
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import type { BootstrapFinding, BootstrapReport } from "../../protocol/src/index.js";
 import { checkCodexReadiness } from "../../runtime-adapters/src/index.js";
 import { createId, ensureDir, fileExists, getLocalStateDir, nowIso, writeJsonFileAtomic } from "../../shared/src/index.js";
 
-type BootstrapCommand = "doctor" | "setup" | "repair" | "verify" | "status" | "config-init" | "env-snapshot";
+export type BootstrapCommand = "doctor" | "setup" | "repair" | "verify" | "status" | "config-init" | "env-snapshot";
 
 interface DoctorContext {
   command: BootstrapCommand;
@@ -183,26 +182,4 @@ export async function runBootstrapCommand(command: BootstrapCommand): Promise<Bo
     default:
       return runDoctorLike("status");
   }
-}
-
-async function main(command: BootstrapCommand): Promise<void> {
-  const report = await runBootstrapCommand(command);
-  console.log(JSON.stringify(report, null, 2));
-}
-
-const rawCommand = (process.argv[2] ?? "status").toLowerCase();
-const commandMap: Record<string, BootstrapCommand> = {
-  doctor: "doctor",
-  setup: "setup",
-  repair: "repair",
-  verify: "verify",
-  status: "status",
-  "config-init": "config-init",
-  config: "config-init",
-  env: "env-snapshot",
-  "env-snapshot": "env-snapshot"
-};
-
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  void main(commandMap[rawCommand] ?? "status");
 }

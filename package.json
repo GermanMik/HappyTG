@@ -12,6 +12,7 @@
     "dev:daemon": "pnpm --filter @happytg/host-daemon run dev",
     "daemon:pair": "pnpm --filter @happytg/host-daemon run pair",
     "daemon:once": "pnpm --filter @happytg/host-daemon run once",
+    "happytg": "tsx packages/bootstrap/src/cli.ts",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",

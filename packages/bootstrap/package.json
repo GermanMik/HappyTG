@@ -4,17 +4,18 @@
   "private": true,
   "type": "module",
   "bin": {
-    "happytg-bootstrap": "dist/index.js"
+    "happytg": "dist/cli.js",
+    "happytg-bootstrap": "dist/cli.js"
   },
   "main": "dist/index.js",
   "scripts": {
-    "doctor": "tsx src/index.ts doctor",
-    "setup": "tsx src/index.ts setup",
-    "repair": "tsx src/index.ts repair",
-    "verify": "tsx src/index.ts verify",
-    "status": "tsx src/index.ts status",
-    "config:init": "tsx src/index.ts config-init",
-    "env:snapshot": "tsx src/index.ts env-snapshot",
+    "doctor": "tsx src/cli.ts doctor",
+    "setup": "tsx src/cli.ts setup",
+    "repair": "tsx src/cli.ts repair",
+    "verify": "tsx src/cli.ts verify",
+    "status": "tsx src/cli.ts status",
+    "config:init": "tsx src/cli.ts config init",
+    "env:snapshot": "tsx src/cli.ts env snapshot",
     "build": "tsc -p tsconfig.json",
     "lint": "echo \"TODO: lint bootstrap\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",

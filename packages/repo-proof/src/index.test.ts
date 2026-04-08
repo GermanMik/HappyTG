@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { freezeTaskSpec, initTaskBundle, updateEvidence, validateTaskBundle, writeVerificationVerdict } from "./index.js";
+import { TASK_METADATA_FILE, freezeTaskSpec, initTaskBundle, readTaskBundle, updateEvidence, validateTaskBundle, writeVerificationVerdict } from "./index.js";
 
 test("repo proof bundle can be initialized, frozen, validated, and verified", async () => {
   const repoRoot = await mkdtemp(path.join(os.tmpdir(), "happytg-proof-"));
@@ -45,5 +45,10 @@ test("repo proof bundle can be initialized, frozen, validated, and verified", as
   assert.equal(validation.ok, true);
 
   const spec = await readFile(path.join(task.rootPath, "spec.md"), "utf8");
+  const metadata = await readTaskBundle(task.rootPath);
+  const metadataRaw = await readFile(path.join(task.rootPath, TASK_METADATA_FILE), "utf8");
   assert.match(spec, /Status: frozen/);
+  assert.equal(metadata?.id, "HTG-9999");
+  assert.equal(metadata?.verificationState, "passed");
+  assert.match(metadataRaw, /HTG-9999/);
 });
