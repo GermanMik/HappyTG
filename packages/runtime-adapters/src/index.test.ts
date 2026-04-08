@@ -1,42 +1,60 @@
-import { mkdtemp, rm, writeFile, chmod } from "node:fs/promises";
+import assert from "node:assert/strict";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import assert from "node:assert/strict";
 
-import { checkCodexReadiness, runCodexExec } from "./index.js";
+import { checkCodexReadiness, codexCliMissingMessage, runCodexExec } from "./index.js";
 
-async function writeExecutable(filePath: string, content: string): Promise<void> {
-  await writeFile(filePath, content, "utf8");
-  await chmod(filePath, 0o755);
+async function writeNodeEntrypoint(filePath: string, source: string): Promise<void> {
+  await writeFile(filePath, `${source.trim()}\n`, "utf8");
+}
+
+async function createCodexHarness(tempDir: string, fileName: string, source: string): Promise<{ binaryPath: string; binaryArgs: string[] }> {
+  const entrypointPath = path.join(tempDir, fileName);
+  await writeNodeEntrypoint(entrypointPath, source);
+  return {
+    binaryPath: process.execPath,
+    binaryArgs: [entrypointPath]
+  };
+}
+
+function restoreCodexBin(originalValue: string | undefined): void {
+  if (originalValue === undefined) {
+    delete process.env.CODEX_CLI_BIN;
+    return;
+  }
+
+  process.env.CODEX_CLI_BIN = originalValue;
 }
 
 test("checkCodexReadiness reports available Codex and captures smoke warnings", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-ready-"));
   try {
-    const binaryPath = path.join(tempDir, "codex");
+    const harness = await createCodexHarness(
+      tempDir,
+      "codex-harness.mjs",
+      `
+        const args = process.argv.slice(2);
+        if (args[0] === "--version") {
+          console.log("codex test 1.0");
+          process.exit(0);
+        }
+        if (args[0] === "exec") {
+          console.log('{"type":"message","text":"OK"}');
+          console.error("migration warning");
+          process.exit(0);
+        }
+        console.error("unexpected invocation");
+        process.exit(1);
+      `
+    );
     const configPath = path.join(tempDir, "config.toml");
     await writeFile(configPath, 'model = "gpt-5"\n', "utf8");
-    await writeExecutable(
-      binaryPath,
-      [
-        "#!/bin/sh",
-        'if [ "$1" = "--version" ]; then',
-        '  echo "codex test 1.0"',
-        "  exit 0",
-        "fi",
-        'if [ "$1" = "exec" ]; then',
-        '  echo "{\\"type\\":\\"message\\",\\"text\\":\\"OK\\"}"',
-        '  echo "migration warning" 1>&2',
-        "  exit 0",
-        "fi",
-        'echo "unexpected invocation" 1>&2',
-        "exit 1"
-      ].join("\n")
-    );
 
     const readiness = await checkCodexReadiness({
-      binaryPath,
+      binaryPath: harness.binaryPath,
+      binaryArgs: harness.binaryArgs,
       configPath,
       smokePrompt: "Print exactly OK and exit."
     });
@@ -55,43 +73,45 @@ test("runCodexExec reads summary from the Codex output file", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-exec-"));
   const originalBin = process.env.CODEX_CLI_BIN;
   try {
-    const binaryPath = path.join(tempDir, "codex");
-    await writeExecutable(
-      binaryPath,
-      [
-        "#!/bin/sh",
-        'if [ "$1" = "exec" ]; then',
-        '  OUTPUT=""',
-        '  while [ "$#" -gt 0 ]; do',
-        '    if [ "$1" = "-o" ]; then',
-        '      OUTPUT="$2"',
-        "      shift 2",
-        "      continue",
-        "    fi",
-        '    if [ "$1" = "-C" ] || [ "$1" = "--sandbox" ] || [ "$1" = "--profile" ] || [ "$1" = "--model" ]; then',
-        "      shift 2",
-        "      continue",
-        "    fi",
-        '    if [ "$1" = "--json" ] || [ "$1" = "--skip-git-repo-check" ]; then',
-        "      shift 1",
-        "      continue",
-        "    fi",
-        '    PROMPT="$1"',
-        "    shift 1",
-        "  done",
-        '  printf "summary from output file\\n" > "$OUTPUT"',
-        '  printf "stdout for %s\\n" "$PROMPT"',
-        "  exit 0",
-        "fi",
-        'echo "unexpected invocation" 1>&2',
-        "exit 1"
-      ].join("\n")
+    const harness = await createCodexHarness(
+      tempDir,
+      "codex-exec.mjs",
+      `
+        import { writeFile } from "node:fs/promises";
+
+        const args = process.argv.slice(2);
+        if (args[0] !== "exec") {
+          console.error("unexpected invocation");
+          process.exit(1);
+        }
+
+        let outputPath = "";
+        let prompt = "";
+        for (let index = 1; index < args.length; index += 1) {
+          const arg = args[index];
+          if (arg === "-o" || arg === "-C" || arg === "--sandbox" || arg === "--profile" || arg === "--model") {
+            if (arg === "-o") {
+              outputPath = args[index + 1] ?? "";
+            }
+            index += 1;
+            continue;
+          }
+          if (arg === "--json" || arg === "--skip-git-repo-check") {
+            continue;
+          }
+          prompt = arg;
+        }
+
+        await writeFile(outputPath, "summary from output file\\n", "utf8");
+        console.log(\`stdout for \${prompt}\`);
+      `
     );
 
-    process.env.CODEX_CLI_BIN = binaryPath;
     const result = await runCodexExec({
       cwd: tempDir,
       prompt: "ship it",
+      binaryPath: harness.binaryPath,
+      binaryArgs: harness.binaryArgs,
       outputDir: tempDir,
       sandbox: "workspace-write"
     });
@@ -102,11 +122,7 @@ test("runCodexExec reads summary from the Codex output file", async () => {
     assert.match(result.stdout, /stdout for ship it/);
     assert.ok(result.lastMessagePath?.startsWith(tempDir));
   } finally {
-    if (originalBin === undefined) {
-      delete process.env.CODEX_CLI_BIN;
-    } else {
-      process.env.CODEX_CLI_BIN = originalBin;
-    }
+    restoreCodexBin(originalBin);
     await rm(tempDir, { recursive: true, force: true });
   }
 });
@@ -115,25 +131,26 @@ test("runCodexExec marks timeout and returns a timeout summary", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-timeout-"));
   const originalBin = process.env.CODEX_CLI_BIN;
   try {
-    const binaryPath = path.join(tempDir, "codex");
-    await writeExecutable(
-      binaryPath,
-      [
-        "#!/bin/sh",
-        'if [ "$1" = "exec" ]; then',
-        "  sleep 1",
-        '  echo "late output"',
-        "  exit 0",
-        "fi",
-        'echo "unexpected invocation" 1>&2',
-        "exit 1"
-      ].join("\n")
+    const harness = await createCodexHarness(
+      tempDir,
+      "codex-timeout.mjs",
+      `
+        const args = process.argv.slice(2);
+        if (args[0] !== "exec") {
+          console.error("unexpected invocation");
+          process.exit(1);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+        console.log("late output");
+      `
     );
 
-    process.env.CODEX_CLI_BIN = binaryPath;
     const result = await runCodexExec({
       cwd: tempDir,
       prompt: "wait forever",
+      binaryPath: harness.binaryPath,
+      binaryArgs: harness.binaryArgs,
       outputDir: tempDir,
       timeoutMs: 10
     });
@@ -144,11 +161,29 @@ test("runCodexExec marks timeout and returns a timeout summary", async () => {
     assert.match(result.summary, /timed out after 10ms/);
     assert.match(result.stderr, /timed out after 10ms/);
   } finally {
-    if (originalBin === undefined) {
-      delete process.env.CODEX_CLI_BIN;
-    } else {
-      process.env.CODEX_CLI_BIN = originalBin;
-    }
+    restoreCodexBin(originalBin);
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runCodexExec returns actionable guidance when Codex CLI is missing", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-missing-"));
+  const originalBin = process.env.CODEX_CLI_BIN;
+  try {
+    process.env.CODEX_CLI_BIN = path.join(tempDir, "missing-codex");
+
+    const result = await runCodexExec({
+      cwd: tempDir,
+      prompt: "ship it",
+      outputDir: tempDir
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.exitCode, 127);
+    assert.equal(result.summary, codexCliMissingMessage());
+    assert.match(result.stderr, /missing-codex/);
+  } finally {
+    restoreCodexBin(originalBin);
     await rm(tempDir, { recursive: true, force: true });
   }
 });

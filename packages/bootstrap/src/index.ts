@@ -2,8 +2,8 @@ import os from "node:os";
 import path from "node:path";
 
 import type { BootstrapFinding, BootstrapReport } from "../../protocol/src/index.js";
-import { checkCodexReadiness } from "../../runtime-adapters/src/index.js";
-import { createId, ensureDir, fileExists, getLocalStateDir, nowIso, writeJsonFileAtomic } from "../../shared/src/index.js";
+import { checkCodexReadiness, codexCliMissingMessage } from "../../runtime-adapters/src/index.js";
+import { createId, ensureDir, getLocalStateDir, nowIso, resolveExecutable, writeJsonFileAtomic } from "../../shared/src/index.js";
 
 export type BootstrapCommand = "doctor" | "setup" | "repair" | "verify" | "status" | "config-init" | "env-snapshot";
 
@@ -18,57 +18,64 @@ export interface DoctorDetection {
   reportJson: Record<string, unknown>;
 }
 
+function pushPlanStep(planPreview: string[], step: string): void {
+  if (!planPreview.includes(step)) {
+    planPreview.push(step);
+  }
+}
+
 export async function detectFindings(): Promise<DoctorDetection> {
   const findings: BootstrapFinding[] = [];
   const planPreview: string[] = [];
 
   const platform = `${os.platform()}-${os.arch()}`;
-  const hasGit = await fileExists("/usr/bin/git").catch(() => false);
+  const gitBinaryPath = await resolveExecutable("git");
+  const hasGit = Boolean(gitBinaryPath);
   const codex = await checkCodexReadiness();
 
   if (!hasGit) {
     findings.push({
       code: "GIT_MISSING",
       severity: "warn",
-      message: "Git binary was not detected at /usr/bin/git. PATH-based detection should be added next."
+      message: "Git was not found in PATH. Install Git, verify `git --version`, then rerun `pnpm happytg doctor`."
     });
-    planPreview.push("Verify Git is installed and visible in PATH");
+    pushPlanStep(planPreview, "Install Git and verify `git --version`.");
   }
 
   if (!codex.available) {
     findings.push({
       code: "CODEX_MISSING",
       severity: "error",
-      message: "Codex CLI was not found or failed to run"
+      message: codexCliMissingMessage()
     });
-    planPreview.push("Install Codex CLI globally with npm");
+    pushPlanStep(planPreview, "Install Codex CLI and verify `codex --version`.");
   }
 
   if (!codex.configExists) {
     findings.push({
       code: "CODEX_CONFIG_MISSING",
       severity: "warn",
-      message: `Codex config was not found at ${codex.configPath}`
+      message: "Codex config was not found. Create `~/.codex/config.toml`, then rerun `pnpm happytg doctor`."
     });
-    planPreview.push("Initialize ~/.codex/config.toml");
+    pushPlanStep(planPreview, "Create `~/.codex/config.toml`, then rerun `pnpm happytg doctor`.");
   }
 
   if (codex.available && codex.configExists && !codex.smokeOk) {
     findings.push({
       code: "CODEX_SMOKE_FAILED",
       severity: "warn",
-      message: codex.smokeError || "Codex smoke check failed"
+      message: "Codex CLI started, but the smoke check did not complete. Review Codex auth/config, then rerun `pnpm happytg doctor --json`."
     });
-    planPreview.push("Review Codex auth and runtime configuration");
+    pushPlanStep(planPreview, "Review Codex auth/config and rerun `pnpm happytg doctor --json`.");
   }
 
-  if (codex.smokeError) {
+  if (codex.available && codex.configExists && codex.smokeOk && codex.smokeError) {
     findings.push({
       code: "CODEX_SMOKE_WARNINGS",
       severity: "warn",
-      message: codex.smokeError.split("\n").slice(0, 3).join(" ").trim()
+      message: "Codex CLI completed the smoke check with warnings. Run `pnpm happytg doctor --json` for the detailed stderr output."
     });
-    planPreview.push("Inspect Codex stderr warnings reported during smoke check");
+    pushPlanStep(planPreview, "Inspect Codex warnings with `pnpm happytg doctor --json`.");
   }
 
   const profileRecommendation = findings.some((item) => item.severity === "error") ? "minimal" : "recommended";
@@ -79,6 +86,10 @@ export async function detectFindings(): Promise<DoctorDetection> {
     profileRecommendation,
     reportJson: {
       platform,
+      git: {
+        available: hasGit,
+        binaryPath: gitBinaryPath ?? null
+      },
       codex
     }
   };

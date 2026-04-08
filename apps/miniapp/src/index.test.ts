@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
 import test from "node:test";
 
-import { createMiniAppServer } from "./index.js";
+import { createMiniAppServer, formatMiniAppPortConflictMessage, startMiniAppServer } from "./index.js";
 
 test("mini app ready endpoint returns 503 when api health fails", async () => {
   const server = createMiniAppServer({
@@ -59,7 +60,8 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
 
     assert.equal(response.status, 200);
     assert.match(html, /HappyTG Mini App/);
-    assert.match(html, /devbox \(host_1\) state=active/);
+    assert.match(html, /devbox/);
+    assert.match(html, /badge badge-success">active/);
     assert.match(html, /href="\/session\/ses_1"/);
     assert.match(html, /href="\/task\/HTG-0001"/);
   } finally {
@@ -114,7 +116,9 @@ test("task page renders canonical artifacts and escapes file content", async () 
 
     assert.equal(response.status, 200);
     assert.match(html, /Task HTG-0001/);
-    assert.match(html, /Validation: missing raw\/test-unit.txt/);
+    assert.match(html, /Proof Progress/);
+    assert.match(html, /Fresh Verify/);
+    assert.match(html, /missing raw\/test-unit.txt/);
     assert.match(html, /&lt;unsafe&gt;content&lt;\/unsafe&gt;/);
     assert.doesNotMatch(html, /<unsafe>content<\/unsafe>/);
   } finally {
@@ -173,10 +177,38 @@ test("session page renders timeline, summary, and task link", async () => {
 
     assert.equal(response.status, 200);
     assert.match(html, /Session ses_2/);
-    assert.match(html, /Summary: Verifier running/);
+    assert.match(html, /Verifier running/);
+    assert.match(html, /Proof Progress/);
     assert.match(html, /href="\/task\/HTG-0002"/);
     assert.match(html, /1\. 2026-04-07T10:00:00.000Z session\.created/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("startMiniAppServer returns an actionable message when the port is already in use", async () => {
+  const occupied = createServer();
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Occupied server did not bind to a TCP port");
+  }
+
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  try {
+    await assert.rejects(
+      () => startMiniAppServer(server, { port: address.port, logger: { info() {} } }),
+      new RegExp(formatMiniAppPortConflictMessage(address.port).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    );
+  } finally {
+    await new Promise<void>((resolve, reject) => occupied.close((error) => error ? reject(error) : resolve()));
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
   }
 });

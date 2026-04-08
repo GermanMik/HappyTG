@@ -1,14 +1,25 @@
-import { mkdtemp, readFile, rm, writeFile, chmod } from "node:fs/promises";
+import assert from "node:assert/strict";
+import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import assert from "node:assert/strict";
 
 import { runBootstrapCommand } from "./index.js";
 
-async function writeExecutable(filePath: string, content: string): Promise<void> {
-  await writeFile(filePath, content, "utf8");
-  await chmod(filePath, 0o755);
+async function writeNodeEntrypoint(filePath: string, source: string): Promise<void> {
+  await writeFile(filePath, `${source.trim()}\n`, "utf8");
+}
+
+async function writeFakeGitBinary(filePath: string): Promise<void> {
+  await writeFile(
+    filePath,
+    process.platform === "win32" ? "@echo off\r\necho git test\r\n" : "#!/bin/sh\necho git test\n",
+    "utf8"
+  );
+
+  if (process.platform !== "win32") {
+    await chmod(filePath, 0o755);
+  }
 }
 
 function restoreEnv(snapshot: Record<string, string | undefined>): void {
@@ -21,32 +32,38 @@ function restoreEnv(snapshot: Record<string, string | undefined>): void {
   }
 }
 
-test("doctor writes a report and flags missing Codex config", async () => {
+test("doctor writes a report, detects Git via PATH, and flags missing Codex config as warn", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-doctor-"));
   const envSnapshot = {
     CODEX_CLI_BIN: process.env.CODEX_CLI_BIN,
     CODEX_CONFIG_PATH: process.env.CODEX_CONFIG_PATH,
-    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR
+    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR,
+    PATH: process.env.PATH
   };
 
   try {
-    const binaryPath = path.join(tempDir, "codex");
-    await writeExecutable(
-      binaryPath,
-      [
-        "#!/bin/sh",
-        'if [ "$1" = "--version" ]; then',
-        '  echo "codex test 1.0"',
-        "  exit 0",
-        "fi",
-        'echo "unexpected invocation" 1>&2',
-        "exit 1"
-      ].join("\n")
-    );
+    const binaryPath = path.join(tempDir, "codex-doctor.mjs");
+    const gitBinaryPath = path.join(tempDir, process.platform === "win32" ? "git.cmd" : "git");
+    await Promise.all([
+      writeNodeEntrypoint(
+        binaryPath,
+        `
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex test 1.0");
+            process.exit(0);
+          }
+          console.error("unexpected invocation");
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitBinaryPath)
+    ]);
 
     process.env.CODEX_CLI_BIN = binaryPath;
     process.env.CODEX_CONFIG_PATH = path.join(tempDir, "missing-config.toml");
     process.env.HAPPYTG_STATE_DIR = path.join(tempDir, ".happytg-state");
+    process.env.PATH = tempDir;
 
     const report = await runBootstrapCommand("doctor");
     const stored = JSON.parse(await readFile(path.join(process.env.HAPPYTG_STATE_DIR, "state", "doctor-last.json"), "utf8")) as typeof report;
@@ -55,46 +72,56 @@ test("doctor writes a report and flags missing Codex config", async () => {
     assert.equal(report.status, "warn");
     assert.equal(stored.id, report.id);
     assert.ok(report.findings.some((item) => item.code === "CODEX_CONFIG_MISSING"));
-    assert.ok(report.planPreview.includes("Initialize ~/.codex/config.toml"));
+    assert.deepEqual(report.reportJson.git, {
+      available: true,
+      binaryPath: gitBinaryPath
+    });
+    assert.ok(report.planPreview.includes("Create `~/.codex/config.toml`, then rerun `pnpm happytg doctor`."));
   } finally {
     restoreEnv(envSnapshot);
     await rm(tempDir, { recursive: true, force: true });
   }
 });
 
-test("verify surfaces Codex smoke warnings when config exists", async () => {
+test("verify surfaces Codex smoke warnings as warn when config exists", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-verify-"));
   const envSnapshot = {
     CODEX_CLI_BIN: process.env.CODEX_CLI_BIN,
     CODEX_CONFIG_PATH: process.env.CODEX_CONFIG_PATH,
-    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR
+    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR,
+    PATH: process.env.PATH
   };
 
   try {
-    const binaryPath = path.join(tempDir, "codex");
+    const binaryPath = path.join(tempDir, "codex-verify.mjs");
     const configPath = path.join(tempDir, "config.toml");
-    await writeFile(configPath, 'model = "gpt-5"\n', "utf8");
-    await writeExecutable(
-      binaryPath,
-      [
-        "#!/bin/sh",
-        'if [ "$1" = "--version" ]; then',
-        '  echo "codex test 1.0"',
-        "  exit 0",
-        "fi",
-        'if [ "$1" = "exec" ]; then',
-        '  echo "{\\"type\\":\\"message\\",\\"text\\":\\"OK\\"}"',
-        '  echo "sqlite warning" 1>&2',
-        "  exit 0",
-        "fi",
-        'echo "unexpected invocation" 1>&2',
-        "exit 1"
-      ].join("\n")
-    );
+    const gitBinaryPath = path.join(tempDir, process.platform === "win32" ? "git.cmd" : "git");
+    await Promise.all([
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeNodeEntrypoint(
+        binaryPath,
+        `
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex test 1.0");
+            process.exit(0);
+          }
+          if (args[0] === "exec") {
+            console.log('{"type":"message","text":"OK"}');
+            console.error("sqlite warning");
+            process.exit(0);
+          }
+          console.error("unexpected invocation");
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitBinaryPath)
+    ]);
 
     process.env.CODEX_CLI_BIN = binaryPath;
     process.env.CODEX_CONFIG_PATH = configPath;
     process.env.HAPPYTG_STATE_DIR = path.join(tempDir, ".happytg-state");
+    process.env.PATH = tempDir;
 
     const report = await runBootstrapCommand("verify");
 

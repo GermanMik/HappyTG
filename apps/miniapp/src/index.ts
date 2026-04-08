@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 
-import { createJsonServer, createLogger, json, route, text } from "../../../packages/shared/src/index.js";
+import { createJsonServer, createLogger, json, route, text, type Logger } from "../../../packages/shared/src/index.js";
 
 const logger = createLogger("miniapp");
 const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
@@ -17,6 +17,82 @@ async function defaultFetchJson<T>(pathname: string): Promise<T> {
   }
 
   return (await response.json()) as T;
+}
+
+const proofProgressSteps = [
+  { phase: "init", label: "Init" },
+  { phase: "spec_frozen", label: "Freeze/Spec" },
+  { phase: "build", label: "Build" },
+  { phase: "evidence", label: "Evidence" },
+  { phase: "verify", label: "Fresh Verify" },
+  { phase: "fix", label: "Minimal Fix" },
+  { phase: "complete", label: "Complete" }
+] as const;
+
+type BadgeTone = "neutral" | "info" | "success" | "warn" | "danger";
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function toneForState(value: string): BadgeTone {
+  const state = value.toLowerCase();
+  if (["active", "approved", "completed", "complete", "passed", "ok", "paired"].some((token) => state.includes(token))) {
+    return "success";
+  }
+  if (["warn", "pending", "running", "verifying", "created", "queued"].some((token) => state.includes(token))) {
+    return "warn";
+  }
+  if (["fail", "failed", "error", "rejected", "cancelled", "revoked", "missing"].some((token) => state.includes(token))) {
+    return "danger";
+  }
+  return "neutral";
+}
+
+function renderBadge(label: string, tone = toneForState(label)): string {
+  return `<span class="badge badge-${tone}">${escapeHtml(label)}</span>`;
+}
+
+function renderProofProgress(task: { phase: string; verificationState: string }, options?: { sessionState?: string }): string {
+  const activePhase = task.verificationState === "running" || options?.sessionState === "verifying"
+    ? "verify"
+    : task.phase;
+  const currentStepIndex = proofProgressSteps.findIndex((step) => step.phase === activePhase);
+  const verificationBadge = renderBadge(task.verificationState);
+
+  return `
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Proof Progress</h2>
+        ${verificationBadge}
+      </div>
+      <ol class="progress-list">
+        ${proofProgressSteps.map((step, index) => {
+          const status = index < currentStepIndex
+            ? "done"
+            : index === currentStepIndex
+              ? "current"
+              : "pending";
+          const statusLabel = status === "done" ? "done" : status === "current" ? "current" : "pending";
+          return `<li class="progress-step progress-step-${status}">
+            <span class="progress-marker">${index + 1}</span>
+            <div>
+              <strong>${escapeHtml(step.label)}</strong>
+              <div class="muted">${statusLabel}</div>
+            </div>
+          </li>`;
+        }).join("")}
+      </ol>
+    </section>
+  `;
+}
+
+export function formatMiniAppPortConflictMessage(listenPort: number): string {
+  return `Port ${listenPort} is already in use. Free the port or start the mini app with a different PORT, then try again.`;
 }
 
 export function renderPage(title: string, body: string): string {
@@ -73,12 +149,160 @@ export function renderPage(title: string, body: string): string {
       .muted {
         color: var(--muted);
       }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border: 1px solid currentColor;
+      }
+      .badge-neutral {
+        color: #6f675c;
+        background: rgba(111, 103, 92, 0.08);
+      }
+      .badge-info {
+        color: #2d5b7c;
+        background: rgba(45, 91, 124, 0.1);
+      }
+      .badge-success {
+        color: #0c7c59;
+        background: rgba(12, 124, 89, 0.1);
+      }
+      .badge-warn {
+        color: #8b5e10;
+        background: rgba(139, 94, 16, 0.1);
+      }
+      .badge-danger {
+        color: #a7382a;
+        background: rgba(167, 56, 42, 0.1);
+      }
+      .status-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .status-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 0;
+        border-top: 1px solid rgba(214, 202, 183, 0.7);
+      }
+      .status-list li:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .status-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .progress-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+      .progress-step {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.45);
+      }
+      .progress-step-done {
+        border-color: rgba(12, 124, 89, 0.35);
+        background: rgba(12, 124, 89, 0.08);
+      }
+      .progress-step-current {
+        border-color: rgba(45, 91, 124, 0.35);
+        background: rgba(45, 91, 124, 0.08);
+      }
+      .progress-marker {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+      .kv-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .kv-item {
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(214, 202, 183, 0.8);
+        background: rgba(255, 255, 255, 0.45);
+      }
+      .eyebrow {
+        margin: 0 0 8px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
     </style>
   </head>
   <body>
     <main>${body}</main>
   </body>
 </html>`;
+}
+
+export async function startMiniAppServer(
+  server = createMiniAppServer(),
+  options?: {
+    port?: number;
+    logger?: Pick<Logger, "info">;
+  }
+): Promise<void> {
+  const listenPort = options?.port ?? port;
+  const activeLogger = options?.logger ?? logger;
+
+  await new Promise<void>((resolve, reject) => {
+    const onListening = () => {
+      cleanup();
+      activeLogger.info("Mini App listening", { port: listenPort, apiBaseUrl });
+      resolve();
+    };
+    const onError = (error: NodeJS.ErrnoException) => {
+      cleanup();
+      if (error.code === "EADDRINUSE") {
+        reject(new Error(formatMiniAppPortConflictMessage(listenPort)));
+        return;
+      }
+      reject(error);
+    };
+    const cleanup = () => {
+      server.off("listening", onListening);
+      server.off("error", onError);
+    };
+
+    server.once("listening", onListening);
+    server.once("error", onError);
+    server.listen(listenPort);
+  });
 }
 
 export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJson: defaultFetchJson }) {
@@ -111,24 +335,25 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
 
         const body = `
           <section class="panel">
+            <p class="eyebrow">Overview</p>
             <h1>HappyTG Mini App</h1>
             <p class="muted">Telegram-first render layer for deep inspection. Source of truth remains the control plane and repo-local task bundles.</p>
           </section>
           <section class="panel">
             <h2>Hosts</h2>
-            <pre>${overview.hosts.map((host) => `${host.label} (${host.id}) state=${host.status}`).join("\n") || "No hosts found."}</pre>
+            <ul class="status-list">${overview.hosts.map((host) => `<li><div><strong>${escapeHtml(host.label)}</strong><div class="muted"><code>${escapeHtml(host.id)}</code></div></div><div class="status-meta">${renderBadge(host.status)}</div></li>`).join("") || "<li><span>No hosts found.</span></li>"}</ul>
           </section>
           <section class="panel">
             <h2>Sessions</h2>
-            <ul>${overview.sessions.map((session) => `<li><a href="/session/${session.id}">${session.id}</a> state=${session.state} title=${session.title}${session.taskId ? ` task=${session.taskId}` : ""}</li>`).join("") || "<li>No sessions found.</li>"}</ul>
+            <ul class="status-list">${overview.sessions.map((session) => `<li><div><strong><a href="/session/${encodeURIComponent(session.id)}">${escapeHtml(session.id)}</a></strong><div class="muted">${escapeHtml(session.title)}${session.taskId ? ` · task ${escapeHtml(session.taskId)}` : ""}</div></div><div class="status-meta">${renderBadge(session.state)}</div></li>`).join("") || "<li><span>No sessions found.</span></li>"}</ul>
           </section>
           <section class="panel">
             <h2>Approvals</h2>
-            <pre>${overview.approvals.map((approval) => `${approval.id} session=${approval.sessionId} state=${approval.state} reason=${approval.reason}`).join("\n") || "No approvals found."}</pre>
+            <ul class="status-list">${overview.approvals.map((approval) => `<li><div><strong>${escapeHtml(approval.id)}</strong><div class="muted">session ${escapeHtml(approval.sessionId)} · ${escapeHtml(approval.reason)}</div></div><div class="status-meta">${renderBadge(approval.state)}</div></li>`).join("") || "<li><span>No approvals found.</span></li>"}</ul>
           </section>
           <section class="panel">
             <h2>Tasks</h2>
-            <ul>${overview.tasks.map((task) => `<li><a href="/task/${task.id}">${task.id}</a> phase=${task.phase} verify=${task.verificationState}</li>`).join("") || "<li>No tasks found.</li>"}</ul>
+            <ul class="status-list">${overview.tasks.map((task) => `<li><div><strong><a href="/task/${encodeURIComponent(task.id)}">${escapeHtml(task.id)}</a></strong><div class="muted">phase ${escapeHtml(task.phase)}</div></div><div class="status-meta">${renderBadge(task.verificationState)}</div></li>`).join("") || "<li><span>No tasks found.</span></li>"}</ul>
           </section>
         `;
 
@@ -144,20 +369,25 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         const artifactSections = await Promise.all(
           ["spec.md", "evidence.md", "problems.md", "verdict.json"].map(async (artifact) => {
             const response = await dependencies.fetchJson<{ path: string; content: string }>(`/api/v1/tasks/${params.id}/artifact?path=${encodeURIComponent(artifact)}`);
-            return `<section class="panel"><h2>${artifact}</h2><pre>${response.content.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</pre></section>`;
+            return `<section class="panel"><h2>${escapeHtml(artifact)}</h2><pre>${escapeHtml(response.content)}</pre></section>`;
           })
         );
         const body = `
           <section class="panel">
-            <h1>Task ${task.task.id}</h1>
-            <p>Phase: ${task.task.phase}</p>
-            <p>Verification: ${task.task.verificationState}</p>
-            <p>Bundle path: <code>${task.task.rootPath}</code></p>
-            <p>Validation: ${task.validation.ok ? "ok" : `missing ${task.validation.missing.join(", ")}`}</p>
+            <div class="panel-header">
+              <h1>Task ${escapeHtml(task.task.id)}</h1>
+              ${renderBadge(task.task.verificationState)}
+            </div>
+            <div class="kv-grid">
+              <div class="kv-item"><div class="eyebrow">Phase</div><strong>${escapeHtml(task.task.phase)}</strong></div>
+              <div class="kv-item"><div class="eyebrow">Validation</div><strong>${escapeHtml(task.validation.ok ? "ok" : `missing ${task.validation.missing.join(", ")}`)}</strong></div>
+              <div class="kv-item"><div class="eyebrow">Bundle path</div><code>${escapeHtml(task.task.rootPath)}</code></div>
+            </div>
           </section>
+          ${renderProofProgress(task.task)}
           <section class="panel">
             <h2>Artifacts</h2>
-            <pre>${artifacts.artifacts.join("\n")}</pre>
+            <pre>${escapeHtml(artifacts.artifacts.join("\n"))}</pre>
           </section>
           ${artifactSections.join("\n")}
         `;
@@ -174,17 +404,22 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
 
         const body = `
           <section class="panel">
-            <h1>Session ${timeline.session.id}</h1>
-            <p>Title: ${timeline.session.title}</p>
-            <p>State: ${timeline.session.state}</p>
-            <p>Summary: ${timeline.session.currentSummary ?? "n/a"}</p>
-            <p>Error: ${timeline.session.lastError ?? "n/a"}</p>
-            <p>Task: ${timeline.task ? `<a href="/task/${timeline.task.id}">${timeline.task.id}</a> phase=${timeline.task.phase} verify=${timeline.task.verificationState}` : "n/a"}</p>
-            <p>Approval: ${timeline.approval ? `${timeline.approval.id} state=${timeline.approval.state} reason=${timeline.approval.reason}` : "n/a"}</p>
+            <div class="panel-header">
+              <h1>Session ${escapeHtml(timeline.session.id)}</h1>
+              ${renderBadge(timeline.session.state)}
+            </div>
+            <div class="kv-grid">
+              <div class="kv-item"><div class="eyebrow">Title</div><strong>${escapeHtml(timeline.session.title)}</strong></div>
+              <div class="kv-item"><div class="eyebrow">Summary</div><strong>${escapeHtml(timeline.session.currentSummary ?? "n/a")}</strong></div>
+              <div class="kv-item"><div class="eyebrow">Last error</div><strong>${escapeHtml(timeline.session.lastError ?? "n/a")}</strong></div>
+              <div class="kv-item"><div class="eyebrow">Approval</div><strong>${timeline.approval ? `${escapeHtml(timeline.approval.id)} · ${escapeHtml(timeline.approval.reason)}` : "n/a"}</strong></div>
+            </div>
+            <p>Task: ${timeline.task ? `<a href="/task/${encodeURIComponent(timeline.task.id)}">${escapeHtml(timeline.task.id)}</a> phase=${escapeHtml(timeline.task.phase)} verify=${escapeHtml(timeline.task.verificationState)}` : "n/a"}</p>
           </section>
+          ${timeline.task ? renderProofProgress(timeline.task, { sessionState: timeline.session.state }) : ""}
           <section class="panel">
             <h2>Timeline</h2>
-            <pre>${timeline.events.map((event) => `${event.sequence}. ${event.occurredAt} ${event.type} ${JSON.stringify(event.payload)}`).join("\n") || "No events recorded."}</pre>
+            <pre>${escapeHtml(timeline.events.map((event) => `${event.sequence}. ${event.occurredAt} ${event.type} ${JSON.stringify(event.payload)}`).join("\n") || "No events recorded.")}</pre>
           </section>
         `;
 
@@ -197,7 +432,8 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const server = createMiniAppServer();
-  server.listen(port, () => {
-    logger.info("Mini App listening", { port, apiBaseUrl });
+  void startMiniAppServer(server).catch((error) => {
+    console.error(error instanceof Error ? error.message : "Mini App failed to start.");
+    process.exitCode = 1;
   });
 }

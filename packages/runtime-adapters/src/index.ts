@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 import type { RuntimeExecutionResult, RuntimeReadiness } from "../../protocol/src/index.js";
-import { ensureDir, fileExists, nowIso, readTextFileOrEmpty, resolveHome } from "../../shared/src/index.js";
+import { ensureDir, fileExists, nowIso, readTextFileOrEmpty, resolveExecutable, resolveHome } from "../../shared/src/index.js";
 
 export interface RuntimeAdapter {
   id: string;
@@ -24,11 +24,52 @@ function homeExpanded(configPath: string): string {
   return configPath.startsWith("~") ? resolveHome(configPath) : configPath;
 }
 
+function isJavaScriptEntrypoint(filePath: string): boolean {
+  return [".js", ".mjs", ".cjs"].includes(path.extname(filePath).toLowerCase());
+}
+
+function formatSpawnError(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
+function isCommandMissingError(error: unknown): boolean {
+  return Boolean(
+    error
+    && typeof error === "object"
+    && "code" in error
+    && (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
+}
+
+export function codexCliMissingMessage(): string {
+  return "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`.";
+}
+
+async function resolveCommandInvocation(command: string, args: string[], cwd?: string): Promise<{ command: string; args: string[] }> {
+  const resolvedPath = await resolveExecutable(command, { cwd });
+  const commandPath = resolvedPath ?? command;
+
+  if (isJavaScriptEntrypoint(commandPath)) {
+    return {
+      command: process.execPath,
+      args: [commandPath, ...args]
+    };
+  }
+
+  return {
+    command: commandPath,
+    args
+  };
+}
+
 async function runCommand(command: string, args: string[], cwd?: string, timeoutMs = Number(process.env.HAPPYTG_CODEX_EXEC_TIMEOUT_MS ?? 120_000)): Promise<{ stdout: string; stderr: string; exitCode: number; timedOut: boolean }> {
+  const invocation = await resolveCommandInvocation(command, args, cwd);
+  const useWindowsShell = process.platform === "win32" && /\.(cmd|bat)$/i.test(invocation.command);
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const child = spawn(invocation.command, invocation.args, {
       cwd,
-      env: process.env
+      env: process.env,
+      shell: useWindowsShell
     });
 
     let stdout = "";
@@ -65,23 +106,25 @@ async function runCommand(command: string, args: string[], cwd?: string, timeout
 
 export async function checkCodexReadiness(input?: {
   binaryPath?: string;
+  binaryArgs?: string[];
   configPath?: string;
   smokePrompt?: string;
 }): Promise<RuntimeReadiness> {
   const binaryPath = input?.binaryPath ?? process.env.CODEX_CLI_BIN ?? "codex";
+  const binaryArgs = input?.binaryArgs ?? [];
   const configPath = homeExpanded(input?.configPath ?? process.env.CODEX_CONFIG_PATH ?? "~/.codex/config.toml");
   const smokePrompt = input?.smokePrompt ?? process.env.CODEX_SMOKE_PROMPT ?? "Print exactly OK and exit.";
   const configExists = await fileExists(configPath);
 
   try {
-    const versionRun = await runCommand(binaryPath, ["--version"]);
+    const versionRun = await runCommand(binaryPath, [...binaryArgs, "--version"]);
     const available = versionRun.exitCode === 0;
     let smokeOk = false;
     let smokeOutput = "";
     let smokeError = "";
 
     if (available && configExists) {
-      const smokeRun = await runCommand(binaryPath, ["exec", "--skip-git-repo-check", "--json", smokePrompt]);
+      const smokeRun = await runCommand(binaryPath, [...binaryArgs, "exec", "--skip-git-repo-check", "--json", smokePrompt]);
       smokeOk = smokeRun.exitCode === 0;
       smokeOutput = smokeRun.stdout.trim();
       smokeError = smokeRun.stderr.trim();
@@ -106,7 +149,7 @@ export async function checkCodexReadiness(input?: {
       configPath,
       configExists,
       smokeOk: false,
-      smokeError: error instanceof Error ? error.message : "Unknown error"
+      smokeError: isCommandMissingError(error) ? codexCliMissingMessage() : formatSpawnError(error)
     };
   }
 }
@@ -114,6 +157,8 @@ export async function checkCodexReadiness(input?: {
 export async function runCodexExec(input: {
   cwd: string;
   prompt: string;
+  binaryPath?: string;
+  binaryArgs?: string[];
   outputDir?: string;
   profile?: string;
   model?: string;
@@ -123,12 +168,13 @@ export async function runCodexExec(input: {
   timeoutMs?: number;
 }): Promise<RuntimeExecutionResult> {
   const startedAt = nowIso();
-  const binaryPath = process.env.CODEX_CLI_BIN ?? "codex";
+  const binaryPath = input.binaryPath ?? process.env.CODEX_CLI_BIN ?? "codex";
+  const binaryArgs = input.binaryArgs ?? [];
   const outputDir = input.outputDir ?? path.join(os.tmpdir(), "happytg-codex");
   await ensureDir(outputDir);
 
   const lastMessagePath = path.join(outputDir, `codex-last-message-${Date.now()}.txt`);
-  const args = ["exec", "--json", "-o", lastMessagePath, "-C", input.cwd];
+  const args = [...binaryArgs, "exec", "--json", "-o", lastMessagePath, "-C", input.cwd];
   if (input.sandbox) {
     args.push("--sandbox", input.sandbox);
   }
@@ -146,23 +192,37 @@ export async function runCodexExec(input: {
   }
   args.push(input.prompt);
 
-  const result = await runCommand(binaryPath, args, input.cwd, input.timeoutMs);
-  const finishedAt = nowIso();
-  const lastMessage = await readTextFileOrEmpty(lastMessagePath);
+  try {
+    const result = await runCommand(binaryPath, args, input.cwd, input.timeoutMs);
+    const finishedAt = nowIso();
+    const lastMessage = await readTextFileOrEmpty(lastMessagePath);
 
-  return {
-    ok: result.exitCode === 0,
-    timedOut: result.timedOut,
-    summary: result.timedOut
-      ? `Codex execution timed out after ${input.timeoutMs ?? Number(process.env.HAPPYTG_CODEX_EXEC_TIMEOUT_MS ?? 120_000)}ms.`
-      : lastMessage.trim() || result.stdout.trim().split("\n").slice(-5).join("\n") || "Codex run completed",
-    stdout: result.stdout,
-    stderr: result.stderr,
-    exitCode: result.exitCode,
-    startedAt,
-    finishedAt,
-    lastMessagePath
-  };
+    return {
+      ok: result.exitCode === 0,
+      timedOut: result.timedOut,
+      summary: result.timedOut
+        ? `Codex execution timed out after ${input.timeoutMs ?? Number(process.env.HAPPYTG_CODEX_EXEC_TIMEOUT_MS ?? 120_000)}ms.`
+        : lastMessage.trim() || result.stdout.trim().split("\n").slice(-5).join("\n") || "Codex run completed",
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+      startedAt,
+      finishedAt,
+      lastMessagePath
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      timedOut: false,
+      summary: isCommandMissingError(error) ? codexCliMissingMessage() : "Codex execution failed. Run `pnpm happytg doctor --json` for details.",
+      stdout: "",
+      stderr: formatSpawnError(error),
+      exitCode: isCommandMissingError(error) ? 127 : 1,
+      startedAt,
+      finishedAt: nowIso(),
+      lastMessagePath
+    };
+  }
 }
 
 export async function writeSessionCheckpoint(filePath: string, payload: Record<string, unknown>): Promise<void> {

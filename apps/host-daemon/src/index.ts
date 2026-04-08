@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { runBootstrapCommand } from "../../../packages/bootstrap/src/index.js";
 import { freezeTaskSpec, updateEvidence, writeRawArtifact, writeVerificationVerdict } from "../../../packages/repo-proof/src/index.js";
-import { checkCodexReadiness, runCodexExec } from "../../../packages/runtime-adapters/src/index.js";
+import { checkCodexReadiness, codexCliMissingMessage, runCodexExec } from "../../../packages/runtime-adapters/src/index.js";
 import type {
   DaemonCompleteRequest,
   DaemonDispatchAckRequest,
@@ -28,9 +28,11 @@ const logger = createLogger("host-daemon");
 const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
 const heartbeatMs = Number(process.env.HOST_DAEMON_DEFAULT_POLL_MS ?? 2_000);
 const journalRetentionMs = Number(process.env.HOST_DAEMON_JOURNAL_RETENTION_MS ?? 86_400_000);
+const startupNoticeSuppressMs = Number(process.env.HOST_DAEMON_REPEAT_SUPPRESS_MS ?? 60_000);
 const stateDir = getLocalStateDir();
 const stateFile = path.join(stateDir, "daemon-state.json");
 const journalFile = path.join(stateDir, "daemon-journal.json");
+const startupNotices = new Map<string, number>();
 
 type SandboxMode = "read-only" | "workspace-write";
 
@@ -65,6 +67,55 @@ export function defaultWorkspaces(env = process.env, cwd = process.cwd()): Daemo
     path: workspacePath,
     repoName: path.basename(workspacePath)
   }));
+}
+
+export function hostNotPairedMessage(): string {
+  return "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`.";
+}
+
+export function startupReadinessMessage(input: { available: boolean }): string | undefined {
+  if (!input.available) {
+    return codexCliMissingMessage();
+  }
+
+  return undefined;
+}
+
+export function firstRunGuidance(input: { hostId?: string; readinessAvailable: boolean }): string | undefined {
+  if (!input.readinessAvailable) {
+    return codexCliMissingMessage();
+  }
+
+  if (!input.hostId) {
+    return hostNotPairedMessage();
+  }
+
+  return undefined;
+}
+
+export function shouldEmitStartupNotice(
+  noticeCache: Map<string, number>,
+  key: string,
+  nowMs = Date.now(),
+  suppressMs = startupNoticeSuppressMs
+): boolean {
+  const lastEmittedAt = noticeCache.get(key);
+  if (lastEmittedAt !== undefined && nowMs - lastEmittedAt < suppressMs) {
+    return false;
+  }
+
+  noticeCache.set(key, nowMs);
+  return true;
+}
+
+function clearStartupNotice(key: string): void {
+  startupNotices.delete(key);
+}
+
+function emitStartupNotice(key: string, message: string): void {
+  if (shouldEmitStartupNotice(startupNotices, key)) {
+    console.log(message);
+  }
 }
 
 async function loadState(): Promise<DaemonState> {
@@ -163,7 +214,7 @@ async function pairHost(labelOverride?: string): Promise<void> {
 
 async function hello(state: DaemonState): Promise<{ state: DaemonState; dispatches: PendingDispatch[] }> {
   if (!state.hostId) {
-    throw new Error("Host is not paired. Run `pnpm --filter @happytg/host-daemon dev -- pair` first.");
+    throw new Error(hostNotPairedMessage());
   }
 
   const response = await apiFetch<HostHelloResponse>("/api/v1/daemon/hello", {
@@ -393,6 +444,7 @@ async function processProofDispatch(state: DaemonState, dispatch: PendingDispatc
   await updateTaskPhase(state.hostId!, task.id, task.phase, task.verificationState);
   await updateSessionEvent(state.hostId!, dispatch.sessionId, `Task ${task.id} evidence updated`, "verifying");
 
+  await updateTaskPhase(state.hostId!, task.id, "verify", "running");
   const firstVerifier = await runVerifier(task, workspace, "verifier-1.txt");
   const firstVerdict = parseVerifierVerdict(firstVerifier.summary);
   let verdict = await writeVerificationVerdict({
@@ -428,6 +480,7 @@ async function processProofDispatch(state: DaemonState, dispatch: PendingDispatc
     ]);
     await updateTaskPhase(state.hostId!, task.id, "fix", task.verificationState);
 
+    await updateTaskPhase(state.hostId!, task.id, "verify", "running");
     const secondVerifier = await runVerifier(task, workspace, "verifier-2.txt");
     const secondVerdict = parseVerifierVerdict(secondVerifier.summary);
     verdict = await writeVerificationVerdict({
@@ -519,9 +572,24 @@ async function processDispatch(state: DaemonState, dispatch: PendingDispatch): P
 
 async function runOnce(): Promise<void> {
   const readiness = await checkCodexReadiness();
-  logger.info("Codex readiness", readiness);
-
   const state = await loadState();
+  const guidance = firstRunGuidance({
+    hostId: state.hostId,
+    readinessAvailable: readiness.available
+  });
+
+  if (guidance === codexCliMissingMessage()) {
+    emitStartupNotice("codex-missing", guidance);
+    return;
+  }
+  clearStartupNotice("codex-missing");
+
+  if (guidance === hostNotPairedMessage()) {
+    emitStartupNotice("host-not-paired", guidance);
+    return;
+  }
+  clearStartupNotice("host-not-paired");
+
   const helloResult = await hello(state);
   if (!helloResult.state.hostId) {
     throw new Error("Host pairing is incomplete");

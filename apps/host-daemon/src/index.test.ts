@@ -6,8 +6,12 @@ import type { PendingDispatch } from "../../../packages/protocol/src/index.js";
 import {
   compactJournal,
   defaultWorkspaces,
+  firstRunGuidance,
+  hostNotPairedMessage,
   parseVerifierVerdict,
   sandboxForDispatch,
+  shouldEmitStartupNotice,
+  startupReadinessMessage,
   summarizeBootstrapReport
 } from "./index.js";
 
@@ -92,6 +96,27 @@ test("parseVerifierVerdict keys off the first line only", () => {
   assert.equal(parseVerifierVerdict("VERDICT: PASS\nAll good"), "passed");
   assert.equal(parseVerifierVerdict("VERDICT: FAIL\nNeeds fixes"), "failed");
   assert.equal(parseVerifierVerdict("VERDICT: FAIL\nPASS later"), "failed");
+});
+
+test("startup guidance stays actionable and repeated notices are suppressed", () => {
+  const cache = new Map<string, number>();
+
+  assert.equal(
+    startupReadinessMessage({ available: false }),
+    "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
+  );
+  assert.equal(
+    firstRunGuidance({ hostId: undefined, readinessAvailable: false }),
+    "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
+  );
+  assert.equal(
+    firstRunGuidance({ hostId: undefined, readinessAvailable: true }),
+    "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`."
+  );
+  assert.equal(hostNotPairedMessage(), "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`.");
+  assert.equal(shouldEmitStartupNotice(cache, "codex", 0, 60_000), true);
+  assert.equal(shouldEmitStartupNotice(cache, "codex", 1_000, 60_000), false);
+  assert.equal(shouldEmitStartupNotice(cache, "codex", 61_000, 60_000), true);
 });
 
 test("summarizeBootstrapReport includes top finding codes", () => {

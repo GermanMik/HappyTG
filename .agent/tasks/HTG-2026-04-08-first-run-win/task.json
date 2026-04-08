@@ -1,0 +1,20 @@
+{
+  "id": "HTG-2026-04-08-first-run-win",
+  "sessionId": "ses_manual",
+  "workspaceId": "HappyTG",
+  "rootPath": "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Windows first-run UX and diagnostics hardening",
+  "acceptanceCriteria": [
+    "Runtime adapters use a cross-platform Codex harness and package tests pass on Windows/macOS/Linux without POSIX-only test scripts.",
+    "Bootstrap reports missing config and Codex smoke warnings as warn, uses PATH-based Git detection, and preserves machine-readable report JSON.",
+    "User-facing first-run messaging is concise and actionable for missing Codex CLI, unpaired host, and occupied miniapp port; verbose details stay in doctor/JSON diagnostics.",
+    "CLI bootstrap output is structured and compact, and at least one user-facing progress indicator is shown without changing existing APIs unnecessarily.",
+    "Miniapp handles port conflicts without an unhandled stack trace and host-daemon suppresses repeated expected first-run noise.",
+    "Tests cover the cross-platform runtime harness, bootstrap warning expectations, diagnostics/text rendering split, and reduced-noise startup or miniapp port-conflict handling."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-08T04:23:47.446Z",
+  "updatedAt": "2026-04-08T04:55:02.000Z"
+}

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { promises as fs } from "node:fs";
+import { constants as fsConstants, promises as fs } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -53,6 +53,89 @@ export async function fileExists(filePath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+function stripWrappedQuotes(value: string): string {
+  if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+    return value.slice(1, -1);
+  }
+
+  return value;
+}
+
+function envPathValue(env: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform): string {
+  if (platform !== "win32") {
+    return env.PATH ?? "";
+  }
+
+  const pathKey = Object.keys(env).find((key) => key.toLowerCase() === "path");
+  return pathKey ? env[pathKey] ?? "" : "";
+}
+
+function executableExtensions(env: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform, command = ""): string[] {
+  if (platform !== "win32" || path.extname(command)) {
+    return [""];
+  }
+
+  const raw = env.PATHEXT ?? ".COM;.EXE;.BAT;.CMD";
+  const extensions = raw
+    .split(";")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => entry.startsWith(".") ? entry.toLowerCase() : `.${entry.toLowerCase()}`);
+
+  return ["", ...extensions];
+}
+
+async function isExecutableFile(filePath: string, platform: NodeJS.Platform = process.platform): Promise<boolean> {
+  try {
+    await fs.access(filePath, platform === "win32" ? fsConstants.F_OK : fsConstants.X_OK);
+    return (await fs.stat(filePath)).isFile();
+  } catch {
+    return false;
+  }
+}
+
+export async function resolveExecutable(command: string, options?: {
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  platform?: NodeJS.Platform;
+}): Promise<string | undefined> {
+  const normalized = stripWrappedQuotes(command).trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  const env = options?.env ?? process.env;
+  const platform = options?.platform ?? process.platform;
+  const cwd = options?.cwd ?? process.cwd();
+  const hasExplicitPath = path.isAbsolute(normalized) || normalized.includes("/") || normalized.includes("\\");
+  const searchRoots = hasExplicitPath
+    ? [path.isAbsolute(normalized) ? normalized : path.resolve(cwd, normalized)]
+    : envPathValue(env, platform)
+      .split(path.delimiter)
+      .map((entry) => stripWrappedQuotes(entry.trim()))
+      .filter(Boolean)
+      .map((entry) => path.join(entry, normalized));
+
+  for (const root of searchRoots) {
+    for (const extension of executableExtensions(env, platform, normalized)) {
+      const candidate = extension && !root.toLowerCase().endsWith(extension) ? `${root}${extension}` : root;
+      if (await isExecutableFile(candidate, platform)) {
+        return candidate;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+export async function findExecutable(command: string, env = process.env, platform: NodeJS.Platform = process.platform): Promise<string | undefined> {
+  return resolveExecutable(command, { env, platform });
+}
+
+export async function findExecutableOnPath(command: string, env = process.env, cwd = process.cwd()): Promise<string | undefined> {
+  return resolveExecutable(command, { env, cwd });
 }
 
 export async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {

@@ -1,0 +1,255 @@
+
+> @happytg/runtime-adapters@0.1.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: checkCodexReadiness reports available Codex and captures smoke warnings
+ok 1 - checkCodexReadiness reports available Codex and captures smoke warnings
+  ---
+  duration_ms: 1139.602708
+  type: 'test'
+  ...
+# Subtest: runCodexExec reads summary from the Codex output file
+ok 2 - runCodexExec reads summary from the Codex output file
+  ---
+  duration_ms: 892.7715
+  type: 'test'
+  ...
+# Subtest: runCodexExec marks timeout and returns a timeout summary
+ok 3 - runCodexExec marks timeout and returns a timeout summary
+  ---
+  duration_ms: 125.758292
+  type: 'test'
+  ...
+# Subtest: runCodexExec returns actionable guidance when Codex CLI is missing
+ok 4 - runCodexExec returns actionable guidance when Codex CLI is missing
+  ---
+  duration_ms: 162.952125
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8361.8375
+
+> @happytg/bootstrap@0.1.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: parseHappyTGArgs maps config and env nested commands
+ok 1 - parseHappyTGArgs maps config and env nested commands
+  ---
+  duration_ms: 10.142541
+  type: 'test'
+  ...
+# Subtest: executeHappyTG initializes and inspects repo-local task bundles
+ok 2 - executeHappyTG initializes and inspects repo-local task bundles
+  ---
+  duration_ms: 734.686
+  type: 'test'
+  ...
+# Subtest: renderText returns a compact bootstrap summary with diagnostics hints
+ok 3 - renderText returns a compact bootstrap summary with diagnostics hints
+  ---
+  duration_ms: 7.657542
+  type: 'test'
+  ...
+# Subtest: doctor writes a report, detects Git via PATH, and flags missing Codex config as warn
+ok 4 - doctor writes a report, detects Git via PATH, and flags missing Codex config as warn
+  ---
+  duration_ms: 1029.067375
+  type: 'test'
+  ...
+# Subtest: verify surfaces Codex smoke warnings as warn when config exists
+ok 5 - verify surfaces Codex smoke warnings as warn when config exists
+  ---
+  duration_ms: 744.084208
+  type: 'test'
+  ...
+# Subtest: config-init and env-snapshot remain deterministic plan-only commands
+ok 6 - config-init and env-snapshot remain deterministic plan-only commands
+  ---
+  duration_ms: 284.577625
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4647.102917
+
+> @happytg/shared@0.1.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: resolveHome and atomic file helpers round-trip data
+ok 1 - resolveHome and atomic file helpers round-trip data
+  ---
+  duration_ms: 1748.194875
+  type: 'test'
+  ...
+# Subtest: findExecutable searches PATH and appends Windows executable extensions
+ok 2 - findExecutable searches PATH and appends Windows executable extensions
+  ---
+  duration_ms: 545.789375
+  type: 'test'
+  ...
+# Subtest: FileStateStore serializes concurrent updates through its queue
+ok 3 - FileStateStore serializes concurrent updates through its queue
+  ---
+  duration_ms: 343.540834
+  type: 'test'
+  ...
+# Subtest: createJsonServer resolves route params and query data
+ok 4 - createJsonServer resolves route params and query data
+  ---
+  duration_ms: 399.503083
+  type: 'test'
+  ...
+# Subtest: createJsonServer returns a structured 500 when handler throws
+ok 5 - createJsonServer returns a structured 500 when handler throws
+  ---
+  duration_ms: 166.552375
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9090.562333
+
+> @happytg/miniapp@0.1.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: mini app ready endpoint returns 503 when api health fails
+ok 1 - mini app ready endpoint returns 503 when api health fails
+  ---
+  duration_ms: 238.982208
+  type: 'test'
+  ...
+# Subtest: overview page renders hosts, sessions, approvals, and tasks
+ok 2 - overview page renders hosts, sessions, approvals, and tasks
+  ---
+  duration_ms: 38.513208
+  type: 'test'
+  ...
+# Subtest: task page renders canonical artifacts and escapes file content
+ok 3 - task page renders canonical artifacts and escapes file content
+  ---
+  duration_ms: 33.128958
+  type: 'test'
+  ...
+# Subtest: session page renders timeline, summary, and task link
+ok 4 - session page renders timeline, summary, and task link
+  ---
+  duration_ms: 44.916792
+  type: 'test'
+  ...
+# Subtest: startMiniAppServer returns an actionable message when the port is already in use
+ok 5 - startMiniAppServer returns an actionable message when the port is already in use
+  ---
+  duration_ms: 16.227833
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2579.755833
+
+> @happytg/host-daemon@0.1.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: defaultWorkspaces prefers configured workspace paths
+ok 1 - defaultWorkspaces prefers configured workspace paths
+  ---
+  duration_ms: 14.350541
+  type: 'test'
+  ...
+# Subtest: compactJournal keeps running entries and trims stale completed entries
+ok 2 - compactJournal keeps running entries and trims stale completed entries
+  ---
+  duration_ms: 0.849917
+  type: 'test'
+  ...
+# Subtest: sandboxForDispatch preserves read-only safety for doctor and verify paths
+ok 3 - sandboxForDispatch preserves read-only safety for doctor and verify paths
+  ---
+  duration_ms: 0.539042
+  type: 'test'
+  ...
+# Subtest: parseVerifierVerdict keys off the first line only
+ok 4 - parseVerifierVerdict keys off the first line only
+  ---
+  duration_ms: 0.364667
+  type: 'test'
+  ...
+# Subtest: startup guidance stays actionable and repeated notices are suppressed
+ok 5 - startup guidance stays actionable and repeated notices are suppressed
+  ---
+  duration_ms: 1.027
+  type: 'test'
+  ...
+# Subtest: summarizeBootstrapReport includes top finding codes
+ok 6 - summarizeBootstrapReport includes top finding codes
+  ---
+  duration_ms: 0.534
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3278.51525
+Command: pnpm --filter @happytg/shared test
+Result: pass
+Key output:
+- 5 tests passed
+- includes cross-platform executable resolution coverage
+
+Command: pnpm --filter @happytg/runtime-adapters test
+Result: pass
+Key output:
+- 4 tests passed
+- Node-based Codex harness covers readiness, exec output, timeout, and missing CLI guidance
+
+Command: pnpm --filter @happytg/bootstrap test
+Result: pass
+Key output:
+- 6 tests passed
+- covers PATH-based Git detection, warn expectations, and compact CLI rendering
+
+Command: pnpm --filter @happytg/miniapp test
+Result: pass
+Key output:
+- 5 tests passed
+- covers progress rendering and actionable port-conflict handling
+
+Command: pnpm --filter @happytg/host-daemon test
+Result: pass
+Key output:
+- 6 tests passed
+- covers actionable first-run guidance and repeat suppression

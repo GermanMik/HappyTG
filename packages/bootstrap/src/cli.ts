@@ -28,6 +28,35 @@ interface ParsedOptions {
   values: Map<string, string[]>;
 }
 
+function statusBadge(status: "pass" | "warn" | "fail"): string {
+  return `[${status.toUpperCase()}]`;
+}
+
+function findingLabel(severity: "info" | "warn" | "error"): string {
+  return severity.toUpperCase().padEnd(5, " ");
+}
+
+function summarizeFindings(result: BootstrapReport): string {
+  if (result.findings.length === 0) {
+    return "Environment looks ready.";
+  }
+
+  const counts = result.findings.reduce(
+    (accumulator, finding) => {
+      accumulator[finding.severity] += 1;
+      return accumulator;
+    },
+    { info: 0, warn: 0, error: 0 }
+  );
+  const summaryParts = [
+    counts.error > 0 ? `${counts.error} error${counts.error === 1 ? "" : "s"}` : "",
+    counts.warn > 0 ? `${counts.warn} warning${counts.warn === 1 ? "" : "s"}` : "",
+    counts.info > 0 ? `${counts.info} info` : ""
+  ].filter(Boolean);
+
+  return `${summaryParts.join(", ")} found.`;
+}
+
 function usage(): string {
   return [
     "Usage:",
@@ -160,32 +189,45 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
   throw new Error(`Unsupported command: ${scope}`);
 }
 
-function renderText(result: BootstrapReport | TaskBundle | TaskStatusResponse): string {
+export function renderText(result: BootstrapReport | TaskBundle | TaskStatusResponse): string {
   if ("command" in result) {
     const lines = [
-      `Command: ${result.command}`,
-      `Status: ${result.status}`,
-      `Profile: ${result.profileRecommendation}`
+      `HappyTG ${result.command} ${statusBadge(result.status)}`,
+      `Summary: ${summarizeFindings(result)}`,
+      `Profile: ${result.profileRecommendation ?? "n/a"}`
     ];
+
     if (result.findings.length > 0) {
+      lines.push("");
       lines.push("Findings:");
-      lines.push(...result.findings.map((finding) => `- [${finding.severity}] ${finding.code}: ${finding.message}`));
+      lines.push(...result.findings.map((finding) => `- ${findingLabel(finding.severity)} ${finding.message}`));
     }
+
     if (result.planPreview.length > 0) {
-      lines.push("Plan:");
+      lines.push("");
+      lines.push("Next steps:");
       lines.push(...result.planPreview.map((item) => `- ${item}`));
     }
+
+    lines.push("");
+    lines.push("Diagnostics:");
+    lines.push(`- Run \`pnpm happytg ${result.command} --json\` for machine-readable details.`);
+    if (result.command !== "doctor") {
+      lines.push("- Run `pnpm happytg doctor --json` for the full environment report.");
+    }
+
     return lines.join("\n");
   }
 
   if ("phase" in result) {
-    return [
+    const lines = [
       `Task: ${result.id}`,
       `Mode: ${result.mode}`,
       `Phase: ${result.phase}`,
       `Verification: ${result.verificationState}`,
       `Bundle: ${result.rootPath}`
-    ].join("\n");
+    ];
+    return lines.join("\n");
   }
 
   return [

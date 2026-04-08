@@ -1,0 +1,70 @@
+{
+  "taskId": "HTG-2026-04-08-first-run-win",
+  "criteria": [
+    {
+      "criterion": "Runtime adapters use a cross-platform Codex harness and package tests pass on Windows/macOS/Linux without POSIX-only test scripts.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win/raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Bootstrap reports missing config and Codex smoke warnings as warn, uses PATH-based Git detection, and preserves machine-readable report JSON.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win/raw/test-unit.txt",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win/raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "User-facing first-run messaging is concise and actionable for missing Codex CLI, unpaired host, and occupied miniapp port; verbose details stay in doctor/JSON diagnostics.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/cli.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win/raw/test-unit.txt",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win/raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "CLI bootstrap output is structured and compact, and at least one user-facing progress indicator is shown without changing existing APIs unnecessarily.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/cli.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/cli.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "Miniapp handles port conflicts without an unhandled stack trace and host-daemon suppresses repeated expected first-run noise.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "Tests cover the cross-platform runtime harness, bootstrap warning expectations, diagnostics/text rendering split, and reduced-noise startup or miniapp port-conflict handling.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/cli.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon/src/index.test.ts"
+      ]
+    }
+  ],
+  "artifacts": [
+    "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win/raw/build.txt",
+    "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win/raw/test-unit.txt",
+    "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win/raw/test-integration.txt",
+    "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-first-run-win/raw/lint.txt"
+  ],
+  "generatedAt": "2026-04-08T04:55:02.000Z"
+}

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -9,6 +9,7 @@ import type { Logger } from "./index.js";
 import {
   FileStateStore,
   createJsonServer,
+  findExecutable,
   json,
   readJsonFile,
   readTextFileOrEmpty,
@@ -26,8 +27,8 @@ const silentLogger: Logger = {
 
 test("resolveHome and atomic file helpers round-trip data", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-files-"));
+  const originalHome = process.env.HOME;
   try {
-    const originalHome = process.env.HOME;
     process.env.HOME = tempDir;
 
     const jsonPath = path.join(tempDir, "nested", "data.json");
@@ -42,12 +43,42 @@ test("resolveHome and atomic file helpers round-trip data", async () => {
     assert.equal(await readTextFileOrEmpty(textPath), "hello");
     assert.equal(await readTextFileOrEmpty(path.join(tempDir, "missing.txt")), "");
     assert.equal((await readFile(jsonPath, "utf8")).endsWith("\n"), true);
-
+  } finally {
     if (originalHome === undefined) {
       delete process.env.HOME;
     } else {
       process.env.HOME = originalHome;
     }
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("findExecutable searches PATH and appends Windows executable extensions", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-"));
+  try {
+    const windowsCodex = path.join(tempDir, "codex.cmd");
+    const unixGit = path.join(tempDir, "git");
+    await Promise.all([
+      writeFile(windowsCodex, "@echo off\r\n", "utf8"),
+      writeFile(unixGit, "#!/bin/sh\n", "utf8")
+    ]);
+    await chmod(unixGit, 0o755);
+
+    const windowsResolved = await findExecutable("codex", {
+        PATH: tempDir,
+        PATHEXT: ".COM;.EXE;.BAT;.CMD"
+      }, "win32");
+    const unixResolved = await findExecutable("git", {
+        PATH: tempDir
+      }, "linux");
+    const explicitWindowsResolved = await findExecutable(path.join(tempDir, "codex"), {
+        PATH: tempDir,
+        PATHEXT: ".COM;.EXE;.BAT;.CMD"
+      }, "win32");
+
+    assert.equal(windowsResolved, windowsCodex);
+    assert.equal(unixResolved, unixGit);
+    assert.equal(explicitWindowsResolved, windowsCodex);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

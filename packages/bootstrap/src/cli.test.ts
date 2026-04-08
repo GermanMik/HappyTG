@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { executeHappyTG, parseHappyTGArgs } from "./cli.js";
+import { executeHappyTG, parseHappyTGArgs, renderText } from "./cli.js";
 
 test("parseHappyTGArgs maps config and env nested commands", () => {
   assert.deepEqual(parseHappyTGArgs(["config", "init", "--json"]), {
@@ -62,4 +62,37 @@ test("executeHappyTG initializes and inspects repo-local task bundles", async ()
   } finally {
     await rm(repoRoot, { recursive: true, force: true });
   }
+});
+
+test("renderText returns a compact bootstrap summary with diagnostics hints", () => {
+  const output = renderText({
+    id: "btr_1",
+    hostFingerprint: "fp",
+    command: "status",
+    status: "warn",
+    profileRecommendation: "recommended",
+    findings: [
+      {
+        code: "CODEX_MISSING",
+        severity: "error",
+        message: "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
+      }
+    ],
+    planPreview: [
+      "Install Codex CLI and verify `codex --version`."
+    ],
+    reportJson: {
+      codex: {
+        binaryPath: "/tmp/codex"
+      }
+    },
+    createdAt: "2026-04-08T00:00:00.000Z"
+  });
+
+  assert.match(output, /HappyTG status \[WARN\]/);
+  assert.match(output, /Summary: 1 error found\./);
+  assert.match(output, /Next steps:/);
+  assert.match(output, /Diagnostics:/);
+  assert.match(output, /pnpm happytg status --json/);
+  assert.doesNotMatch(output, /\/tmp\/codex/);
 });

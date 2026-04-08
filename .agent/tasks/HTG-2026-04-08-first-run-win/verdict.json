@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-08-first-run-win",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "manual_fresh_verify_20260408"
+  },
+  "checks": [
+    {
+      "name": "targeted-package-tests",
+      "ok": true,
+      "detail": "Shared, runtime-adapters, bootstrap, miniapp, and host-daemon targeted test suites passed."
+    },
+    {
+      "name": "repo-typecheck",
+      "ok": true,
+      "detail": "`pnpm typecheck` passed across 13 packages."
+    },
+    {
+      "name": "repo-test",
+      "ok": true,
+      "detail": "`pnpm test` passed across 13 packages."
+    },
+    {
+      "name": "repo-build",
+      "ok": true,
+      "detail": "`pnpm build` passed across 13 packages."
+    },
+    {
+      "name": "bootstrap-rendering-and-diagnostics",
+      "ok": true,
+      "detail": "Plain-text `doctor` and `verify` output stayed compact while detailed diagnostics remained behind JSON paths."
+    }
+  ],
+  "generatedAt": "2026-04-08T04:55:02.000Z"
+}
