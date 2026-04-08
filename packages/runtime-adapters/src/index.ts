@@ -20,6 +20,14 @@ export const primaryRuntimeAdapter: RuntimeAdapter = {
   supportsResumableSessions: true
 };
 
+const BENIGN_CODEX_SMOKE_WARNING_PATTERNS = [
+  /codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit/i,
+  /codex_state::runtime: failed to open state db .*migration .*missing in the resolved migrations/i,
+  /codex_core::state_db: failed to initialize state runtime .*migration .*missing in the resolved migrations/i,
+  /codex_core::rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back/i,
+  /codex_core::shell_snapshot: Failed to delete shell snapshot .*No such file or directory/i
+] as const;
+
 function homeExpanded(configPath: string): string {
   return configPath.startsWith("~") ? resolveHome(configPath) : configPath;
 }
@@ -43,6 +51,32 @@ function isCommandMissingError(error: unknown): boolean {
 
 export function codexCliMissingMessage(): string {
   return "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`.";
+}
+
+export function classifyCodexSmokeStderr(stderr: string): {
+  actionableLines: string[];
+  ignoredLines: string[];
+} {
+  const lines = stderr
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const actionableLines: string[] = [];
+  const ignoredLines: string[] = [];
+  for (const line of lines) {
+    if (BENIGN_CODEX_SMOKE_WARNING_PATTERNS.some((pattern) => pattern.test(line))) {
+      ignoredLines.push(line);
+      continue;
+    }
+
+    actionableLines.push(line);
+  }
+
+  return {
+    actionableLines,
+    ignoredLines
+  };
 }
 
 async function resolveCommandInvocation(command: string, args: string[], cwd?: string): Promise<{ command: string; args: string[] }> {

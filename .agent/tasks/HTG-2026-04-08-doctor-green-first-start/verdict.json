@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-08-doctor-green-first-start",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "manual_fresh_verify_20260408"
+  },
+  "checks": [
+    {
+      "name": "targeted-tests",
+      "ok": true,
+      "detail": "`pnpm --filter @happytg/runtime-adapters test` and `pnpm --filter @happytg/bootstrap test` passed with benign-warning filtering coverage."
+    },
+    {
+      "name": "doctor-pass",
+      "ok": true,
+      "detail": "`pnpm happytg doctor` returned PASS on the current machine."
+    },
+    {
+      "name": "doctor-json-diagnostics",
+      "ok": true,
+      "detail": "`pnpm happytg doctor --json` returned PASS and still exposed raw `reportJson.codex.smokeError`."
+    },
+    {
+      "name": "repo-typecheck-test-build",
+      "ok": true,
+      "detail": "`pnpm typecheck`, `pnpm test`, and `pnpm build` all passed."
+    }
+  ],
+  "generatedAt": "2026-04-08T14:08:38.000Z"
+}

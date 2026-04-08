@@ -1,0 +1,12 @@
+Command: pnpm --filter @happytg/runtime-adapters test
+Result: pass
+Key output:
+- 5 tests passed
+- includes known benign Codex smoke warning classification
+
+Command: pnpm --filter @happytg/bootstrap test
+Result: pass
+Key output:
+- 8 tests passed
+- includes benign Codex smoke warning filtering
+- includes diagnostics separation coverage

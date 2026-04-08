@@ -14,10 +14,47 @@
 ## Before You Start
 
 1. Clone the repository.
-2. Copy `.env.example` to `.env`.
+2. Copy `.env.example` to `.env`:
+
+   ```bash
+   cp .env.example .env
+   ```
 3. Fill at least the Telegram token, webhook secret, API signing key, database URL, Redis URL, artifact storage settings, and Codex paths.
 4. Run `pnpm install`.
 5. Run `pnpm happytg doctor` on the execution host that will run Codex.
+6. If doctor reports a finding, inspect the detailed JSON report with `pnpm happytg doctor --json`.
+
+## First-Start Commands
+
+Run the first start in separate terminals so pairing and daemon startup stay explicit:
+
+### Terminal 1: install and control plane
+
+```bash
+pnpm install
+pnpm happytg doctor
+docker compose -f infra/docker-compose.example.yml up --build
+```
+
+### Terminal 2: development stack
+
+```bash
+pnpm dev
+```
+
+### Terminal 3: execution host pairing and daemon
+
+```bash
+pnpm daemon:pair
+# send /pair <CODE> to the Telegram bot
+pnpm dev:daemon
+```
+
+If the Mini App port is busy, restart it explicitly:
+
+```bash
+PORT=3002 pnpm dev:miniapp
+```
 
 ## Developer Install
 
@@ -36,8 +73,9 @@
 3. Run the host daemon on the machine that owns the workspace and Codex install:
 
    ```bash
-   pnpm --filter @happytg/host-daemon pair
-   pnpm --filter @happytg/host-daemon run
+   pnpm daemon:pair
+   # send /pair <CODE> to the Telegram bot
+   pnpm dev:daemon
    ```
 
 4. Open Telegram, complete pairing, then run a quick session followed by a proof-loop session.
@@ -69,9 +107,20 @@
 
 4. Put a reverse proxy with TLS in front of the API and Mini App.
 5. On each execution host, install Codex CLI and run `pnpm happytg doctor`.
-6. Start the host daemon outside the Compose stack on the execution host.
-7. Pair execution hosts through Telegram.
-8. Run `pnpm happytg verify` and then execute a Codex smoke session.
+6. Request pairing on the execution host:
+
+   ```bash
+   pnpm daemon:pair
+   ```
+
+7. Pair execution hosts through Telegram with `/pair <CODE>`.
+8. Start the host daemon outside the Compose stack on the execution host:
+
+   ```bash
+   pnpm --filter @happytg/host-daemon run
+   ```
+
+9. Run `pnpm happytg verify` and then execute a Codex smoke session.
 
 ## Required Config
 
@@ -88,3 +137,4 @@
 - The host daemon is intentionally excluded from Docker Compose because it must run where the target repositories and local Codex configuration live.
 - The CI baseline in `.github/workflows/ci.yml` matches the expected local verification gates.
 - `pnpm happytg ...` is the repo-local wrapper around the same CLI surface exposed as `happytg ...` when installed as a binary.
+- `pnpm happytg doctor --json` is the detailed diagnostics path for raw Codex stderr, binary paths, and config paths when the plain-text doctor output asks for deeper inspection.

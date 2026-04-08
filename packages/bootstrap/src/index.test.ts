@@ -135,6 +135,115 @@ test("verify surfaces Codex smoke warnings as warn when config exists", async ()
   }
 });
 
+test("doctor ignores known benign Codex internal smoke warnings while keeping raw diagnostics", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-benign-"));
+  const envSnapshot = {
+    CODEX_CLI_BIN: process.env.CODEX_CLI_BIN,
+    CODEX_CONFIG_PATH: process.env.CODEX_CONFIG_PATH,
+    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR,
+    PATH: process.env.PATH
+  };
+
+  try {
+    const binaryPath = path.join(tempDir, "codex-benign.mjs");
+    const configPath = path.join(tempDir, "config.toml");
+    const gitBinaryPath = path.join(tempDir, process.platform === "win32" ? "git.cmd" : "git");
+    await Promise.all([
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeNodeEntrypoint(
+        binaryPath,
+        `
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex test 1.0");
+            process.exit(0);
+          }
+          if (args[0] === "exec") {
+            console.log('{"type":"message","text":"OK"}');
+            console.error("2026-04-08T00:00:00.000Z WARN codex_state::runtime: failed to open state db at /tmp/state.sqlite: migration 21 was previously applied but is missing in the resolved migrations");
+            console.error("2026-04-08T00:00:00.000Z WARN codex_core::rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back");
+            console.error("2026-04-08T00:00:00.000Z WARN codex_core::shell_snapshot: Failed to delete shell snapshot at \\"/tmp/snapshot\\": Os { code: 2, kind: NotFound, message: \\"No such file or directory\\" }");
+            process.exit(0);
+          }
+          console.error("unexpected invocation");
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitBinaryPath)
+    ]);
+
+    process.env.CODEX_CLI_BIN = binaryPath;
+    process.env.CODEX_CONFIG_PATH = configPath;
+    process.env.HAPPYTG_STATE_DIR = path.join(tempDir, ".happytg-state");
+    process.env.PATH = tempDir;
+
+    const report = await runBootstrapCommand("doctor");
+
+    assert.equal(report.status, "pass");
+    assert.equal(report.findings.length, 0);
+    assert.match(String((report.reportJson.codex as { smokeError?: string }).smokeError ?? ""), /failed to open state db/);
+  } finally {
+    restoreEnv(envSnapshot);
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("doctor stays green when smoke stderr contains only known benign Codex internal warnings", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-benign-"));
+  const envSnapshot = {
+    CODEX_CLI_BIN: process.env.CODEX_CLI_BIN,
+    CODEX_CONFIG_PATH: process.env.CODEX_CONFIG_PATH,
+    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR,
+    PATH: process.env.PATH
+  };
+
+  try {
+    const binaryPath = path.join(tempDir, "codex-benign.mjs");
+    const configPath = path.join(tempDir, "config.toml");
+    const gitBinaryPath = path.join(tempDir, process.platform === "win32" ? "git.cmd" : "git");
+    await Promise.all([
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeNodeEntrypoint(
+        binaryPath,
+        `
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex test 1.0");
+            process.exit(0);
+          }
+          if (args[0] === "exec") {
+            console.log('{"type":"message","text":"OK"}');
+            console.error("2026-04-08T14:03:06Z  WARN codex_state::runtime: failed to open state db at /Users/example/.codex/state_5.sqlite: migration 21 was previously applied but is missing in the resolved migrations");
+            console.error("2026-04-08T14:03:06Z  WARN codex_core::state_db: failed to initialize state runtime at /Users/example/.codex: migration 21 was previously applied but is missing in the resolved migrations");
+            console.error("2026-04-08T14:03:06Z  WARN codex_core::rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back");
+            console.error("2026-04-08T14:03:06Z  WARN codex_core::shell_snapshot: Failed to delete shell snapshot at \\"/tmp/example\\": Os { code: 2, kind: NotFound, message: \\"No such file or directory\\" }");
+            console.error("2026-04-08T14:03:06Z ERROR codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit");
+            process.exit(0);
+          }
+          console.error("unexpected invocation");
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitBinaryPath)
+    ]);
+
+    process.env.CODEX_CLI_BIN = binaryPath;
+    process.env.CODEX_CONFIG_PATH = configPath;
+    process.env.HAPPYTG_STATE_DIR = path.join(tempDir, ".happytg-state");
+    process.env.PATH = tempDir;
+
+    const report = await runBootstrapCommand("doctor");
+
+    assert.equal(report.status, "pass");
+    assert.ok(!report.findings.some((item) => item.code === "CODEX_SMOKE_WARNINGS"));
+    assert.match(String(report.reportJson.codex && (report.reportJson.codex as Record<string, unknown>).smokeError), /failed to open state db/);
+    assert.match(String(report.reportJson.codex && (report.reportJson.codex as Record<string, unknown>).smokeError), /failed to refresh available models/);
+  } finally {
+    restoreEnv(envSnapshot);
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("config-init and env-snapshot remain deterministic plan-only commands", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-config-"));
   const envSnapshot = {

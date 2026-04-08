@@ -46,12 +46,36 @@ It is designed around one hard constraint: Telegram is a render surface for comm
 1. Install Node.js 22+, `pnpm`, Git, and Codex CLI.
 2. Copy `.env.example` to `.env` and fill Telegram/OpenAI/backend secrets.
 3. Read [docs/installation.md](./docs/installation.md).
-4. Run `pnpm install`.
-5. Run `pnpm happytg doctor`.
-6. Start the local control-plane stack with `docker compose -f infra/docker-compose.example.yml up --build`.
-7. In a separate shell, run `pnpm dev` for live-reload development or use the container stack as-is for smoke testing.
-8. Run `apps/host-daemon` on the execution host outside Docker Compose.
-9. Pair a host through the Telegram bot and run the first smoke task.
+4. Run the first-start commands:
+
+   ```bash
+   cp .env.example .env
+   pnpm install
+   pnpm happytg doctor
+   docker compose -f infra/docker-compose.example.yml up --build
+   ```
+
+5. In a second shell, start the development stack:
+
+   ```bash
+   pnpm dev
+   ```
+
+6. In a third shell on the execution host, request pairing and then start the daemon:
+
+   ```bash
+   pnpm daemon:pair
+   # send /pair <CODE> to the Telegram bot
+   pnpm dev:daemon
+   ```
+
+7. If the Mini App port is already in use, restart it with a different port:
+
+   ```bash
+   PORT=3002 pnpm dev:miniapp
+   ```
+
+8. After pairing succeeds, run the first smoke task, then the first proof-loop task.
 
 ## Monorepo Commands
 

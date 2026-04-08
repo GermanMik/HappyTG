@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { checkCodexReadiness, codexCliMissingMessage, runCodexExec } from "./index.js";
+import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage, runCodexExec } from "./index.js";
 
 async function writeNodeEntrypoint(filePath: string, source: string): Promise<void> {
   await writeFile(filePath, `${source.trim()}\n`, "utf8");
@@ -67,6 +67,24 @@ test("checkCodexReadiness reports available Codex and captures smoke warnings", 
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
+});
+
+test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only", () => {
+  const stderr = [
+    "2026-04-08T14:03:06Z  WARN codex_state::runtime: failed to open state db at /Users/example/.codex/state_5.sqlite: migration 21 was previously applied but is missing in the resolved migrations",
+    "2026-04-08T14:03:06Z  WARN codex_core::state_db: failed to initialize state runtime at /Users/example/.codex: migration 21 was previously applied but is missing in the resolved migrations",
+    "2026-04-08T14:03:06Z  WARN codex_core::rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back",
+    "2026-04-08T14:03:06Z  WARN codex_core::shell_snapshot: Failed to delete shell snapshot at \"/tmp/example\": Os { code: 2, kind: NotFound, message: \"No such file or directory\" }",
+    "2026-04-08T14:03:06Z ERROR codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit",
+    "2026-04-08T14:03:07Z WARN custom warning"
+  ].join("\n");
+
+  const classified = classifyCodexSmokeStderr(stderr);
+
+  assert.equal(classified.ignoredLines.length, 5);
+  assert.deepEqual(classified.actionableLines, [
+    "2026-04-08T14:03:07Z WARN custom warning"
+  ]);
 });
 
 test("runCodexExec reads summary from the Codex output file", async () => {

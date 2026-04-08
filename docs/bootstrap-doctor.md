@@ -3,6 +3,7 @@
 ## Commands
 
 - repo-local: `pnpm happytg doctor`
+- repo-local JSON diagnostics: `pnpm happytg doctor --json`
 - repo-local: `pnpm happytg setup`
 - repo-local: `pnpm happytg repair`
 - repo-local: `pnpm happytg verify`
@@ -26,6 +27,7 @@
 - verify after install
 - idempotent runs
 - persisted reports for repair
+- keep the plain-text path short; detailed Codex stderr belongs in `--json`
 
 ## State Files
 

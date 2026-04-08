@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 
 import type { BootstrapFinding, BootstrapReport } from "../../protocol/src/index.js";
-import { checkCodexReadiness, codexCliMissingMessage } from "../../runtime-adapters/src/index.js";
+import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage } from "../../runtime-adapters/src/index.js";
 import { createId, ensureDir, getLocalStateDir, nowIso, resolveExecutable, writeJsonFileAtomic } from "../../shared/src/index.js";
 
 export type BootstrapCommand = "doctor" | "setup" | "repair" | "verify" | "status" | "config-init" | "env-snapshot";
@@ -32,6 +32,7 @@ export async function detectFindings(): Promise<DoctorDetection> {
   const gitBinaryPath = await resolveExecutable("git");
   const hasGit = Boolean(gitBinaryPath);
   const codex = await checkCodexReadiness();
+  const actionableSmokeWarnings = classifyCodexSmokeStderr(codex.smokeError ?? "").actionableLines;
 
   if (!hasGit) {
     findings.push({
@@ -69,7 +70,7 @@ export async function detectFindings(): Promise<DoctorDetection> {
     pushPlanStep(planPreview, "Review Codex auth/config and rerun `pnpm happytg doctor --json`.");
   }
 
-  if (codex.available && codex.configExists && codex.smokeOk && codex.smokeError) {
+  if (codex.available && codex.configExists && codex.smokeOk && actionableSmokeWarnings.length > 0) {
     findings.push({
       code: "CODEX_SMOKE_WARNINGS",
       severity: "warn",

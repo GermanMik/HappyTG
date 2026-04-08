@@ -1,0 +1,18 @@
+{
+  "id": "HTG-2026-04-08-doctor-green-first-start",
+  "sessionId": "ses_manual",
+  "workspaceId": "HappyTG",
+  "rootPath": "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-doctor-green-first-start",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Make doctor green for benign Codex warnings and document first start",
+  "acceptanceCriteria": [
+    "Bootstrap doctor/status/verify stay green when Codex smoke succeeds and stderr contains only known benign Codex internal state warnings; raw stderr remains available in --json diagnostics.",
+    "Real Codex smoke failures and unknown stderr still surface as actionable findings.",
+    "Repository launch/quickstart docs include concrete first-start commands, including install, doctor, control-plane start, pairing, and daemon start.",
+    "Tests cover benign-warning filtering and preserve existing diagnostics separation behavior."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-08T14:03:51.524Z",
+  "updatedAt": "2026-04-08T14:08:38.000Z"
+}

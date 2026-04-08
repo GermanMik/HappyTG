@@ -1,0 +1,47 @@
+{
+  "taskId": "HTG-2026-04-08-doctor-green-first-start",
+  "criteria": [
+    {
+      "criterion": "Bootstrap doctor/status/verify stay green when Codex smoke succeeds and stderr contains only known benign Codex internal state warnings; raw stderr remains available in --json diagnostics.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-doctor-green-first-start/raw/test-unit.txt",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-doctor-green-first-start/raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Real Codex smoke failures and unknown stderr still surface as actionable findings.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters/src/index.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "Repository launch/quickstart docs include concrete first-start commands, including install, doctor, control-plane start, pairing, and daemon start.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/README.md",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/docs/quickstart.md",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/docs/installation.md",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/docs/bootstrap-doctor.md"
+      ]
+    },
+    {
+      "criterion": "Tests cover benign-warning filtering and preserve existing diagnostics separation behavior.",
+      "artifacts": [
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap/src/index.test.ts",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-doctor-green-first-start/raw/test-unit.txt",
+        "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-doctor-green-first-start/raw/test-integration.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-doctor-green-first-start/raw/build.txt",
+    "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-doctor-green-first-start/raw/test-unit.txt",
+    "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-doctor-green-first-start/raw/test-integration.txt",
+    "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-08-doctor-green-first-start/raw/lint.txt"
+  ],
+  "generatedAt": "2026-04-08T14:08:38.000Z"
+}

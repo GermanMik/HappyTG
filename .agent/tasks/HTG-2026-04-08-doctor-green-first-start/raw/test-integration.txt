@@ -1,0 +1,24 @@
+Command: pnpm happytg doctor
+Result: pass
+Output summary:
+- HappyTG doctor [PASS]
+- Summary: Environment looks ready.
+
+Command: pnpm happytg doctor --json
+Result: pass
+Output summary:
+- status = pass
+- findings = []
+- raw `reportJson.codex.smokeError` still contains Codex internal state-db and shell-snapshot stderr
+
+Command: pnpm happytg verify
+Result: pass
+Output summary:
+- HappyTG verify [PASS]
+- Summary: Environment looks ready.
+
+Command: pnpm test
+Result: pass
+Key output:
+- turbo test
+- Tasks: 13 successful, 13 total

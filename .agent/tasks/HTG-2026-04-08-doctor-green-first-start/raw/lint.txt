@@ -1,0 +1,5 @@
+Command: pnpm lint
+Result: pass
+Key output:
+- turbo lint
+- package lint scripts remain the repository's existing TODO echo placeholders
