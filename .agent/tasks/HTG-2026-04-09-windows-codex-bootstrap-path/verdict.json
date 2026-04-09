@@ -1,0 +1,46 @@
+{
+  "taskId": "HTG-2026-04-09-windows-codex-bootstrap-path",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "targeted-regressions-and-repo-gates"
+  },
+  "checks": [
+    {
+      "name": "windows-path-merge",
+      "ok": true,
+      "detail": "Windows PATH and PATHEXT handling now merges duplicate-cased env keys instead of losing usable values when `Path`/`PATH` or `PATHEXT`/`pathext` coexist."
+    },
+    {
+      "name": "runtime-windows-shim-regressions",
+      "ok": true,
+      "detail": "Runtime readiness tests pass for `Path`, lowercase `path`/`pathext`, and duplicated `Path`/`PATH` scenarios."
+    },
+    {
+      "name": "bootstrap-doctor-regression",
+      "ok": true,
+      "detail": "Bootstrap doctor test proves a Windows-style `codex.cmd` shim no longer produces `CODEX_MISSING` when found through mixed-case Windows env keys."
+    },
+    {
+      "name": "repo-lint",
+      "ok": true,
+      "detail": "pnpm lint passed."
+    },
+    {
+      "name": "repo-typecheck",
+      "ok": true,
+      "detail": "pnpm typecheck passed."
+    },
+    {
+      "name": "repo-test",
+      "ok": true,
+      "detail": "pnpm test passed."
+    },
+    {
+      "name": "repo-build",
+      "ok": true,
+      "detail": "pnpm build passed."
+    }
+  ],
+  "generatedAt": "2026-04-09T16:31:31Z"
+}

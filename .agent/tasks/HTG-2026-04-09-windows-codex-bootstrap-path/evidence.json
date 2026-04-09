@@ -1,0 +1,49 @@
+{
+  "taskId": "HTG-2026-04-09-windows-codex-bootstrap-path",
+  "criteria": [
+    {
+      "id": "windows-codex-env-merge",
+      "status": "passed",
+      "artifacts": [
+        "packages/shared/src/index.ts",
+        "packages/shared/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/test-integration.txt"
+      ]
+    },
+    {
+      "id": "windows-runtime-readiness",
+      "status": "passed",
+      "artifacts": [
+        "packages/runtime-adapters/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/test-integration.txt"
+      ]
+    },
+    {
+      "id": "bootstrap-doctor-path",
+      "status": "passed",
+      "artifacts": [
+        "packages/bootstrap/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/test-integration.txt"
+      ]
+    },
+    {
+      "id": "repo-verification",
+      "status": "passed",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/lint.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/typecheck.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/raw/build.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/spec.md",
+    ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/evidence.md",
+    ".agent/tasks/HTG-2026-04-09-windows-codex-bootstrap-path/verdict.json"
+  ],
+  "generatedAt": "2026-04-09T16:31:31Z"
+}

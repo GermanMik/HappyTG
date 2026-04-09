@@ -1,0 +1,228 @@
+
+> @happytg/shared@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: resolveHome and atomic file helpers round-trip data
+ok 1 - resolveHome and atomic file helpers round-trip data
+  ---
+  duration_ms: 62.378958
+  type: 'test'
+  ...
+# Subtest: resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides
+ok 2 - resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides
+  ---
+  duration_ms: 1.605209
+  type: 'test'
+  ...
+# Subtest: resolveHome honors Windows home overrides with case-insensitive env keys
+ok 3 - resolveHome honors Windows home overrides with case-insensitive env keys
+  ---
+  duration_ms: 0.801417
+  type: 'test'
+  ...
+# Subtest: findExecutable searches PATH and appends Windows executable extensions
+ok 4 - findExecutable searches PATH and appends Windows executable extensions
+  ---
+  duration_ms: 63.324708
+  type: 'test'
+  ...
+# Subtest: findExecutable honors Windows path and PATHEXT keys regardless of casing
+ok 5 - findExecutable honors Windows path and PATHEXT keys regardless of casing
+  ---
+  duration_ms: 15.836833
+  type: 'test'
+  ...
+# Subtest: findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys
+ok 6 - findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys
+  ---
+  duration_ms: 15.702291
+  type: 'test'
+  ...
+# Subtest: loadHappyTGEnv fills missing values without overriding existing env
+ok 7 - loadHappyTGEnv fills missing values without overriding existing env
+  ---
+  duration_ms: 13.402875
+  type: 'test'
+  ...
+# Subtest: normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT
+ok 8 - normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT
+  ---
+  duration_ms: 0.958209
+  type: 'test'
+  ...
+# Subtest: telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values
+ok 9 - telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values
+  ---
+  duration_ms: 2.294417
+  type: 'test'
+  ...
+# Subtest: FileStateStore serializes concurrent updates through its queue
+ok 10 - FileStateStore serializes concurrent updates through its queue
+  ---
+  duration_ms: 46.3465
+  type: 'test'
+  ...
+# Subtest: createJsonServer resolves route params and query data
+ok 11 - createJsonServer resolves route params and query data
+  ---
+  duration_ms: 99.131833
+  type: 'test'
+  ...
+# Subtest: createJsonServer returns a structured 500 when handler throws
+ok 12 - createJsonServer returns a structured 500 when handler throws
+  ---
+  duration_ms: 34.644583
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1160.885833
+
+> @happytg/runtime-adapters@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: checkCodexReadiness reports available Codex and captures smoke warnings
+ok 1 - checkCodexReadiness reports available Codex and captures smoke warnings
+  ---
+  duration_ms: 414.170583
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness resolves a Windows-style codex.cmd shim from Path
+ok 2 - checkCodexReadiness resolves a Windows-style codex.cmd shim from Path
+  ---
+  duration_ms: 620.131917
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext
+ok 3 - checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext
+  ---
+  duration_ms: 492.361833
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated
+ok 4 - checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated
+  ---
+  duration_ms: 564.070875
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness marks only true ENOENT failures as missing
+ok 5 - checkCodexReadiness marks only true ENOENT failures as missing
+  ---
+  duration_ms: 73.5815
+  type: 'test'
+  ...
+# Subtest: classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+ok 6 - classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+  ---
+  duration_ms: 3.194333
+  type: 'test'
+  ...
+# Subtest: runCodexExec reads summary from the Codex output file
+ok 7 - runCodexExec reads summary from the Codex output file
+  ---
+  duration_ms: 85.740625
+  type: 'test'
+  ...
+# Subtest: runCodexExec marks timeout and returns a timeout summary
+ok 8 - runCodexExec marks timeout and returns a timeout summary
+  ---
+  duration_ms: 17.480958
+  type: 'test'
+  ...
+# Subtest: runCodexExec returns actionable guidance when Codex CLI is missing
+ok 9 - runCodexExec returns actionable guidance when Codex CLI is missing
+  ---
+  duration_ms: 6.815125
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3042.893334
+
+> @happytg/bootstrap@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: parseHappyTGArgs maps config and env nested commands
+ok 1 - parseHappyTGArgs maps config and env nested commands
+  ---
+  duration_ms: 4.263
+  type: 'test'
+  ...
+# Subtest: executeHappyTG initializes and inspects repo-local task bundles
+ok 2 - executeHappyTG initializes and inspects repo-local task bundles
+  ---
+  duration_ms: 88.226834
+  type: 'test'
+  ...
+# Subtest: renderText returns a compact bootstrap summary with preflight and diagnostics hints
+ok 3 - renderText returns a compact bootstrap summary with preflight and diagnostics hints
+  ---
+  duration_ms: 3.278542
+  type: 'test'
+  ...
+# Subtest: doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+ok 4 - doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+  ---
+  duration_ms: 678.416792
+  type: 'test'
+  ...
+# Subtest: verify surfaces Codex smoke warnings as warn when config exists
+ok 5 - verify surfaces Codex smoke warnings as warn when config exists
+  ---
+  duration_ms: 109.7525
+  type: 'test'
+  ...
+# Subtest: doctor distinguishes unavailable Codex from a missing Codex binary
+ok 6 - doctor distinguishes unavailable Codex from a missing Codex binary
+  ---
+  duration_ms: 59.643833
+  type: 'test'
+  ...
+# Subtest: setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+ok 7 - setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+  ---
+  duration_ms: 111.269041
+  type: 'test'
+  ...
+# Subtest: doctor reports Redis installed but stopped
+ok 8 - doctor reports Redis installed but stopped
+  ---
+  duration_ms: 125.675917
+  type: 'test'
+  ...
+# Subtest: doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+ok 9 - doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+  ---
+  duration_ms: 711.415167
+  type: 'test'
+  ...
+# Subtest: config-init and env-snapshot remain deterministic plan-only commands
+ok 10 - config-init and env-snapshot remain deterministic plan-only commands
+  ---
+  duration_ms: 61.177792
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2623.547333

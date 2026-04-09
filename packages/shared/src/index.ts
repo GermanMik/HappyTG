@@ -37,6 +37,15 @@ function envValue(
   return resolvedKey ? env[resolvedKey] : undefined;
 }
 
+function envValues(
+  env: NodeJS.ProcessEnv,
+  key: string
+): string[] {
+  return Object.entries(env)
+    .filter(([candidate, value]) => value !== undefined && candidate.toLowerCase() === key.toLowerCase())
+    .map(([, value]) => value as string);
+}
+
 function pathModuleForHome(
   homeDirectory: string,
   platform: NodeJS.Platform = process.platform
@@ -147,8 +156,53 @@ function envPathValue(env: NodeJS.ProcessEnv, platform: NodeJS.Platform = proces
     return envValue(env, "PATH") ?? "";
   }
 
-  const pathKey = envKeyFor(env, "Path");
-  return pathKey ? env[pathKey] ?? "" : "";
+  const delimiter = pathDelimiterForPlatform(platform);
+  const seen = new Set<string>();
+  const mergedEntries: string[] = [];
+  for (const rawValue of envValues(env, "Path")) {
+    for (const entry of rawValue.split(delimiter)) {
+      const normalizedEntry = stripWrappedQuotes(entry.trim());
+      if (!normalizedEntry) {
+        continue;
+      }
+
+      const dedupeKey = normalizedEntry.toLowerCase();
+      if (seen.has(dedupeKey)) {
+        continue;
+      }
+
+      seen.add(dedupeKey);
+      mergedEntries.push(normalizedEntry);
+    }
+  }
+
+  return mergedEntries.join(delimiter);
+}
+
+function envPathExtValue(env: NodeJS.ProcessEnv): string {
+  const seen = new Set<string>();
+  const mergedEntries: string[] = [];
+  for (const rawValue of envValues(env, "PATHEXT")) {
+    for (const entry of rawValue.split(";")) {
+      const normalizedEntry = entry.trim();
+      if (!normalizedEntry) {
+        continue;
+      }
+
+      const extension = normalizedEntry.startsWith(".")
+        ? normalizedEntry
+        : `.${normalizedEntry}`;
+      const dedupeKey = extension.toLowerCase();
+      if (seen.has(dedupeKey)) {
+        continue;
+      }
+
+      seen.add(dedupeKey);
+      mergedEntries.push(extension);
+    }
+  }
+
+  return mergedEntries.join(";");
 }
 
 function pathDelimiterForPlatform(platform: NodeJS.Platform): string {
@@ -160,7 +214,7 @@ function executableExtensions(env: NodeJS.ProcessEnv, platform: NodeJS.Platform 
     return [""];
   }
 
-  const raw = envValue(env, "PATHEXT") ?? ".COM;.EXE;.BAT;.CMD";
+  const raw = envPathExtValue(env) || ".COM;.EXE;.BAT;.CMD";
   const extensions = raw
     .split(";")
     .map((entry) => entry.trim())
@@ -343,9 +397,11 @@ export function normalizeSpawnEnv(
     normalized.Path = resolvedPath;
   }
 
-  const pathextKey = Object.keys(env).find((key) => key.toLowerCase() === "pathext");
-  if (pathextKey && env[pathextKey] !== undefined) {
-    normalized.PATHEXT = env[pathextKey];
+  const resolvedPathext = envPathExtValue(env) || executableExtensions(env, platform)
+    .filter(Boolean)
+    .join(";");
+  if (resolvedPathext) {
+    normalized.PATHEXT = resolvedPathext;
   }
 
   return normalized;
