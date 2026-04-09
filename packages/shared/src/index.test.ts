@@ -164,6 +164,33 @@ test("findExecutable honors Windows path and PATHEXT keys regardless of casing",
   }
 });
 
+test("findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-dupe-"));
+  try {
+    const windowsCodex = path.join(tempDir, "codex.cmd");
+    await writeFile(windowsCodex, "@echo off\r\n", "utf8");
+
+    const env = {
+      Path: "",
+      PATH: tempDir,
+      PATHEXT: "",
+      pathext: ".cmd;.exe",
+      HOME: "C:\\Users\\tester"
+    } as NodeJS.ProcessEnv;
+
+    const resolved = await findExecutable("codex", env, "win32");
+    const normalized = normalizeSpawnEnv(env, "win32");
+
+    assert.equal(resolved, windowsCodex);
+    assert.equal(normalized.Path, tempDir);
+    assert.equal(normalized.PATHEXT, ".cmd;.exe");
+    assert.equal(normalized.PATH, undefined);
+    assert.equal(normalized.HOME, "C:\\Users\\tester");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("loadHappyTGEnv fills missing values without overriding existing env", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-env-"));
   try {
@@ -195,7 +222,7 @@ test("normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT", 
     HOME: "C:\\Users\\tester"
   }, "win32");
 
-  assert.equal(normalized.Path, "C:\\Users\\tester\\AppData\\Roaming\\npm");
+  assert.equal(normalized.Path, "C:\\wrong;C:\\Users\\tester\\AppData\\Roaming\\npm");
   assert.equal(normalized.PATHEXT, ".COM;.EXE;.BAT;.CMD");
   assert.equal(normalized.PATH, undefined);
   assert.equal(normalized.HOME, "C:\\Users\\tester");

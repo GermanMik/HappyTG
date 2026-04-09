@@ -10,6 +10,21 @@ async function writeNodeEntrypoint(filePath: string, source: string): Promise<vo
   await writeFile(filePath, `${source.trim()}\n`, "utf8");
 }
 
+async function writeExecutable(filePath: string, source: string): Promise<void> {
+  await writeFile(filePath, `${source.trim()}\n`, "utf8");
+  if (process.platform !== "win32") {
+    await chmod(filePath, 0o755);
+  }
+}
+
+function batchQuote(value: string): string {
+  return value.replace(/"/g, "\"\"");
+}
+
+function shellQuote(value: string): string {
+  return value.replace(/(["\\$`])/g, "\\$1");
+}
+
 async function createCodexHarness(tempDir: string, fileName: string, source: string): Promise<{ binaryPath: string; binaryArgs: string[] }> {
   const entrypointPath = path.join(tempDir, fileName);
   await writeNodeEntrypoint(entrypointPath, source);
@@ -17,6 +32,54 @@ async function createCodexHarness(tempDir: string, fileName: string, source: str
     binaryPath: process.execPath,
     binaryArgs: [entrypointPath]
   };
+}
+
+async function createWindowsCodexShim(tempDir: string, version: string): Promise<{ shimPath: string }> {
+  const scriptName = "codex-shim.mjs";
+  const scriptPath = path.join(tempDir, scriptName);
+  await writeNodeEntrypoint(
+    scriptPath,
+    `
+      const args = process.argv.slice(2);
+      if (args[0] === "--version") {
+        console.log(${JSON.stringify(version)});
+        process.exit(0);
+      }
+      if (args[0] === "exec") {
+        console.log('{"type":"message","text":"OK"}');
+        process.exit(0);
+      }
+      console.error("unexpected invocation");
+      process.exit(1);
+    `
+  );
+
+  const shimPath = path.join(tempDir, "codex.cmd");
+  if (process.platform === "win32") {
+    await Promise.all([
+      writeFile(
+        path.join(tempDir, "node.cmd"),
+        `@echo off\r\n"${batchQuote(process.execPath)}" %*\r\n`,
+        "utf8"
+      ),
+      writeFile(
+        shimPath,
+        `@echo off\r\nsetlocal\r\nnode "%~dp0${scriptName}" %*\r\n`,
+        "utf8"
+      )
+    ]);
+    return { shimPath };
+  }
+
+  await writeExecutable(
+    shimPath,
+    `
+      #!/bin/sh
+      SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+      exec "${shellQuote(process.execPath)}" "$SCRIPT_DIR/${scriptName}" "$@"
+    `
+  );
+  return { shimPath };
 }
 
 function restoreCodexBin(originalValue: string | undefined): void {
@@ -72,29 +135,11 @@ test("checkCodexReadiness reports available Codex and captures smoke warnings", 
 test("checkCodexReadiness resolves a Windows-style codex.cmd shim from Path", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-shim-"));
   try {
-    const shimPath = path.join(tempDir, "codex.cmd");
     const configPath = path.join(tempDir, "config.toml");
+    const { shimPath } = await createWindowsCodexShim(tempDir, "codex shim 0.115.0");
     await Promise.all([
-      writeFile(
-        shimPath,
-        [
-          "#!/bin/sh",
-          "if [ \"$1\" = \"--version\" ]; then",
-          "  echo \"codex shim 0.115.0\"",
-          "  exit 0",
-          "fi",
-          "if [ \"$1\" = \"exec\" ]; then",
-          "  echo '{\"type\":\"message\",\"text\":\"OK\"}'",
-          "  exit 0",
-          "fi",
-          "echo \"unexpected invocation\" >&2",
-          "exit 1"
-        ].join("\n"),
-        "utf8"
-      ),
       writeFile(configPath, 'model = "gpt-5"\n', "utf8")
     ]);
-    await chmod(shimPath, 0o755);
 
     const readiness = await checkCodexReadiness({
       env: {
@@ -120,29 +165,11 @@ test("checkCodexReadiness resolves a Windows-style codex.cmd shim from Path", as
 test("checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-shim-case-"));
   try {
-    const shimPath = path.join(tempDir, "codex.cmd");
     const configPath = path.join(tempDir, "config.toml");
+    const { shimPath } = await createWindowsCodexShim(tempDir, "codex shim 0.116.0");
     await Promise.all([
-      writeFile(
-        shimPath,
-        [
-          "#!/bin/sh",
-          "if [ \"$1\" = \"--version\" ]; then",
-          "  echo \"codex shim 0.116.0\"",
-          "  exit 0",
-          "fi",
-          "if [ \"$1\" = \"exec\" ]; then",
-          "  echo '{\"type\":\"message\",\"text\":\"OK\"}'",
-          "  exit 0",
-          "fi",
-          "echo \"unexpected invocation\" >&2",
-          "exit 1"
-        ].join("\n"),
-        "utf8"
-      ),
       writeFile(configPath, 'model = "gpt-5"\n', "utf8")
     ]);
-    await chmod(shimPath, 0o755);
 
     const readiness = await checkCodexReadiness({
       env: {
@@ -158,6 +185,35 @@ test("checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase
     assert.equal(readiness.missing, false);
     assert.equal(readiness.smokeOk, true);
     assert.match(readiness.version ?? "", /codex shim 0\.116\.0/);
+    assert.equal(readiness.binaryPath, shimPath);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-shim-dupe-"));
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const { shimPath } = await createWindowsCodexShim(tempDir, "codex shim 0.117.0");
+    await writeFile(configPath, 'model = "gpt-5"\n', "utf8");
+
+    const readiness = await checkCodexReadiness({
+      env: {
+        Path: "",
+        PATH: tempDir,
+        PATHEXT: "",
+        pathext: ".cmd;.exe"
+      } as NodeJS.ProcessEnv,
+      platform: "win32",
+      cwd: tempDir,
+      configPath
+    });
+
+    assert.equal(readiness.available, true);
+    assert.equal(readiness.missing, false);
+    assert.equal(readiness.smokeOk, true);
+    assert.match(readiness.version ?? "", /codex shim 0\.117\.0/);
     assert.equal(readiness.binaryPath, shimPath);
   } finally {
     await rm(tempDir, { recursive: true, force: true });

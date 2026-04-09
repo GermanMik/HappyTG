@@ -17,6 +17,63 @@ async function writeFakeGitBinary(filePath: string): Promise<void> {
   await writeExecutable(filePath, "#!/bin/sh\necho git test\n");
 }
 
+function batchQuote(value: string): string {
+  return value.replace(/"/g, "\"\"");
+}
+
+function shellQuote(value: string): string {
+  return value.replace(/(["\\$`])/g, "\\$1");
+}
+
+async function createWindowsCodexShim(tempDir: string, version: string): Promise<string> {
+  const scriptName = "codex-shim.mjs";
+  const scriptPath = path.join(tempDir, scriptName);
+  await writeExecutable(
+    scriptPath,
+    `
+      #!/usr/bin/env node
+      const args = process.argv.slice(2);
+      if (args[0] === "--version") {
+        console.log(${JSON.stringify(version)});
+        process.exit(0);
+      }
+      if (args[0] === "exec") {
+        console.log('{"type":"message","text":"OK"}');
+        process.exit(0);
+      }
+      console.error("unexpected invocation");
+      process.exit(1);
+    `
+  );
+
+  const shimPath = path.join(tempDir, "codex.cmd");
+  if (process.platform === "win32") {
+    await Promise.all([
+      writeFile(
+        path.join(tempDir, "node.cmd"),
+        `@echo off\r\n"${batchQuote(process.execPath)}" %*\r\n`,
+        "utf8"
+      ),
+      writeFile(
+        shimPath,
+        `@echo off\r\nsetlocal\r\nnode "%~dp0${scriptName}" %*\r\n`,
+        "utf8"
+      )
+    ]);
+    return shimPath;
+  }
+
+  await writeExecutable(
+    shimPath,
+    `
+      #!/bin/sh
+      SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+      exec "${shellQuote(process.execPath)}" "$SCRIPT_DIR/${scriptName}" "$@"
+    `
+  );
+  return shimPath;
+}
+
 async function reserveFreePort(): Promise<number> {
   const server = net.createServer();
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -104,27 +161,11 @@ test("doctor writes a report, detects Git, and keeps Codex available on a Window
     const configPath = path.join(tempDir, "config.toml");
     const stateDir = path.join(tempDir, ".happytg-state");
     const gitBinaryPath = path.join(tempDir, "git.cmd");
-    const codexShimPath = path.join(tempDir, "codex.cmd");
+    const codexShimPath = await createWindowsCodexShim(tempDir, "codex shim 0.115.0");
     await Promise.all([
       writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
       writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
-      writeFakeGitBinary(gitBinaryPath),
-      writeExecutable(
-        codexShimPath,
-        `
-          #!/bin/sh
-          if [ "$1" = "--version" ]; then
-            echo "codex shim 0.115.0"
-            exit 0
-          fi
-          if [ "$1" = "exec" ]; then
-            echo '{"type":"message","text":"OK"}'
-            exit 0
-          fi
-          echo "unexpected invocation" >&2
-          exit 1
-        `
-      )
+      writeFile(gitBinaryPath, "@echo off\r\n", "utf8")
     ]);
 
     const report = await runBootstrapCommand("doctor", {
@@ -140,9 +181,10 @@ test("doctor writes a report, detects Git, and keeps Codex available on a Window
         HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
         HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
         REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
-        PATH: "C:\\wrong-path",
-        Path: tempDir,
-        PATHEXT: ".COM;.EXE;.BAT;.CMD"
+        PATH: tempDir,
+        Path: "",
+        PATHEXT: "",
+        pathext: ".cmd;.exe"
       }
     });
     const stored = JSON.parse(await readFile(path.join(stateDir, "state", "doctor-last.json"), "utf8")) as typeof report;
@@ -150,6 +192,7 @@ test("doctor writes a report, detects Git, and keeps Codex available on a Window
     assert.equal(report.command, "doctor");
     assert.equal(stored.id, report.id);
     assert.ok(!report.findings.some((item) => item.code === "CODEX_MISSING"));
+    assert.match((report.reportJson.preflight as string[]).join("\n"), /Codex: codex shim 0\.115\.0/);
     assert.deepEqual((report.reportJson.git as { available: boolean; binaryPath: string | null }), {
       available: true,
       binaryPath: gitBinaryPath
