@@ -18,6 +18,25 @@ function isWindowsPathLike(value: string): boolean {
   return /^[A-Za-z]:([\\/]|$)/u.test(value) || value.startsWith("\\\\") || value.includes("\\");
 }
 
+function envKeyFor(
+  env: NodeJS.ProcessEnv,
+  key: string
+): string | undefined {
+  if (env[key] !== undefined) {
+    return key;
+  }
+
+  return Object.keys(env).find((candidate) => candidate.toLowerCase() === key.toLowerCase());
+}
+
+function envValue(
+  env: NodeJS.ProcessEnv,
+  key: string
+): string | undefined {
+  const resolvedKey = envKeyFor(env, key);
+  return resolvedKey ? env[resolvedKey] : undefined;
+}
+
 function pathModuleForHome(
   homeDirectory: string,
   platform: NodeJS.Platform = process.platform
@@ -33,19 +52,19 @@ function effectiveHomeDirectory(
   env: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform
 ): string {
-  const homeOverride = stripWrappedQuotes(env.HOME ?? "").trim();
+  const homeOverride = stripWrappedQuotes(envValue(env, "HOME") ?? "").trim();
   if (homeOverride) {
     return homeOverride;
   }
 
   if (platform === "win32") {
-    const userProfile = stripWrappedQuotes(env.USERPROFILE ?? "").trim();
+    const userProfile = stripWrappedQuotes(envValue(env, "USERPROFILE") ?? "").trim();
     if (userProfile) {
       return userProfile;
     }
 
-    const homeDrive = stripWrappedQuotes(env.HOMEDRIVE ?? "").trim();
-    const homePath = stripWrappedQuotes(env.HOMEPATH ?? "").trim();
+    const homeDrive = stripWrappedQuotes(envValue(env, "HOMEDRIVE") ?? "").trim();
+    const homePath = stripWrappedQuotes(envValue(env, "HOMEPATH") ?? "").trim();
     if (homeDrive && homePath) {
       return path.win32.join(homeDrive, homePath);
     }
@@ -125,11 +144,10 @@ function stripWrappedQuotes(value: string): string {
 
 function envPathValue(env: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform): string {
   if (platform !== "win32") {
-    return env.PATH ?? "";
+    return envValue(env, "PATH") ?? "";
   }
 
-  const pathKey = ["Path", "PATH"].find((key) => env[key] !== undefined)
-    ?? Object.keys(env).find((key) => key.toLowerCase() === "path");
+  const pathKey = envKeyFor(env, "Path");
   return pathKey ? env[pathKey] ?? "" : "";
 }
 
@@ -142,7 +160,7 @@ function executableExtensions(env: NodeJS.ProcessEnv, platform: NodeJS.Platform 
     return [""];
   }
 
-  const raw = env.PATHEXT ?? ".COM;.EXE;.BAT;.CMD";
+  const raw = envValue(env, "PATHEXT") ?? ".COM;.EXE;.BAT;.CMD";
   const extensions = raw
     .split(";")
     .map((entry) => entry.trim())
@@ -174,7 +192,10 @@ export async function resolveExecutable(command: string, options?: {
   const env = options?.env ?? process.env;
   const platform = options?.platform ?? process.platform;
   const cwd = options?.cwd ?? process.cwd();
-  const hasExplicitPath = path.isAbsolute(normalized) || normalized.includes("/") || normalized.includes("\\");
+  const hasExplicitPath = path.isAbsolute(normalized)
+    || (platform === "win32" && path.win32.isAbsolute(normalized))
+    || normalized.includes("/")
+    || normalized.includes("\\");
   const searchRoots = hasExplicitPath
     ? [path.isAbsolute(normalized) ? normalized : path.resolve(cwd, normalized)]
     : envPathValue(env, platform)
@@ -338,7 +359,7 @@ export function telegramTokenStatus(
   status: TelegramTokenStatus;
   configured: boolean;
 } {
-  const token = (env.TELEGRAM_BOT_TOKEN ?? "").trim();
+  const token = (envValue(env, "TELEGRAM_BOT_TOKEN") ?? "").trim();
   if (!token) {
     return {
       status: "missing",

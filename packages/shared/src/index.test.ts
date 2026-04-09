@@ -91,6 +91,31 @@ test("resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overr
   assert.equal(windowsStateDir, "C:\\Users\\profile\\.happytg");
 });
 
+test("resolveHome honors Windows home overrides with case-insensitive env keys", () => {
+  assert.equal(resolveHome("~", {
+    env: {
+      home: "C:\\Temp\\case-home"
+    } as NodeJS.ProcessEnv,
+    platform: "win32"
+  }), "C:\\Temp\\case-home");
+  assert.equal(resolveHome("~/workspace", {
+    env: {
+      UserProfile: "C:\\Users\\CaseProfile"
+    } as NodeJS.ProcessEnv,
+    platform: "win32"
+  }), "C:\\Users\\CaseProfile\\workspace");
+  assert.equal(resolveHome("~/workspace", {
+    env: {
+      homedrive: "D:",
+      homepath: "\\Users\\CaseDrive"
+    } as NodeJS.ProcessEnv,
+    platform: "win32"
+  }), "D:\\Users\\CaseDrive\\workspace");
+  assert.equal(getLocalStateDir({
+    userprofile: "C:\\Users\\CaseProfile"
+  } as NodeJS.ProcessEnv, "win32"), "C:\\Users\\CaseProfile\\.happytg");
+});
+
 test("findExecutable searches PATH and appends Windows executable extensions", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-"));
   try {
@@ -117,6 +142,23 @@ test("findExecutable searches PATH and appends Windows executable extensions", a
     assert.equal(windowsResolved, windowsCodex);
     assert.equal(unixResolved, unixGit);
     assert.equal(explicitWindowsResolved, windowsCodex);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("findExecutable honors Windows path and PATHEXT keys regardless of casing", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-case-"));
+  try {
+    const windowsCodex = path.join(tempDir, "codex.cmd");
+    await writeFile(windowsCodex, "@echo off\r\n", "utf8");
+
+    const resolved = await findExecutable("codex", {
+      path: tempDir,
+      pathext: ".cmd;.exe"
+    } as NodeJS.ProcessEnv, "win32");
+
+    assert.equal(resolved, windowsCodex);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -164,6 +206,9 @@ test("telegramTokenStatus distinguishes missing, placeholder, invalid, and confi
   assert.equal(telegramTokenStatus({ TELEGRAM_BOT_TOKEN: "replace-me" }).status, "placeholder");
   assert.equal(telegramTokenStatus({ TELEGRAM_BOT_TOKEN: "abc" }).status, "invalid");
   assert.equal(telegramTokenStatus({ TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx" }).status, "configured");
+  assert.equal(telegramTokenStatus({
+    telegram_bot_token: "123456:abcdefghijklmnopqrstuvwx"
+  } as NodeJS.ProcessEnv).status, "configured");
 });
 
 test("FileStateStore serializes concurrent updates through its queue", async () => {

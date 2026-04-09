@@ -1,0 +1,51 @@
+{
+  "taskId": "HTG-2026-04-09-windows-first-run-onboarding",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "repo-gates-and-targeted-regressions"
+  },
+  "checks": [
+    {
+      "name": "windows-home-resolution",
+      "ok": true,
+      "detail": "Shared helpers now resolve Windows-sensitive env keys case-insensitively and regression tests cover HOME, USERPROFILE, HOMEDRIVE/HOMEPATH, and mixed env-key casing."
+    },
+    {
+      "name": "windows-codex-shim-detection",
+      "ok": true,
+      "detail": "Runtime and bootstrap tests pass for Windows-like codex.cmd resolution through mixed Path/PATH and PATHEXT casing."
+    },
+    {
+      "name": "bootstrap-guidance-accuracy",
+      "ok": true,
+      "detail": "Bootstrap now distinguishes true CODEX_MISSING from CODEX_UNAVAILABLE when the binary is present but unusable."
+    },
+    {
+      "name": "github-facing-onboarding-docs",
+      "ok": true,
+      "detail": "README and bootstrap/quickstart docs now use document-title links, a first-start flow diagram, and compact state/port tables."
+    },
+    {
+      "name": "repo-lint",
+      "ok": true,
+      "detail": "pnpm lint passed."
+    },
+    {
+      "name": "repo-typecheck",
+      "ok": true,
+      "detail": "pnpm typecheck passed."
+    },
+    {
+      "name": "repo-test",
+      "ok": true,
+      "detail": "pnpm test passed."
+    },
+    {
+      "name": "repo-build",
+      "ok": true,
+      "detail": "pnpm build passed."
+    }
+  ],
+  "generatedAt": "2026-04-09T23:59:00.000Z"
+}

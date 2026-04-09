@@ -117,6 +117,53 @@ test("checkCodexReadiness resolves a Windows-style codex.cmd shim from Path", as
   }
 });
 
+test("checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-shim-case-"));
+  try {
+    const shimPath = path.join(tempDir, "codex.cmd");
+    const configPath = path.join(tempDir, "config.toml");
+    await Promise.all([
+      writeFile(
+        shimPath,
+        [
+          "#!/bin/sh",
+          "if [ \"$1\" = \"--version\" ]; then",
+          "  echo \"codex shim 0.116.0\"",
+          "  exit 0",
+          "fi",
+          "if [ \"$1\" = \"exec\" ]; then",
+          "  echo '{\"type\":\"message\",\"text\":\"OK\"}'",
+          "  exit 0",
+          "fi",
+          "echo \"unexpected invocation\" >&2",
+          "exit 1"
+        ].join("\n"),
+        "utf8"
+      ),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8")
+    ]);
+    await chmod(shimPath, 0o755);
+
+    const readiness = await checkCodexReadiness({
+      env: {
+        path: tempDir,
+        pathext: ".cmd;.exe"
+      } as NodeJS.ProcessEnv,
+      platform: "win32",
+      cwd: tempDir,
+      configPath
+    });
+
+    assert.equal(readiness.available, true);
+    assert.equal(readiness.missing, false);
+    assert.equal(readiness.smokeOk, true);
+    assert.match(readiness.version ?? "", /codex shim 0\.116\.0/);
+    assert.equal(readiness.binaryPath, shimPath);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("checkCodexReadiness marks only true ENOENT failures as missing", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-broken-codex-"));
   try {

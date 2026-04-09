@@ -1,5 +1,7 @@
 # Installation
 
+Use [Quickstart](./quickstart.md) for the shortest path, [Bootstrap Doctor](./bootstrap-doctor.md) for the bootstrap state model, and [Self-Hosting](./self-hosting.md) when you are not using the local `pnpm dev` path.
+
 ## Prerequisites
 
 - Git
@@ -10,6 +12,26 @@
 - Telegram bot token
 - PostgreSQL, Redis, and S3-compatible object storage for local or self-hosted runs
 - Docker and Docker Compose for the packaged control-plane path
+
+## Install Decision Tree
+
+```mermaid
+flowchart TD
+    A["Clone repo"] --> B{"Need only the fastest local first run?"}
+    B -->|Yes| C["Follow Quickstart"]
+    B -->|No| D["Continue with Installation"]
+    D --> E["Copy .env.example to .env"]
+    E --> F["Set TELEGRAM_BOT_TOKEN"]
+    F --> G["pnpm install"]
+    G --> H["pnpm happytg setup"]
+    H --> I{"Redis already running on 6379?"}
+    I -->|Yes| J["Start postgres + minio only"]
+    I -->|No| K["Start postgres + redis + minio"]
+    J --> L{"Using local dev stack?"}
+    K --> L
+    L -->|Yes| M["pnpm dev + pairing + pnpm dev:daemon"]
+    L -->|No| N["Follow Self-Hosting"]
+```
 
 ## Before You Start
 
@@ -73,6 +95,15 @@ pnpm dev:daemon
 - Do not run the full compose app stack and `pnpm dev` together on the same machine unless you intentionally changed the ports.
 - If the bot logs `telegramConfigured: false`, set `TELEGRAM_BOT_TOKEN` in `.env` and restart `pnpm dev:bot`.
 - If pairing is not complete yet, the normal next step is always `pnpm daemon:pair` -> `/pair <CODE>` in Telegram -> `pnpm dev:daemon`.
+
+## First-Run Checkpoints
+
+| Checkpoint | Healthy result | If not healthy |
+| --- | --- | --- |
+| `pnpm happytg setup` | Short checklist with actionable next steps | Use `pnpm happytg doctor --json` for the detailed failure surface. |
+| Bot startup | `Bot listening` with `telegramConfigured: true` | Set or fix `TELEGRAM_BOT_TOKEN` in `.env`, then restart the bot. |
+| Codex detection | `codex --version` works in the same shell | If not found, install/fix Codex; if found but doctor says unavailable, fix the shell/runtime and rerun doctor. |
+| Pairing | `/pair <CODE>` succeeds in Telegram | Reissue `pnpm daemon:pair` if the code expired. |
 
 ## Redis and Port Decisions
 
@@ -182,8 +213,8 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
 
 ## Notes
 
-- `infra/Dockerfile.app` is the shared runtime image for `apps/api`, `apps/worker`, `apps/bot`, and `apps/miniapp`.
+- [Shared App Dockerfile](../infra/Dockerfile.app) is the shared runtime image for `apps/api`, `apps/worker`, `apps/bot`, and `apps/miniapp`.
 - The host daemon is intentionally excluded from Docker Compose because it must run where the target repositories and local Codex configuration live.
-- The CI baseline in `.github/workflows/ci.yml` matches the expected local verification gates.
+- The CI baseline in [CI Workflow](../.github/workflows/ci.yml) matches the expected local verification gates.
 - `pnpm happytg ...` is the repo-local wrapper around the same CLI surface exposed as `happytg ...` when installed as a binary.
 - `pnpm happytg setup` is the short first-run path; `pnpm happytg doctor --json` and `pnpm happytg verify --json` are the detailed diagnostics paths.

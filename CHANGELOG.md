@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Hardened Windows home resolution so `~` and `~/...` respect env-driven home overrides consistently, including Windows-style env-key casing.
+- Hardened Codex detection for Windows PATH shim scenarios such as `codex.cmd`, mixed `Path` / `PATH`, and mixed `PATHEXT` casing.
+- Clarified bootstrap diagnostics so "Codex CLI not found" is reserved for true missing-binary cases instead of broken-but-present installs.
+
+### Docs
+
+- Refined GitHub-facing onboarding in [README](./README.md), [Quickstart](./docs/quickstart.md), [Installation](./docs/installation.md), [Bootstrap Doctor](./docs/bootstrap-doctor.md), and [Troubleshooting](./docs/troubleshooting.md).
+- Replaced path-like navigation labels with document-title links where that improved first-run readability.
+
 ## v0.1.0
 
 Первый зафиксированный релиз HappyTG.

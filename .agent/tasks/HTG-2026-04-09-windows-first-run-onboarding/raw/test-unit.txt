@@ -1,0 +1,278 @@
+
+> @happytg/shared@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: resolveHome and atomic file helpers round-trip data
+ok 1 - resolveHome and atomic file helpers round-trip data
+  ---
+  duration_ms: 9.347209
+  type: 'test'
+  ...
+# Subtest: resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides
+ok 2 - resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides
+  ---
+  duration_ms: 0.526291
+  type: 'test'
+  ...
+# Subtest: resolveHome honors Windows home overrides with case-insensitive env keys
+ok 3 - resolveHome honors Windows home overrides with case-insensitive env keys
+  ---
+  duration_ms: 0.260958
+  type: 'test'
+  ...
+# Subtest: findExecutable searches PATH and appends Windows executable extensions
+ok 4 - findExecutable searches PATH and appends Windows executable extensions
+  ---
+  duration_ms: 3.795292
+  type: 'test'
+  ...
+# Subtest: findExecutable honors Windows path and PATHEXT keys regardless of casing
+ok 5 - findExecutable honors Windows path and PATHEXT keys regardless of casing
+  ---
+  duration_ms: 1.706458
+  type: 'test'
+  ...
+# Subtest: loadHappyTGEnv fills missing values without overriding existing env
+ok 6 - loadHappyTGEnv fills missing values without overriding existing env
+  ---
+  duration_ms: 2.767083
+  type: 'test'
+  ...
+# Subtest: normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT
+ok 7 - normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT
+  ---
+  duration_ms: 0.233292
+  type: 'test'
+  ...
+# Subtest: telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values
+ok 8 - telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values
+  ---
+  duration_ms: 0.14925
+  type: 'test'
+  ...
+# Subtest: FileStateStore serializes concurrent updates through its queue
+ok 9 - FileStateStore serializes concurrent updates through its queue
+  ---
+  duration_ms: 26.489666
+  type: 'test'
+  ...
+# Subtest: createJsonServer resolves route params and query data
+ok 10 - createJsonServer resolves route params and query data
+  ---
+  duration_ms: 17.577667
+  type: 'test'
+  ...
+# Subtest: createJsonServer returns a structured 500 when handler throws
+ok 11 - createJsonServer returns a structured 500 when handler throws
+  ---
+  duration_ms: 9.803709
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 297.529625
+
+> @happytg/runtime-adapters@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: checkCodexReadiness reports available Codex and captures smoke warnings
+ok 1 - checkCodexReadiness reports available Codex and captures smoke warnings
+  ---
+  duration_ms: 819.687417
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness resolves a Windows-style codex.cmd shim from Path
+ok 2 - checkCodexReadiness resolves a Windows-style codex.cmd shim from Path
+  ---
+  duration_ms: 951.014167
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext
+ok 3 - checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext
+  ---
+  duration_ms: 525.585792
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness marks only true ENOENT failures as missing
+ok 4 - checkCodexReadiness marks only true ENOENT failures as missing
+  ---
+  duration_ms: 102.925
+  type: 'test'
+  ...
+# Subtest: classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+ok 5 - classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+  ---
+  duration_ms: 3.812542
+  type: 'test'
+  ...
+# Subtest: runCodexExec reads summary from the Codex output file
+ok 6 - runCodexExec reads summary from the Codex output file
+  ---
+  duration_ms: 226.118667
+  type: 'test'
+  ...
+# Subtest: runCodexExec marks timeout and returns a timeout summary
+ok 7 - runCodexExec marks timeout and returns a timeout summary
+  ---
+  duration_ms: 33.890292
+  type: 'test'
+  ...
+# Subtest: runCodexExec returns actionable guidance when Codex CLI is missing
+ok 8 - runCodexExec returns actionable guidance when Codex CLI is missing
+  ---
+  duration_ms: 10.702375
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4279.104667
+
+> @happytg/bootstrap@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: parseHappyTGArgs maps config and env nested commands
+ok 1 - parseHappyTGArgs maps config and env nested commands
+  ---
+  duration_ms: 3.433792
+  type: 'test'
+  ...
+# Subtest: executeHappyTG initializes and inspects repo-local task bundles
+ok 2 - executeHappyTG initializes and inspects repo-local task bundles
+  ---
+  duration_ms: 61.964166
+  type: 'test'
+  ...
+# Subtest: renderText returns a compact bootstrap summary with preflight and diagnostics hints
+ok 3 - renderText returns a compact bootstrap summary with preflight and diagnostics hints
+  ---
+  duration_ms: 1.31325
+  type: 'test'
+  ...
+# Subtest: doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+ok 4 - doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+  ---
+  duration_ms: 946.524041
+  type: 'test'
+  ...
+# Subtest: verify surfaces Codex smoke warnings as warn when config exists
+ok 5 - verify surfaces Codex smoke warnings as warn when config exists
+  ---
+  duration_ms: 698.862083
+  type: 'test'
+  ...
+# Subtest: doctor distinguishes unavailable Codex from a missing Codex binary
+ok 6 - doctor distinguishes unavailable Codex from a missing Codex binary
+  ---
+  duration_ms: 381.99675
+  type: 'test'
+  ...
+# Subtest: setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+ok 7 - setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+  ---
+  duration_ms: 363.162834
+  type: 'test'
+  ...
+# Subtest: doctor reports Redis installed but stopped
+ok 8 - doctor reports Redis installed but stopped
+  ---
+  duration_ms: 314.438458
+  type: 'test'
+  ...
+# Subtest: doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+ok 9 - doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+  ---
+  duration_ms: 681.125666
+  type: 'test'
+  ...
+# Subtest: config-init and env-snapshot remain deterministic plan-only commands
+ok 10 - config-init and env-snapshot remain deterministic plan-only commands
+  ---
+  duration_ms: 71.860459
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5054.122709
+
+> @happytg/bot@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/bot
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: resume command sends session transition summary
+ok 1 - resume command sends session transition summary
+  ---
+  duration_ms: 2.306083
+  type: 'test'
+  ...
+# Subtest: doctor command resolves telegram identity and creates bootstrap session
+ok 2 - doctor command resolves telegram identity and creates bootstrap session
+  ---
+  duration_ms: 1.478875
+  type: 'test'
+  ...
+# Subtest: verify command surfaces approval keyboard when required
+ok 3 - verify command surfaces approval keyboard when required
+  ---
+  duration_ms: 0.880625
+  type: 'test'
+  ...
+# Subtest: approval callback resolves with the linked HappyTG user
+ok 4 - approval callback resolves with the linked HappyTG user
+  ---
+  duration_ms: 0.643542
+  type: 'test'
+  ...
+# Subtest: bot ready endpoint returns healthy when api is reachable
+ok 5 - bot ready endpoint returns healthy when api is reachable
+  ---
+  duration_ms: 57.806416
+  type: 'test'
+  ...
+# Subtest: bot ready endpoint returns 503 when api is unreachable
+ok 6 - bot ready endpoint returns 503 when api is unreachable
+  ---
+  duration_ms: 22.9055
+  type: 'test'
+  ...
+# Subtest: botConfigurationMessage stays actionable without exposing secrets
+ok 7 - botConfigurationMessage stays actionable without exposing secrets
+  ---
+  duration_ms: 1.041875
+  type: 'test'
+  ...
+# Subtest: initializeBotEnvironment prefers a valid .env token over placeholder shell state
+ok 8 - initializeBotEnvironment prefers a valid .env token over placeholder shell state
+  ---
+  duration_ms: 94.0115
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1239.597167

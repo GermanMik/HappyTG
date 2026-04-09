@@ -4,6 +4,8 @@
 
 Get from an empty machine to a paired HappyTG host that can run a first Codex-backed task.
 
+Use [Installation](./installation.md) if you need the fuller local/self-hosted setup, [Bootstrap Doctor](./bootstrap-doctor.md) if you want the bootstrap state model first, and [Configuration](./configuration.md) for env/runtime knobs.
+
 ## Preflight
 
 - Install Git, Node.js 22+, `pnpm`, and Codex CLI.
@@ -73,6 +75,26 @@ Get from an empty machine to a paired HappyTG host that can run a first Codex-ba
    pnpm happytg verify
    ```
 
+## What `pnpm dev` Starts
+
+| Surface | Port | Expected startup signal |
+| --- | --- | --- |
+| Mini App | `3001` | `Mini App listening` |
+| API | `4000` | `API listening` |
+| Bot | `4100` | `Bot listening` or a short Telegram token warning |
+| Worker probe | `4200` | `Worker probe server listening` |
+
+The host daemon is separate from `pnpm dev`; start it with `pnpm dev:daemon` after pairing.
+
+## If First Start Stops Here
+
+| Signal | What it means | What to do next |
+| --- | --- | --- |
+| `telegramConfigured: false` | The bot did not get a valid Telegram token. | Set `TELEGRAM_BOT_TOKEN` in `.env`, then restart `pnpm dev:bot` or `pnpm dev`. |
+| `Codex CLI not found` | This shell cannot resolve Codex at all. | Verify `codex --version`, then rerun `pnpm happytg doctor`. |
+| `Codex: detected but unavailable` | Codex was found, but startup failed in this shell. | Run `codex --version`, fix the local install/runtime, then rerun `pnpm happytg doctor --json`. |
+| `Host is not paired yet` | Pairing has not been completed yet. | Run `pnpm daemon:pair`, send `/pair <CODE>` in Telegram, then start `pnpm dev:daemon`. |
+
 ## Port Overrides
 
 | Service | Default | Override in `.env` | One-shot bash | One-shot PowerShell |
@@ -100,6 +122,6 @@ If `6379` is already in use:
 
 ## Next Reads
 
-- [installation.md](./installation.md)
-- [runtime-codex.md](./runtime-codex.md)
-- [proof-loop.md](./proof-loop.md)
+- [Installation](./installation.md)
+- [Runtime Codex](./runtime-codex.md)
+- [Proof Loop](./proof-loop.md)

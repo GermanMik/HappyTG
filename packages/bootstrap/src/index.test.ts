@@ -216,6 +216,51 @@ test("verify surfaces Codex smoke warnings as warn when config exists", async ()
   }
 });
 
+test("doctor distinguishes unavailable Codex from a missing Codex binary", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-codex-unavailable-"));
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const codexPath = path.join(tempDir, "codex-broken.mjs");
+    const gitPath = path.join(tempDir, "git");
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeExecutable(
+        codexPath,
+        `
+          #!/usr/bin/env node
+          process.stderr.write("codex init failed\\n");
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitPath)
+    ]);
+
+    const report = await runBootstrapCommand("doctor", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: codexPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir
+      }
+    });
+
+    assert.ok(!report.findings.some((item) => item.code === "CODEX_MISSING"));
+    assert.ok(report.findings.some((item) => item.code === "CODEX_UNAVAILABLE"));
+    assert.match((report.reportJson.preflight as string[]).join("\n"), /Codex: detected but unavailable/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-setup-"));
   const redis = await createRedisLikeServer();

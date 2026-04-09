@@ -193,6 +193,26 @@ function formatCodexSummary(version: string | undefined): string {
   return version.split("\n")[0]?.trim() ?? "available";
 }
 
+function formatCodexPreflightSummary(input: {
+  available: boolean;
+  missing?: boolean;
+  version?: string;
+}): string {
+  if (input.available) {
+    return formatCodexSummary(input.version);
+  }
+
+  if (input.missing === false) {
+    return "detected but unavailable";
+  }
+
+  return "not found";
+}
+
+function codexUnavailableMessage(): string {
+  return "Codex CLI was found, but `codex --version` did not complete successfully. Fix the local Codex install or shell environment, then rerun `pnpm happytg doctor --json`.";
+}
+
 function formatPortStateForSummary(results: PortCheckResult[]): string {
   const relevant = results.filter((item) => ["miniapp", "api", "bot", "worker", "redis"].includes(item.id));
   const busy = relevant.filter((item) => item.state !== "free");
@@ -632,7 +652,7 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
 
   const preflight = [
     `Env: ${envPresenceSummary(envFilePath)}`,
-    `Codex: ${codex.available ? formatCodexSummary(codex.version) : "not found"}`,
+    `Codex: ${formatCodexPreflightSummary(codex)}`,
     `Telegram: ${tokenState.status === "configured" ? "configured" : tokenState.status.replaceAll("_", " ")}`,
     `Redis: ${redisSummary(redis)}`,
     `Ports: ${formatPortStateForSummary(portResults)}`
@@ -654,11 +674,19 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     });
   }
 
-  if (!codex.available) {
+  if (!codex.available && codex.missing !== false) {
     pushFinding(findings, {
       code: "CODEX_MISSING",
       severity: "error",
       message: codexCliMissingMessage()
+    });
+  }
+
+  if (!codex.available && codex.missing === false) {
+    pushFinding(findings, {
+      code: "CODEX_UNAVAILABLE",
+      severity: "error",
+      message: codexUnavailableMessage()
     });
   }
 
@@ -751,8 +779,11 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
   if (tokenState.status !== "configured") {
     pushPlanStep(planPreview, "Set `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.");
   }
-  if (!codex.available) {
+  if (!codex.available && codex.missing !== false) {
     pushPlanStep(planPreview, "Install Codex CLI and verify `codex --version`.");
+  }
+  if (!codex.available && codex.missing === false) {
+    pushPlanStep(planPreview, "Run `codex --version` in this shell, fix the local Codex install/runtime, then rerun `pnpm happytg setup`.");
   }
   if (redis.state === "running") {
     pushPlanStep(planPreview, "Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port.");
