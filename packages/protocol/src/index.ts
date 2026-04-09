@@ -405,6 +405,7 @@ export interface PolicyDecision {
 export interface RuntimeReadiness {
   runtime: "codex-cli";
   available: boolean;
+  missing?: boolean;
   binaryPath?: string;
   version?: string;
   configPath: string;

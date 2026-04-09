@@ -1,0 +1,40 @@
+{
+  "taskId": "HTG-2026-04-08-windows-first-run-path",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "mode": "read-only repo verification"
+  },
+  "checks": [
+    {
+      "name": "windows-home-resolution-regressions",
+      "ok": true,
+      "detail": "Shared tests cover Windows HOME, USERPROFILE, HOMEDRIVE/HOMEPATH, and runtime local state fallback."
+    },
+    {
+      "name": "windows-codex-shim-detection",
+      "ok": true,
+      "detail": "Runtime adapter and bootstrap tests pass for Windows-like codex.cmd shim discovery via Path/PATHEXT."
+    },
+    {
+      "name": "bot-first-run-env-path",
+      "ok": true,
+      "detail": "Bot startup now recovers a valid TELEGRAM_BOT_TOKEN from .env when shell state is placeholder and otherwise logs actionable setup guidance."
+    },
+    {
+      "name": "repo-typecheck",
+      "ok": true,
+      "detail": "pnpm typecheck passed."
+    },
+    {
+      "name": "repo-test",
+      "ok": true,
+      "detail": "pnpm test passed."
+    },
+    {
+      "name": "repo-build",
+      "ok": true,
+      "detail": "pnpm build passed."
+    }
+  ]
+}

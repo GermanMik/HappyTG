@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -64,6 +64,126 @@ test("checkCodexReadiness reports available Codex and captures smoke warnings", 
     assert.equal(readiness.smokeOk, true);
     assert.match(readiness.version ?? "", /codex test 1\.0/);
     assert.match(readiness.smokeError ?? "", /migration warning/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("checkCodexReadiness resolves a Windows-style codex.cmd shim from Path", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-shim-"));
+  try {
+    const shimPath = path.join(tempDir, "codex.cmd");
+    const configPath = path.join(tempDir, "config.toml");
+    await Promise.all([
+      writeFile(
+        shimPath,
+        [
+          "#!/bin/sh",
+          "if [ \"$1\" = \"--version\" ]; then",
+          "  echo \"codex shim 0.115.0\"",
+          "  exit 0",
+          "fi",
+          "if [ \"$1\" = \"exec\" ]; then",
+          "  echo '{\"type\":\"message\",\"text\":\"OK\"}'",
+          "  exit 0",
+          "fi",
+          "echo \"unexpected invocation\" >&2",
+          "exit 1"
+        ].join("\n"),
+        "utf8"
+      ),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8")
+    ]);
+    await chmod(shimPath, 0o755);
+
+    const readiness = await checkCodexReadiness({
+      env: {
+        PATH: "C:\\wrong-path",
+        Path: tempDir,
+        PATHEXT: ".COM;.EXE;.BAT;.CMD"
+      },
+      platform: "win32",
+      cwd: tempDir,
+      configPath
+    });
+
+    assert.equal(readiness.available, true);
+    assert.equal(readiness.missing, false);
+    assert.equal(readiness.smokeOk, true);
+    assert.match(readiness.version ?? "", /codex shim 0\.115\.0/);
+    assert.equal(readiness.binaryPath, shimPath);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-shim-case-"));
+  try {
+    const shimPath = path.join(tempDir, "codex.cmd");
+    const configPath = path.join(tempDir, "config.toml");
+    await Promise.all([
+      writeFile(
+        shimPath,
+        [
+          "#!/bin/sh",
+          "if [ \"$1\" = \"--version\" ]; then",
+          "  echo \"codex shim 0.116.0\"",
+          "  exit 0",
+          "fi",
+          "if [ \"$1\" = \"exec\" ]; then",
+          "  echo '{\"type\":\"message\",\"text\":\"OK\"}'",
+          "  exit 0",
+          "fi",
+          "echo \"unexpected invocation\" >&2",
+          "exit 1"
+        ].join("\n"),
+        "utf8"
+      ),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8")
+    ]);
+    await chmod(shimPath, 0o755);
+
+    const readiness = await checkCodexReadiness({
+      env: {
+        path: tempDir,
+        pathext: ".cmd;.exe"
+      } as NodeJS.ProcessEnv,
+      platform: "win32",
+      cwd: tempDir,
+      configPath
+    });
+
+    assert.equal(readiness.available, true);
+    assert.equal(readiness.missing, false);
+    assert.equal(readiness.smokeOk, true);
+    assert.match(readiness.version ?? "", /codex shim 0\.116\.0/);
+    assert.equal(readiness.binaryPath, shimPath);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("checkCodexReadiness marks only true ENOENT failures as missing", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-broken-codex-"));
+  try {
+    const brokenBinary = path.join(tempDir, "codex-broken.mjs");
+    await writeNodeEntrypoint(
+      brokenBinary,
+      `
+        process.stderr.write("broken codex version\\n");
+        process.exit(1);
+      `
+    );
+
+    const readiness = await checkCodexReadiness({
+      binaryPath: process.execPath,
+      binaryArgs: [brokenBinary]
+    });
+
+    assert.equal(readiness.available, false);
+    assert.equal(readiness.missing, false);
+    assert.equal(readiness.binaryPath, process.execPath);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

@@ -19,11 +19,13 @@ import {
   createLogger,
   ensureDir,
   getLocalStateDir,
+  loadHappyTGEnv,
   nowIso,
   readJsonFile,
   writeJsonFileAtomic
 } from "../../../packages/shared/src/index.js";
 
+loadHappyTGEnv();
 const logger = createLogger("host-daemon");
 const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
 const heartbeatMs = Number(process.env.HOST_DAEMON_DEFAULT_POLL_MS ?? 2_000);
@@ -73,16 +75,23 @@ export function hostNotPairedMessage(): string {
   return "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`.";
 }
 
-export function startupReadinessMessage(input: { available: boolean }): string | undefined {
-  if (!input.available) {
+export function pairingInstructions(pairingCode: string): string[] {
+  return [
+    `Pair with Telegram using: /pair ${pairingCode}`,
+    "Next: keep `pnpm dev` running, send the command in Telegram, then start the daemon with `pnpm dev:daemon`."
+  ];
+}
+
+export function startupReadinessMessage(input: { available: boolean; missing?: boolean }): string | undefined {
+  if (!input.available && input.missing !== false) {
     return codexCliMissingMessage();
   }
 
   return undefined;
 }
 
-export function firstRunGuidance(input: { hostId?: string; readinessAvailable: boolean }): string | undefined {
-  if (!input.readinessAvailable) {
+export function firstRunGuidance(input: { hostId?: string; readinessAvailable: boolean; readinessMissing?: boolean }): string | undefined {
+  if (!input.readinessAvailable && input.readinessMissing !== false) {
     return codexCliMissingMessage();
   }
 
@@ -207,7 +216,9 @@ async function pairHost(labelOverride?: string): Promise<void> {
   await saveState(state);
 
   logger.info("Pairing code issued", response);
-  console.log(`Pair with Telegram using: /pair ${response.pairingCode}`);
+  for (const line of pairingInstructions(response.pairingCode)) {
+    console.log(line);
+  }
   console.log(`Host ID: ${response.hostId}`);
   console.log(`Expires at: ${response.expiresAt}`);
 }
@@ -575,7 +586,8 @@ async function runOnce(): Promise<void> {
   const state = await loadState();
   const guidance = firstRunGuidance({
     hostId: state.hostId,
-    readinessAvailable: readiness.available
+    readinessAvailable: readiness.available,
+    readinessMissing: readiness.missing
   });
 
   if (guidance === codexCliMissingMessage()) {

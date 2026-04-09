@@ -1,0 +1,41 @@
+
+> happytg@0.2.0 happytg /Users/mikhaylov-g/Documents/Develop/HappyTG
+> tsx packages/bootstrap/src/cli.ts "doctor"
+
+HappyTG doctor [PASS]
+Summary: Environment looks ready.
+Profile: recommended
+
+Checks:
+- Env: .env found
+- Codex: codex-cli 0.115.0
+- Telegram: configured
+- Redis: remote URL redis://redis.example:6379
+- Ports: all critical ports free
+
+Next steps:
+- Run `pnpm happytg setup` for the guided first-start checklist.
+
+Diagnostics:
+- Run `pnpm happytg doctor --json` for machine-readable details.
+
+> happytg@0.2.0 happytg /Users/mikhaylov-g/Documents/Develop/HappyTG
+> tsx packages/bootstrap/src/cli.ts "verify"
+
+HappyTG verify [PASS]
+Summary: Environment looks ready.
+Profile: recommended
+
+Checks:
+- Env: .env found
+- Codex: codex-cli 0.115.0
+- Telegram: configured
+- Redis: remote URL redis://redis.example:6379
+- Ports: all critical ports free
+
+Next steps:
+- Run `pnpm happytg setup` for the guided first-start checklist.
+
+Diagnostics:
+- Run `pnpm happytg verify --json` for machine-readable details.
+- Run `pnpm happytg doctor --json` for the full environment report.

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import type { BootstrapReport, TaskBundle } from "../../protocol/src/index.js";
 import { initTaskBundle, readTaskBundle, taskBundlePath, validateTaskBundle } from "../../repo-proof/src/index.js";
+import { loadHappyTGEnv } from "../../shared/src/index.js";
 
 import { runBootstrapCommand, type BootstrapCommand } from "./index.js";
 
@@ -191,11 +192,20 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
 
 export function renderText(result: BootstrapReport | TaskBundle | TaskStatusResponse): string {
   if ("command" in result) {
+    const preflight = Array.isArray((result.reportJson as { preflight?: unknown }).preflight)
+      ? ((result.reportJson as { preflight: string[] }).preflight)
+      : [];
     const lines = [
       `HappyTG ${result.command} ${statusBadge(result.status)}`,
       `Summary: ${summarizeFindings(result)}`,
       `Profile: ${result.profileRecommendation ?? "n/a"}`
     ];
+
+    if (preflight.length > 0) {
+      lines.push("");
+      lines.push(result.command === "setup" ? "Preflight:" : "Checks:");
+      lines.push(...preflight.map((item) => `- ${item}`));
+    }
 
     if (result.findings.length > 0) {
       lines.push("");
@@ -205,7 +215,7 @@ export function renderText(result: BootstrapReport | TaskBundle | TaskStatusResp
 
     if (result.planPreview.length > 0) {
       lines.push("");
-      lines.push("Next steps:");
+      lines.push(result.command === "setup" ? "First start:" : "Next steps:");
       lines.push(...result.planPreview.map((item) => `- ${item}`));
     }
 
@@ -275,6 +285,8 @@ export async function executeHappyTG(argv: string[], cwd = process.cwd()): Promi
 }
 
 async function main(argv: string[]): Promise<void> {
+  loadHappyTGEnv();
+
   if (argv.includes("--help") || argv.includes("-h")) {
     console.log(usage());
     return;

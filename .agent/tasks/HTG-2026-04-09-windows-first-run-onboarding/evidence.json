@@ -1,0 +1,54 @@
+{
+  "taskId": "HTG-2026-04-09-windows-first-run-onboarding",
+  "criteria": [
+    {
+      "id": "windows-home-resolution",
+      "status": "passed",
+      "artifacts": [
+        "packages/shared/src/index.ts",
+        "packages/shared/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/raw/test-integration.txt"
+      ]
+    },
+    {
+      "id": "windows-codex-detection",
+      "status": "passed",
+      "artifacts": [
+        "packages/runtime-adapters/src/index.test.ts",
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/raw/test-integration.txt"
+      ]
+    },
+    {
+      "id": "first-run-onboarding-docs",
+      "status": "passed",
+      "artifacts": [
+        "README.md",
+        "docs/quickstart.md",
+        "docs/installation.md",
+        "docs/bootstrap-doctor.md",
+        "docs/troubleshooting.md",
+        "infra/README.md"
+      ]
+    },
+    {
+      "id": "repo-verification",
+      "status": "passed",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/raw/lint.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/raw/typecheck.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/raw/build.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/spec.md",
+    ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/evidence.md",
+    ".agent/tasks/HTG-2026-04-09-windows-first-run-onboarding/verdict.json"
+  ],
+  "generatedAt": "2026-04-09T23:59:00.000Z"
+}

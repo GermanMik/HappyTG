@@ -1,7 +1,16 @@
 import { fileURLToPath } from "node:url";
 
 import { refreshExpiredApproval } from "../../../packages/approval-engine/src/index.js";
-import { FileStateStore, createJsonServer, createLogger, json, route, type Logger } from "../../../packages/shared/src/index.js";
+import {
+  FileStateStore,
+  createJsonServer,
+  createLogger,
+  json,
+  loadHappyTGEnv,
+  readPort,
+  route,
+  type Logger
+} from "../../../packages/shared/src/index.js";
 
 import {
   markExpiredApprovalSessions,
@@ -32,6 +41,8 @@ export interface WorkerReadinessSnapshot {
   lastTickLagMs?: number;
   lastError?: string;
 }
+
+loadHappyTGEnv();
 
 export function createWorkerRuntime(options: WorkerRuntimeOptions = {}) {
   const logger = options.logger ?? createLogger("worker");
@@ -186,7 +197,7 @@ export function createWorkerServer(runtime = createWorkerRuntime()) {
   );
 }
 
-const port = Number(process.env.PORT ?? 4200);
+const port = readPort(process.env, ["HAPPYTG_WORKER_PORT", "PORT"], 4200);
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const runtime = createWorkerRuntime();
   const server = createWorkerServer(runtime);

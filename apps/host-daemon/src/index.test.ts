@@ -8,6 +8,7 @@ import {
   defaultWorkspaces,
   firstRunGuidance,
   hostNotPairedMessage,
+  pairingInstructions,
   parseVerifierVerdict,
   sandboxForDispatch,
   shouldEmitStartupNotice,
@@ -106,14 +107,26 @@ test("startup guidance stays actionable and repeated notices are suppressed", ()
     "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
   );
   assert.equal(
+    startupReadinessMessage({ available: false, missing: false }),
+    undefined
+  );
+  assert.equal(
     firstRunGuidance({ hostId: undefined, readinessAvailable: false }),
     "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
+  );
+  assert.equal(
+    firstRunGuidance({ hostId: undefined, readinessAvailable: false, readinessMissing: false }),
+    "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`."
   );
   assert.equal(
     firstRunGuidance({ hostId: undefined, readinessAvailable: true }),
     "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`."
   );
   assert.equal(hostNotPairedMessage(), "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`.");
+  assert.deepEqual(pairingInstructions("PAIR-123"), [
+    "Pair with Telegram using: /pair PAIR-123",
+    "Next: keep `pnpm dev` running, send the command in Telegram, then start the daemon with `pnpm dev:daemon`."
+  ]);
   assert.equal(shouldEmitStartupNotice(cache, "codex", 0, 60_000), true);
   assert.equal(shouldEmitStartupNotice(cache, "codex", 1_000, 60_000), false);
   assert.equal(shouldEmitStartupNotice(cache, "codex", 61_000, 60_000), true);

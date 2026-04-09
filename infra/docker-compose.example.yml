@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "${HAPPYTG_POSTGRES_HOST_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d happytg"]
       interval: 10s
@@ -16,7 +16,7 @@ services:
   redis:
     image: redis:7
     ports:
-      - "6379:6379"
+      - "${HAPPYTG_REDIS_HOST_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -30,8 +30,8 @@ services:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: miniosecret
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${HAPPYTG_MINIO_PORT:-9000}:9000"
+      - "${HAPPYTG_MINIO_CONSOLE_PORT:-9001}:9001"
 
   api:
     build:
@@ -41,12 +41,17 @@ services:
         APP_PACKAGE: "@happytg/api"
     env_file:
       - ../.env
+    environment:
+      PORT: 4000
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/happytg}
+      REDIS_URL: ${COMPOSE_REDIS_URL:-redis://redis:6379}
+      S3_ENDPOINT: ${COMPOSE_S3_ENDPOINT:-http://minio:9000}
     depends_on:
       - postgres
       - redis
       - minio
     ports:
-      - "4000:4000"
+      - "${HAPPYTG_API_PORT:-4000}:4000"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/ready').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 10s
@@ -61,6 +66,11 @@ services:
         APP_PACKAGE: "@happytg/worker"
     env_file:
       - ../.env
+    environment:
+      PORT: 4200
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/happytg}
+      REDIS_URL: ${COMPOSE_REDIS_URL:-redis://redis:6379}
+      S3_ENDPOINT: ${COMPOSE_S3_ENDPOINT:-http://minio:9000}
     depends_on:
       - api
       - redis
@@ -78,6 +88,9 @@ services:
         APP_PACKAGE: "@happytg/bot"
     env_file:
       - ../.env
+    environment:
+      PORT: 4100
+      HAPPYTG_API_URL: ${COMPOSE_HAPPYTG_API_URL:-http://api:4000}
     depends_on:
       - api
     healthcheck:
@@ -94,10 +107,13 @@ services:
         APP_PACKAGE: "@happytg/miniapp"
     env_file:
       - ../.env
+    environment:
+      PORT: 3001
+      HAPPYTG_API_URL: ${COMPOSE_HAPPYTG_API_URL:-http://api:4000}
     depends_on:
       - api
     ports:
-      - "3001:3001"
+      - "${HAPPYTG_MINIAPP_PORT:-3001}:3001"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/ready').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 10s

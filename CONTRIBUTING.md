@@ -11,8 +11,8 @@ HappyTG is an event-driven control plane for remote AI coding workflows. Contrib
 
 ## Development Workflow
 
-1. Read [AGENTS.md](./AGENTS.md).
-2. Read [docs/local-development.md](./docs/local-development.md).
+1. Read [Agent Guidance](./AGENTS.md).
+2. Read [Local Development](./docs/local-development.md).
 3. For non-trivial tasks, initialize a task bundle under `.agent/tasks/<TASK_ID>/`.
 4. Freeze spec before build.
 5. Record evidence and run a fresh verifier pass before claiming completion.

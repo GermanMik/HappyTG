@@ -33,4 +33,4 @@ Codex CLI is the primary runtime. Secondary runtimes are supported only behind a
 
 ## Detailed Spec
 
-The full production blueprint lives in [docs/engineering-blueprint.md](./docs/engineering-blueprint.md).
+The full production blueprint lives in [Engineering Blueprint](./docs/engineering-blueprint.md).

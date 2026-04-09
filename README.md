@@ -4,6 +4,23 @@ HappyTG is a Telegram-first, Codex-first, self-hosted control plane for remotely
 
 It is designed around one hard constraint: Telegram is a render surface for commands, approvals, summaries, and notifications, but it is not the execution core and it is not the source of truth. The source of truth lives in the control plane state, durable event log, materialized views, and repo-local proof artifacts.
 
+## First Start Flow
+
+```mermaid
+flowchart LR
+    A["Copy .env.example to .env"] --> B["Set TELEGRAM_BOT_TOKEN"]
+    B --> C["pnpm install"]
+    C --> D["pnpm happytg setup"]
+    D --> E{"Redis already running on 6379?"}
+    E -->|Yes| F["docker compose up postgres minio"]
+    E -->|No| G["docker compose up postgres redis minio"]
+    F --> H["pnpm dev"]
+    G --> H
+    H --> I["pnpm daemon:pair"]
+    I --> J["Send /pair <CODE> in Telegram"]
+    J --> K["pnpm dev:daemon"]
+```
+
 ## Why HappyTG
 
 - Remote control for local execution: operate coding work from Telegram while code runs on your own host.
@@ -28,40 +45,84 @@ It is designed around one hard constraint: Telegram is a render surface for comm
 - `packages/hooks`: platform lifecycle hooks.
 - `packages/shared`: shared types, logging, config, and utility helpers.
 
-## Repo Entry Points
+## Runtime Surfaces
 
-- [ARCHITECTURE.md](./ARCHITECTURE.md): high-level architectural overview.
-- [AGENTS.md](./AGENTS.md): Codex/Cursor guidance for contributors and agents.
-- [docs/engineering-blueprint.md](./docs/engineering-blueprint.md): comprehensive production-oriented blueprint.
-- [docs/quickstart.md](./docs/quickstart.md): first-run path.
-- [docs/runtime-codex.md](./docs/runtime-codex.md): Codex-first runtime model.
-- [docs/proof-loop.md](./docs/proof-loop.md): repo-local proof loop.
-- [docs/bootstrap-doctor.md](./docs/bootstrap-doctor.md): deterministic bootstrap and doctor subsystem.
-- [infra/docker-compose.example.yml](./infra/docker-compose.example.yml): local self-hosted composition example.
-- [infra/Dockerfile.app](./infra/Dockerfile.app): reusable runtime image for API, worker, bot, and Mini App surfaces.
-- [.github/workflows/ci.yml](./.github/workflows/ci.yml): repository verification pipeline for typecheck, test, and build.
+| Surface | Default port | Purpose | Start command |
+| --- | --- | --- | --- |
+| Mini App | `3001` | Deep inspection for diffs, bundles, and reports | `pnpm dev:miniapp` |
+| API | `4000` | Control plane HTTP/API surface | `pnpm dev:api` |
+| Bot | `4100` | Telegram command and approval surface | `pnpm dev:bot` |
+| Worker probe | `4200` | Worker health/probe surface | `pnpm dev:worker` |
+| Host daemon | n/a | Local execution agent on the repo-owning host | `pnpm dev:daemon` |
+
+## First-Run Signals
+
+| Signal | Meaning | Next action |
+| --- | --- | --- |
+| `Codex CLI not found` | The current shell cannot resolve Codex at all. | Verify `codex --version`, then rerun `pnpm happytg doctor`. |
+| `Codex: detected but unavailable` | The binary was found, but startup failed in this shell. | Run `codex --version` directly, fix the local install/runtime, then rerun `pnpm happytg doctor --json`. |
+| `telegramConfigured: false` | Bot token is missing, placeholder, or invalid. | Set `TELEGRAM_BOT_TOKEN` in `.env`, then restart the bot. |
+| `Host is not paired yet` | The daemon has not been paired with Telegram yet. | Run `pnpm daemon:pair`, send `/pair <CODE>`, then start `pnpm dev:daemon`. |
+
+## Documentation Map
+
+| Document | Use it when |
+| --- | --- |
+| [Architecture](./ARCHITECTURE.md) | You want the high-level system model and source-of-truth boundaries. |
+| [Agent Guidance](./AGENTS.md) | You are contributing through Codex or Cursor and need repo rules. |
+| [Engineering Blueprint](./docs/engineering-blueprint.md) | You need the full production-oriented design blueprint. |
+| [Quickstart](./docs/quickstart.md) | You want the shortest path from clone to paired host. |
+| [Installation](./docs/installation.md) | You need the complete local or self-hosted install path. |
+| [Bootstrap Doctor](./docs/bootstrap-doctor.md) | You need to understand `setup`, `doctor`, `repair`, or `verify`. |
+| [Runtime Codex](./docs/runtime-codex.md) | You want the Codex runtime model and execution expectations. |
+| [Proof Loop](./docs/proof-loop.md) | You are running non-trivial work with repo-local proof artifacts. |
+| [Release Notes 0.2.0](./docs/releases/0.2.0.md) | You want the current release-level summary of onboarding/runtime changes. |
+| [Docker Compose Example](./infra/docker-compose.example.yml) | You need the local shared infra compose file. |
+| [Shared App Dockerfile](./infra/Dockerfile.app) | You need the reusable runtime image definition. |
+| [CI Workflow](./.github/workflows/ci.yml) | You want the exact baseline verification gates enforced in CI. |
 
 ## Fast Start
 
 1. Install Node.js 22+, `pnpm`, Git, and Codex CLI.
-2. Copy `.env.example` to `.env` and fill Telegram/OpenAI/backend secrets.
-3. Read [docs/installation.md](./docs/installation.md).
-4. Run the first-start commands:
+2. Create `.env`:
 
    ```bash
    cp .env.example .env
-   pnpm install
-   pnpm happytg doctor
-   docker compose -f infra/docker-compose.example.yml up --build
    ```
 
-5. In a second shell, start the development stack:
+   PowerShell:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+3. Set `TELEGRAM_BOT_TOKEN` in `.env`.
+4. Run the guided preflight:
+
+   ```bash
+   pnpm install
+   pnpm happytg setup
+   ```
+
+5. Start shared infra. If Redis is already running on `localhost:6379`, reuse it and skip compose `redis`:
+
+   ```bash
+   docker compose -f infra/docker-compose.example.yml up postgres minio
+   ```
+
+   If Redis is not running yet:
+
+   ```bash
+   docker compose -f infra/docker-compose.example.yml up postgres redis minio
+   ```
+
+6. In a second shell, start the development stack:
 
    ```bash
    pnpm dev
    ```
 
-6. In a third shell on the execution host, request pairing and then start the daemon:
+7. In a third shell on the execution host, request pairing and then start the daemon:
 
    ```bash
    pnpm daemon:pair
@@ -69,13 +130,21 @@ It is designed around one hard constraint: Telegram is a render surface for comm
    pnpm dev:daemon
    ```
 
-7. If the Mini App port is already in use, restart it with a different port:
+8. If a port is already in use, override it explicitly. Example for the Mini App:
 
    ```bash
-   PORT=3002 pnpm dev:miniapp
+   HAPPYTG_MINIAPP_PORT=3002 pnpm dev:miniapp
    ```
 
-8. After pairing succeeds, run the first smoke task, then the first proof-loop task.
+   PowerShell:
+
+   ```powershell
+   $env:HAPPYTG_MINIAPP_PORT=3002; pnpm dev:miniapp
+   ```
+
+9. After pairing succeeds, run the first smoke task, then the first proof-loop task.
+
+For the fuller path, use [Quickstart](./docs/quickstart.md), [Installation](./docs/installation.md), and [Bootstrap Doctor](./docs/bootstrap-doctor.md).
 
 ## Monorepo Commands
 
@@ -95,7 +164,7 @@ pnpm happytg task status --repo . --task HTG-0001
 
 ## CI Baseline
 
-The repository ships with a single verification workflow in `.github/workflows/ci.yml`. Every branch under `codex/**`, plus `main`, runs the same baseline gates:
+The repository ships with a single verification workflow in [CI Workflow](./.github/workflows/ci.yml). Every branch under `codex/**`, plus `main`, runs the same baseline gates:
 
 - `pnpm install --frozen-lockfile`
 - `pnpm typecheck`

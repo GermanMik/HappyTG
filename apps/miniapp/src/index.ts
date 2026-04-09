@@ -1,10 +1,20 @@
 import { fileURLToPath } from "node:url";
 
-import { createJsonServer, createLogger, json, route, text, type Logger } from "../../../packages/shared/src/index.js";
+import {
+  createJsonServer,
+  createLogger,
+  json,
+  loadHappyTGEnv,
+  readPort,
+  route,
+  text,
+  type Logger
+} from "../../../packages/shared/src/index.js";
 
 const logger = createLogger("miniapp");
+loadHappyTGEnv();
 const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
-const port = Number(process.env.PORT ?? 3001);
+const port = readPort(process.env, ["HAPPYTG_MINIAPP_PORT", "PORT"], 3001);
 
 export interface MiniAppDependencies {
   fetchJson<T>(pathname: string): Promise<T>;
@@ -92,7 +102,7 @@ function renderProofProgress(task: { phase: string; verificationState: string },
 }
 
 export function formatMiniAppPortConflictMessage(listenPort: number): string {
-  return `Port ${listenPort} is already in use. Free the port or start the mini app with a different PORT, then try again.`;
+  return `Port ${listenPort} is already in use. Reuse the running mini app if it is yours, or start a new one with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
 }
 
 export function renderPage(title: string, body: string): string {

@@ -1,0 +1,62 @@
+{
+  "taskId": "HTG-2026-04-08-windows-first-run-path",
+  "status": "verified",
+  "changedFiles": [
+    "packages/shared/src/index.ts",
+    "packages/shared/src/index.test.ts",
+    "packages/runtime-adapters/src/index.ts",
+    "packages/runtime-adapters/src/index.test.ts",
+    "packages/protocol/src/index.ts",
+    "apps/host-daemon/src/index.ts",
+    "apps/host-daemon/src/index.test.ts",
+    "apps/bot/src/index.ts",
+    "apps/bot/src/index.test.ts"
+  ],
+  "commands": [
+    {
+      "command": "pnpm lint",
+      "artifact": "raw/lint.txt",
+      "ok": true
+    },
+    {
+      "command": "pnpm typecheck",
+      "artifact": "raw/typecheck.txt",
+      "ok": true
+    },
+    {
+      "command": "pnpm --filter @happytg/shared test",
+      "artifact": "raw/test-unit.txt",
+      "ok": true
+    },
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters test",
+      "artifact": "raw/test-unit.txt",
+      "ok": true
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap test",
+      "artifact": "raw/test-unit.txt",
+      "ok": true
+    },
+    {
+      "command": "pnpm --filter @happytg/host-daemon test",
+      "artifact": "raw/test-unit.txt",
+      "ok": true
+    },
+    {
+      "command": "pnpm --filter @happytg/bot test",
+      "artifact": "raw/test-unit.txt",
+      "ok": true
+    },
+    {
+      "command": "pnpm test",
+      "artifact": "raw/test-integration.txt",
+      "ok": true
+    },
+    {
+      "command": "pnpm build",
+      "artifact": "raw/build.txt",
+      "ok": true
+    }
+  ]
+}
