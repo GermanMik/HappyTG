@@ -108,9 +108,35 @@ test("checkCodexReadiness resolves a Windows-style codex.cmd shim from Path", as
     });
 
     assert.equal(readiness.available, true);
+    assert.equal(readiness.missing, false);
     assert.equal(readiness.smokeOk, true);
     assert.match(readiness.version ?? "", /codex shim 0\.115\.0/);
-    assert.equal(readiness.binaryPath, "codex");
+    assert.equal(readiness.binaryPath, shimPath);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("checkCodexReadiness marks only true ENOENT failures as missing", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-broken-codex-"));
+  try {
+    const brokenBinary = path.join(tempDir, "codex-broken.mjs");
+    await writeNodeEntrypoint(
+      brokenBinary,
+      `
+        process.stderr.write("broken codex version\\n");
+        process.exit(1);
+      `
+    );
+
+    const readiness = await checkCodexReadiness({
+      binaryPath: process.execPath,
+      binaryArgs: [brokenBinary]
+    });
+
+    assert.equal(readiness.available, false);
+    assert.equal(readiness.missing, false);
+    assert.equal(readiness.binaryPath, process.execPath);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

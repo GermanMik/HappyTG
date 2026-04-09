@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -5,6 +6,7 @@ import {
   createLogger,
   json,
   loadHappyTGEnv,
+  parseDotEnv,
   readJsonBody,
   readPort,
   route,
@@ -15,17 +17,15 @@ import type { BotDependencies, TelegramUpdate } from "./handlers.js";
 import { createBotHandlers } from "./handlers.js";
 
 const logger = createLogger("bot");
-loadHappyTGEnv();
-const botToken = process.env.TELEGRAM_BOT_TOKEN;
-const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
-const port = readPort(process.env, ["HAPPYTG_BOT_PORT", "PORT"], 4100);
 
-export function botConfigurationMessage(env = process.env): string | undefined {
+export function botConfigurationMessage(env = process.env, envFilePath?: string): string | undefined {
   const tokenState = telegramTokenStatus(env);
   switch (tokenState.status) {
     case "missing":
     case "placeholder":
-      return "Telegram bot token is missing. Set `TELEGRAM_BOT_TOKEN` in `.env`, then restart the bot.";
+      return envFilePath
+        ? "Telegram bot token is missing. Set `TELEGRAM_BOT_TOKEN` in `.env`, then restart the bot."
+        : "Telegram bot token is missing. Copy `.env.example` to `.env`, set `TELEGRAM_BOT_TOKEN`, then restart the bot.";
     case "invalid":
       return "Telegram bot token format looks invalid. Update `TELEGRAM_BOT_TOKEN`, then restart the bot.";
     case "configured":
@@ -33,6 +33,47 @@ export function botConfigurationMessage(env = process.env): string | undefined {
       return undefined;
   }
 }
+
+function hydrateTelegramTokenFromEnvFile(env: NodeJS.ProcessEnv, envFilePath?: string): void {
+  if (!envFilePath || telegramTokenStatus(env).configured) {
+    return;
+  }
+
+  const parsed = parseDotEnv(readFileSync(envFilePath, "utf8"));
+  const fileToken = parsed.TELEGRAM_BOT_TOKEN?.trim();
+  if (!fileToken) {
+    return;
+  }
+
+  if (telegramTokenStatus({ TELEGRAM_BOT_TOKEN: fileToken }).configured) {
+    env.TELEGRAM_BOT_TOKEN = fileToken;
+  }
+}
+
+export function initializeBotEnvironment(options?: {
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  envFilePath?: string;
+}): {
+  envFilePath?: string;
+  telegramConfigured: boolean;
+  configurationMessage?: string;
+} {
+  const env = options?.env ?? process.env;
+  const loaded = loadHappyTGEnv(options);
+  hydrateTelegramTokenFromEnvFile(env, loaded.envFilePath);
+
+  return {
+    envFilePath: loaded.envFilePath,
+    telegramConfigured: telegramTokenStatus(env).configured,
+    configurationMessage: botConfigurationMessage(env, loaded.envFilePath)
+  };
+}
+
+const botEnvironment = initializeBotEnvironment();
+const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
+const port = readPort(process.env, ["HAPPYTG_BOT_PORT", "PORT"], 4100);
 
 function createDefaultApiFetch() {
   return async function apiFetch<T>(pathname: string, init?: RequestInit): Promise<T> {
@@ -127,7 +168,7 @@ export function createBotServer(dependencies: Partial<BotDependencies> = {}) {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const server = createBotServer();
   server.listen(port, () => {
-    const configurationMessage = botConfigurationMessage();
+    const configurationMessage = botEnvironment.configurationMessage;
     if (configurationMessage) {
       logger.warn(configurationMessage, { port, apiBaseUrl, telegramConfigured: false });
     } else {

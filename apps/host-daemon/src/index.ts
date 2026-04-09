@@ -82,16 +82,16 @@ export function pairingInstructions(pairingCode: string): string[] {
   ];
 }
 
-export function startupReadinessMessage(input: { available: boolean }): string | undefined {
-  if (!input.available) {
+export function startupReadinessMessage(input: { available: boolean; missing?: boolean }): string | undefined {
+  if (!input.available && input.missing !== false) {
     return codexCliMissingMessage();
   }
 
   return undefined;
 }
 
-export function firstRunGuidance(input: { hostId?: string; readinessAvailable: boolean }): string | undefined {
-  if (!input.readinessAvailable) {
+export function firstRunGuidance(input: { hostId?: string; readinessAvailable: boolean; readinessMissing?: boolean }): string | undefined {
+  if (!input.readinessAvailable && input.readinessMissing !== false) {
     return codexCliMissingMessage();
   }
 
@@ -586,7 +586,8 @@ async function runOnce(): Promise<void> {
   const state = await loadState();
   const guidance = firstRunGuidance({
     hostId: state.hostId,
-    readinessAvailable: readiness.available
+    readinessAvailable: readiness.available,
+    readinessMissing: readiness.missing
   });
 
   if (guidance === codexCliMissingMessage()) {

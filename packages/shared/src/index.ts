@@ -14,6 +14,21 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
+function isWindowsPathLike(value: string): boolean {
+  return /^[A-Za-z]:([\\/]|$)/u.test(value) || value.startsWith("\\\\") || value.includes("\\");
+}
+
+function pathModuleForHome(
+  homeDirectory: string,
+  platform: NodeJS.Platform = process.platform
+): typeof path.win32 | typeof path.posix {
+  if (platform !== "win32") {
+    return path.posix;
+  }
+
+  return isWindowsPathLike(homeDirectory) ? path.win32 : path.posix;
+}
+
 function effectiveHomeDirectory(
   env: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform
@@ -56,9 +71,7 @@ export function resolveHome(
   }
 
   if (inputPath.startsWith("~/") || inputPath.startsWith("~\\")) {
-    const pathModule = options?.platform === "win32" && (/^[A-Za-z]:/u.test(homeDirectory) || homeDirectory.includes("\\"))
-      ? path.win32
-      : path;
+    const pathModule = pathModuleForHome(homeDirectory, options?.platform);
     return pathModule.join(homeDirectory, inputPath.slice(2));
   }
 
@@ -77,8 +90,16 @@ export function getControlPlaneStorePath(env = process.env): string {
   return path.join(getDataDir(env), "control-plane.json");
 }
 
-export function getLocalStateDir(env = process.env): string {
-  return resolveHome(env.HAPPYTG_STATE_DIR ?? path.join(os.homedir(), ".happytg"));
+export function getLocalStateDir(
+  env = process.env,
+  platform: NodeJS.Platform = process.platform
+): string {
+  if (env.HAPPYTG_STATE_DIR) {
+    return resolveHome(env.HAPPYTG_STATE_DIR, { env, platform });
+  }
+
+  const homeDirectory = effectiveHomeDirectory(env, platform);
+  return pathModuleForHome(homeDirectory, platform).join(homeDirectory, ".happytg");
 }
 
 export async function ensureDir(dirPath: string): Promise<void> {

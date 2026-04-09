@@ -36,6 +36,14 @@ function isJavaScriptEntrypoint(filePath: string): boolean {
   return [".js", ".mjs", ".cjs"].includes(path.extname(filePath).toLowerCase());
 }
 
+function trimWrappedQuotes(value: string): string {
+  if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+    return value.slice(1, -1);
+  }
+
+  return value;
+}
+
 function formatSpawnError(error: unknown): string {
   return error instanceof Error ? error.message : "Unknown error";
 }
@@ -87,7 +95,7 @@ async function resolveCommandInvocation(
     env?: NodeJS.ProcessEnv;
     platform?: NodeJS.Platform;
   }
-): Promise<{ command: string; args: string[] }> {
+) : Promise<{ command: string; args: string[]; resolvedPath?: string }> {
   const resolvedPath = await resolveExecutable(command, {
     cwd: options?.cwd,
     env: options?.env,
@@ -98,13 +106,15 @@ async function resolveCommandInvocation(
   if (isJavaScriptEntrypoint(commandPath)) {
     return {
       command: process.execPath,
-      args: [commandPath, ...args]
+      args: [commandPath, ...args],
+      resolvedPath
     };
   }
 
   return {
     command: commandPath,
-    args
+    args,
+    resolvedPath
   };
 }
 
@@ -127,7 +137,16 @@ async function runCommand(
     env,
     platform
   });
-  const useWindowsShell = platform === "win32" && /\.(cmd|bat)$/i.test(invocation.command);
+  const normalizedCommand = trimWrappedQuotes(command).trim();
+  const bareWindowsCommand = platform === "win32"
+    && !path.extname(normalizedCommand)
+    && !normalizedCommand.includes("/")
+    && !normalizedCommand.includes("\\");
+  const useWindowsShell = platform === "win32"
+    && (
+      /\.(cmd|bat)$/i.test(invocation.command)
+      || (bareWindowsCommand && !invocation.resolvedPath)
+    );
   const spawnEnv = normalizeSpawnEnv(env, platform);
   return new Promise((resolve, reject) => {
     const child = spawn(invocation.command, invocation.args, {
@@ -184,9 +203,15 @@ export async function checkCodexReadiness(input?: {
   const configPath = homeExpanded(input?.configPath ?? env.CODEX_CONFIG_PATH ?? "~/.codex/config.toml");
   const smokePrompt = input?.smokePrompt ?? env.CODEX_SMOKE_PROMPT ?? "Print exactly OK and exit.";
   const configExists = await fileExists(configPath);
+  const resolvedBinaryPath = await resolveExecutable(binaryPath, {
+    cwd: input?.cwd,
+    env,
+    platform
+  });
+  const commandPath = resolvedBinaryPath ?? binaryPath;
 
   try {
-    const versionRun = await runCommand(binaryPath, [...binaryArgs, "--version"], {
+    const versionRun = await runCommand(commandPath, [...binaryArgs, "--version"], {
       cwd: input?.cwd,
       env,
       platform
@@ -197,7 +222,7 @@ export async function checkCodexReadiness(input?: {
     let smokeError = "";
 
     if (available && configExists) {
-      const smokeRun = await runCommand(binaryPath, [...binaryArgs, "exec", "--skip-git-repo-check", "--json", smokePrompt], {
+      const smokeRun = await runCommand(commandPath, [...binaryArgs, "exec", "--skip-git-repo-check", "--json", smokePrompt], {
         cwd: input?.cwd,
         env,
         platform
@@ -210,7 +235,8 @@ export async function checkCodexReadiness(input?: {
     return {
       runtime: "codex-cli",
       available,
-      binaryPath,
+      missing: false,
+      binaryPath: commandPath,
       version: versionRun.stdout.trim() || versionRun.stderr.trim(),
       configPath,
       configExists,
@@ -219,14 +245,16 @@ export async function checkCodexReadiness(input?: {
       smokeError
     };
   } catch (error) {
+    const missing = isCommandMissingError(error);
     return {
       runtime: "codex-cli",
       available: false,
-      binaryPath,
+      missing,
+      binaryPath: commandPath,
       configPath,
       configExists,
       smokeOk: false,
-      smokeError: isCommandMissingError(error) ? codexCliMissingMessage() : formatSpawnError(error)
+      smokeError: missing ? codexCliMissingMessage() : formatSpawnError(error)
     };
   }
 }

@@ -107,8 +107,16 @@ test("startup guidance stays actionable and repeated notices are suppressed", ()
     "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
   );
   assert.equal(
+    startupReadinessMessage({ available: false, missing: false }),
+    undefined
+  );
+  assert.equal(
     firstRunGuidance({ hostId: undefined, readinessAvailable: false }),
     "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
+  );
+  assert.equal(
+    firstRunGuidance({ hostId: undefined, readinessAvailable: false, readinessMissing: false }),
+    "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`."
   );
   assert.equal(
     firstRunGuidance({ hostId: undefined, readinessAvailable: true }),

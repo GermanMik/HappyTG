@@ -10,6 +10,7 @@ import {
   FileStateStore,
   createJsonServer,
   findExecutable,
+  getLocalStateDir,
   loadHappyTGEnv,
   json,
   normalizeSpawnEnv,
@@ -56,7 +57,7 @@ test("resolveHome and atomic file helpers round-trip data", async () => {
 test("resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides", () => {
   const windowsHomeOverride = resolveHome("~/workspace", {
     env: {
-      HOME: "/tmp/windows-home",
+      HOME: "C:\\Temp\\windows-home",
       USERPROFILE: "C:\\Users\\fallback"
     },
     platform: "win32"
@@ -74,10 +75,20 @@ test("resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overr
     },
     platform: "win32"
   });
+  const windowsStateDir = getLocalStateDir({
+    USERPROFILE: "C:\\Users\\profile"
+  } as NodeJS.ProcessEnv, "win32");
 
-  assert.equal(windowsHomeOverride, path.join("/tmp/windows-home", "workspace"));
+  assert.equal(resolveHome("~", {
+    env: {
+      HOME: "C:\\Temp\\windows-home"
+    },
+    platform: "win32"
+  }), "C:\\Temp\\windows-home");
+  assert.equal(windowsHomeOverride, "C:\\Temp\\windows-home\\workspace");
   assert.equal(windowsUserProfile, "C:\\Users\\profile\\workspace");
   assert.equal(windowsHomeDrive, "C:\\Users\\drive-home\\workspace");
+  assert.equal(windowsStateDir, "C:\\Users\\profile\\.happytg");
 });
 
 test("findExecutable searches PATH and appends Windows executable extensions", async () => {
