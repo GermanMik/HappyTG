@@ -1,0 +1,2 @@
+No dedicated integration-only command was run for this task.
+Coverage came from the repo-wide `pnpm test` suite plus focused bootstrap/runtime regression tests.

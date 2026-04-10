@@ -76,6 +76,7 @@ flowchart LR
 | [Bootstrap Doctor](./docs/bootstrap-doctor.md) | You need to understand `setup`, `doctor`, `repair`, or `verify`. |
 | [Runtime Codex](./docs/runtime-codex.md) | You want the Codex runtime model and execution expectations. |
 | [Proof Loop](./docs/proof-loop.md) | You are running non-trivial work with repo-local proof artifacts. |
+| [Release Process](./docs/release-process.md) | You need the guarded path for tags and GitHub Releases. |
 | [Release Notes 0.2.0](./docs/releases/0.2.0.md) | You want the current release-level summary of onboarding/runtime changes. |
 | [Docker Compose Example](./infra/docker-compose.example.yml) | You need the local shared infra compose file. |
 | [Shared App Dockerfile](./infra/Dockerfile.app) | You need the reusable runtime image definition. |

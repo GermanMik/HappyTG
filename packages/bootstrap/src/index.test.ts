@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -47,6 +47,50 @@ async function createWindowsCodexShim(tempDir: string, version: string): Promise
   );
 
   const shimPath = path.join(tempDir, "codex.cmd");
+  if (process.platform === "win32") {
+    await Promise.all([
+      writeFile(
+        path.join(tempDir, "node.cmd"),
+        `@echo off\r\n"${batchQuote(process.execPath)}" %*\r\n`,
+        "utf8"
+      ),
+      writeFile(
+        shimPath,
+        `@echo off\r\nsetlocal\r\nnode "%~dp0${scriptName}" %*\r\n`,
+        "utf8"
+      )
+    ]);
+    return shimPath;
+  }
+
+  await writeExecutable(
+    shimPath,
+    `
+      #!/bin/sh
+      SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+      exec "${shellQuote(process.execPath)}" "$SCRIPT_DIR/${scriptName}" "$@"
+    `
+  );
+  return shimPath;
+}
+
+async function createWindowsNpmPrefixShim(tempDir: string, prefix: string): Promise<string> {
+  const scriptName = "npm-prefix-shim.mjs";
+  const scriptPath = path.join(tempDir, scriptName);
+  await writeExecutable(
+    scriptPath,
+    `
+      const args = process.argv.slice(2);
+      if (args[0] === "prefix" && args[1] === "-g") {
+        console.log(${JSON.stringify(prefix)});
+        process.exit(0);
+      }
+      console.error("unexpected invocation");
+      process.exit(1);
+    `
+  );
+
+  const shimPath = path.join(tempDir, "npm.cmd");
   if (process.platform === "win32") {
     await Promise.all([
       writeFile(
@@ -299,6 +343,94 @@ test("doctor distinguishes unavailable Codex from a missing Codex binary", async
     assert.ok(!report.findings.some((item) => item.code === "CODEX_MISSING"));
     assert.ok(report.findings.some((item) => item.code === "CODEX_UNAVAILABLE"));
     assert.match((report.reportJson.preflight as string[]).join("\n"), /Codex: detected but unavailable/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("doctor reports a PATH issue when Codex wrapper files exist under the global npm prefix", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-codex-path-issue-"));
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const gitBinaryPath = path.join(tempDir, "git.cmd");
+    const npmPrefix = path.join(tempDir, "global-npm");
+    const npmBinDir = npmPrefix;
+    const wrapperPath = path.join(npmBinDir, "codex.cmd");
+    await mkdir(npmBinDir, { recursive: true });
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeFile(gitBinaryPath, "@echo off\r\n", "utf8"),
+      createWindowsNpmPrefixShim(tempDir, npmPrefix),
+      writeFile(wrapperPath, "@echo off\r\n", "utf8")
+    ]);
+
+    const report = await runBootstrapCommand("doctor", {
+      cwd: tempDir,
+      platform: "win32",
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir,
+        Path: "",
+        PATHEXT: "",
+        pathext: ".cmd;.exe"
+      }
+    });
+
+    assert.ok(report.findings.some((item) => item.code === "CODEX_MISSING"));
+    assert.match(report.findings.find((item) => item.code === "CODEX_MISSING")?.message ?? "", /PATH issue/i);
+    assert.match(report.planPreview.join("\n"), new RegExp(npmBinDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.deepEqual((report.reportJson.codexInstallCheck as { wrapperPaths: string[] }).wrapperPaths, [wrapperPath]);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-codex-partial-install-"));
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const gitBinaryPath = path.join(tempDir, "git.cmd");
+    const npmPrefix = path.join(tempDir, "global-npm");
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeFile(gitBinaryPath, "@echo off\r\n", "utf8"),
+      createWindowsNpmPrefixShim(tempDir, npmPrefix)
+    ]);
+
+    const report = await runBootstrapCommand("doctor", {
+      cwd: tempDir,
+      platform: "win32",
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir,
+        Path: "",
+        PATHEXT: "",
+        pathext: ".cmd;.exe"
+      }
+    });
+
+    assert.ok(report.findings.some((item) => item.code === "CODEX_MISSING"));
+    assert.match(report.findings.find((item) => item.code === "CODEX_MISSING")?.message ?? "", /missing or partial install/i);
+    assert.match(report.planPreview.join("\n"), /Reinstall Codex CLI, update PATH/);
+    assert.deepEqual((report.reportJson.codexInstallCheck as { wrapperPaths: string[] }).wrapperPaths, []);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-10-codex-path-guidance",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "2026-04-10T04:56:58Z"
+  },
+  "checks": [
+    {
+      "name": "pnpm lint",
+      "status": "passed",
+      "artifact": ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/lint.txt"
+    },
+    {
+      "name": "pnpm typecheck",
+      "status": "passed",
+      "artifact": ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/typecheck.txt"
+    },
+    {
+      "name": "pnpm test",
+      "status": "passed",
+      "artifact": ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/test-unit.txt"
+    },
+    {
+      "name": "test-integration",
+      "status": "not_applicable",
+      "artifact": ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/test-integration.txt"
+    },
+    {
+      "name": "pnpm build",
+      "status": "passed",
+      "artifact": ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/build.txt"
+    }
+  ],
+  "generatedAt": "2026-04-10T04:56:58Z"
+}

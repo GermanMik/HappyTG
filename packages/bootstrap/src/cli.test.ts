@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
+import { codexCliMissingMessage } from "../../runtime-adapters/src/index.js";
 import { executeHappyTG, parseHappyTGArgs, renderText } from "./cli.js";
 
 test("parseHappyTGArgs maps config and env nested commands", () => {
@@ -75,7 +76,7 @@ test("renderText returns a compact bootstrap summary with preflight and diagnost
       {
         code: "CODEX_MISSING",
         severity: "error",
-        message: "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
+        message: codexCliMissingMessage()
       }
     ],
     planPreview: [

@@ -1,0 +1,48 @@
+{
+  "taskId": "HTG-2026-04-10-release-automation",
+  "criteria": [
+    {
+      "id": "release-workflow",
+      "status": "passed",
+      "artifacts": [
+        ".github/workflows/release.yml",
+        "docs/release-process.md",
+        "README.md"
+      ]
+    },
+    {
+      "id": "release-validation",
+      "status": "passed",
+      "artifacts": [
+        "package.json",
+        "scripts/release/validate-release.mjs",
+        "CHANGELOG.md",
+        "docs/releases/0.2.0.md",
+        ".agent/tasks/HTG-2026-04-10-release-automation/raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "verification",
+      "status": "passed",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-10-release-automation/raw/lint.txt",
+        ".agent/tasks/HTG-2026-04-10-release-automation/raw/typecheck.txt",
+        ".agent/tasks/HTG-2026-04-10-release-automation/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-10-release-automation/raw/build.txt"
+      ]
+    },
+    {
+      "id": "tree-cleanup",
+      "status": "passed",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-10-release-automation/evidence.md"
+      ]
+    }
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-10-release-automation/spec.md",
+    ".agent/tasks/HTG-2026-04-10-release-automation/evidence.md",
+    ".agent/tasks/HTG-2026-04-10-release-automation/verdict.json"
+  ],
+  "generatedAt": "2026-04-10T04:41:38Z"
+}

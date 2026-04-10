@@ -17,6 +17,7 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "release:check": "node scripts/release/validate-release.mjs",
     "bootstrap:doctor": "pnpm --filter @happytg/bootstrap run doctor",
     "bootstrap:setup": "pnpm --filter @happytg/bootstrap run setup",
     "bootstrap:repair": "pnpm --filter @happytg/bootstrap run repair",

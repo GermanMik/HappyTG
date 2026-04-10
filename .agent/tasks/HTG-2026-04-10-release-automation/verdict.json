@@ -1,0 +1,46 @@
+{
+  "taskId": "HTG-2026-04-10-release-automation",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "release-check-and-repo-gates"
+  },
+  "checks": [
+    {
+      "name": "release-validation-script",
+      "ok": true,
+      "detail": "Local release validation now checks every workspace package version, CHANGELOG.md, and docs/releases/<version>.md before publication."
+    },
+    {
+      "name": "github-release-workflow",
+      "ok": true,
+      "detail": "The new Release workflow runs only from the latest default-branch HEAD, blocks duplicate tags/releases, reruns typecheck/test/build, and creates the tag plus GitHub Release through gh."
+    },
+    {
+      "name": "tree-cleanup",
+      "ok": true,
+      "detail": "Removed only generated .turbo/dist trees; retained tracked proof bundles because they are canonical repo history."
+    },
+    {
+      "name": "repo-lint",
+      "ok": true,
+      "detail": "pnpm lint passed."
+    },
+    {
+      "name": "repo-typecheck",
+      "ok": true,
+      "detail": "pnpm typecheck passed."
+    },
+    {
+      "name": "repo-test",
+      "ok": true,
+      "detail": "pnpm test passed."
+    },
+    {
+      "name": "repo-build",
+      "ok": true,
+      "detail": "pnpm build passed."
+    }
+  ],
+  "generatedAt": "2026-04-10T04:41:38Z"
+}

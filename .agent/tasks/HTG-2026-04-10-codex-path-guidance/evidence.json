@@ -1,0 +1,51 @@
+{
+  "taskId": "HTG-2026-04-10-codex-path-guidance",
+  "criteria": [
+    {
+      "id": "guidance-path-reinstall",
+      "status": "passed",
+      "evidence": [
+        "packages/runtime-adapters/src/index.ts",
+        "packages/runtime-adapters/src/index.test.ts"
+      ]
+    },
+    {
+      "id": "bootstrap-prefix-diagnostics",
+      "status": "passed",
+      "evidence": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts"
+      ]
+    },
+    {
+      "id": "host-daemon-runtime-copy-alignment",
+      "status": "passed",
+      "evidence": [
+        "packages/bootstrap/src/cli.test.ts",
+        "apps/host-daemon/src/index.test.ts"
+      ]
+    },
+    {
+      "id": "verification",
+      "status": "passed",
+      "evidence": [
+        ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/lint.txt",
+        ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/typecheck.txt",
+        ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/build.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-10-codex-path-guidance/spec.md",
+    ".agent/tasks/HTG-2026-04-10-codex-path-guidance/evidence.md",
+    ".agent/tasks/HTG-2026-04-10-codex-path-guidance/verdict.json",
+    ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/lint.txt",
+    ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-04-10-codex-path-guidance/raw/build.txt"
+  ],
+  "generatedAt": "2026-04-10T04:56:58Z"
+}

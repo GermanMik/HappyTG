@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -7,8 +8,10 @@ import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage }
 import {
   createId,
   ensureDir,
+  fileExists,
   findUpwardFile,
   getLocalStateDir,
+  normalizeSpawnEnv,
   nowIso,
   readPort,
   resolveExecutable,
@@ -71,6 +74,16 @@ interface RedisDetection {
     redisCli: string | null;
     redisServer: string | null;
   };
+}
+
+interface CodexInstallCheck {
+  npmBinaryPath: string | null;
+  npmPrefix: string | null;
+  npmBinDir: string | null;
+  prefixChecked: boolean;
+  wrapperCandidates: string[];
+  wrapperPaths: string[];
+  pathLikelyIssue: boolean;
 }
 
 const criticalPortDefinitions: PortCheckDefinition[] = [
@@ -213,6 +226,18 @@ function codexUnavailableMessage(): string {
   return "Codex CLI was found, but `codex --version` did not complete successfully. Fix the local Codex install or shell environment, then rerun `pnpm happytg doctor --json`.";
 }
 
+function codexMissingMessage(installCheck?: CodexInstallCheck): string {
+  if (installCheck?.prefixChecked && installCheck.pathLikelyIssue) {
+    return "Codex CLI is not on the current shell PATH yet. HappyTG found Codex wrapper files under the global npm prefix, so this looks like a PATH issue. Update PATH, restart the shell, verify `codex --version`, then run `pnpm happytg doctor`.";
+  }
+
+  if (installCheck?.prefixChecked) {
+    return "Codex CLI is not on the current shell PATH yet. HappyTG checked the global npm prefix and did not find Codex wrapper files, so this looks like a missing or partial install. Reinstall Codex, update PATH, verify `codex --version`, then run `pnpm happytg doctor`.";
+  }
+
+  return codexCliMissingMessage();
+}
+
 function formatPortStateForSummary(results: PortCheckResult[]): string {
   const relevant = results.filter((item) => ["miniapp", "api", "bot", "worker", "redis"].includes(item.id));
   const busy = relevant.filter((item) => item.state !== "free");
@@ -247,6 +272,122 @@ function redisSummary(redis: RedisDetection): string {
 
 function isLocalRedisHost(host: string): boolean {
   return ["localhost", "127.0.0.1", "::1", ""].includes(host);
+}
+
+function isJavaScriptEntrypoint(filePath: string): boolean {
+  return [".js", ".mjs", ".cjs"].includes(path.extname(filePath).toLowerCase());
+}
+
+function npmBinDirForPrefix(prefix: string, platform: NodeJS.Platform): string {
+  return platform === "win32" ? prefix : path.join(prefix, "bin");
+}
+
+async function runResolvedToolCommand(input: {
+  command: string;
+  args: string[];
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+  timeoutMs?: number;
+}): Promise<{ stdout: string; stderr: string; exitCode: number } | undefined> {
+  const resolvedPath = await resolveExecutable(input.command, {
+    cwd: input.cwd,
+    env: input.env,
+    platform: input.platform
+  });
+  if (!resolvedPath) {
+    return undefined;
+  }
+
+  const command = isJavaScriptEntrypoint(resolvedPath) ? process.execPath : resolvedPath;
+  const args = isJavaScriptEntrypoint(resolvedPath) ? [resolvedPath, ...input.args] : input.args;
+  const useShell = input.platform === "win32" && /\.(cmd|bat)$/i.test(resolvedPath);
+  const timeoutMs = input.timeoutMs ?? 10_000;
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: input.cwd,
+      env: normalizeSpawnEnv(input.env, input.platform),
+      shell: useShell
+    });
+
+    let stdout = "";
+    let stderr = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGTERM");
+    }, timeoutMs);
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      resolve({
+        stdout,
+        stderr,
+        exitCode: code ?? 1
+      });
+    });
+  });
+}
+
+async function detectCodexInstallCheck(
+  env: NodeJS.ProcessEnv,
+  options: {
+    cwd: string;
+    platform: NodeJS.Platform;
+  }
+): Promise<CodexInstallCheck> {
+  const npmRun = await runResolvedToolCommand({
+    command: "npm",
+    args: ["prefix", "-g"],
+    cwd: options.cwd,
+    env,
+    platform: options.platform
+  }).catch(() => undefined);
+  const npmBinaryPath = await resolveExecutable("npm", {
+    cwd: options.cwd,
+    env,
+    platform: options.platform
+  });
+  const npmPrefix = npmRun?.exitCode === 0 ? npmRun.stdout.trim().split(/\r?\n/u)[0]?.trim() ?? "" : "";
+  const npmBinDir = npmPrefix ? npmBinDirForPrefix(npmPrefix, options.platform) : "";
+  const candidateSet = new Set<string>();
+
+  if (npmPrefix) {
+    candidateSet.add(path.join(npmPrefix, "codex"));
+    candidateSet.add(path.join(npmPrefix, "codex.cmd"));
+    candidateSet.add(path.join(npmPrefix, "codex.ps1"));
+  }
+  if (npmBinDir) {
+    candidateSet.add(path.join(npmBinDir, "codex"));
+    candidateSet.add(path.join(npmBinDir, "codex.cmd"));
+    candidateSet.add(path.join(npmBinDir, "codex.ps1"));
+  }
+
+  const wrapperCandidates = [...candidateSet];
+  const wrapperChecks = await Promise.all(wrapperCandidates.map(async (candidate) => ({
+    candidate,
+    exists: await fileExists(candidate)
+  })));
+  const wrapperPaths = wrapperChecks.filter((entry) => entry.exists).map((entry) => entry.candidate);
+
+  return {
+    npmBinaryPath: npmBinaryPath ?? null,
+    npmPrefix: npmPrefix || null,
+    npmBinDir: npmBinDir || null,
+    prefixChecked: Boolean(npmBinaryPath && npmRun?.exitCode === 0 && npmPrefix),
+    wrapperCandidates,
+    wrapperPaths,
+    pathLikelyIssue: wrapperPaths.length > 0
+  };
 }
 
 function safeUrlPort(url: URL, fallback: number): number {
@@ -640,6 +781,12 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     env,
     platform
   });
+  const codexInstallCheck = !codex.available && codex.missing !== false
+    ? await detectCodexInstallCheck(env, {
+      cwd,
+      platform
+    })
+    : undefined;
   const actionableSmokeWarnings = classifyCodexSmokeStderr(codex.smokeError ?? "").actionableLines;
   const tokenState = telegramTokenStatus(env);
   const [redis, portResults] = await Promise.all([
@@ -678,7 +825,7 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     pushFinding(findings, {
       code: "CODEX_MISSING",
       severity: "error",
-      message: codexCliMissingMessage()
+      message: codexMissingMessage(codexInstallCheck)
     });
   }
 
@@ -780,7 +927,16 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     pushPlanStep(planPreview, "Set `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.");
   }
   if (!codex.available && codex.missing !== false) {
-    pushPlanStep(planPreview, "Install Codex CLI and verify `codex --version`.");
+    if (codexInstallCheck?.pathLikelyIssue) {
+      pushPlanStep(
+        planPreview,
+        codexInstallCheck.npmBinDir
+          ? `Add \`${codexInstallCheck.npmBinDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
+          : "Add the global npm bin directory to PATH, restart the shell, then verify `codex --version`."
+      );
+    } else {
+      pushPlanStep(planPreview, "Reinstall Codex CLI, update PATH, then verify `codex --version`.");
+    }
   }
   if (!codex.available && codex.missing === false) {
     pushPlanStep(planPreview, "Run `codex --version` in this shell, fix the local Codex install/runtime, then rerun `pnpm happytg setup`.");
@@ -818,6 +974,7 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
         binaryPath: gitBinaryPath ?? null
       },
       codex,
+      codexInstallCheck: codexInstallCheck ?? null,
       telegram: {
         status: tokenState.status,
         configured: tokenState.configured,

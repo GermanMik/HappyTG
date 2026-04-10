@@ -1,0 +1,93 @@
+
+> happytg@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG
+> turbo lint
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running lint in 13 packages
+   • Remote caching disabled
+
+@happytg/runtime-adapters:lint: cache miss, executing 016ce60e45cb5e04
+@happytg/shared:lint: cache miss, executing 0b33a562ad9e3015
+@happytg/miniapp:lint: cache miss, executing aa719960351a2831
+@happytg/api:lint: cache miss, executing 02ab1af0c4c9155b
+@happytg/hooks:lint: cache miss, executing 01b99aebd4819a4b
+@happytg/worker:lint: cache miss, executing fcbb7809965e3a82
+@happytg/repo-proof:lint: cache miss, executing 85f77307eb785142
+@happytg/bot:lint: cache miss, executing 32733db5375132a2
+@happytg/bootstrap:lint: cache miss, executing 199696c9515a4eea
+@happytg/policy-engine:lint: cache miss, executing 46ed3d17da95e8aa
+@happytg/runtime-adapters:lint: 
+@happytg/runtime-adapters:lint: > @happytg/runtime-adapters@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters
+@happytg/runtime-adapters:lint: > echo "TODO: lint runtime-adapters"
+@happytg/runtime-adapters:lint: 
+@happytg/policy-engine:lint: 
+@happytg/policy-engine:lint: > @happytg/policy-engine@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/policy-engine
+@happytg/policy-engine:lint: > echo "TODO: lint policy-engine"
+@happytg/policy-engine:lint: 
+@happytg/runtime-adapters:lint: TODO: lint runtime-adapters
+@happytg/policy-engine:lint: TODO: lint policy-engine
+@happytg/protocol:lint: cache miss, executing 6108d57b33c9d07a
+@happytg/bootstrap:lint: 
+@happytg/bootstrap:lint: > @happytg/bootstrap@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+@happytg/bootstrap:lint: > echo "TODO: lint bootstrap"
+@happytg/bootstrap:lint: 
+@happytg/host-daemon:lint: cache miss, executing 8da1af11e631c8f0
+@happytg/bootstrap:lint: TODO: lint bootstrap
+@happytg/api:lint: 
+@happytg/api:lint: > @happytg/api@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/api
+@happytg/api:lint: > echo "TODO: lint api"
+@happytg/api:lint: 
+@happytg/shared:lint: 
+@happytg/shared:lint: > @happytg/shared@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared
+@happytg/shared:lint: > echo "TODO: lint shared"
+@happytg/shared:lint: 
+@happytg/approval-engine:lint: cache miss, executing 385f6c32becf7e4a
+@happytg/api:lint: TODO: lint api
+@happytg/hooks:lint: 
+@happytg/hooks:lint: > @happytg/hooks@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/hooks
+@happytg/hooks:lint: > echo "TODO: lint hooks"
+@happytg/hooks:lint: 
+@happytg/shared:lint: TODO: lint shared
+@happytg/bot:lint: 
+@happytg/bot:lint: > @happytg/bot@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/bot
+@happytg/bot:lint: > echo "TODO: lint bot"
+@happytg/bot:lint: 
+@happytg/miniapp:lint: 
+@happytg/miniapp:lint: > @happytg/miniapp@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp
+@happytg/miniapp:lint: > echo "TODO: lint miniapp"
+@happytg/miniapp:lint: 
+@happytg/hooks:lint: TODO: lint hooks
+@happytg/miniapp:lint: TODO: lint miniapp
+@happytg/bot:lint: TODO: lint bot
+@happytg/worker:lint: 
+@happytg/worker:lint: > @happytg/worker@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/worker
+@happytg/worker:lint: > echo "TODO: lint worker"
+@happytg/worker:lint: 
+@happytg/worker:lint: TODO: lint worker
+@happytg/repo-proof:lint: 
+@happytg/repo-proof:lint: > @happytg/repo-proof@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/repo-proof
+@happytg/repo-proof:lint: > echo "TODO: lint repo-proof"
+@happytg/repo-proof:lint: 
+@happytg/repo-proof:lint: TODO: lint repo-proof
+@happytg/host-daemon:lint: 
+@happytg/host-daemon:lint: > @happytg/host-daemon@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon
+@happytg/host-daemon:lint: > echo "TODO: lint host-daemon"
+@happytg/host-daemon:lint: 
+@happytg/protocol:lint: 
+@happytg/protocol:lint: > @happytg/protocol@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/protocol
+@happytg/protocol:lint: > echo "TODO: lint protocol"
+@happytg/protocol:lint: 
+@happytg/approval-engine:lint: 
+@happytg/approval-engine:lint: > @happytg/approval-engine@0.2.0 lint /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/approval-engine
+@happytg/approval-engine:lint: > echo "TODO: lint approval-engine"
+@happytg/approval-engine:lint: 
+@happytg/protocol:lint: TODO: lint protocol
+@happytg/host-daemon:lint: TODO: lint host-daemon
+@happytg/approval-engine:lint: TODO: lint approval-engine
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    14.829s 
+

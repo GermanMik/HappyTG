@@ -1,0 +1,6 @@
+
+> happytg@0.2.0 release:check /Users/mikhaylov-g/Documents/Develop/HappyTG
+> node scripts/release/validate-release.mjs "--version" "0.2.0"
+
+Release validation passed for 0.2.0.
+Checked 14 package versions, CHANGELOG.md, and docs/releases/0.2.0.md.

@@ -1,0 +1,624 @@
+
+> happytg@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG
+> turbo test
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running test in 13 packages
+   • Remote caching disabled
+
+@happytg/approval-engine:test: cache hit, replaying logs 9f13aa0769021051
+@happytg/approval-engine:test: 
+@happytg/approval-engine:test: > @happytg/approval-engine@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/approval-engine
+@happytg/approval-engine:test: > tsx --test src/*.test.ts
+@happytg/approval-engine:test: 
+@happytg/approval-engine:test: TAP version 13
+@happytg/approval-engine:test: # Subtest: createApprovalRequest creates pending approval with expiry
+@happytg/approval-engine:test: ok 1 - createApprovalRequest creates pending approval with expiry
+@happytg/approval-engine:test:   ---
+@happytg/approval-engine:test:   duration_ms: 484.882458
+@happytg/approval-engine:test:   type: 'test'
+@happytg/approval-engine:test:   ...
+@happytg/approval-engine:test: # Subtest: resolveApprovalRequest updates state and emits decision
+@happytg/approval-engine:test: ok 2 - resolveApprovalRequest updates state and emits decision
+@happytg/approval-engine:test:   ---
+@happytg/approval-engine:test:   duration_ms: 2.408792
+@happytg/approval-engine:test:   type: 'test'
+@happytg/approval-engine:test:   ...
+@happytg/approval-engine:test: # Subtest: refreshExpiredApproval marks pending request as expired
+@happytg/approval-engine:test: ok 3 - refreshExpiredApproval marks pending request as expired
+@happytg/approval-engine:test:   ---
+@happytg/approval-engine:test:   duration_ms: 1.878292
+@happytg/approval-engine:test:   type: 'test'
+@happytg/approval-engine:test:   ...
+@happytg/approval-engine:test: 1..3
+@happytg/approval-engine:test: # tests 3
+@happytg/approval-engine:test: # suites 0
+@happytg/approval-engine:test: # pass 3
+@happytg/approval-engine:test: # fail 0
+@happytg/approval-engine:test: # cancelled 0
+@happytg/approval-engine:test: # skipped 0
+@happytg/approval-engine:test: # todo 0
+@happytg/approval-engine:test: # duration_ms 27758.128083
+@happytg/worker:test: cache hit, replaying logs 977db7655b547a72
+@happytg/worker:test: 
+@happytg/worker:test: > @happytg/worker@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/worker
+@happytg/worker:test: > tsx --test src/*.test.ts
+@happytg/worker:test: 
+@happytg/worker:test: TAP version 13
+@happytg/worker:test: # Subtest: worker readiness becomes healthy after a successful tick
+@happytg/worker:test: ok 1 - worker readiness becomes healthy after a successful tick
+@happytg/worker:test:   ---
+@happytg/worker:test:   duration_ms: 1790.139667
+@happytg/worker:test:   type: 'test'
+@happytg/worker:test:   ...
+@happytg/worker:test: # Subtest: worker ready endpoint returns 503 before first tick
+@happytg/worker:test: ok 2 - worker ready endpoint returns 503 before first tick
+@happytg/worker:test:   ---
+@happytg/worker:test:   duration_ms: 1652.299625
+@happytg/worker:test:   type: 'test'
+@happytg/worker:test:   ...
+@happytg/worker:test: # Subtest: reconcileSessionsAndDispatches moves active sessions to reconnecting when host is stale
+@happytg/worker:test: ok 3 - reconcileSessionsAndDispatches moves active sessions to reconnecting when host is stale
+@happytg/worker:test:   ---
+@happytg/worker:test:   duration_ms: 11.812
+@happytg/worker:test:   type: 'test'
+@happytg/worker:test:   ...
+@happytg/worker:test: # Subtest: markExpiredApprovalSessions pauses awaiting approval sessions
+@happytg/worker:test: ok 4 - markExpiredApprovalSessions pauses awaiting approval sessions
+@happytg/worker:test:   ---
+@happytg/worker:test:   duration_ms: 0.585042
+@happytg/worker:test:   type: 'test'
+@happytg/worker:test:   ...
+@happytg/worker:test: 1..4
+@happytg/worker:test: # tests 4
+@happytg/worker:test: # suites 0
+@happytg/worker:test: # pass 4
+@happytg/worker:test: # fail 0
+@happytg/worker:test: # cancelled 0
+@happytg/worker:test: # skipped 0
+@happytg/worker:test: # todo 0
+@happytg/worker:test: # duration_ms 29646.7595
+@happytg/miniapp:test: cache hit, replaying logs d75e3801c7430ac6
+@happytg/miniapp:test: 
+@happytg/miniapp:test: > @happytg/miniapp@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp
+@happytg/miniapp:test: > tsx --test src/*.test.ts
+@happytg/miniapp:test: 
+@happytg/miniapp:test: TAP version 13
+@happytg/miniapp:test: # Subtest: mini app ready endpoint returns 503 when api health fails
+@happytg/miniapp:test: ok 1 - mini app ready endpoint returns 503 when api health fails
+@happytg/miniapp:test:   ---
+@happytg/miniapp:test:   duration_ms: 1720.940541
+@happytg/miniapp:test:   type: 'test'
+@happytg/miniapp:test:   ...
+@happytg/miniapp:test: # Subtest: overview page renders hosts, sessions, approvals, and tasks
+@happytg/miniapp:test: ok 2 - overview page renders hosts, sessions, approvals, and tasks
+@happytg/miniapp:test:   ---
+@happytg/miniapp:test:   duration_ms: 756.215958
+@happytg/miniapp:test:   type: 'test'
+@happytg/miniapp:test:   ...
+@happytg/miniapp:test: # Subtest: task page renders canonical artifacts and escapes file content
+@happytg/miniapp:test: ok 3 - task page renders canonical artifacts and escapes file content
+@happytg/miniapp:test:   ---
+@happytg/miniapp:test:   duration_ms: 345.84175
+@happytg/miniapp:test:   type: 'test'
+@happytg/miniapp:test:   ...
+@happytg/miniapp:test: # Subtest: session page renders timeline, summary, and task link
+@happytg/miniapp:test: ok 4 - session page renders timeline, summary, and task link
+@happytg/miniapp:test:   ---
+@happytg/miniapp:test:   duration_ms: 630.682959
+@happytg/miniapp:test:   type: 'test'
+@happytg/miniapp:test:   ...
+@happytg/miniapp:test: # Subtest: startMiniAppServer returns an actionable message when the port is already in use
+@happytg/miniapp:test: ok 5 - startMiniAppServer returns an actionable message when the port is already in use
+@happytg/miniapp:test:   ---
+@happytg/miniapp:test:   duration_ms: 84.12375
+@happytg/miniapp:test:   type: 'test'
+@happytg/miniapp:test:   ...
+@happytg/miniapp:test: 1..5
+@happytg/miniapp:test: # tests 5
+@happytg/miniapp:test: # suites 0
+@happytg/miniapp:test: # pass 5
+@happytg/miniapp:test: # fail 0
+@happytg/miniapp:test: # cancelled 0
+@happytg/miniapp:test: # skipped 0
+@happytg/miniapp:test: # todo 0
+@happytg/miniapp:test: # duration_ms 38014.505042
+@happytg/bot:test: cache hit, replaying logs d6bb7aa43a45ab4e
+@happytg/bot:test: 
+@happytg/bot:test: > @happytg/bot@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/bot
+@happytg/bot:test: > tsx --test src/*.test.ts
+@happytg/bot:test: 
+@happytg/bot:test: TAP version 13
+@happytg/bot:test: # Subtest: resume command sends session transition summary
+@happytg/bot:test: ok 1 - resume command sends session transition summary
+@happytg/bot:test:   ---
+@happytg/bot:test:   duration_ms: 0.568084
+@happytg/bot:test:   type: 'test'
+@happytg/bot:test:   ...
+@happytg/bot:test: # Subtest: doctor command resolves telegram identity and creates bootstrap session
+@happytg/bot:test: ok 2 - doctor command resolves telegram identity and creates bootstrap session
+@happytg/bot:test:   ---
+@happytg/bot:test:   duration_ms: 0.476041
+@happytg/bot:test:   type: 'test'
+@happytg/bot:test:   ...
+@happytg/bot:test: # Subtest: verify command surfaces approval keyboard when required
+@happytg/bot:test: ok 3 - verify command surfaces approval keyboard when required
+@happytg/bot:test:   ---
+@happytg/bot:test:   duration_ms: 0.352708
+@happytg/bot:test:   type: 'test'
+@happytg/bot:test:   ...
+@happytg/bot:test: # Subtest: approval callback resolves with the linked HappyTG user
+@happytg/bot:test: ok 4 - approval callback resolves with the linked HappyTG user
+@happytg/bot:test:   ---
+@happytg/bot:test:   duration_ms: 0.40925
+@happytg/bot:test:   type: 'test'
+@happytg/bot:test:   ...
+@happytg/bot:test: # Subtest: bot ready endpoint returns healthy when api is reachable
+@happytg/bot:test: ok 5 - bot ready endpoint returns healthy when api is reachable
+@happytg/bot:test:   ---
+@happytg/bot:test:   duration_ms: 12.886292
+@happytg/bot:test:   type: 'test'
+@happytg/bot:test:   ...
+@happytg/bot:test: # Subtest: bot ready endpoint returns 503 when api is unreachable
+@happytg/bot:test: ok 6 - bot ready endpoint returns 503 when api is unreachable
+@happytg/bot:test:   ---
+@happytg/bot:test:   duration_ms: 4.332042
+@happytg/bot:test:   type: 'test'
+@happytg/bot:test:   ...
+@happytg/bot:test: # Subtest: botConfigurationMessage stays actionable without exposing secrets
+@happytg/bot:test: ok 7 - botConfigurationMessage stays actionable without exposing secrets
+@happytg/bot:test:   ---
+@happytg/bot:test:   duration_ms: 0.148917
+@happytg/bot:test:   type: 'test'
+@happytg/bot:test:   ...
+@happytg/bot:test: # Subtest: initializeBotEnvironment prefers a valid .env token over placeholder shell state
+@happytg/bot:test: ok 8 - initializeBotEnvironment prefers a valid .env token over placeholder shell state
+@happytg/bot:test:   ---
+@happytg/bot:test:   duration_ms: 3.051375
+@happytg/bot:test:   type: 'test'
+@happytg/bot:test:   ...
+@happytg/bot:test: 1..8
+@happytg/bot:test: # tests 8
+@happytg/bot:test: # suites 0
+@happytg/bot:test: # pass 8
+@happytg/bot:test: # fail 0
+@happytg/bot:test: # cancelled 0
+@happytg/bot:test: # skipped 0
+@happytg/bot:test: # todo 0
+@happytg/bot:test: # duration_ms 261.048292
+@happytg/policy-engine:test: cache hit, replaying logs 1d0b231b5c39fe5a
+@happytg/policy-engine:test: 
+@happytg/policy-engine:test: > @happytg/policy-engine@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/policy-engine
+@happytg/policy-engine:test: > tsx --test src/*.test.ts
+@happytg/policy-engine:test: 
+@happytg/policy-engine:test: TAP version 13
+@happytg/policy-engine:test: # Subtest: evaluatePolicies returns deny before lower-layer approval or allow
+@happytg/policy-engine:test: ok 1 - evaluatePolicies returns deny before lower-layer approval or allow
+@happytg/policy-engine:test:   ---
+@happytg/policy-engine:test:   duration_ms: 13.321375
+@happytg/policy-engine:test:   type: 'test'
+@happytg/policy-engine:test:   ...
+@happytg/policy-engine:test: # Subtest: evaluatePolicies requires approval when no deny matches
+@happytg/policy-engine:test: ok 2 - evaluatePolicies requires approval when no deny matches
+@happytg/policy-engine:test:   ---
+@happytg/policy-engine:test:   duration_ms: 0.611709
+@happytg/policy-engine:test:   type: 'test'
+@happytg/policy-engine:test:   ...
+@happytg/policy-engine:test: 1..2
+@happytg/policy-engine:test: # tests 2
+@happytg/policy-engine:test: # suites 0
+@happytg/policy-engine:test: # pass 2
+@happytg/policy-engine:test: # fail 0
+@happytg/policy-engine:test: # cancelled 0
+@happytg/policy-engine:test: # skipped 0
+@happytg/policy-engine:test: # todo 0
+@happytg/policy-engine:test: # duration_ms 23453.289708
+@happytg/runtime-adapters:test: cache hit, replaying logs c23d15eac960421e
+@happytg/runtime-adapters:test: 
+@happytg/runtime-adapters:test: > @happytg/runtime-adapters@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters
+@happytg/runtime-adapters:test: > tsx --test src/*.test.ts
+@happytg/runtime-adapters:test: 
+@happytg/runtime-adapters:test: TAP version 13
+@happytg/runtime-adapters:test: # Subtest: checkCodexReadiness reports available Codex and captures smoke warnings
+@happytg/runtime-adapters:test: ok 1 - checkCodexReadiness reports available Codex and captures smoke warnings
+@happytg/runtime-adapters:test:   ---
+@happytg/runtime-adapters:test:   duration_ms: 836.89325
+@happytg/runtime-adapters:test:   type: 'test'
+@happytg/runtime-adapters:test:   ...
+@happytg/runtime-adapters:test: # Subtest: checkCodexReadiness resolves a Windows-style codex.cmd shim from Path
+@happytg/runtime-adapters:test: ok 2 - checkCodexReadiness resolves a Windows-style codex.cmd shim from Path
+@happytg/runtime-adapters:test:   ---
+@happytg/runtime-adapters:test:   duration_ms: 2488.296792
+@happytg/runtime-adapters:test:   type: 'test'
+@happytg/runtime-adapters:test:   ...
+@happytg/runtime-adapters:test: # Subtest: checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext
+@happytg/runtime-adapters:test: ok 3 - checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext
+@happytg/runtime-adapters:test:   ---
+@happytg/runtime-adapters:test:   duration_ms: 1334.264166
+@happytg/runtime-adapters:test:   type: 'test'
+@happytg/runtime-adapters:test:   ...
+@happytg/runtime-adapters:test: # Subtest: checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated
+@happytg/runtime-adapters:test: ok 4 - checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated
+@happytg/runtime-adapters:test:   ---
+@happytg/runtime-adapters:test:   duration_ms: 1228.617167
+@happytg/runtime-adapters:test:   type: 'test'
+@happytg/runtime-adapters:test:   ...
+@happytg/runtime-adapters:test: # Subtest: checkCodexReadiness marks only true ENOENT failures as missing
+@happytg/runtime-adapters:test: ok 5 - checkCodexReadiness marks only true ENOENT failures as missing
+@happytg/runtime-adapters:test:   ---
+@happytg/runtime-adapters:test:   duration_ms: 148.553042
+@happytg/runtime-adapters:test:   type: 'test'
+@happytg/runtime-adapters:test:   ...
+@happytg/runtime-adapters:test: # Subtest: classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+@happytg/runtime-adapters:test: ok 6 - classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+@happytg/runtime-adapters:test:   ---
+@happytg/runtime-adapters:test:   duration_ms: 5.751709
+@happytg/runtime-adapters:test:   type: 'test'
+@happytg/runtime-adapters:test:   ...
+@happytg/runtime-adapters:test: # Subtest: runCodexExec reads summary from the Codex output file
+@happytg/runtime-adapters:test: ok 7 - runCodexExec reads summary from the Codex output file
+@happytg/runtime-adapters:test:   ---
+@happytg/runtime-adapters:test:   duration_ms: 138.553459
+@happytg/runtime-adapters:test:   type: 'test'
+@happytg/runtime-adapters:test:   ...
+@happytg/runtime-adapters:test: # Subtest: runCodexExec marks timeout and returns a timeout summary
+@happytg/runtime-adapters:test: ok 8 - runCodexExec marks timeout and returns a timeout summary
+@happytg/runtime-adapters:test:   ---
+@happytg/runtime-adapters:test:   duration_ms: 26.447375
+@happytg/runtime-adapters:test:   type: 'test'
+@happytg/runtime-adapters:test:   ...
+@happytg/runtime-adapters:test: # Subtest: runCodexExec returns actionable guidance when Codex CLI is missing
+@happytg/runtime-adapters:test: ok 9 - runCodexExec returns actionable guidance when Codex CLI is missing
+@happytg/runtime-adapters:test:   ---
+@happytg/runtime-adapters:test:   duration_ms: 6.330041
+@happytg/runtime-adapters:test:   type: 'test'
+@happytg/runtime-adapters:test:   ...
+@happytg/runtime-adapters:test: 1..9
+@happytg/runtime-adapters:test: # tests 9
+@happytg/runtime-adapters:test: # suites 0
+@happytg/runtime-adapters:test: # pass 9
+@happytg/runtime-adapters:test: # fail 0
+@happytg/runtime-adapters:test: # cancelled 0
+@happytg/runtime-adapters:test: # skipped 0
+@happytg/runtime-adapters:test: # todo 0
+@happytg/runtime-adapters:test: # duration_ms 9490.216958
+@happytg/api:test: cache hit, replaying logs 9559deee12eb7548
+@happytg/api:test: 
+@happytg/api:test: > @happytg/api@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/api
+@happytg/api:test: > tsx --test src/*.test.ts
+@happytg/api:test: 
+@happytg/api:test: TAP version 13
+@happytg/api:test: # Subtest: api ready endpoint returns store metadata
+@happytg/api:test: ok 1 - api ready endpoint returns store metadata
+@happytg/api:test:   ---
+@happytg/api:test:   duration_ms: 2822.779041
+@happytg/api:test:   type: 'test'
+@happytg/api:test:   ...
+@happytg/api:test: # Subtest: proof session creates task bundle and approval, then approval dispatches session
+@happytg/api:test: ok 2 - proof session creates task bundle and approval, then approval dispatches session
+@happytg/api:test:   ---
+@happytg/api:test:   duration_ms: 4085.14175
+@happytg/api:test:   type: 'test'
+@happytg/api:test:   ...
+@happytg/api:test: # Subtest: quick session dispatches immediately without approval
+@happytg/api:test: ok 3 - quick session dispatches immediately without approval
+@happytg/api:test:   ---
+@happytg/api:test:   duration_ms: 686.86875
+@happytg/api:test:   type: 'test'
+@happytg/api:test:   ...
+@happytg/api:test: # Subtest: session timeline and task artifact reads are available for mini app inspection
+@happytg/api:test: ok 4 - session timeline and task artifact reads are available for mini app inspection
+@happytg/api:test:   ---
+@happytg/api:test:   duration_ms: 522.78475
+@happytg/api:test:   type: 'test'
+@happytg/api:test:   ...
+@happytg/api:test: # Subtest: bootstrap sessions dispatch deterministic doctor runs and support resume state transitions
+@happytg/api:test: ok 5 - bootstrap sessions dispatch deterministic doctor runs and support resume state transitions
+@happytg/api:test:   ---
+@happytg/api:test:   duration_ms: 969.163875
+@happytg/api:test:   type: 'test'
+@happytg/api:test:   ...
+@happytg/api:test: 1..5
+@happytg/api:test: # tests 5
+@happytg/api:test: # suites 0
+@happytg/api:test: # pass 5
+@happytg/api:test: # fail 0
+@happytg/api:test: # cancelled 0
+@happytg/api:test: # skipped 0
+@happytg/api:test: # todo 0
+@happytg/api:test: # duration_ms 38899.356542
+@happytg/repo-proof:test: cache hit, replaying logs 74a0995a96a644a3
+@happytg/repo-proof:test: 
+@happytg/repo-proof:test: > @happytg/repo-proof@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/repo-proof
+@happytg/repo-proof:test: > tsx --test src/*.test.ts
+@happytg/repo-proof:test: 
+@happytg/repo-proof:test: TAP version 13
+@happytg/repo-proof:test: # Subtest: repo proof bundle can be initialized, frozen, validated, and verified
+@happytg/repo-proof:test: ok 1 - repo proof bundle can be initialized, frozen, validated, and verified
+@happytg/repo-proof:test:   ---
+@happytg/repo-proof:test:   duration_ms: 4170.119292
+@happytg/repo-proof:test:   type: 'test'
+@happytg/repo-proof:test:   ...
+@happytg/repo-proof:test: 1..1
+@happytg/repo-proof:test: # tests 1
+@happytg/repo-proof:test: # suites 0
+@happytg/repo-proof:test: # pass 1
+@happytg/repo-proof:test: # fail 0
+@happytg/repo-proof:test: # cancelled 0
+@happytg/repo-proof:test: # skipped 0
+@happytg/repo-proof:test: # todo 0
+@happytg/repo-proof:test: # duration_ms 34297.528834
+@happytg/shared:test: cache hit, replaying logs e760b7410fe592ea
+@happytg/shared:test: 
+@happytg/shared:test: > @happytg/shared@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared
+@happytg/shared:test: > tsx --test src/*.test.ts
+@happytg/shared:test: 
+@happytg/shared:test: TAP version 13
+@happytg/shared:test: # Subtest: resolveHome and atomic file helpers round-trip data
+@happytg/shared:test: ok 1 - resolveHome and atomic file helpers round-trip data
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 91.744292
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides
+@happytg/shared:test: ok 2 - resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 4.963583
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: resolveHome honors Windows home overrides with case-insensitive env keys
+@happytg/shared:test: ok 3 - resolveHome honors Windows home overrides with case-insensitive env keys
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 0.575
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: findExecutable searches PATH and appends Windows executable extensions
+@happytg/shared:test: ok 4 - findExecutable searches PATH and appends Windows executable extensions
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 79.565416
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: findExecutable honors Windows path and PATHEXT keys regardless of casing
+@happytg/shared:test: ok 5 - findExecutable honors Windows path and PATHEXT keys regardless of casing
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 131.685542
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys
+@happytg/shared:test: ok 6 - findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 103.419583
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: loadHappyTGEnv fills missing values without overriding existing env
+@happytg/shared:test: ok 7 - loadHappyTGEnv fills missing values without overriding existing env
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 83.620208
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT
+@happytg/shared:test: ok 8 - normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 9.9365
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values
+@happytg/shared:test: ok 9 - telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 1.217667
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: FileStateStore serializes concurrent updates through its queue
+@happytg/shared:test: ok 10 - FileStateStore serializes concurrent updates through its queue
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 106.398084
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: createJsonServer resolves route params and query data
+@happytg/shared:test: ok 11 - createJsonServer resolves route params and query data
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 212.096833
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: # Subtest: createJsonServer returns a structured 500 when handler throws
+@happytg/shared:test: ok 12 - createJsonServer returns a structured 500 when handler throws
+@happytg/shared:test:   ---
+@happytg/shared:test:   duration_ms: 66.872833
+@happytg/shared:test:   type: 'test'
+@happytg/shared:test:   ...
+@happytg/shared:test: 1..12
+@happytg/shared:test: # tests 12
+@happytg/shared:test: # suites 0
+@happytg/shared:test: # pass 12
+@happytg/shared:test: # fail 0
+@happytg/shared:test: # cancelled 0
+@happytg/shared:test: # skipped 0
+@happytg/shared:test: # todo 0
+@happytg/shared:test: # duration_ms 4366.799375
+@happytg/bootstrap:test: cache hit, replaying logs f2ed2aa6b7ee11b2
+@happytg/bootstrap:test: 
+@happytg/bootstrap:test: > @happytg/bootstrap@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+@happytg/bootstrap:test: > tsx --test src/*.test.ts
+@happytg/bootstrap:test: 
+@happytg/bootstrap:test: TAP version 13
+@happytg/bootstrap:test: # Subtest: parseHappyTGArgs maps config and env nested commands
+@happytg/bootstrap:test: ok 1 - parseHappyTGArgs maps config and env nested commands
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 3.498666
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: # Subtest: executeHappyTG initializes and inspects repo-local task bundles
+@happytg/bootstrap:test: ok 2 - executeHappyTG initializes and inspects repo-local task bundles
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 181.189625
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: # Subtest: renderText returns a compact bootstrap summary with preflight and diagnostics hints
+@happytg/bootstrap:test: ok 3 - renderText returns a compact bootstrap summary with preflight and diagnostics hints
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 1.765417
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: # Subtest: doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+@happytg/bootstrap:test: ok 4 - doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 3102.60025
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: # Subtest: verify surfaces Codex smoke warnings as warn when config exists
+@happytg/bootstrap:test: ok 5 - verify surfaces Codex smoke warnings as warn when config exists
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 385.897416
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: # Subtest: doctor distinguishes unavailable Codex from a missing Codex binary
+@happytg/bootstrap:test: ok 6 - doctor distinguishes unavailable Codex from a missing Codex binary
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 293.963791
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: # Subtest: setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+@happytg/bootstrap:test: ok 7 - setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 530.43825
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: # Subtest: doctor reports Redis installed but stopped
+@happytg/bootstrap:test: ok 8 - doctor reports Redis installed but stopped
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 581.027667
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: # Subtest: doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+@happytg/bootstrap:test: ok 9 - doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 965.474417
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: # Subtest: config-init and env-snapshot remain deterministic plan-only commands
+@happytg/bootstrap:test: ok 10 - config-init and env-snapshot remain deterministic plan-only commands
+@happytg/bootstrap:test:   ---
+@happytg/bootstrap:test:   duration_ms: 39.372417
+@happytg/bootstrap:test:   type: 'test'
+@happytg/bootstrap:test:   ...
+@happytg/bootstrap:test: 1..10
+@happytg/bootstrap:test: # tests 10
+@happytg/bootstrap:test: # suites 0
+@happytg/bootstrap:test: # pass 10
+@happytg/bootstrap:test: # fail 0
+@happytg/bootstrap:test: # cancelled 0
+@happytg/bootstrap:test: # skipped 0
+@happytg/bootstrap:test: # todo 0
+@happytg/bootstrap:test: # duration_ms 9307.062292
+@happytg/hooks:test: cache hit, replaying logs c68074338340b2f1
+@happytg/hooks:test: 
+@happytg/hooks:test: > @happytg/hooks@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/hooks
+@happytg/hooks:test: > tsx --test src/*.test.ts
+@happytg/hooks:test: 
+@happytg/hooks:test: TAP version 13
+@happytg/hooks:test: # Subtest: defineHook creates an enabled hook definition for the requested point
+@happytg/hooks:test: ok 1 - defineHook creates an enabled hook definition for the requested point
+@happytg/hooks:test:   ---
+@happytg/hooks:test:   duration_ms: 5.824542
+@happytg/hooks:test:   type: 'test'
+@happytg/hooks:test:   ...
+@happytg/hooks:test: # Subtest: executeHook returns a completed execution envelope
+@happytg/hooks:test: ok 2 - executeHook returns a completed execution envelope
+@happytg/hooks:test:   ---
+@happytg/hooks:test:   duration_ms: 5.366875
+@happytg/hooks:test:   type: 'test'
+@happytg/hooks:test:   ...
+@happytg/hooks:test: 1..2
+@happytg/hooks:test: # tests 2
+@happytg/hooks:test: # suites 0
+@happytg/hooks:test: # pass 2
+@happytg/hooks:test: # fail 0
+@happytg/hooks:test: # cancelled 0
+@happytg/hooks:test: # skipped 0
+@happytg/hooks:test: # todo 0
+@happytg/hooks:test: # duration_ms 26620.691667
+@happytg/protocol:test: cache hit, replaying logs 68d5a531e6d9ca81
+@happytg/protocol:test: 
+@happytg/protocol:test: > @happytg/protocol@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/protocol
+@happytg/protocol:test: > tsx --test src/*.test.ts
+@happytg/protocol:test: 
+@happytg/protocol:test: TAP version 13
+@happytg/protocol:test: # Subtest: createEmptyStore returns the canonical empty control-plane shape
+@happytg/protocol:test: ok 1 - createEmptyStore returns the canonical empty control-plane shape
+@happytg/protocol:test:   ---
+@happytg/protocol:test:   duration_ms: 0.565875
+@happytg/protocol:test:   type: 'test'
+@happytg/protocol:test:   ...
+@happytg/protocol:test: # Subtest: protocol enums include resumability, proof, and bootstrap contracts
+@happytg/protocol:test: ok 2 - protocol enums include resumability, proof, and bootstrap contracts
+@happytg/protocol:test:   ---
+@happytg/protocol:test:   duration_ms: 0.085958
+@happytg/protocol:test:   type: 'test'
+@happytg/protocol:test:   ...
+@happytg/protocol:test: 1..2
+@happytg/protocol:test: # tests 2
+@happytg/protocol:test: # suites 0
+@happytg/protocol:test: # pass 2
+@happytg/protocol:test: # fail 0
+@happytg/protocol:test: # cancelled 0
+@happytg/protocol:test: # skipped 0
+@happytg/protocol:test: # todo 0
+@happytg/protocol:test: # duration_ms 226.386375
+@happytg/host-daemon:test: cache hit, replaying logs c26f7a2d18f1fd22
+@happytg/host-daemon:test: 
+@happytg/host-daemon:test: > @happytg/host-daemon@0.2.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon
+@happytg/host-daemon:test: > tsx --test src/*.test.ts
+@happytg/host-daemon:test: 
+@happytg/host-daemon:test: TAP version 13
+@happytg/host-daemon:test: # Subtest: defaultWorkspaces prefers configured workspace paths
+@happytg/host-daemon:test: ok 1 - defaultWorkspaces prefers configured workspace paths
+@happytg/host-daemon:test:   ---
+@happytg/host-daemon:test:   duration_ms: 1.22225
+@happytg/host-daemon:test:   type: 'test'
+@happytg/host-daemon:test:   ...
+@happytg/host-daemon:test: # Subtest: compactJournal keeps running entries and trims stale completed entries
+@happytg/host-daemon:test: ok 2 - compactJournal keeps running entries and trims stale completed entries
+@happytg/host-daemon:test:   ---
+@happytg/host-daemon:test:   duration_ms: 0.101375
+@happytg/host-daemon:test:   type: 'test'
+@happytg/host-daemon:test:   ...
+@happytg/host-daemon:test: # Subtest: sandboxForDispatch preserves read-only safety for doctor and verify paths
+@happytg/host-daemon:test: ok 3 - sandboxForDispatch preserves read-only safety for doctor and verify paths
+@happytg/host-daemon:test:   ---
+@happytg/host-daemon:test:   duration_ms: 0.079375
+@happytg/host-daemon:test:   type: 'test'
+@happytg/host-daemon:test:   ...
+@happytg/host-daemon:test: # Subtest: parseVerifierVerdict keys off the first line only
+@happytg/host-daemon:test: ok 4 - parseVerifierVerdict keys off the first line only
+@happytg/host-daemon:test:   ---
+@happytg/host-daemon:test:   duration_ms: 0.051041
+@happytg/host-daemon:test:   type: 'test'
+@happytg/host-daemon:test:   ...
+@happytg/host-daemon:test: # Subtest: startup guidance stays actionable and repeated notices are suppressed
+@happytg/host-daemon:test: ok 5 - startup guidance stays actionable and repeated notices are suppressed
+@happytg/host-daemon:test:   ---
+@happytg/host-daemon:test:   duration_ms: 0.148917
+@happytg/host-daemon:test:   type: 'test'
+@happytg/host-daemon:test:   ...
+@happytg/host-daemon:test: # Subtest: summarizeBootstrapReport includes top finding codes
+@happytg/host-daemon:test: ok 6 - summarizeBootstrapReport includes top finding codes
+@happytg/host-daemon:test:   ---
+@happytg/host-daemon:test:   duration_ms: 0.093625
+@happytg/host-daemon:test:   type: 'test'
+@happytg/host-daemon:test:   ...
+@happytg/host-daemon:test: 1..6
+@happytg/host-daemon:test: # tests 6
+@happytg/host-daemon:test: # suites 0
+@happytg/host-daemon:test: # pass 6
+@happytg/host-daemon:test: # fail 0
+@happytg/host-daemon:test: # cancelled 0
+@happytg/host-daemon:test: # skipped 0
+@happytg/host-daemon:test: # todo 0
+@happytg/host-daemon:test: # duration_ms 253.78675
+
+ Tasks:    13 successful, 13 total
+Cached:    13 cached, 13 total
+  Time:    1.074s >>> FULL TURBO
+

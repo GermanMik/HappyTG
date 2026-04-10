@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.2.0
+
 ### Fixed
 
 - Hardened Windows home resolution so `~` and `~/...` respect env-driven home overrides consistently, including Windows-style env-key casing.

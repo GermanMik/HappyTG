@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { PendingDispatch } from "../../../packages/protocol/src/index.js";
+import { codexCliMissingMessage } from "../../../packages/runtime-adapters/src/index.js";
 
 import {
   compactJournal,
@@ -104,7 +105,7 @@ test("startup guidance stays actionable and repeated notices are suppressed", ()
 
   assert.equal(
     startupReadinessMessage({ available: false }),
-    "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
+    codexCliMissingMessage()
   );
   assert.equal(
     startupReadinessMessage({ available: false, missing: false }),
@@ -112,7 +113,7 @@ test("startup guidance stays actionable and repeated notices are suppressed", ()
   );
   assert.equal(
     firstRunGuidance({ hostId: undefined, readinessAvailable: false }),
-    "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`."
+    codexCliMissingMessage()
   );
   assert.equal(
     firstRunGuidance({ hostId: undefined, readinessAvailable: false, readinessMissing: false }),
