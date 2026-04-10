@@ -1,0 +1,43 @@
+{
+  "taskId": "HTG-2026-04-10-runtime-adapters-windows-shim",
+  "criteria": [
+    {
+      "id": "windows-cmd-readiness",
+      "status": "passed",
+      "artifacts": [
+        "packages/runtime-adapters/src/index.ts",
+        "packages/runtime-adapters/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-10-runtime-adapters-windows-shim/raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "missing-command-preserved",
+      "status": "passed",
+      "artifacts": [
+        "packages/runtime-adapters/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-10-runtime-adapters-windows-shim/raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "shell-root-cause-reproduced",
+      "status": "passed",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-10-runtime-adapters-windows-shim/raw/build.txt"
+      ]
+    },
+    {
+      "id": "repo-gates",
+      "status": "passed",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-10-runtime-adapters-windows-shim/raw/typecheck.txt",
+        ".agent/tasks/HTG-2026-04-10-runtime-adapters-windows-shim/raw/lint.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-10-runtime-adapters-windows-shim/spec.md",
+    ".agent/tasks/HTG-2026-04-10-runtime-adapters-windows-shim/evidence.md",
+    ".agent/tasks/HTG-2026-04-10-runtime-adapters-windows-shim/verdict.json"
+  ],
+  "generatedAt": "2026-04-10T05:05:56Z"
+}

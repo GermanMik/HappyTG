@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-10-runtime-adapters-windows-shim",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "targeted-runtime-tests-plus-typecheck-lint"
+  },
+  "checks": [
+    {
+      "name": "windows-cmd-shell-quoting",
+      "ok": true,
+      "detail": "Resolved Windows .cmd/.bat paths are now quoted before shell execution, so spaced shim paths do not break readiness version/smoke runs."
+    },
+    {
+      "name": "windows-path-casing-regressions",
+      "ok": true,
+      "detail": "Runtime readiness tests pass for Path, lowercase path/pathext, and duplicate PATH/Path plus PATHEXT/pathext scenarios with a .cmd shim under a spaced directory."
+    },
+    {
+      "name": "missing-command-behavior",
+      "ok": true,
+      "detail": "True missing-command detection remains intact and still reports the actionable Codex PATH guidance."
+    },
+    {
+      "name": "repo-typecheck",
+      "ok": true,
+      "detail": "pnpm typecheck passed."
+    },
+    {
+      "name": "repo-lint",
+      "ok": true,
+      "detail": "pnpm lint passed."
+    }
+  ],
+  "generatedAt": "2026-04-10T05:05:56Z"
+}

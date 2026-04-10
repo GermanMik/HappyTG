@@ -36,12 +36,8 @@ function isJavaScriptEntrypoint(filePath: string): boolean {
   return [".js", ".mjs", ".cjs"].includes(path.extname(filePath).toLowerCase());
 }
 
-function trimWrappedQuotes(value: string): string {
-  if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
-    return value.slice(1, -1);
-  }
-
-  return value;
+function quoteShellCommand(command: string): string {
+  return `"${command}"`;
 }
 
 function formatSpawnError(error: unknown): string {
@@ -58,7 +54,7 @@ function isCommandMissingError(error: unknown): boolean {
 }
 
 export function codexCliMissingMessage(): string {
-  return "Codex CLI not found. Install Codex CLI, verify `codex --version`, then run `pnpm happytg doctor`.";
+  return "Codex CLI is not on the current shell PATH yet. Check the global npm prefix and installed Codex wrapper files to see whether this is a PATH issue or a partial install. If Codex is still missing, reinstall Codex, update PATH, verify `codex --version`, then run `pnpm happytg doctor`.";
 }
 
 export function classifyCodexSmokeStderr(stderr: string): {
@@ -137,19 +133,14 @@ async function runCommand(
     env,
     platform
   });
-  const normalizedCommand = trimWrappedQuotes(command).trim();
-  const bareWindowsCommand = platform === "win32"
-    && !path.extname(normalizedCommand)
-    && !normalizedCommand.includes("/")
-    && !normalizedCommand.includes("\\");
   const useWindowsShell = platform === "win32"
-    && (
-      /\.(cmd|bat)$/i.test(invocation.command)
-      || (bareWindowsCommand && !invocation.resolvedPath)
-    );
+    && /\.(cmd|bat)$/i.test(invocation.command);
   const spawnEnv = normalizeSpawnEnv(env, platform);
+  const spawnCommand = useWindowsShell
+    ? quoteShellCommand(invocation.command)
+    : invocation.command;
   return new Promise((resolve, reject) => {
-    const child = spawn(invocation.command, invocation.args, {
+    const child = spawn(spawnCommand, invocation.args, {
       cwd,
       env: spawnEnv,
       shell: useWindowsShell

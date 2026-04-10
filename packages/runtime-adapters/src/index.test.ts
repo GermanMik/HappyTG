@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -82,6 +82,13 @@ async function createWindowsCodexShim(tempDir: string, version: string): Promise
   return { shimPath };
 }
 
+async function createTempDirWithSpace(prefix: string): Promise<{ tempRoot: string; tempDir: string }> {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), prefix));
+  const tempDir = path.join(tempRoot, "dir with space");
+  await mkdir(tempDir, { recursive: true });
+  return { tempRoot, tempDir };
+}
+
 function restoreCodexBin(originalValue: string | undefined): void {
   if (originalValue === undefined) {
     delete process.env.CODEX_CLI_BIN;
@@ -133,7 +140,7 @@ test("checkCodexReadiness reports available Codex and captures smoke warnings", 
 });
 
 test("checkCodexReadiness resolves a Windows-style codex.cmd shim from Path", async () => {
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-shim-"));
+  const { tempRoot, tempDir } = await createTempDirWithSpace("happytg-runtime-win-shim-");
   try {
     const configPath = path.join(tempDir, "config.toml");
     const { shimPath } = await createWindowsCodexShim(tempDir, "codex shim 0.115.0");
@@ -158,12 +165,12 @@ test("checkCodexReadiness resolves a Windows-style codex.cmd shim from Path", as
     assert.match(readiness.version ?? "", /codex shim 0\.115\.0/);
     assert.equal(readiness.binaryPath, shimPath);
   } finally {
-    await rm(tempDir, { recursive: true, force: true });
+    await rm(tempRoot, { recursive: true, force: true });
   }
 });
 
 test("checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext", async () => {
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-shim-case-"));
+  const { tempRoot, tempDir } = await createTempDirWithSpace("happytg-runtime-win-shim-case-");
   try {
     const configPath = path.join(tempDir, "config.toml");
     const { shimPath } = await createWindowsCodexShim(tempDir, "codex shim 0.116.0");
@@ -187,12 +194,12 @@ test("checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase
     assert.match(readiness.version ?? "", /codex shim 0\.116\.0/);
     assert.equal(readiness.binaryPath, shimPath);
   } finally {
-    await rm(tempDir, { recursive: true, force: true });
+    await rm(tempRoot, { recursive: true, force: true });
   }
 });
 
 test("checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated", async () => {
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-shim-dupe-"));
+  const { tempRoot, tempDir } = await createTempDirWithSpace("happytg-runtime-win-shim-dupe-");
   try {
     const configPath = path.join(tempDir, "config.toml");
     const { shimPath } = await createWindowsCodexShim(tempDir, "codex shim 0.117.0");
@@ -215,6 +222,31 @@ test("checkCodexReadiness keeps Windows shim resolution working when PATH/Path a
     assert.equal(readiness.smokeOk, true);
     assert.match(readiness.version ?? "", /codex shim 0\.117\.0/);
     assert.equal(readiness.binaryPath, shimPath);
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("checkCodexReadiness treats a Windows shell command-not-found result as missing", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-missing-"));
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    await writeFile(configPath, 'model = "gpt-5"\n', "utf8");
+
+    const readiness = await checkCodexReadiness({
+      env: {
+        Path: tempDir,
+        PATHEXT: ".CMD;.EXE"
+      } as NodeJS.ProcessEnv,
+      platform: "win32",
+      cwd: tempDir,
+      configPath
+    });
+
+    assert.equal(readiness.available, false);
+    assert.equal(readiness.missing, true);
+    assert.equal(readiness.binaryPath, "codex");
+    assert.match(readiness.smokeError ?? "", /not on the current shell PATH yet/i);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -261,6 +293,15 @@ test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only
   assert.deepEqual(classified.actionableLines, [
     "2026-04-08T14:03:07Z WARN custom warning"
   ]);
+});
+
+test("codexCliMissingMessage explains PATH diagnosis and reinstall fallback", () => {
+  const message = codexCliMissingMessage();
+
+  assert.match(message, /not on the current shell PATH yet/i);
+  assert.match(message, /global npm prefix/i);
+  assert.match(message, /partial install/i);
+  assert.match(message, /reinstall Codex, update PATH/i);
 });
 
 test("runCodexExec reads summary from the Codex output file", async () => {

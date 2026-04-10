@@ -1,0 +1,13 @@
+{
+  "script": "/var/folders/4w/m8wlgpkx0s14dkbfh510h01wlkj3kd/T/happytg-runtime-shell-HMqZEl/dir with space/codex.cmd",
+  "unquoted": {
+    "code": 127,
+    "stdout": "",
+    "stderr": "/bin/sh: /var/folders/4w/m8wlgpkx0s14dkbfh510h01wlkj3kd/T/happytg-runtime-shell-HMqZEl/dir: No such file or directory\n"
+  },
+  "quoted": {
+    "code": 0,
+    "stdout": "--version\n",
+    "stderr": ""
+  }
+}
