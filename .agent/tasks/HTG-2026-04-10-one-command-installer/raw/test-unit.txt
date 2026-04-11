@@ -1,0 +1,128 @@
+
+> @happytg/bootstrap@0.3.0 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: parseHappyTGArgs maps config and env nested commands
+ok 1 - parseHappyTGArgs maps config and env nested commands
+  ---
+  duration_ms: 23.483042
+  type: 'test'
+  ...
+# Subtest: parseHappyTGArgs maps install flags into the installer request
+ok 2 - parseHappyTGArgs maps install flags into the installer request
+  ---
+  duration_ms: 1.135375
+  type: 'test'
+  ...
+# Subtest: executeHappyTG initializes and inspects repo-local task bundles
+ok 3 - executeHappyTG initializes and inspects repo-local task bundles
+  ---
+  duration_ms: 292.394458
+  type: 'test'
+  ...
+# Subtest: renderText returns a compact bootstrap summary with preflight and diagnostics hints
+ok 4 - renderText returns a compact bootstrap summary with preflight and diagnostics hints
+  ---
+  duration_ms: 3.118875
+  type: 'test'
+  ...
+# Subtest: renderText returns a compact install summary
+ok 5 - renderText returns a compact install summary
+  ---
+  duration_ms: 1.012834
+  type: 'test'
+  ...
+# Subtest: doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+ok 6 - doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+  ---
+  duration_ms: 1654.157916
+  type: 'test'
+  ...
+# Subtest: verify surfaces Codex smoke warnings as warn when config exists
+ok 7 - verify surfaces Codex smoke warnings as warn when config exists
+  ---
+  duration_ms: 714.028334
+  type: 'test'
+  ...
+# Subtest: doctor distinguishes unavailable Codex from a missing Codex binary
+ok 8 - doctor distinguishes unavailable Codex from a missing Codex binary
+  ---
+  duration_ms: 362.457209
+  type: 'test'
+  ...
+# Subtest: doctor reports a PATH issue when Codex wrapper files exist under the global npm prefix
+ok 9 - doctor reports a PATH issue when Codex wrapper files exist under the global npm prefix
+  ---
+  duration_ms: 1048.535084
+  type: 'test'
+  ...
+# Subtest: doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix
+ok 10 - doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix
+  ---
+  duration_ms: 1051.877417
+  type: 'test'
+  ...
+# Subtest: setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+ok 11 - setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+  ---
+  duration_ms: 861.544166
+  type: 'test'
+  ...
+# Subtest: doctor reports Redis installed but stopped
+ok 12 - doctor reports Redis installed but stopped
+  ---
+  duration_ms: 803.615333
+  type: 'test'
+  ...
+# Subtest: doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+ok 13 - doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+  ---
+  duration_ms: 1563.855417
+  type: 'test'
+  ...
+# Subtest: config-init and env-snapshot remain deterministic plan-only commands
+ok 14 - config-init and env-snapshot remain deterministic plan-only commands
+  ---
+  duration_ms: 122.287209
+  type: 'test'
+  ...
+# Subtest: detectLinuxFamily classifies Debian and Fedora os-release content
+ok 15 - detectLinuxFamily classifies Debian and Fedora os-release content
+  ---
+  duration_ms: 62.881
+  type: 'test'
+  ...
+# Subtest: detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path
+ok 16 - detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path
+  ---
+  duration_ms: 6751.709833
+  type: 'test'
+  ...
+# Subtest: inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe
+ok 17 - inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe
+  ---
+  duration_ms: 3839.169417
+  type: 'test'
+  ...
+# Subtest: mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun
+ok 18 - mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun
+  ---
+  duration_ms: 47.188208
+  type: 'test'
+  ...
+# Subtest: retro installer renderers include active cursor and keyboard hints
+ok 19 - retro installer renderers include active cursor and keyboard hints
+  ---
+  duration_ms: 5.403709
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13256.981625

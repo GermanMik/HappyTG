@@ -1,13 +1,13 @@
 {
   "name": "@happytg/bootstrap",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "bin": {
-    "happytg": "dist/cli.js",
-    "happytg-bootstrap": "dist/cli.js"
+    "happytg": "dist/bootstrap/src/cli.js",
+    "happytg-bootstrap": "dist/bootstrap/src/cli.js"
   },
-  "main": "dist/index.js",
+  "main": "dist/bootstrap/src/index.js",
   "scripts": {
     "doctor": "tsx src/cli.ts doctor",
     "setup": "tsx src/cli.ts setup",

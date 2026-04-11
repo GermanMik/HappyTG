@@ -6,6 +6,7 @@ Use [Quickstart](./quickstart.md) for the shortest first run, [Installation](./i
 
 | Command | Purpose | When to use it |
 | --- | --- | --- |
+| `pnpm happytg install` | Full one-command onboarding | You want repo sync, Telegram setup, env merge, and optional post-checks in one flow. |
 | `pnpm happytg setup` | Compact guided first start | You want the shortest actionable checklist. |
 | `pnpm happytg doctor` | Readiness inspection | You want the plain-text diagnostic summary. |
 | `pnpm happytg doctor --json` | Full diagnostic payload | You need raw paths, classifications, and detailed stderr. |
@@ -35,7 +36,9 @@ Use [Quickstart](./quickstart.md) for the shortest first run, [Installation](./i
 
 ## Guided First Start
 
-`pnpm happytg setup` is the compact onboarding path.
+`pnpm happytg install` is the primary onboarding path.
+
+`pnpm happytg setup` remains the compact onboarding path after install or for an already-synced checkout.
 
 It checks:
 
@@ -67,6 +70,7 @@ Use `--json` when you need raw paths, detailed port classifications, or full Cod
 
 ## State Files
 
+- `~/.happytg/state/install-last.json`
 - `~/.happytg/state/doctor-last.json`
 - `~/.happytg/state/setup-last.json`
 - `~/.happytg/state/repair-last.json`

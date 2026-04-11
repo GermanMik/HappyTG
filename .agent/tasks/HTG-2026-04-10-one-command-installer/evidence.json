@@ -1,0 +1,105 @@
+{
+  "taskId": "HTG-2026-04-10-one-command-installer",
+  "criteria": [
+    {
+      "id": "install-cli-and-tui",
+      "status": "passed",
+      "artifacts": [
+        "packages/bootstrap/src/cli.ts",
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/cli.test.ts",
+        "packages/bootstrap/src/install.test.ts"
+      ]
+    },
+    {
+      "id": "shared-installer-behavior",
+      "status": "passed",
+      "artifacts": [
+        "packages/bootstrap/src/install/platform.ts",
+        "packages/bootstrap/src/install/repo.ts",
+        "packages/bootstrap/src/install/env.ts",
+        "packages/bootstrap/src/install/telegram.ts",
+        "packages/bootstrap/src/install/background.ts",
+        "packages/bootstrap/manifests/installers/installers.yaml",
+        ".env.example"
+      ]
+    },
+    {
+      "id": "platform-shims",
+      "status": "passed",
+      "artifacts": [
+        "scripts/install/install.sh",
+        "scripts/install/install.ps1"
+      ]
+    },
+    {
+      "id": "idempotency-and-docs",
+      "status": "passed",
+      "artifacts": [
+        "packages/bootstrap/src/cli.ts",
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "README.md",
+        "docs/installation.md",
+        "docs/quickstart.md",
+        "docs/bootstrap-doctor.md",
+        "docs/configuration.md"
+      ]
+    },
+    {
+      "id": "telegram-token-and-pairing",
+      "status": "passed",
+      "artifacts": [
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/index.ts",
+        "apps/host-daemon/src/index.ts",
+        "apps/host-daemon/src/index.test.ts"
+      ]
+    },
+    {
+      "id": "release-metadata",
+      "status": "passed",
+      "artifacts": [
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/shared/package.json",
+        "CHANGELOG.md",
+        "docs/releases/0.3.0.md",
+        ".agent/tasks/HTG-2026-04-10-one-command-installer/raw/release-check.txt"
+      ]
+    },
+    {
+      "id": "verification",
+      "status": "passed",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-10-one-command-installer/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-10-one-command-installer/raw/lint.txt",
+        ".agent/tasks/HTG-2026-04-10-one-command-installer/raw/typecheck.txt",
+        ".agent/tasks/HTG-2026-04-10-one-command-installer/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-10-one-command-installer/raw/doctor.txt",
+        ".agent/tasks/HTG-2026-04-10-one-command-installer/raw/verify.txt",
+        ".agent/tasks/HTG-2026-04-10-one-command-installer/raw/build.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-10-one-command-installer/spec.md",
+    ".agent/tasks/HTG-2026-04-10-one-command-installer/evidence.md",
+    ".agent/tasks/HTG-2026-04-10-one-command-installer/verdict.json",
+    ".agent/tasks/HTG-2026-04-10-one-command-installer/problems.md"
+  ],
+  "generatedAt": "2026-04-11T00:00:00Z"
+}

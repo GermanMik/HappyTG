@@ -1,0 +1,66 @@
+{
+  "taskId": "HTG-2026-04-10-one-command-installer",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "repo-gates-and-release-check"
+  },
+  "checks": [
+    {
+      "name": "installer-cli-surface",
+      "ok": true,
+      "detail": "The bootstrap CLI exposes `happytg install`, renders install summaries, and includes the new command in `--help` usage."
+    },
+    {
+      "name": "shared-installer-flow",
+      "ok": true,
+      "detail": "The installer now covers platform detection, repo sync, dependency resolution, `.env` merge, Telegram-first onboarding, background setup, and post-check execution inside `packages/bootstrap`."
+    },
+    {
+      "name": "telegram-token-handling",
+      "ok": true,
+      "detail": "Interactive install collects the Telegram bot token, non-interactive install now requires `--telegram-bot-token`, and pairing guidance reuses the configured bot identity."
+    },
+    {
+      "name": "platform-shims",
+      "ok": true,
+      "detail": "macOS/Linux and Windows shims clone or update the repo and invoke the shared TypeScript installer via `pnpm dlx tsx`, avoiding a broken dependency on untracked dist output."
+    },
+    {
+      "name": "release-metadata",
+      "ok": true,
+      "detail": "Workspace versions were bumped to `0.3.0`, `CHANGELOG.md` and `docs/releases/0.3.0.md` were added, and `pnpm release:check --version 0.3.0` passed."
+    },
+    {
+      "name": "repo-lint",
+      "ok": true,
+      "detail": "pnpm lint passed."
+    },
+    {
+      "name": "repo-typecheck",
+      "ok": true,
+      "detail": "pnpm typecheck passed."
+    },
+    {
+      "name": "repo-test",
+      "ok": true,
+      "detail": "pnpm test passed."
+    },
+    {
+      "name": "repo-doctor",
+      "ok": true,
+      "detail": "pnpm happytg doctor completed with expected local-environment warnings only: missing `.env` and Redis not running on localhost:6379."
+    },
+    {
+      "name": "repo-verify",
+      "ok": true,
+      "detail": "pnpm happytg verify completed with the same expected local-environment warnings only; no installer-specific regressions were introduced."
+    },
+    {
+      "name": "repo-build",
+      "ok": true,
+      "detail": "pnpm build passed."
+    }
+  ],
+  "generatedAt": "2026-04-11T00:00:00Z"
+}

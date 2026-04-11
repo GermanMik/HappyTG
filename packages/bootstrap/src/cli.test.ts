@@ -21,6 +21,47 @@ test("parseHappyTGArgs maps config and env nested commands", () => {
   });
 });
 
+test("parseHappyTGArgs maps install flags into the installer request", () => {
+  const parsed = parseHappyTGArgs([
+    "install",
+    "--non-interactive",
+    "--repo-mode",
+    "current",
+    "--repo-dir",
+    "./HappyTG",
+    "--telegram-bot-token",
+    "123456:abcdefghijklmnopqrstuvwx",
+    "--allowed-user",
+    "1001",
+    "--allowed-user",
+    "1002",
+    "--home-channel",
+    "@home",
+    "--background",
+    "manual",
+    "--post-check",
+    "setup",
+    "--post-check",
+    "doctor",
+    "--json"
+  ], "/tmp/happytg-cli");
+
+  assert.equal(parsed.kind, "install");
+  if (parsed.kind !== "install") {
+    return;
+  }
+
+  assert.equal(parsed.json, true);
+  assert.equal(parsed.options.nonInteractive, true);
+  assert.equal(parsed.options.repoMode, "current");
+  assert.equal(parsed.options.repoDir, "/tmp/happytg-cli/HappyTG");
+  assert.equal(parsed.options.telegramBotToken, "123456:abcdefghijklmnopqrstuvwx");
+  assert.deepEqual(parsed.options.telegramAllowedUserIds, ["1001", "1002"]);
+  assert.equal(parsed.options.telegramHomeChannel, "@home");
+  assert.equal(parsed.options.backgroundMode, "manual");
+  assert.deepEqual(parsed.options.postChecks, ["setup", "doctor"]);
+});
+
 test("executeHappyTG initializes and inspects repo-local task bundles", async () => {
   const repoRoot = await mkdtemp(path.join(os.tmpdir(), "happytg-cli-task-"));
 
@@ -101,4 +142,58 @@ test("renderText returns a compact bootstrap summary with preflight and diagnost
   assert.match(output, /Diagnostics:/);
   assert.match(output, /pnpm happytg setup --json/);
   assert.doesNotMatch(output, /\/tmp\/codex/);
+});
+
+test("renderText returns a compact install summary", () => {
+  const output = renderText({
+    kind: "install",
+    status: "warn",
+    interactive: false,
+    repo: {
+      mode: "current",
+      path: "/tmp/HappyTG",
+      sync: "reused",
+      dirtyStrategy: "keep"
+    },
+    environment: {
+      platform: {
+        platform: "darwin",
+        arch: "arm64",
+        shell: "/bin/zsh",
+        linuxFamily: "unknown",
+        systemPackageManager: "brew",
+        repoPackageManager: "pnpm",
+        isInteractiveTerminal: false
+      },
+      dependencies: []
+    },
+    telegram: {
+      configured: true,
+      allowedUserIds: ["1001"],
+      bot: {
+        ok: true,
+        username: "happytg_bot"
+      }
+    },
+    background: {
+      mode: "manual",
+      status: "manual",
+      detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+    },
+    postChecks: [],
+    steps: [],
+    nextSteps: [
+      "pnpm dev",
+      "pnpm daemon:pair"
+    ],
+    warnings: [
+      "Docker Desktop was skipped."
+    ],
+    reportJson: {}
+  });
+
+  assert.match(output, /HappyTG install \[WARN\]/);
+  assert.match(output, /@happytg_bot/);
+  assert.match(output, /Docker Desktop was skipped/);
+  assert.match(output, /pnpm daemon:pair/);
 });

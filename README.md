@@ -4,21 +4,18 @@ HappyTG is a Telegram-first, Codex-first, self-hosted control plane for remotely
 
 It is designed around one hard constraint: Telegram is a render surface for commands, approvals, summaries, and notifications, but it is not the execution core and it is not the source of truth. The source of truth lives in the control plane state, durable event log, materialized views, and repo-local proof artifacts.
 
-## First Start Flow
+## One-Command Install
 
 ```mermaid
 flowchart LR
-    A["Copy .env.example to .env"] --> B["Set TELEGRAM_BOT_TOKEN"]
-    B --> C["pnpm install"]
-    C --> D["pnpm happytg setup"]
-    D --> E{"Redis already running on 6379?"}
-    E -->|Yes| F["docker compose up postgres minio"]
-    E -->|No| G["docker compose up postgres redis minio"]
-    F --> H["pnpm dev"]
-    G --> H
-    H --> I["pnpm daemon:pair"]
-    I --> J["Send /pair <CODE> in Telegram"]
-    J --> K["pnpm dev:daemon"]
+    A["curl | bash or irm | iex"] --> B["Bootstrap repo/runtime"]
+    B --> C["happytg install"]
+    C --> D["Retro TUI: preflight + repo mode + Telegram token + background mode"]
+    D --> E["pnpm install + env merge + setup/doctor/verify"]
+    E --> F["pnpm dev"]
+    F --> G["pnpm daemon:pair"]
+    G --> H["Send /pair <CODE> to configured bot"]
+    H --> I["pnpm dev:daemon or background launcher"]
 ```
 
 ## Why HappyTG
@@ -77,35 +74,35 @@ flowchart LR
 | [Runtime Codex](./docs/runtime-codex.md) | You want the Codex runtime model and execution expectations. |
 | [Proof Loop](./docs/proof-loop.md) | You are running non-trivial work with repo-local proof artifacts. |
 | [Release Process](./docs/release-process.md) | You need the guarded path for tags and GitHub Releases. |
-| [Release Notes 0.2.0](./docs/releases/0.2.0.md) | You want the current release-level summary of onboarding/runtime changes. |
+| [Release Notes 0.3.0](./docs/releases/0.3.0.md) | You want the current release-level summary of installer/onboarding changes. |
 | [Docker Compose Example](./infra/docker-compose.example.yml) | You need the local shared infra compose file. |
 | [Shared App Dockerfile](./infra/Dockerfile.app) | You need the reusable runtime image definition. |
 | [CI Workflow](./.github/workflows/ci.yml) | You want the exact baseline verification gates enforced in CI. |
 
 ## Fast Start
 
-1. Install Node.js 22+, `pnpm`, Git, and Codex CLI.
-2. Create `.env`:
+1. Bootstrap from a single command.
+
+   macOS / Linux:
 
    ```bash
-   cp .env.example .env
+   curl -fsSL https://raw.githubusercontent.com/GermanMik/HappyTG/main/scripts/install/install.sh | bash
    ```
 
-   PowerShell:
+   Windows PowerShell:
 
    ```powershell
-   Copy-Item .env.example .env
+   irm https://raw.githubusercontent.com/GermanMik/HappyTG/main/scripts/install/install.ps1 | iex
    ```
 
-3. Set `TELEGRAM_BOT_TOKEN` in `.env`.
-4. Run the guided preflight:
+2. The installer will:
+   - detect platform, shell, package manager, and repo mode
+   - ask for the Telegram bot token and save it into `.env`
+   - resolve or explain Git, Node.js 22+, `pnpm`, Codex CLI, and optional Docker
+   - run `pnpm install`, merge `.env`, and offer `setup`, `doctor`, and `verify`
+   - save the bot username when it can validate the token so later pairing tells you exactly which bot to message
 
-   ```bash
-   pnpm install
-   pnpm happytg setup
-   ```
-
-5. Start shared infra. If Redis is already running on `localhost:6379`, reuse it and skip compose `redis`:
+3. Start shared infra. If Redis is already running on `localhost:6379`, reuse it and skip compose `redis`:
 
    ```bash
    docker compose -f infra/docker-compose.example.yml up postgres minio
@@ -117,21 +114,21 @@ flowchart LR
    docker compose -f infra/docker-compose.example.yml up postgres redis minio
    ```
 
-6. In a second shell, start the development stack:
+4. In a second shell, start the development stack:
 
    ```bash
    pnpm dev
    ```
 
-7. In a third shell on the execution host, request pairing and then start the daemon:
+5. In a third shell on the execution host, request pairing and then start the daemon:
 
    ```bash
    pnpm daemon:pair
-   # send /pair <CODE> to the Telegram bot
+   # send /pair <CODE> to the configured Telegram bot
    pnpm dev:daemon
    ```
 
-8. If a port is already in use, override it explicitly. Example for the Mini App:
+6. If a port is already in use, override it explicitly. Example for the Mini App:
 
    ```bash
    HAPPYTG_MINIAPP_PORT=3002 pnpm dev:miniapp
@@ -143,7 +140,7 @@ flowchart LR
    $env:HAPPYTG_MINIAPP_PORT=3002; pnpm dev:miniapp
    ```
 
-9. After pairing succeeds, run the first smoke task, then the first proof-loop task.
+7. After pairing succeeds, run the first smoke task, then the first proof-loop task.
 
 For the fuller path, use [Quickstart](./docs/quickstart.md), [Installation](./docs/installation.md), and [Bootstrap Doctor](./docs/bootstrap-doctor.md).
 
@@ -156,6 +153,7 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm dev
+pnpm happytg install
 pnpm happytg doctor
 pnpm happytg verify
 pnpm happytg task status --repo . --task HTG-0001

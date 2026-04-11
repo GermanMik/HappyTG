@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-10-one-command-installer",
+  "sessionId": "ses_install_onboarding",
+  "workspaceId": "happytg",
+  "rootPath": "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-10-one-command-installer",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "One-command installer and Telegram-first onboarding",
+  "acceptanceCriteria": [
+    "`happytg install` is the primary interactive installer entrypoint and provides the required retro TUI screens for preflight, repo mode, Telegram setup, background run mode, progress, and final summary.",
+    "The shared bootstrap installer handles platform detection, repo sync decisions, safe dirty-worktree behavior, dependency installation, `.env` merge/backup behavior, Telegram-only onboarding, and Telegram bot token capture/verification while preserving Linux support.",
+    "Thin shell and PowerShell shims bootstrap a fresh machine and hand off to the shared repo/bootstrap installer implementation without creating a parallel installer.",
+    "Installer reruns are idempotent and safe, machine-readable paths exist where appropriate, existing bootstrap commands remain compatible, and required docs/manifests/tests are updated.",
+    "The installer eliminates the recurring missing-token setup error by collecting `TELEGRAM_BOT_TOKEN`, persisting it safely, and surfacing the configured bot identity for later `/pair <CODE>` authorization messaging."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-10T05:19:14.609Z",
+  "updatedAt": "2026-04-11T00:00:00Z"
+}
