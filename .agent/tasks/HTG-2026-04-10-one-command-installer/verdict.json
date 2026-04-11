@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-04-10-one-command-installer",
+  "status": "pending",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": ""
+  },
+  "checks": [],
+  "generatedAt": "2026-04-10T05:19:14.609Z"
+}
