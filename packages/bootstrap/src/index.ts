@@ -187,6 +187,11 @@ function platformCommands(platform: NodeJS.Platform = process.platform): {
   };
 }
 
+function telegramBotTarget(env: NodeJS.ProcessEnv): string {
+  const username = env.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/u, "");
+  return username ? `@${username}` : "Telegram";
+}
+
 function defaultInfraComposeCommand(redis: RedisDetection, platform: NodeJS.Platform): string {
   const services = redis.state === "running" ? "postgres minio" : "postgres redis minio";
   const command = `docker compose -f infra/docker-compose.example.yml up ${services}`;
@@ -709,6 +714,7 @@ function buildSetupPlan(
 ): string[] {
   const platform = context.platform ?? process.platform;
   const commands = platformCommands(platform);
+  const botTarget = telegramBotTarget(context.env ?? process.env);
   const steps: string[] = [];
 
   if (!envFilePath) {
@@ -755,7 +761,7 @@ function buildSetupPlan(
   }
 
   steps.push("Request a pairing code on the execution host: `pnpm daemon:pair`.");
-  steps.push("Send `/pair <CODE>` in Telegram, then start the daemon with `pnpm dev:daemon`.");
+  steps.push(`Send \`/pair <CODE>\` to ${botTarget}, then start the daemon with \`pnpm dev:daemon\`.`);
 
   return steps.slice(0, 6);
 }

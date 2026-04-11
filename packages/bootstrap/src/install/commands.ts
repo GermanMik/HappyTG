@@ -13,6 +13,10 @@ function isJavaScriptEntrypoint(filePath: string): boolean {
   return [".js", ".mjs", ".cjs"].includes(path.extname(filePath).toLowerCase());
 }
 
+function quoteShellCommand(command: string): string {
+  return `"${command}"`;
+}
+
 export async function runCommand(input: {
   command: string;
   args?: string[];
@@ -28,9 +32,10 @@ export async function runCommand(input: {
   const useShell = input.shell ?? (platform === "win32" && /\.(cmd|bat)$/i.test(input.command));
   const command = isJavaScriptEntrypoint(input.command) ? process.execPath : input.command;
   const commandArgs = isJavaScriptEntrypoint(input.command) ? [input.command, ...args] : args;
+  const spawnCommand = useShell ? quoteShellCommand(command) : command;
 
   return new Promise((resolve, reject) => {
-    const child = spawn(command, commandArgs, {
+    const child = spawn(spawnCommand, commandArgs, {
       cwd,
       env: normalizeSpawnEnv(env, platform),
       shell: useShell

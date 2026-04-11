@@ -1,0 +1,79 @@
+
+> happytg@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG
+> turbo typecheck
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running typecheck in 13 packages
+   • Remote caching disabled
+
+@happytg/policy-engine:typecheck: cache miss, executing 4c84c5bf7bb2ba71
+@happytg/shared:typecheck: cache miss, executing cd02476cbbc1e70f
+@happytg/repo-proof:typecheck: cache miss, executing fdc927d7da66bf63
+@happytg/approval-engine:typecheck: cache miss, executing 0992d6804dab7e18
+@happytg/hooks:typecheck: cache miss, executing d41fb4981d163c93
+@happytg/bot:typecheck: cache miss, executing 7a72ef3eb1387af2
+@happytg/worker:typecheck: cache miss, executing 1db3b07bc2d2e2d9
+@happytg/bootstrap:typecheck: cache miss, executing 4f1d8850d6a8e033
+@happytg/runtime-adapters:typecheck: cache miss, executing 4d423b610229b533
+@happytg/protocol:typecheck: cache miss, executing 2c5dbf33866b162f
+@happytg/hooks:typecheck:
+@happytg/hooks:typecheck: > @happytg/hooks@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/hooks
+@happytg/hooks:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:typecheck:
+@happytg/approval-engine:typecheck:
+@happytg/approval-engine:typecheck: > @happytg/approval-engine@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/approval-engine
+@happytg/approval-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:typecheck:
+@happytg/protocol:typecheck:
+@happytg/protocol:typecheck: > @happytg/protocol@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/protocol
+@happytg/protocol:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:typecheck:
+@happytg/runtime-adapters:typecheck:
+@happytg/runtime-adapters:typecheck: > @happytg/runtime-adapters@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters
+@happytg/runtime-adapters:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:typecheck:
+@happytg/worker:typecheck:
+@happytg/worker:typecheck: > @happytg/worker@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/worker
+@happytg/worker:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/worker:typecheck:
+@happytg/policy-engine:typecheck:
+@happytg/policy-engine:typecheck: > @happytg/policy-engine@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/policy-engine
+@happytg/policy-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:typecheck:
+@happytg/repo-proof:typecheck:
+@happytg/repo-proof:typecheck: > @happytg/repo-proof@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/repo-proof
+@happytg/repo-proof:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:typecheck:
+@happytg/bootstrap:typecheck:
+@happytg/bootstrap:typecheck: > @happytg/bootstrap@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+@happytg/bootstrap:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:typecheck:
+@happytg/shared:typecheck:
+@happytg/shared:typecheck: > @happytg/shared@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared
+@happytg/shared:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/shared:typecheck:
+@happytg/bot:typecheck:
+@happytg/bot:typecheck: > @happytg/bot@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/bot
+@happytg/bot:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bot:typecheck:
+@happytg/host-daemon:typecheck: cache miss, executing 8d68871bf0410637
+@happytg/api:typecheck: cache miss, executing b02b41d836cec304
+@happytg/miniapp:typecheck: cache miss, executing fefc0f5b0ab6a495
+@happytg/host-daemon:typecheck:
+@happytg/host-daemon:typecheck: > @happytg/host-daemon@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon
+@happytg/host-daemon:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:typecheck:
+@happytg/api:typecheck:
+@happytg/api:typecheck: > @happytg/api@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/api
+@happytg/api:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/api:typecheck:
+@happytg/miniapp:typecheck:
+@happytg/miniapp:typecheck: > @happytg/miniapp@0.3.0 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp
+@happytg/miniapp:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/miniapp:typecheck:
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    1m2.716s

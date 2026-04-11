@@ -2,6 +2,24 @@
 
 Use [Quickstart](./quickstart.md) for the shortest path, [Bootstrap Doctor](./bootstrap-doctor.md) for the bootstrap state model, and [Self-Hosting](./self-hosting.md) when you are not using the local `pnpm dev` path.
 
+## One-Command Path
+
+HappyTG now installs through a single logical command:
+
+macOS / Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GermanMik/HappyTG/main/scripts/install/install.sh | bash
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/GermanMik/HappyTG/main/scripts/install/install.ps1 | iex
+```
+
+The shims only bootstrap Git / Node.js / `pnpm` enough to fetch the repo and hand off to the shared TypeScript installer inside `packages/bootstrap`.
+
 ## Prerequisites
 
 - Git
@@ -17,51 +35,67 @@ Use [Quickstart](./quickstart.md) for the shortest path, [Bootstrap Doctor](./bo
 
 ```mermaid
 flowchart TD
-    A["Clone repo"] --> B{"Need only the fastest local first run?"}
-    B -->|Yes| C["Follow Quickstart"]
-    B -->|No| D["Continue with Installation"]
-    D --> E["Copy .env.example to .env"]
-    E --> F["Set TELEGRAM_BOT_TOKEN"]
-    F --> G["pnpm install"]
-    G --> H["pnpm happytg setup"]
+    A["Run installer shim"] --> B["happytg install"]
+    B --> C{"Repo mode"}
+    C -->|clone| D["Clone fresh checkout"]
+    C -->|update| E["Update existing checkout"]
+    C -->|current| F["Use current directory"]
+    D --> G["Ask for Telegram bot token and onboarding settings"]
+    E --> G
+    F --> G
+    G --> H["pnpm install + env merge + setup/doctor/verify"]
     H --> I{"Redis already running on 6379?"}
     I -->|Yes| J["Start postgres + minio only"]
     I -->|No| K["Start postgres + redis + minio"]
-    J --> L{"Using local dev stack?"}
+    J --> L["pnpm dev + pairing + daemon"]
     K --> L
-    L -->|Yes| M["pnpm dev + pairing + pnpm dev:daemon"]
-    L -->|No| N["Follow Self-Hosting"]
 ```
 
-## Before You Start
+## What The Installer Does
 
-1. Clone the repository.
-2. Create `.env` from `.env.example`.
+1. Detects OS, shell, package manager, terminal capability, and dependency state.
+2. Lets you choose repo mode:
+   - `clone fresh`
+   - `update existing checkout`
+   - `use current directory`
+3. Handles dirty worktrees without overwriting local changes silently.
+4. Installs or explains Git, Node.js 22+, `pnpm`, Codex CLI, and optional Docker/Desktop.
+5. Runs `pnpm install`.
+6. Merges `.env.example` into `.env` without losing existing values and creates a backup before edits.
+7. Prompts for Telegram-first settings:
+   - bot token
+   - allowed user IDs
+   - home channel
+8. Validates the bot token when possible and stores `TELEGRAM_BOT_USERNAME` so later pairing instructions can point at the configured bot directly.
+9. Offers a background daemon mode:
+   - macOS: `LaunchAgent`, `manual`, `skip`
+   - Windows: `Scheduled Task`, `Startup`, `manual`, `skip`
+   - Linux: current service flow remains supported, plus installer-safe user-service/manual options
+10. Can run `setup`, `doctor`, and `verify` in one unified flow.
 
-   ```bash
-   cp .env.example .env
-   ```
+## Local CLI Path
 
-   PowerShell:
+If the repo is already present, you can use the same flow directly:
 
-   ```powershell
-   Copy-Item .env.example .env
-   ```
+```bash
+pnpm happytg install
+```
 
-3. Set a real `TELEGRAM_BOT_TOKEN` in `.env`. HappyTG no longer assumes you edited `.env` correctly ahead of time; `pnpm happytg setup` will stop and tell you if the token is missing or obviously invalid.
-4. Run `pnpm install`.
-5. Run `pnpm happytg setup` on the execution host that will run Codex.
-6. Use `pnpm happytg doctor --json` or `pnpm happytg verify --json` only when you need the detailed diagnostics.
+Useful flags:
+
+```bash
+pnpm happytg install --non-interactive --repo-mode current --telegram-bot-token <TOKEN> --allowed-user 123456789 --home-channel @team --post-check setup --post-check doctor
+pnpm happytg install --json
+```
 
 ## First Start
 
 Run the first start in separate terminals so infra, pairing, and daemon startup stay explicit.
 
-### Terminal 1: guided preflight and shared infra
+### Terminal 1: installer or shared infra
 
 ```bash
-pnpm install
-pnpm happytg setup
+pnpm happytg install
 ```
 
 If Redis is already running on `localhost:6379`, reuse it:
@@ -86,21 +120,22 @@ pnpm dev
 
 ```bash
 pnpm daemon:pair
-# send /pair <CODE> to the Telegram bot
+# send /pair <CODE> to the configured Telegram bot
 pnpm dev:daemon
 ```
 
 ### Important
 
 - Do not run the full compose app stack and `pnpm dev` together on the same machine unless you intentionally changed the ports.
-- If the bot logs `telegramConfigured: false`, set `TELEGRAM_BOT_TOKEN` in `.env` and restart `pnpm dev:bot`.
+- If the bot logs `telegramConfigured: false`, rerun `pnpm happytg install` or set `TELEGRAM_BOT_TOKEN` in `.env`, then restart `pnpm dev:bot`.
 - If pairing is not complete yet, the normal next step is always `pnpm daemon:pair` -> `/pair <CODE>` in Telegram -> `pnpm dev:daemon`.
 
 ## First-Run Checkpoints
 
 | Checkpoint | Healthy result | If not healthy |
 | --- | --- | --- |
-| `pnpm happytg setup` | Short checklist with actionable next steps | Use `pnpm happytg doctor --json` for the detailed failure surface. |
+| `pnpm happytg install` | Interactive one-command onboarding with repo sync and Telegram setup | Use `pnpm happytg doctor --json` for the detailed failure surface. |
+| `pnpm happytg setup` | Short checklist with actionable next steps after install | Use `pnpm happytg doctor --json` for the detailed failure surface. |
 | Bot startup | `Bot listening` with `telegramConfigured: true` | Set or fix `TELEGRAM_BOT_TOKEN` in `.env`, then restart the bot. |
 | Codex detection | `codex --version` works in the same shell | If not found, install/fix Codex; if found but doctor says unavailable, fix the shell/runtime and rerun doctor. |
 | Pairing | `/pair <CODE>` succeeds in Telegram | Reissue `pnpm daemon:pair` if the code expired. |
@@ -137,19 +172,20 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
 
 ## Developer Install
 
-1. Start local infrastructure:
+1. Run `pnpm happytg install` if you have not already completed the one-command flow.
+2. Start local infrastructure:
 
    ```bash
    docker compose -f infra/docker-compose.example.yml up postgres redis minio
    ```
 
-2. In a separate terminal, run the monorepo in watch mode:
+3. In a separate terminal, run the monorepo in watch mode:
 
    ```bash
    pnpm dev
    ```
 
-3. Run the host daemon on the machine that owns the workspace and Codex install:
+4. Run the host daemon on the machine that owns the workspace and Codex install:
 
    ```bash
    pnpm daemon:pair
@@ -157,8 +193,8 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
    pnpm dev:daemon
    ```
 
-4. Open Telegram, complete pairing, then run a quick session followed by a proof-loop session.
-5. Use the repo-local CLI when you need deterministic bootstrap or task-bundle actions:
+5. Open Telegram, complete pairing, then run a quick session followed by a proof-loop session.
+6. Use the repo-local CLI when you need deterministic bootstrap or task-bundle actions:
 
    ```bash
    pnpm happytg status
@@ -166,7 +202,7 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
    pnpm happytg task validate --repo . --task HTG-0001
    ```
 
-6. Validate the local baseline before any change lands:
+7. Validate the local baseline before any change lands:
 
    ```bash
    pnpm typecheck
@@ -177,7 +213,7 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
 ## Single-User Self-Hosted Install
 
 1. Provision one control-plane host and one or more execution hosts.
-2. On the control-plane host, copy `.env.example` to `.env` and set production secrets and storage endpoints.
+2. On the control-plane host, run `pnpm happytg install` or manually copy `.env.example` to `.env` and set production secrets and storage endpoints.
 3. Start the packaged compose stack without `pnpm dev`:
 
    ```bash
@@ -217,4 +253,4 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
 - The host daemon is intentionally excluded from Docker Compose because it must run where the target repositories and local Codex configuration live.
 - The CI baseline in [CI Workflow](../.github/workflows/ci.yml) matches the expected local verification gates.
 - `pnpm happytg ...` is the repo-local wrapper around the same CLI surface exposed as `happytg ...` when installed as a binary.
-- `pnpm happytg setup` is the short first-run path; `pnpm happytg doctor --json` and `pnpm happytg verify --json` are the detailed diagnostics paths.
+- `pnpm happytg install` is the primary onboarding path; `pnpm happytg setup` remains the short checklist; `pnpm happytg doctor --json` and `pnpm happytg verify --json` remain the detailed diagnostics paths.

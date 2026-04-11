@@ -8,30 +8,27 @@ Use [Installation](./installation.md) if you need the fuller local/self-hosted s
 
 ## Preflight
 
-- Install Git, Node.js 22+, `pnpm`, and Codex CLI.
-- Create `.env` from `.env.example`.
-- Put a real `TELEGRAM_BOT_TOKEN` into `.env`.
+- Run the one-command installer, or be ready to provide Git, Node.js 22+, `pnpm`, Codex CLI, and a real Telegram bot token manually.
 - Decide whether you will reuse a system Redis on `6379` or start compose `redis`.
 
 ## Happy Path
 
-1. Create `.env`.
+1. Run the installer shim.
 
    ```bash
-   cp .env.example .env
+   curl -fsSL https://raw.githubusercontent.com/GermanMik/HappyTG/main/scripts/install/install.sh | bash
    ```
 
    PowerShell:
 
    ```powershell
-   Copy-Item .env.example .env
+   irm https://raw.githubusercontent.com/GermanMik/HappyTG/main/scripts/install/install.ps1 | iex
    ```
 
-2. Fill the Telegram bot token, install dependencies, and run the guided preflight.
+2. If the repo is already present locally, use the repo-local equivalent instead.
 
    ```bash
-   pnpm install
-   pnpm happytg setup
+   pnpm happytg install
    ```
 
 3. Start shared infra only. Do not run the full compose app stack and `pnpm dev` together.
@@ -60,7 +57,7 @@ Use [Installation](./installation.md) if you need the fuller local/self-hosted s
    pnpm daemon:pair
    ```
 
-6. Send `/pair <CODE>` to the Telegram bot, then start the daemon.
+6. Send `/pair <CODE>` to the configured Telegram bot, then start the daemon.
 
    ```bash
    pnpm dev:daemon
@@ -90,7 +87,7 @@ The host daemon is separate from `pnpm dev`; start it with `pnpm dev:daemon` aft
 
 | Signal | What it means | What to do next |
 | --- | --- | --- |
-| `telegramConfigured: false` | The bot did not get a valid Telegram token. | Set `TELEGRAM_BOT_TOKEN` in `.env`, then restart `pnpm dev:bot` or `pnpm dev`. |
+| `telegramConfigured: false` | The bot did not get a valid Telegram token. | Rerun `pnpm happytg install` or set `TELEGRAM_BOT_TOKEN` in `.env`, then restart `pnpm dev:bot` or `pnpm dev`. |
 | `Codex CLI not found` | This shell cannot resolve Codex at all. | Verify `codex --version`, then rerun `pnpm happytg doctor`. |
 | `Codex: detected but unavailable` | Codex was found, but startup failed in this shell. | Run `codex --version`, fix the local install/runtime, then rerun `pnpm happytg doctor --json`. |
 | `Host is not paired yet` | Pairing has not been completed yet. | Run `pnpm daemon:pair`, send `/pair <CODE>` in Telegram, then start `pnpm dev:daemon`. |
@@ -118,7 +115,7 @@ If `6379` is already in use:
 - Telegram handles commands, approvals, and short summaries.
 - Mini App shows richer task and artifact views.
 - Repo-local proof artifacts are written to `.agent/tasks/<TASK_ID>/`.
-- `pnpm happytg setup` shows the short first-run checklist; `pnpm happytg doctor --json` and `pnpm happytg verify --json` keep the detailed diagnostics.
+- `pnpm happytg install` is the primary onboarding path; `pnpm happytg setup` remains the short first-run checklist; `pnpm happytg doctor --json` and `pnpm happytg verify --json` keep the detailed diagnostics.
 
 ## Next Reads
 

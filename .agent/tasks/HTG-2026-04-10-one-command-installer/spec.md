@@ -18,6 +18,7 @@ HappyTG onboarding currently requires the user to manually clone the repository,
 4. Installer manifests, repository docs, and tests are updated for the new one-command onboarding path, including automated coverage for platform detection, repo sync decision logic, idempotent reruns, and `.env` merge behavior, plus renderer coverage where practical.
 5. Re-running the installer is safe: it does not overwrite dirty worktrees or existing `.env` values silently, does not print secrets, preserves compatibility with `pnpm happytg setup`, `doctor`, `repair`, and `verify`, and does not weaken the repo architecture invariants around Telegram, policy/approval ordering, serialized mutations, or lazy heavy initialization.
 6. The installer removes the common post-install blocker where `TELEGRAM_BOT_TOKEN` is still missing by explicitly collecting the token, persisting it safely, verifying the bot when possible, and surfacing the bot identity so later `/pair <CODE>` authorization requests target the configured bot without extra manual lookup.
+7. Release metadata is updated for the installer launch: workspace package versions are bumped consistently, changelog/release notes are added, and the repo-level release validation passes for the selected version.
 
 ## Constraints
 
@@ -36,6 +37,7 @@ HappyTG onboarding currently requires the user to manually clone the repository,
   - `pnpm lint`
   - `pnpm typecheck`
   - `pnpm test`
+  - `pnpm release:check --version 0.3.0`
   - `pnpm happytg doctor`
   - `pnpm happytg verify`
 - Manual / behavioral:
@@ -47,5 +49,6 @@ HappyTG onboarding currently requires the user to manually clone the repository,
   - `.agent/tasks/HTG-2026-04-10-one-command-installer/raw/test-integration.txt`
   - `.agent/tasks/HTG-2026-04-10-one-command-installer/raw/lint.txt`
   - `.agent/tasks/HTG-2026-04-10-one-command-installer/raw/typecheck.txt`
+  - `.agent/tasks/HTG-2026-04-10-one-command-installer/raw/release-check.txt`
   - `.agent/tasks/HTG-2026-04-10-one-command-installer/raw/doctor.txt`
   - `.agent/tasks/HTG-2026-04-10-one-command-installer/raw/verify.txt`

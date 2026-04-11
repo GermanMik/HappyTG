@@ -6,6 +6,7 @@ import { codexCliMissingMessage } from "../../../packages/runtime-adapters/src/i
 
 import {
   compactJournal,
+  configuredBotTarget,
   defaultWorkspaces,
   firstRunGuidance,
   hostNotPairedMessage,
@@ -127,6 +128,21 @@ test("startup guidance stays actionable and repeated notices are suppressed", ()
   assert.deepEqual(pairingInstructions("PAIR-123"), [
     "Pair with Telegram using: /pair PAIR-123",
     "Next: keep `pnpm dev` running, send the command in Telegram, then start the daemon with `pnpm dev:daemon`."
+  ]);
+  assert.equal(configuredBotTarget({
+    TELEGRAM_BOT_USERNAME: "happytg_bot"
+  }), "@happytg_bot");
+  assert.equal(
+    hostNotPairedMessage({
+      TELEGRAM_BOT_USERNAME: "happytg_bot"
+    }),
+    "Host is not paired yet. Run `pnpm daemon:pair`, then send the code to @happytg_bot with `/pair <CODE>`."
+  );
+  assert.deepEqual(pairingInstructions("PAIR-123", {
+    TELEGRAM_BOT_USERNAME: "happytg_bot"
+  }), [
+    "Pair with @happytg_bot using: /pair PAIR-123",
+    "Next: keep `pnpm dev` running, send the command to @happytg_bot, then start the daemon with `pnpm dev:daemon`."
   ]);
   assert.equal(shouldEmitStartupNotice(cache, "codex", 0, 60_000), true);
   assert.equal(shouldEmitStartupNotice(cache, "codex", 1_000, 60_000), false);

@@ -2,6 +2,7 @@ import path from "node:path";
 
 import type { BootstrapReport } from "../../../protocol/src/index.js";
 import {
+  findUpwardFile,
   getLocalStateDir,
   nowIso,
   parseDotEnv,
@@ -222,14 +223,14 @@ function backgroundOptionsForPlatform(platform: NodeJS.Platform): Array<{ mode: 
 
   return [
     {
-      mode: "systemd-user",
-      label: "systemd user service",
-      detail: "Create a user service without changing the broader Linux service flow."
-    },
-    {
       mode: "manual",
       label: "Manual",
       detail: "Keep daemon startup manual with `pnpm dev:daemon`."
+    },
+    {
+      mode: "systemd-user",
+      label: "systemd user service",
+      detail: "Create a user service without changing the broader Linux service flow."
     },
     {
       mode: "skip",
@@ -275,13 +276,17 @@ export async function runHappyTGInstall(
 ): Promise<InstallResult> {
   const stdin = input?.stdin ?? process.stdin;
   const stdout = input?.stdout ?? process.stdout;
-  const runtimeRepoRoot = path.resolve(options.cwd);
+  const cwd = path.resolve(options.cwd);
+  const workspaceRootMarker = options.bootstrapRepoRoot
+    ? undefined
+    : findUpwardFile(cwd, "pnpm-workspace.yaml");
+  const installerRepoRoot = path.resolve(options.bootstrapRepoRoot ?? (workspaceRootMarker ? path.dirname(workspaceRootMarker) : cwd));
   const platform = await detectInstallerEnvironment({
-    cwd: runtimeRepoRoot,
+    cwd,
     env: process.env,
     platform: process.platform,
     interactiveTerminal: !options.nonInteractive && !options.json && Boolean(stdin.isTTY && stdout.isTTY),
-    repoRoot: runtimeRepoRoot
+    repoRoot: installerRepoRoot
   });
   const interactive = platform.platform.isInteractiveTerminal && !options.nonInteractive && !options.json;
   const installEnv: NodeJS.ProcessEnv = {
@@ -289,7 +294,7 @@ export async function runHappyTGInstall(
   };
   await addNpmGlobalBinToPath({
     env: installEnv,
-    cwd: runtimeRepoRoot,
+    cwd,
     platform: platform.platform.platform
   });
 
@@ -380,6 +385,10 @@ export async function runHappyTGInstall(
       homeChannel: options.telegramHomeChannel ?? telegramDefaults.homeChannel
     };
 
+  if (!interactive && !telegramSetup.botToken.trim()) {
+    throw new Error("Telegram bot token is required for non-interactive install. Pass --telegram-bot-token or rerun without --non-interactive.");
+  }
+
   const backgroundModes = backgroundOptionsForPlatform(platform.platform.platform);
   const backgroundMode = interactive
     ? await promptSelect({
@@ -455,11 +464,11 @@ export async function runHappyTGInstall(
   });
 
   const refreshedEnv = await detectInstallerEnvironment({
-    cwd: runtimeRepoRoot,
+    cwd,
     env: installEnv,
     platform: platform.platform.platform,
     interactiveTerminal: false,
-    repoRoot: runtimeRepoRoot
+    repoRoot: installerRepoRoot
   });
   await addNpmGlobalBinToPath({
     env: installEnv,
@@ -678,11 +687,11 @@ export async function runHappyTGInstall(
   }
 
   const finalEnvironment = await detectInstallerEnvironment({
-    cwd: runtimeRepoRoot,
+    cwd,
     env: installEnv,
     platform: platform.platform.platform,
     interactiveTerminal: false,
-    repoRoot: runtimeRepoRoot
+    repoRoot: installerRepoRoot
   });
   const missingRequiredStep = steps.some((step) => step.status === "failed" && step.id.startsWith("dep-"));
   const overallStatus: InstallStatus = missingRequiredStep || steps.some((step) => step.status === "failed")

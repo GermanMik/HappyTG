@@ -7,10 +7,13 @@ import type { BootstrapReport, TaskBundle } from "../../protocol/src/index.js";
 import { initTaskBundle, readTaskBundle, taskBundlePath, validateTaskBundle } from "../../repo-proof/src/index.js";
 import { loadHappyTGEnv } from "../../shared/src/index.js";
 
+import { runHappyTGInstall } from "./install/index.js";
+import type { InstallCommandOptions, InstallResult } from "./install/types.js";
 import { runBootstrapCommand, type BootstrapCommand } from "./index.js";
 
 type CliRequest =
   | { kind: "bootstrap"; command: BootstrapCommand; json: boolean }
+  | { kind: "install"; json: boolean; options: InstallCommandOptions }
   | { kind: "task-init"; json: boolean; repoRoot: string; taskId: string; sessionId: string; workspaceId: string; title: string; mode: "quick" | "proof"; acceptanceCriteria: string[] }
   | { kind: "task-validate"; json: boolean; repoRoot: string; taskId: string }
   | { kind: "task-status"; json: boolean; repoRoot: string; taskId: string };
@@ -62,6 +65,7 @@ function usage(): string {
   return [
     "Usage:",
     "  happytg doctor|setup|repair|verify|status [--json]",
+    "  happytg install [--repo-mode clone|update|current] [--repo-dir <path>] [--repo-url <url>] [--branch <name>] [--telegram-bot-token <token>] [--allowed-user <id>]... [--home-channel <value>] [--background launchagent|scheduled-task|startup|systemd-user|manual|skip] [--post-check setup|doctor|verify]... [--non-interactive] [--json]",
     "  happytg config init [--json]",
     "  happytg env snapshot [--json]",
     "  happytg task init --repo <path> --task <TASK_ID> [--session <id>] [--workspace <id>] [--title <title>] [--mode quick|proof] [--criterion <text>]... [--json]",
@@ -120,6 +124,45 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
   const json = argv.includes("--json");
   const tokens = argv.filter((token) => token !== "--json");
   const [scope = "status", action, ...rest] = tokens;
+
+  if (scope === "install") {
+    const options = parseOptions(tokens.slice(1));
+    const postChecks = takeOptionList(options, "post-check")
+      .filter((value): value is InstallCommandOptions["postChecks"][number] => ["setup", "doctor", "verify"].includes(value));
+    const background = takeOption(options, "background");
+    const repoMode = takeOption(options, "repo-mode");
+
+    return {
+      kind: "install",
+      json: options.json || json,
+      options: {
+        json: options.json || json,
+        nonInteractive: options.json || json || takeOption(options, "non-interactive") === "true",
+        cwd,
+        launchCwd: path.resolve(cwd, takeOption(options, "launch-cwd", cwd)),
+        bootstrapRepoRoot: takeOption(options, "bootstrap-repo-root") ? path.resolve(cwd, takeOption(options, "bootstrap-repo-root")) : undefined,
+        repoMode: repoMode === "clone" || repoMode === "update" || repoMode === "current" ? repoMode : undefined,
+        repoDir: takeOption(options, "repo-dir") ? path.resolve(cwd, takeOption(options, "repo-dir")) : undefined,
+        repoUrl: takeOption(options, "repo-url", "https://github.com/GermanMik/HappyTG.git"),
+        branch: takeOption(options, "branch", "main"),
+        dirtyWorktreeStrategy: (() => {
+          const strategy = takeOption(options, "dirty-worktree");
+          return strategy === "stash" || strategy === "keep" || strategy === "cancel" ? strategy : undefined;
+        })(),
+        telegramBotToken: takeOption(options, "telegram-bot-token") || undefined,
+        telegramAllowedUserIds: [
+          ...takeOptionList(options, "allowed-user"),
+          ...takeOptionList(options, "allowed-user-id"),
+          ...takeOptionList(options, "allowed-user-ids")
+        ],
+        telegramHomeChannel: takeOption(options, "home-channel") || undefined,
+        backgroundMode: background === "launchagent" || background === "scheduled-task" || background === "startup" || background === "systemd-user" || background === "manual" || background === "skip"
+          ? background
+          : undefined,
+        postChecks: postChecks.length > 0 ? postChecks : ["setup", "doctor", "verify"]
+      }
+    };
+  }
 
   if (scope === "config" && action === "init") {
     return { kind: "bootstrap", command: "config-init", json };
@@ -190,7 +233,31 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
   throw new Error(`Unsupported command: ${scope}`);
 }
 
-export function renderText(result: BootstrapReport | TaskBundle | TaskStatusResponse): string {
+export function renderText(result: BootstrapReport | InstallResult | TaskBundle | TaskStatusResponse): string {
+  if ("kind" in result && result.kind === "install") {
+    const lines = [
+      `HappyTG install ${statusBadge(result.status)}`,
+      `Repo: ${result.repo.sync} ${result.repo.path}`,
+      `Background: ${result.background.detail}`,
+      `Telegram: ${result.telegram.bot?.username ? `@${result.telegram.bot.username}` : result.telegram.configured ? "configured" : "missing"}`,
+      `Warnings: ${result.warnings.length}`
+    ];
+
+    if (result.warnings.length > 0) {
+      lines.push("");
+      lines.push("Warnings:");
+      lines.push(...result.warnings.map((warning) => `- ${warning}`));
+    }
+
+    if (result.nextSteps.length > 0) {
+      lines.push("");
+      lines.push("Next steps:");
+      lines.push(...result.nextSteps.map((step) => `- ${step}`));
+    }
+
+    return lines.join("\n");
+  }
+
   if ("command" in result) {
     const preflight = Array.isArray((result.reportJson as { preflight?: unknown }).preflight)
       ? ((result.reportJson as { preflight: string[] }).preflight)
@@ -240,21 +307,29 @@ export function renderText(result: BootstrapReport | TaskBundle | TaskStatusResp
     return lines.join("\n");
   }
 
-  return [
-    `Task: ${result.task?.id ?? path.basename(result.rootPath)}`,
-    `Bundle: ${result.rootPath}`,
-    `Validation: ${result.validation.ok ? "ok" : `missing ${result.validation.missing.join(", ")}`}`,
-    `Phase: ${result.task?.phase ?? "unknown"}`,
-    `Verification: ${result.task?.verificationState ?? "unknown"}`
-  ].join("\n");
+  if ("validation" in result) {
+    return [
+      `Task: ${result.task?.id ?? path.basename(result.rootPath)}`,
+      `Bundle: ${result.rootPath}`,
+      `Validation: ${result.validation.ok ? "ok" : `missing ${result.validation.missing.join(", ")}`}`,
+      `Phase: ${result.task?.phase ?? "unknown"}`,
+      `Verification: ${result.task?.verificationState ?? "unknown"}`
+    ].join("\n");
+  }
+
+  return "Unsupported result";
 }
 
-export async function executeHappyTG(argv: string[], cwd = process.cwd()): Promise<BootstrapReport | TaskBundle | TaskStatusResponse> {
+export async function executeHappyTG(argv: string[], cwd = process.cwd()): Promise<BootstrapReport | InstallResult | TaskBundle | TaskStatusResponse> {
   const request = parseHappyTGArgs(argv, cwd);
 
   switch (request.kind) {
     case "bootstrap":
       return runBootstrapCommand(request.command);
+    case "install":
+      return runHappyTGInstall(request.options, {
+        runBootstrapCheck: runBootstrapCommand
+      });
     case "task-init":
       return initTaskBundle({
         repoRoot: request.repoRoot,

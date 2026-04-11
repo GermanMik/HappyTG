@@ -1,0 +1,79 @@
+
+> happytg@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running build in 13 packages
+   • Remote caching disabled
+
+@happytg/hooks:build: cache miss, executing 25b4d5bde3f23421
+@happytg/miniapp:build: cache miss, executing 33a40f3cd6aab4da
+@happytg/repo-proof:build: cache miss, executing 2f5021a00876e8dc
+@happytg/host-daemon:build: cache miss, executing 0a05b2db24129cd6
+@happytg/bot:build: cache miss, executing 8d78da38f05d7b86
+@happytg/approval-engine:build: cache miss, executing 5affc9d642776165
+@happytg/protocol:build: cache miss, executing 385c4dc8f47018cb
+@happytg/policy-engine:build: cache miss, executing e40379ca03837945
+@happytg/runtime-adapters:build: cache miss, executing 76c7166474196755
+@happytg/worker:build: cache miss, executing 61ee4f27921e801f
+@happytg/bot:build:
+@happytg/bot:build: > @happytg/bot@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build:
+@happytg/protocol:build:
+@happytg/protocol:build: > @happytg/protocol@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build:
+@happytg/hooks:build:
+@happytg/hooks:build: > @happytg/hooks@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build:
+@happytg/repo-proof:build:
+@happytg/repo-proof:build: > @happytg/repo-proof@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build:
+@happytg/approval-engine:build:
+@happytg/approval-engine:build: > @happytg/approval-engine@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build:
+@happytg/miniapp:build:
+@happytg/miniapp:build: > @happytg/miniapp@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build:
+@happytg/policy-engine:build:
+@happytg/policy-engine:build: > @happytg/policy-engine@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build:
+@happytg/host-daemon:build:
+@happytg/host-daemon:build: > @happytg/host-daemon@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build:
+@happytg/runtime-adapters:build:
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build:
+@happytg/worker:build:
+@happytg/worker:build: > @happytg/worker@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build:
+@happytg/api:build: cache miss, executing 3efcc3d76433a4f7
+@happytg/bootstrap:build: cache miss, executing 5366ad72e5b2337f
+@happytg/api:build:
+@happytg/api:build: > @happytg/api@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build:
+@happytg/shared:build: cache miss, executing 91a2ae2e84e15895
+@happytg/bootstrap:build:
+@happytg/bootstrap:build: > @happytg/bootstrap@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build:
+@happytg/shared:build:
+@happytg/shared:build: > @happytg/shared@0.3.0 build /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build:
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    1m9.852s

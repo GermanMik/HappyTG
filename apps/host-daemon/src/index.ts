@@ -71,14 +71,27 @@ export function defaultWorkspaces(env = process.env, cwd = process.cwd()): Daemo
   }));
 }
 
-export function hostNotPairedMessage(): string {
-  return "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`.";
+export function configuredBotTarget(env = process.env): string | undefined {
+  const username = env.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/u, "");
+  return username ? `@${username}` : undefined;
 }
 
-export function pairingInstructions(pairingCode: string): string[] {
+export function hostNotPairedMessage(env = process.env): string {
+  const target = configuredBotTarget(env);
+  return target
+    ? `Host is not paired yet. Run \`pnpm daemon:pair\`, then send the code to ${target} with \`/pair <CODE>\`.`
+    : "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`.";
+}
+
+export function pairingInstructions(pairingCode: string, env = process.env): string[] {
+  const target = configuredBotTarget(env);
   return [
-    `Pair with Telegram using: /pair ${pairingCode}`,
-    "Next: keep `pnpm dev` running, send the command in Telegram, then start the daemon with `pnpm dev:daemon`."
+    target
+      ? `Pair with ${target} using: /pair ${pairingCode}`
+      : `Pair with Telegram using: /pair ${pairingCode}`,
+    target
+      ? `Next: keep \`pnpm dev\` running, send the command to ${target}, then start the daemon with \`pnpm dev:daemon\`.`
+      : "Next: keep `pnpm dev` running, send the command in Telegram, then start the daemon with `pnpm dev:daemon`."
   ];
 }
 

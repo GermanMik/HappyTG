@@ -447,6 +447,10 @@ export async function promptTelegramForm(input: {
         }
         if (key.name === "return") {
           if (fieldOrder[activeRow] === "continue") {
+            if (!form.botToken.trim()) {
+              activeRow = 0;
+              return false;
+            }
             return true;
           }
 

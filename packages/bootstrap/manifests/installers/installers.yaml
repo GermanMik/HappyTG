@@ -1,17 +1,34 @@
 installers:
   git:
     darwin: brew install git
+    darwin-manual: Install Xcode Command Line Tools or Homebrew, then rerun the installer.
+    win32-winget: winget install --id Git.Git -e --source winget
+    win32-choco: choco install git -y
+    win32-manual: Install Git for Windows from https://git-scm.com/download/win, then rerun the installer.
     linux-debian: apt-get install -y git
     linux-fedora: dnf install -y git
+    linux-manual: Install Git with your distro package manager, then rerun the installer.
   nodejs:
     darwin: brew install node@22
+    darwin-manual: Install Node.js 22+ and npm, then rerun the installer.
+    win32-winget: winget install OpenJS.NodeJS.LTS
+    win32-choco: choco install nodejs-lts -y
+    win32-manual: Install Node.js 22+ from https://nodejs.org/, then rerun the installer.
     linux-debian: apt-get install -y nodejs npm
     linux-fedora: dnf install -y nodejs npm
+    linux-manual: Install Node.js 22+ and npm with your distro package manager, then rerun the installer.
   pnpm:
     all: npm install -g pnpm
+    all-manual: Install pnpm with npm or enable it through corepack, then rerun the installer.
   codex-cli:
     all: npm install -g @openai/codex
+    all-manual: Install the Codex CLI globally with npm after Node.js is ready, then rerun the installer.
   docker:
     darwin: brew install --cask docker
+    win32-winget: winget install Docker.DockerDesktop
+    win32-choco: choco install docker-desktop -y
+    win32-manual: Install Docker Desktop manually if you need the packaged/local infra path.
     linux-debian: apt-get install -y docker.io docker-compose-plugin
     linux-fedora: dnf install -y docker docker-compose
+    darwin-manual: Install Docker Desktop manually if you need the packaged/local infra path.
+    linux-manual: Install Docker and Compose manually if you need the packaged/local infra path.

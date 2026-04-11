@@ -1,0 +1,24 @@
+
+> happytg@0.3.0 happytg /Users/mikhaylov-g/Documents/Develop/HappyTG
+> tsx packages/bootstrap/src/cli.ts "doctor"
+
+HappyTG doctor [WARN]
+Summary: 2 warnings found.
+Profile: recommended
+
+Checks:
+- Env: .env missing
+- Codex: codex-cli 0.116.0
+- Telegram: configured
+- Redis: not detected on localhost:6379
+- Ports: all critical ports free
+
+Findings:
+- WARN  `.env` was not found. Create it with `cp .env.example .env`, or export the required variables before first start.
+- WARN  Redis was not detected locally. Start system Redis, or include `redis` when you bring up shared infra.
+
+Next steps:
+- Create `.env`: `cp .env.example .env`.
+
+Diagnostics:
+- Run `pnpm happytg doctor --json` for machine-readable details.

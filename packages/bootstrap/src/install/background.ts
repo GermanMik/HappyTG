@@ -1,3 +1,4 @@
+import { chmod } from "node:fs/promises";
 import path from "node:path";
 
 import {
@@ -45,6 +46,7 @@ async function writeLauncherScript(input: {
     "exec pnpm dev:daemon"
   ].join("\n");
   await writeTextFileAtomic(launcherPath, `${content}\n`);
+  await chmod(launcherPath, 0o755);
   return launcherPath;
 }
 
@@ -137,7 +139,7 @@ async function configureScheduledTask(input: {
 
   await runCommand({
     command: schtasks,
-    args: ["/Create", "/F", "/SC", "ONLOGON", "/TN", "HappyTG Host Daemon", "/TR", launcherPath],
+    args: ["/Create", "/F", "/SC", "ONLOGON", "/TN", "HappyTG Host Daemon", "/TR", `"${launcherPath}"`],
     env: input.env,
     platform: input.platform
   }).catch(() => undefined);
