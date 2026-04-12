@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.3.1
+
+### Fixed
+
+- Installer runtime failures now stay inside installer-native handling instead of falling through to the top-level CLI usage banner.
+- Repo sync now retries transient remote failures 5 times, surfaces attempt progress, and automatically switches to the configured fallback source before returning a structured failure.
+- Windows command execution now normalizes generic npm-style shims such as `pnpm.cmd`, recovers from broken shim launches where safe, and reports actionable structured failures when spawn still fails.
+- Installer reruns now resume from persisted onboarding state so Telegram bot token, allowed user IDs, home channel, background mode, repo location, repo source, and post-check choices do not need to be re-entered after a failed run.
+- Telegram setup input now handles pasted multi-character chunks without breaking raw-mode editing, cursor flow, or retro TUI navigation.
+
+### Changed
+
+- Release metadata is aligned at `0.3.1` across the workspace for the installer resilience update.
+
 ## v0.3.0
 
 ### Added

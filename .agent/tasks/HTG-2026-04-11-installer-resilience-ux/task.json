@@ -1,0 +1,20 @@
+{
+  "id": "HTG-2026-04-11-installer-resilience-ux",
+  "sessionId": "ses_2026_04_11_installer_resilience",
+  "workspaceId": "HappyTG",
+  "rootPath": "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-11-installer-resilience-ux",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Installer resilience and UX for 0.3.1",
+  "acceptanceCriteria": [
+    "Runtime installer failures stay inside installer-native handling and never fall through to CLI usage.",
+    "Repo sync retries primary source exactly 5 times with visible progress, then automatically tries configured fallback source and reports source selection in summary/JSON.",
+    "Windows shim execution normalizes broken npm/pnpm-style wrappers and returns structured installer errors instead of ENOENT crashes.",
+    "Installer state persists user-provided values across reruns and resumes Telegram-first onboarding without re-entering saved data.",
+    "TUI paste works for Telegram fields without breaking raw-mode navigation/editing.",
+    "Release metadata and proof bundle are updated for 0.3.1 with required repo verification."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-11T14:26:41.456Z",
+  "updatedAt": "2026-04-12T13:31:44.387Z"
+}

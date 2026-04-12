@@ -1,6 +1,6 @@
 import readline from "node:readline";
 
-import type { BackgroundMode, InstallStepRecord, PostInstallCheck, RepoModeChoice, TelegramSetup } from "./types.js";
+import type { BackgroundMode, InstallRuntimeErrorDetail, InstallStepRecord, PostInstallCheck, RepoModeChoice, TelegramSetup } from "./types.js";
 import { maskTelegramToken } from "./telegram.js";
 
 const COLORS = {
@@ -64,6 +64,13 @@ function renderStatusBlock(items: Array<{ status: "pass" | "warn" | "fail" | "in
     `${statusIcon(item.status)} ${bright(item.label)}`,
     `   ${item.detail}`
   ]);
+}
+
+function renderIndentedDetail(detail: string): string[] {
+  return detail
+    .split(/\r?\n/u)
+    .filter((line) => line.length > 0)
+    .map((line) => `   ${line}`);
 }
 
 function renderOptions(options: Array<{ label: string; detail: string; active: boolean; selected?: boolean }>): string[] {
@@ -259,12 +266,149 @@ export function renderProgressScreen(input: {
               ? dim("-")
               : dim("·");
     lines.push(`${icon} ${bright(step.label)}`);
-    lines.push(`   ${step.detail}`);
+    lines.push(...renderIndentedDetail(step.detail));
   }
 
   lines.push("");
   lines.push(keyboardHints("progress is automatic"));
   return renderFrame(lines);
+}
+
+export function renderFailureScreen(input: {
+  repoPath: string;
+  error: InstallRuntimeErrorDetail;
+}): string {
+  return renderFrame([
+    ...header("Installer Error", input.repoPath),
+    ...renderStatusBlock([
+      {
+        status: "fail",
+        label: input.error.message,
+        detail: input.error.lastError
+      },
+      {
+        status: input.error.retryable ? "warn" : "info",
+        label: `Suggested action${input.error.attempts ? ` (${input.error.attempts} attempts)` : ""}`,
+        detail: input.error.suggestedAction
+      }
+    ]),
+    "",
+    keyboardHints("ENTER close")
+  ]);
+}
+
+function stripBracketedPasteMarkers(chunk: string): string {
+  return chunk
+    .replace(/\u001B\[200~?/gu, "")
+    .replace(/\u001B\[201~?/gu, "");
+}
+
+function appendInputChunk(draft: string, chunk: string): string {
+  const normalized = stripBracketedPasteMarkers(chunk);
+  if (!normalized) {
+    return draft;
+  }
+
+  return `${draft}${normalized}`;
+}
+
+export interface TelegramFormControllerState {
+  form: TelegramSetup;
+  activeRow: number;
+  editing: boolean;
+  draft: string;
+}
+
+export function createTelegramFormController(initial: TelegramSetup): TelegramFormControllerState {
+  return {
+    form: {
+      botToken: initial.botToken,
+      allowedUserIds: [...initial.allowedUserIds],
+      homeChannel: initial.homeChannel
+    },
+    activeRow: 0,
+    editing: false,
+    draft: ""
+  };
+}
+
+export function reduceTelegramFormKeypress(
+  state: TelegramFormControllerState,
+  input: {
+    chunk: string;
+    key: readline.Key;
+  }
+): {
+  state: TelegramFormControllerState;
+  done: boolean;
+} {
+  const fieldOrder = ["botToken", "allowedUserIds", "homeChannel", "continue"] as const;
+  const next: TelegramFormControllerState = {
+    form: {
+      botToken: state.form.botToken,
+      allowedUserIds: [...state.form.allowedUserIds],
+      homeChannel: state.form.homeChannel
+    },
+    activeRow: state.activeRow,
+    editing: state.editing,
+    draft: state.draft
+  };
+
+  if (!next.editing) {
+    if (input.key.name === "up") {
+      next.activeRow = (next.activeRow - 1 + fieldOrder.length) % fieldOrder.length;
+      return { state: next, done: false };
+    }
+    if (input.key.name === "down") {
+      next.activeRow = (next.activeRow + 1) % fieldOrder.length;
+      return { state: next, done: false };
+    }
+    if (input.key.name === "return") {
+      if (fieldOrder[next.activeRow] === "continue") {
+        if (!next.form.botToken.trim()) {
+          next.activeRow = 0;
+          return { state: next, done: false };
+        }
+        return { state: next, done: true };
+      }
+
+      next.editing = true;
+      next.draft = fieldOrder[next.activeRow] === "botToken"
+        ? next.form.botToken
+        : fieldOrder[next.activeRow] === "allowedUserIds"
+          ? next.form.allowedUserIds.join(", ")
+          : next.form.homeChannel;
+      return { state: next, done: false };
+    }
+    if (input.key.name === "escape" || (input.key.ctrl && input.key.name === "c")) {
+      throw new Error("Installer cancelled.");
+    }
+    return { state: next, done: false };
+  }
+
+  if (input.key.name === "return") {
+    if (fieldOrder[next.activeRow] === "botToken") {
+      next.form.botToken = next.draft.trim();
+    } else if (fieldOrder[next.activeRow] === "allowedUserIds") {
+      next.form.allowedUserIds = next.draft.split(",").map((item) => item.trim()).filter(Boolean);
+    } else if (fieldOrder[next.activeRow] === "homeChannel") {
+      next.form.homeChannel = next.draft.trim();
+    }
+    next.editing = false;
+    return { state: next, done: false };
+  }
+  if (input.key.name === "backspace") {
+    next.draft = next.draft.slice(0, -1);
+    return { state: next, done: false };
+  }
+  if (input.key.name === "escape") {
+    next.editing = false;
+    return { state: next, done: false };
+  }
+  if (input.chunk && !input.key.ctrl && !input.key.meta && input.key.name !== "tab") {
+    next.draft = appendInputChunk(next.draft, input.chunk);
+  }
+  return { state: next, done: false };
 }
 
 export function renderSummaryScreen(input: {
@@ -411,90 +555,30 @@ export async function promptTelegramForm(input: {
   stdout: NodeJS.WriteStream;
   initial: TelegramSetup;
 }): Promise<TelegramSetup> {
-  const form: TelegramSetup = {
-    botToken: input.initial.botToken,
-    allowedUserIds: [...input.initial.allowedUserIds],
-    homeChannel: input.initial.homeChannel
-  };
-  const fieldOrder = ["botToken", "allowedUserIds", "homeChannel", "continue"] as const;
-  let activeRow = 0;
-  let editing = false;
-  let draft = "";
+  let controller = createTelegramFormController(input.initial);
 
   await readKeypress(
     input.stdin,
     input.stdout,
     () => renderTelegramScreen({
-      form: editing
+      form: controller.editing
         ? {
-          botToken: activeRow === 0 ? draft : form.botToken,
-          allowedUserIds: activeRow === 1 ? draft.split(",").map((item) => item.trim()).filter(Boolean) : form.allowedUserIds,
-          homeChannel: activeRow === 2 ? draft : form.homeChannel
+          botToken: controller.activeRow === 0 ? controller.draft : controller.form.botToken,
+          allowedUserIds: controller.activeRow === 1 ? controller.draft.split(",").map((item) => item.trim()).filter(Boolean) : controller.form.allowedUserIds,
+          homeChannel: controller.activeRow === 2 ? controller.draft : controller.form.homeChannel
         }
-        : form,
-      activeRow,
-      editing
+        : controller.form,
+      activeRow: controller.activeRow,
+      editing: controller.editing
     }),
     (chunk, key) => {
-      if (!editing) {
-        if (key.name === "up") {
-          activeRow = (activeRow - 1 + fieldOrder.length) % fieldOrder.length;
-          return false;
-        }
-        if (key.name === "down") {
-          activeRow = (activeRow + 1) % fieldOrder.length;
-          return false;
-        }
-        if (key.name === "return") {
-          if (fieldOrder[activeRow] === "continue") {
-            if (!form.botToken.trim()) {
-              activeRow = 0;
-              return false;
-            }
-            return true;
-          }
-
-          editing = true;
-          draft = fieldOrder[activeRow] === "botToken"
-            ? form.botToken
-            : fieldOrder[activeRow] === "allowedUserIds"
-              ? form.allowedUserIds.join(", ")
-              : form.homeChannel;
-          return false;
-        }
-        if (key.name === "escape" || (key.ctrl && key.name === "c")) {
-          throw new Error("Installer cancelled.");
-        }
-        return false;
-      }
-
-      if (key.name === "return") {
-        if (fieldOrder[activeRow] === "botToken") {
-          form.botToken = draft.trim();
-        } else if (fieldOrder[activeRow] === "allowedUserIds") {
-          form.allowedUserIds = draft.split(",").map((item) => item.trim()).filter(Boolean);
-        } else if (fieldOrder[activeRow] === "homeChannel") {
-          form.homeChannel = draft.trim();
-        }
-        editing = false;
-        return false;
-      }
-      if (key.name === "backspace") {
-        draft = draft.slice(0, -1);
-        return false;
-      }
-      if (key.name === "escape") {
-        editing = false;
-        return false;
-      }
-      if (chunk && !key.ctrl && !key.meta && key.name !== "tab") {
-        draft += chunk;
-      }
-      return false;
+      const reduced = reduceTelegramFormKeypress(controller, { chunk, key });
+      controller = reduced.state;
+      return reduced.done;
     }
   );
 
-  return form;
+  return controller.form;
 }
 
 export function renderProgress(stdout: NodeJS.WriteStream, title: string, steps: InstallStepRecord[]): void {

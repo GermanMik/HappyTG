@@ -1,0 +1,76 @@
+{
+  "taskId": "HTG-2026-04-11-installer-resilience-ux",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "manual-final-verify-2026-04-12"
+  },
+  "checks": [
+    {
+      "name": "structured-runtime-boundary",
+      "ok": true,
+      "detail": "Installer runtime failures now stay out of CLI usage, including early installer throws covered by executeHappyTG structured-failure tests plus install runtime tests for missing-token and Windows shim cases."
+    },
+    {
+      "name": "repo-retry-fallback",
+      "ok": true,
+      "detail": "Repo sync retries transient primary failures 5 times, surfaces progress, switches to the configured fallback source automatically, and reports repoSource/fallbackUsed in result JSON and text summary."
+    },
+    {
+      "name": "windows-shim-resilience",
+      "ok": true,
+      "detail": "Windows-style npm/pnpm shims are normalized through the command layer and ENOENT cases return actionable structured installer failures instead of crashing."
+    },
+    {
+      "name": "resume-persistence",
+      "ok": true,
+      "detail": "Installer draft state persists Telegram/background/repo choices across reruns, and rerun logic now ignores an unavailable saved clone mode and resumes with update/default selection."
+    },
+    {
+      "name": "tui-paste",
+      "ok": true,
+      "detail": "Telegram setup reducer accepts multi-character paste chunks, strips bracketed-paste markers, and keeps editing/navigation behavior stable."
+    },
+    {
+      "name": "release-metadata-031",
+      "ok": true,
+      "detail": "Workspace package versions, changelog, README release link, and docs/releases/0.3.1.md are aligned; release validation passed for 0.3.1."
+    },
+    {
+      "name": "bootstrap-build",
+      "ok": true,
+      "detail": "pnpm --filter @happytg/bootstrap build passed."
+    },
+    {
+      "name": "repo-lint",
+      "ok": true,
+      "detail": "pnpm lint passed across the workspace."
+    },
+    {
+      "name": "repo-typecheck",
+      "ok": true,
+      "detail": "pnpm typecheck passed across the workspace."
+    },
+    {
+      "name": "repo-test",
+      "ok": true,
+      "detail": "pnpm test passed across the workspace."
+    },
+    {
+      "name": "repo-doctor",
+      "ok": true,
+      "detail": "pnpm happytg doctor completed with expected workspace warnings because this checkout still has no .env / TELEGRAM_BOT_TOKEN configured."
+    },
+    {
+      "name": "repo-verify",
+      "ok": true,
+      "detail": "pnpm happytg verify completed with the same expected local-environment warnings only; no installer regression was reported."
+    },
+    {
+      "name": "bundle-validation",
+      "ok": true,
+      "detail": "validateTaskBundle => ok"
+    }
+  ],
+  "generatedAt": "2026-04-12T13:31:44.387Z"
+}

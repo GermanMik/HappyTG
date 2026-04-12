@@ -5,7 +5,8 @@ import path from "node:path";
 import test from "node:test";
 
 import { codexCliMissingMessage } from "../../runtime-adapters/src/index.js";
-import { executeHappyTG, parseHappyTGArgs, renderText } from "./cli.js";
+import { CliUsageError, executeHappyTG, parseHappyTGArgs, renderText } from "./cli.js";
+import type { InstallResult } from "./install/types.js";
 
 test("parseHappyTGArgs maps config and env nested commands", () => {
   assert.deepEqual(parseHappyTGArgs(["config", "init", "--json"]), {
@@ -62,6 +63,11 @@ test("parseHappyTGArgs maps install flags into the installer request", () => {
   assert.deepEqual(parsed.options.postChecks, ["setup", "doctor"]);
 });
 
+test("parseHappyTGArgs uses CliUsageError for invalid CLI surfaces", () => {
+  assert.throws(() => parseHappyTGArgs(["bogus-command"]), CliUsageError);
+  assert.throws(() => parseHappyTGArgs(["task", "bogus"]), CliUsageError);
+});
+
 test("executeHappyTG initializes and inspects repo-local task bundles", async () => {
   const repoRoot = await mkdtemp(path.join(os.tmpdir(), "happytg-cli-task-"));
 
@@ -103,6 +109,33 @@ test("executeHappyTG initializes and inspects repo-local task bundles", async ()
     assert.equal(status.task?.title, "Manual proof bundle");
   } finally {
     await rm(repoRoot, { recursive: true, force: true });
+  }
+});
+
+test("executeHappyTG returns a structured install failure when installer throws before its internal runtime boundary", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-cli-install-failure-"));
+
+  try {
+    const result = await executeHappyTG([
+      "install",
+      "--json",
+      "--non-interactive",
+      "--bootstrap-repo-root",
+      tempDir,
+      "--launch-cwd",
+      tempDir,
+      "--repo-dir",
+      path.join(tempDir, "HappyTG"),
+      "--telegram-bot-token",
+      "123456:abcdefghijklmnopqrstuvwx"
+    ], tempDir) as InstallResult;
+
+    assert.equal(result.kind, "install");
+    assert.equal(result.status, "fail");
+    assert.match(result.error?.lastError ?? "", /installers\.yaml/);
+    assert.doesNotMatch(JSON.stringify(result), /Usage:/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
   }
 });
 
@@ -153,7 +186,11 @@ test("renderText returns a compact install summary", () => {
       mode: "current",
       path: "/tmp/HappyTG",
       sync: "reused",
-      dirtyStrategy: "keep"
+      dirtyStrategy: "keep",
+      source: "local",
+      repoUrl: "https://github.com/GermanMik/HappyTG.git",
+      attempts: 0,
+      fallbackUsed: false
     },
     environment: {
       platform: {
