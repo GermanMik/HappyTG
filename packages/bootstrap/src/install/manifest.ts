@@ -3,12 +3,15 @@ import path from "node:path";
 
 export interface InstallerManifest {
   installers: Record<string, Record<string, string>>;
+  repoSources: Record<string, string>;
 }
 
-let cachedManifest: InstallerManifest | undefined;
+const cachedManifests = new Map<string, InstallerManifest>();
 
 function parseSimpleInstallerManifest(source: string): InstallerManifest {
   const installers: Record<string, Record<string, string>> = {};
+  const repoSources: Record<string, string> = {};
+  let currentSection = "";
   let currentInstaller = "";
 
   for (const rawLine of source.split(/\r?\n/u)) {
@@ -19,16 +22,20 @@ function parseSimpleInstallerManifest(source: string): InstallerManifest {
 
     const indent = rawLine.match(/^ */u)?.[0].length ?? 0;
     if (indent === 0) {
+      if (trimmed.endsWith(":")) {
+        currentSection = trimmed.slice(0, -1).trim();
+        currentInstaller = "";
+      }
       continue;
     }
 
-    if (indent === 2 && trimmed.endsWith(":")) {
+    if (currentSection === "installers" && indent === 2 && trimmed.endsWith(":")) {
       currentInstaller = trimmed.slice(0, -1).trim();
       installers[currentInstaller] = installers[currentInstaller] ?? {};
       continue;
     }
 
-    if (indent === 4 && currentInstaller) {
+    if (currentSection === "installers" && indent === 4 && currentInstaller) {
       const separator = trimmed.indexOf(":");
       if (separator <= 0) {
         continue;
@@ -37,20 +44,34 @@ function parseSimpleInstallerManifest(source: string): InstallerManifest {
       const key = trimmed.slice(0, separator).trim();
       const value = trimmed.slice(separator + 1).trim();
       installers[currentInstaller][key] = value;
+      continue;
+    }
+
+    if (currentSection === "repoSources" && indent === 2) {
+      const separator = trimmed.indexOf(":");
+      if (separator <= 0) {
+        continue;
+      }
+
+      const key = trimmed.slice(0, separator).trim();
+      const value = trimmed.slice(separator + 1).trim();
+      repoSources[key] = value;
     }
   }
 
-  return { installers };
+  return { installers, repoSources };
 }
 
 export function loadInstallerManifest(repoRoot = process.cwd()): InstallerManifest {
+  const manifestPath = path.join(repoRoot, "packages", "bootstrap", "manifests", "installers", "installers.yaml");
+  const cachedManifest = cachedManifests.get(manifestPath);
   if (cachedManifest) {
     return cachedManifest;
   }
 
-  const manifestPath = path.join(repoRoot, "packages", "bootstrap", "manifests", "installers", "installers.yaml");
-  cachedManifest = parseSimpleInstallerManifest(readFileSync(manifestPath, "utf8"));
-  return cachedManifest;
+  const manifest = parseSimpleInstallerManifest(readFileSync(manifestPath, "utf8"));
+  cachedManifests.set(manifestPath, manifest);
+  return manifest;
 }
 
 export function resolveInstallerInstruction(input: {
@@ -93,4 +114,3 @@ export function resolveInstallerInstruction(input: {
 
   return {};
 }
-

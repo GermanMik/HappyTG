@@ -4,13 +4,17 @@ import path from "node:path";
 
 import { fileExists } from "../../../shared/src/index.js";
 
-import { runCommand } from "./commands.js";
+import { CommandExecutionError, runCommand, type CommandRunResult } from "./commands.js";
+import { createInstallRuntimeError, isRetryableRepoFailureMessage, repoFailureCode, repoFailureSuggestedAction } from "./errors.js";
 import type {
   DirtyWorktreeStrategy,
   InstallRepoMode,
+  InstallerRepoSource,
   RepoInspection,
   RepoModeChoice,
-  RepoSelection
+  RepoSelection,
+  RepoSyncProgressEvent,
+  RepoSyncResult
 } from "./types.js";
 
 async function directoryEntries(dirPath: string): Promise<string[]> {
@@ -23,6 +27,212 @@ async function directoryEntries(dirPath: string): Promise<string[]> {
 
 async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
   return (await directoryEntries(dirPath)).length === 0;
+}
+
+async function clearDirectoryContents(dirPath: string): Promise<void> {
+  const entries = await directoryEntries(dirPath);
+  await Promise.all(entries.map((entry) => fs.rm(path.join(dirPath, entry), { recursive: true, force: true })));
+}
+
+async function sleep(ms: number): Promise<void> {
+  if (ms <= 0) {
+    return;
+  }
+
+  await new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+function commandOutput(result: CommandRunResult, fallback: string): string {
+  return result.stderr.trim() || result.stdout.trim() || fallback;
+}
+
+function installerRuntimeFromCommandError(input: {
+  error: CommandExecutionError;
+  repoUrl?: string;
+  repoSource?: InstallerRepoSource["id"];
+  fallbackUsed: boolean;
+}): ReturnType<typeof createInstallRuntimeError> {
+  const likelyWindowsShim = input.error.detail.likelyWindowsShim;
+  return createInstallRuntimeError({
+    code: likelyWindowsShim ? "windows_shim_failure" : "command_spawn_failure",
+    message: input.error.message,
+    lastError: input.error.message,
+    retryable: false,
+    suggestedAction: likelyWindowsShim
+      ? `Open a new shell, verify \`${input.error.detail.failedBinary} --version\`, or reinstall the tool to repair the Windows shim before rerunning the installer.`
+      : `Verify that ${input.error.detail.failedBinary} is installed and runnable in the current shell, then rerun the installer.`,
+    repoUrl: input.repoUrl,
+    repoSource: input.repoSource,
+    failedCommand: input.error.detail.failedCommand,
+    failedBinary: input.error.detail.failedBinary,
+    binaryPath: input.error.detail.binaryPath,
+    fallbackUsed: input.fallbackUsed
+  });
+}
+
+async function prepareCloneTarget(input: {
+  selection: RepoSelection;
+  inspection: RepoInspection;
+}): Promise<void> {
+  if (input.selection.mode === "clone") {
+    await fs.rm(input.selection.path, { recursive: true, force: true });
+    await fs.mkdir(input.selection.path, { recursive: true });
+    return;
+  }
+
+  if (input.selection.mode === "current" && input.inspection.emptyDirectory) {
+    await clearDirectoryContents(input.inspection.path);
+  }
+}
+
+async function syncRepositoryFromSource(input: {
+  selection: RepoSelection;
+  source: InstallerRepoSource;
+  branch: string;
+  currentInspection: RepoInspection;
+  updateInspection: RepoInspection;
+  env?: NodeJS.ProcessEnv;
+  platform?: NodeJS.Platform;
+  runCommandImpl?: typeof runCommand;
+}): Promise<RepoSyncResult> {
+  const targetPath = path.resolve(input.selection.path);
+  const runner = input.runCommandImpl ?? runCommand;
+  const git = (args: string[], cwd?: string) => runner({
+    command: "git",
+    args,
+    cwd,
+    env: input.env,
+    platform: input.platform
+  });
+
+  if (input.selection.mode === "clone") {
+    await prepareCloneTarget({
+      selection: input.selection,
+      inspection: input.updateInspection
+    });
+    const cloneRun = await git(["clone", "--branch", input.branch, input.source.url, targetPath]);
+    if (cloneRun.exitCode !== 0) {
+      throw new Error(commandOutput(cloneRun, "Git clone failed."));
+    }
+
+    return {
+      path: targetPath,
+      sync: "cloned",
+      attempts: 1,
+      repoSource: input.source.id,
+      repoUrl: input.source.url,
+      fallbackUsed: input.source.id === "fallback"
+    };
+  }
+
+  const inspection = input.selection.mode === "current" ? input.currentInspection : input.updateInspection;
+  if (!inspection.isRepo || !inspection.rootPath) {
+    if (input.selection.mode === "current" && inspection.emptyDirectory) {
+      await prepareCloneTarget({
+        selection: input.selection,
+        inspection
+      });
+      const cloneRun = await git(["clone", "--branch", input.branch, input.source.url, "."], inspection.path);
+      if (cloneRun.exitCode !== 0) {
+        throw new Error(commandOutput(cloneRun, "Git clone into current directory failed."));
+      }
+
+      return {
+        path: targetPath,
+        sync: "cloned",
+        attempts: 1,
+        repoSource: input.source.id,
+        repoUrl: input.source.url,
+        fallbackUsed: input.source.id === "fallback"
+      };
+    }
+
+    throw createInstallRuntimeError({
+      code: "command_execution_failure",
+      message: `No Git checkout is available at ${targetPath}.`,
+      lastError: `No Git checkout is available at ${targetPath}.`,
+      retryable: false,
+      suggestedAction: "Choose clone mode, point --repo-dir at an existing checkout, or rerun the installer from an initialized HappyTG repository.",
+      repoUrl: input.source.url,
+      repoSource: input.source.id,
+      fallbackUsed: input.source.id === "fallback"
+    });
+  }
+
+  if (inspection.dirty) {
+    switch (input.selection.dirtyStrategy) {
+      case "stash": {
+        const stashRun = await git(["-C", inspection.rootPath, "stash", "push", "-u", "-m", "HappyTG installer safety stash"]);
+        if (stashRun.exitCode !== 0) {
+          throw createInstallRuntimeError({
+            code: "command_execution_failure",
+            message: commandOutput(stashRun, "Unable to stash local changes before update."),
+            lastError: commandOutput(stashRun, "Unable to stash local changes before update."),
+            retryable: false,
+            suggestedAction: "Stash or commit the local changes manually, or rerun the installer with keep/cancel.",
+            repoUrl: input.source.url,
+            repoSource: input.source.id,
+            fallbackUsed: input.source.id === "fallback"
+          });
+        }
+        break;
+      }
+      case "keep":
+        return {
+          path: inspection.rootPath,
+          sync: "reused",
+          attempts: 0,
+          repoSource: "local",
+          repoUrl: inspection.remoteUrl ?? input.source.url,
+          fallbackUsed: false
+        };
+      case "cancel":
+      default:
+        throw createInstallRuntimeError({
+          code: "command_execution_failure",
+          message: `Checkout at ${inspection.rootPath} has local changes. Choose stash or keep.`,
+          lastError: `Checkout at ${inspection.rootPath} has local changes. Choose stash or keep.`,
+          retryable: false,
+          suggestedAction: "Rerun the installer and choose to stash local changes or keep the current checkout as-is.",
+          repoUrl: input.source.url,
+          repoSource: input.source.id,
+          fallbackUsed: input.source.id === "fallback"
+        });
+    }
+  }
+
+  const fetchRun = await git(["-C", inspection.rootPath, "fetch", "--prune", input.source.url, input.branch]);
+  if (fetchRun.exitCode !== 0) {
+    throw new Error(commandOutput(fetchRun, "Git fetch failed."));
+  }
+
+  const checkoutRun = await git(["-C", inspection.rootPath, "checkout", input.branch]);
+  if (checkoutRun.exitCode !== 0) {
+    throw createInstallRuntimeError({
+      code: "command_execution_failure",
+      message: commandOutput(checkoutRun, `Unable to checkout ${input.branch}.`),
+      lastError: commandOutput(checkoutRun, `Unable to checkout ${input.branch}.`),
+      retryable: false,
+      suggestedAction: `Verify that branch ${input.branch} exists locally or remotely, then rerun the installer.`,
+      repoUrl: input.source.url,
+      repoSource: input.source.id,
+      fallbackUsed: input.source.id === "fallback"
+    });
+  }
+
+  const pullRun = await git(["-C", inspection.rootPath, "pull", "--ff-only", input.source.url, input.branch]);
+  if (pullRun.exitCode !== 0) {
+    throw new Error(commandOutput(pullRun, "Git pull failed."));
+  }
+
+  return {
+    path: inspection.rootPath,
+    sync: "updated",
+    attempts: 1,
+    repoSource: input.source.id,
+    repoUrl: input.source.url,
+    fallbackUsed: input.source.id === "fallback"
+  };
 }
 
 export function defaultClonePath(input: {
@@ -218,99 +428,129 @@ export function defaultDirtyWorktreeStrategy(dirty: boolean, requested?: DirtyWo
 
 export async function syncRepository(input: {
   selection: RepoSelection;
-  repoUrl: string;
+  sources: InstallerRepoSource[];
   branch: string;
   currentInspection: RepoInspection;
   updateInspection: RepoInspection;
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform;
-}): Promise<{
-  path: string;
-  sync: "cloned" | "updated" | "reused";
-}> {
-  const targetPath = path.resolve(input.selection.path);
-  const git = (args: string[], cwd?: string) => runCommand({
-    command: "git",
-    args,
-    cwd,
-    env: input.env,
-    platform: input.platform
-  });
+  maxAttempts?: number;
+  retryDelayMs?: number;
+  onProgress?: (event: RepoSyncProgressEvent) => void | Promise<void>;
+  runCommandImpl?: typeof runCommand;
+}): Promise<RepoSyncResult> {
+  const maxAttempts = input.maxAttempts ?? 5;
+  const retryDelayMs = input.retryDelayMs ?? 250;
+  let totalAttempts = 0;
 
-  if (input.selection.mode === "clone") {
-    await fs.mkdir(targetPath, { recursive: true });
-    const cloneArgs = [
-      "clone",
-      "--branch",
-      input.branch,
-      input.repoUrl,
-      targetPath === input.selection.path ? targetPath : input.selection.path
-    ];
-    const result = await git(cloneArgs);
-    if (result.exitCode !== 0) {
-      throw new Error(result.stderr.trim() || "Git clone failed.");
-    }
+  for (let sourceIndex = 0; sourceIndex < input.sources.length; sourceIndex += 1) {
+    const source = input.sources[sourceIndex]!;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      totalAttempts += 1;
+      await input.onProgress?.({
+        phase: "attempt",
+        source,
+        attempt,
+        maxAttempts,
+        detail: `${source.label}: attempt ${attempt}/${maxAttempts}`
+      });
 
-    return {
-      path: targetPath,
-      sync: "cloned"
-    };
-  }
-
-  const inspection = input.selection.mode === "current" ? input.currentInspection : input.updateInspection;
-  if (!inspection.isRepo || !inspection.rootPath) {
-    if (input.selection.mode === "current" && inspection.emptyDirectory) {
-      const result = await git(["clone", "--branch", input.branch, input.repoUrl, "."], inspection.path);
-      if (result.exitCode !== 0) {
-        throw new Error(result.stderr.trim() || "Git clone into current directory failed.");
-      }
-
-      return {
-        path: targetPath,
-        sync: "cloned"
-      };
-    }
-
-    throw new Error(`No Git checkout is available at ${targetPath}.`);
-  }
-
-  if (inspection.dirty) {
-    switch (input.selection.dirtyStrategy) {
-      case "stash": {
-        const stashRun = await git(["-C", inspection.rootPath, "stash", "push", "-u", "-m", "HappyTG installer safety stash"]);
-        if (stashRun.exitCode !== 0) {
-          throw new Error(stashRun.stderr.trim() || "Unable to stash local changes before update.");
-        }
-        break;
-      }
-      case "keep":
+      try {
+        const result = await syncRepositoryFromSource({
+          selection: input.selection,
+          source,
+          branch: input.branch,
+          currentInspection: input.currentInspection,
+          updateInspection: input.updateInspection,
+          env: input.env,
+          platform: input.platform,
+          runCommandImpl: input.runCommandImpl
+        });
         return {
-          path: inspection.rootPath,
-          sync: "reused"
+          ...result,
+          attempts: totalAttempts
         };
-      case "cancel":
-      default:
-        throw new Error(`Checkout at ${inspection.rootPath} has local changes. Choose stash or keep.`);
+      } catch (error) {
+        if (error instanceof CommandExecutionError) {
+          throw installerRuntimeFromCommandError({
+            error,
+            repoUrl: source.url,
+            repoSource: source.id,
+            fallbackUsed: source.id === "fallback"
+          });
+        }
+
+        if (typeof error === "object" && error !== null && "detail" in error) {
+          throw error;
+        }
+
+        const message = error instanceof Error ? error.message : "Repository sync failed.";
+        const retryable = isRetryableRepoFailureMessage(message);
+        const exhausted = attempt >= maxAttempts;
+        const fallbackUsed = source.id === "fallback";
+        const nextSource = input.sources[sourceIndex + 1];
+
+        if (retryable && !exhausted) {
+          const backoffMs = retryDelayMs * attempt;
+          await input.onProgress?.({
+            phase: "retry",
+            source,
+            attempt,
+            maxAttempts,
+            detail: `${source.label} attempt ${attempt}/${maxAttempts} failed. Retrying shortly.`,
+            errorMessage: message,
+            retryable: true,
+            backoffMs
+          });
+          await sleep(backoffMs);
+          continue;
+        }
+
+        if (retryable && exhausted && nextSource) {
+          await input.onProgress?.({
+            phase: "switch-source",
+            source: nextSource,
+            attempt,
+            maxAttempts,
+            detail: `${source.label} exhausted ${maxAttempts} attempts. Switching to ${nextSource.label}.`,
+            errorMessage: message,
+            retryable: true
+          });
+          break;
+        }
+
+        throw createInstallRuntimeError({
+          code: repoFailureCode({
+            repoSource: source.id,
+            exhausted: retryable && exhausted
+          }),
+          message: retryable && exhausted
+            ? `${source.label} remained unreachable after ${maxAttempts} attempts.`
+            : `Repository sync failed via ${source.label}.`,
+          lastError: message,
+          retryable,
+          suggestedAction: repoFailureSuggestedAction({
+            repoSource: source.id,
+            retryable,
+            fallbackUsed
+          }),
+          attempts: totalAttempts,
+          repoUrl: source.url,
+          repoSource: source.id,
+          fallbackUsed
+        });
+      }
     }
   }
 
-  const fetchRun = await git(["-C", inspection.rootPath, "fetch", "--all", "--prune"]);
-  if (fetchRun.exitCode !== 0) {
-    throw new Error(fetchRun.stderr.trim() || "Git fetch failed.");
-  }
-
-  const checkoutRun = await git(["-C", inspection.rootPath, "checkout", input.branch]);
-  if (checkoutRun.exitCode !== 0) {
-    throw new Error(checkoutRun.stderr.trim() || `Unable to checkout ${input.branch}.`);
-  }
-
-  const pullRun = await git(["-C", inspection.rootPath, "pull", "--ff-only", "origin", input.branch]);
-  if (pullRun.exitCode !== 0) {
-    throw new Error(pullRun.stderr.trim() || "Git pull failed.");
-  }
-
-  return {
-    path: inspection.rootPath,
-    sync: "updated"
-  };
+  throw createInstallRuntimeError({
+    code: "repo_fallback_failure",
+    message: "Repository sync exhausted the configured sources.",
+    lastError: "Repository sync exhausted the configured sources.",
+    retryable: true,
+    suggestedAction: "Check network connectivity to the configured repository sources, then rerun the installer.",
+    attempts: totalAttempts,
+    repoSource: "fallback",
+    fallbackUsed: true
+  });
 }

@@ -1,3 +1,7 @@
+repoSources:
+  primary: https://github.com/GermanMik/HappyTG.git
+  fallback: https://gitclone.com/github.com/GermanMik/HappyTG.git
+
 installers:
   git:
     darwin: brew install git

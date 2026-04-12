@@ -1,0 +1,194 @@
+
+> @happytg/bootstrap@0.3.1 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: parseHappyTGArgs maps config and env nested commands
+ok 1 - parseHappyTGArgs maps config and env nested commands
+  ---
+  duration_ms: 9.4925
+  type: 'test'
+  ...
+# Subtest: parseHappyTGArgs maps install flags into the installer request
+ok 2 - parseHappyTGArgs maps install flags into the installer request
+  ---
+  duration_ms: 1.237125
+  type: 'test'
+  ...
+# Subtest: parseHappyTGArgs uses CliUsageError for invalid CLI surfaces
+ok 3 - parseHappyTGArgs uses CliUsageError for invalid CLI surfaces
+  ---
+  duration_ms: 1.107042
+  type: 'test'
+  ...
+# Subtest: executeHappyTG initializes and inspects repo-local task bundles
+ok 4 - executeHappyTG initializes and inspects repo-local task bundles
+  ---
+  duration_ms: 239.405542
+  type: 'test'
+  ...
+# Subtest: executeHappyTG returns a structured install failure when installer throws before its internal runtime boundary
+ok 5 - executeHappyTG returns a structured install failure when installer throws before its internal runtime boundary
+  ---
+  duration_ms: 19.078625
+  type: 'test'
+  ...
+# Subtest: renderText returns a compact bootstrap summary with preflight and diagnostics hints
+ok 6 - renderText returns a compact bootstrap summary with preflight and diagnostics hints
+  ---
+  duration_ms: 1.291875
+  type: 'test'
+  ...
+# Subtest: renderText returns a compact install summary
+ok 7 - renderText returns a compact install summary
+  ---
+  duration_ms: 1.085542
+  type: 'test'
+  ...
+# Subtest: doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+ok 8 - doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim
+  ---
+  duration_ms: 2055.723458
+  type: 'test'
+  ...
+# Subtest: verify surfaces Codex smoke warnings as warn when config exists
+ok 9 - verify surfaces Codex smoke warnings as warn when config exists
+  ---
+  duration_ms: 653.55875
+  type: 'test'
+  ...
+# Subtest: doctor distinguishes unavailable Codex from a missing Codex binary
+ok 10 - doctor distinguishes unavailable Codex from a missing Codex binary
+  ---
+  duration_ms: 450.179958
+  type: 'test'
+  ...
+# Subtest: doctor reports a PATH issue when Codex wrapper files exist under the global npm prefix
+ok 11 - doctor reports a PATH issue when Codex wrapper files exist under the global npm prefix
+  ---
+  duration_ms: 1175.662708
+  type: 'test'
+  ...
+# Subtest: doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix
+ok 12 - doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix
+  ---
+  duration_ms: 1140.402625
+  type: 'test'
+  ...
+# Subtest: setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+ok 13 - setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis
+  ---
+  duration_ms: 844.558542
+  type: 'test'
+  ...
+# Subtest: doctor reports Redis installed but stopped
+ok 14 - doctor reports Redis installed but stopped
+  ---
+  duration_ms: 733.213875
+  type: 'test'
+  ...
+# Subtest: doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+ok 15 - doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service
+  ---
+  duration_ms: 1440.532041
+  type: 'test'
+  ...
+# Subtest: config-init and env-snapshot remain deterministic plan-only commands
+ok 16 - config-init and env-snapshot remain deterministic plan-only commands
+  ---
+  duration_ms: 138.753875
+  type: 'test'
+  ...
+# Subtest: syncRepository retries transient primary failures and reports attempt progress
+ok 17 - syncRepository retries transient primary failures and reports attempt progress
+  ---
+  duration_ms: 171.09375
+  type: 'test'
+  ...
+# Subtest: syncRepository returns repo_retry_exhausted after 5 primary attempts
+ok 18 - syncRepository returns repo_retry_exhausted after 5 primary attempts
+  ---
+  duration_ms: 58.254583
+  type: 'test'
+  ...
+# Subtest: syncRepository falls back to the configured alternative source after exhausting primary retries
+ok 19 - syncRepository falls back to the configured alternative source after exhausting primary retries
+  ---
+  duration_ms: 49.24675
+  type: 'test'
+  ...
+# Subtest: syncRepository reports repo_fallback_failure when both configured sources fail
+ok 20 - syncRepository reports repo_fallback_failure when both configured sources fail
+  ---
+  duration_ms: 211.442458
+  type: 'test'
+  ...
+# Subtest: runCommand normalizes Windows shim companions like pnpm.cmd
+ok 21 - runCommand normalizes Windows shim companions like pnpm.cmd
+  ---
+  duration_ms: 1359.763542
+  type: 'test'
+  ...
+# Subtest: runHappyTGInstall returns a structured runtime error for Windows shim spawn failures instead of throwing usage-style failures
+ok 22 - runHappyTGInstall returns a structured runtime error for Windows shim spawn failures instead of throwing usage-style failures
+  ---
+  duration_ms: 186.950167
+  type: 'test'
+  ...
+# Subtest: runHappyTGInstall returns a structured runtime error when non-interactive mode is missing a Telegram token
+ok 23 - runHappyTGInstall returns a structured runtime error when non-interactive mode is missing a Telegram token
+  ---
+  duration_ms: 1508.791625
+  type: 'test'
+  ...
+# Subtest: runHappyTGInstall resumes saved installer values on rerun
+ok 24 - runHappyTGInstall resumes saved installer values on rerun
+  ---
+  duration_ms: 1297.611125
+  type: 'test'
+  ...
+# Subtest: Telegram setup reducer treats pasted token chunks as text and preserves editing/navigation behavior
+ok 25 - Telegram setup reducer treats pasted token chunks as text and preserves editing/navigation behavior
+  ---
+  duration_ms: 8.858708
+  type: 'test'
+  ...
+# Subtest: detectLinuxFamily classifies Debian and Fedora os-release content
+ok 26 - detectLinuxFamily classifies Debian and Fedora os-release content
+  ---
+  duration_ms: 69.919584
+  type: 'test'
+  ...
+# Subtest: detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path
+ok 27 - detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path
+  ---
+  duration_ms: 7447.730167
+  type: 'test'
+  ...
+# Subtest: inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe
+ok 28 - inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe
+  ---
+  duration_ms: 1927.671542
+  type: 'test'
+  ...
+# Subtest: mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun
+ok 29 - mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun
+  ---
+  duration_ms: 40.892375
+  type: 'test'
+  ...
+# Subtest: retro installer renderers include active cursor and keyboard hints
+ok 30 - retro installer renderers include active cursor and keyboard hints
+  ---
+  duration_ms: 1.788375
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11779.425667

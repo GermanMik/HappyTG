@@ -6,6 +6,16 @@ export type InstallStatus = "pass" | "warn" | "fail";
 export type StepStatus = "pending" | "running" | "passed" | "warn" | "failed" | "skipped";
 export type LinuxFamily = "debian" | "fedora" | "unknown";
 export type SystemPackageManager = "brew" | "winget" | "choco" | "apt-get" | "dnf" | "manual";
+export type RepoSourceId = "primary" | "fallback" | "local";
+export type InstallRuntimeErrorCode =
+  | "repo_connectivity_failure"
+  | "repo_retry_exhausted"
+  | "repo_fallback_failure"
+  | "command_spawn_failure"
+  | "windows_shim_failure"
+  | "command_execution_failure"
+  | "pnpm_install_failed"
+  | "installer_runtime_failure";
 
 export interface InstallCommandOptions {
   json: boolean;
@@ -15,7 +25,7 @@ export interface InstallCommandOptions {
   bootstrapRepoRoot?: string;
   repoMode?: InstallRepoMode;
   repoDir?: string;
-  repoUrl: string;
+  repoUrl?: string;
   branch: string;
   dirtyWorktreeStrategy?: DirtyWorktreeStrategy;
   telegramBotToken?: string;
@@ -23,6 +33,18 @@ export interface InstallCommandOptions {
   telegramHomeChannel?: string;
   backgroundMode?: BackgroundMode;
   postChecks: PostInstallCheck[];
+}
+
+export interface InstallerRepoSource {
+  id: Extract<RepoSourceId, "primary" | "fallback">;
+  label: string;
+  url: string;
+}
+
+export interface InstallerRepoSourceResolution {
+  primary: InstallerRepoSource;
+  fallback?: InstallerRepoSource;
+  sources: InstallerRepoSource[];
 }
 
 export interface PlatformSnapshot {
@@ -77,6 +99,26 @@ export interface RepoSelection {
   dirtyStrategy: DirtyWorktreeStrategy;
 }
 
+export interface RepoSyncProgressEvent {
+  phase: "attempt" | "retry" | "switch-source";
+  source: InstallerRepoSource;
+  attempt: number;
+  maxAttempts: number;
+  detail: string;
+  errorMessage?: string;
+  retryable?: boolean;
+  backoffMs?: number;
+}
+
+export interface RepoSyncResult {
+  path: string;
+  sync: "cloned" | "updated" | "reused";
+  attempts: number;
+  repoSource: RepoSourceId;
+  repoUrl: string;
+  fallbackUsed: boolean;
+}
+
 export interface TelegramSetup {
   botToken: string;
   allowedUserIds: string[];
@@ -115,6 +157,38 @@ export interface InstallStepRecord {
   detail: string;
 }
 
+export interface InstallRuntimeErrorDetail {
+  code: InstallRuntimeErrorCode;
+  message: string;
+  lastError: string;
+  retryable: boolean;
+  suggestedAction: string;
+  attempts?: number;
+  repoUrl?: string;
+  repoSource?: RepoSourceId;
+  failedCommand?: string;
+  failedBinary?: string;
+  binaryPath?: string;
+  fallbackUsed?: boolean;
+}
+
+export interface InstallDraftState {
+  version: 1;
+  repo?: {
+    mode?: InstallRepoMode;
+    dir?: string;
+    path?: string;
+    source?: RepoSourceId;
+    url?: string;
+    branch?: string;
+    dirtyStrategy?: DirtyWorktreeStrategy;
+  };
+  telegram?: TelegramSetup;
+  backgroundMode?: BackgroundMode;
+  postChecks?: PostInstallCheck[];
+  updatedAt: string;
+}
+
 export interface InstallResult {
   kind: "install";
   status: InstallStatus;
@@ -124,6 +198,10 @@ export interface InstallResult {
     path: string;
     sync: "cloned" | "updated" | "reused";
     dirtyStrategy: DirtyWorktreeStrategy;
+    source: RepoSourceId;
+    repoUrl: string;
+    attempts: number;
+    fallbackUsed: boolean;
   };
   environment: InstallerEnvironment;
   telegram: {
@@ -141,6 +219,6 @@ export interface InstallResult {
   steps: InstallStepRecord[];
   nextSteps: string[];
   warnings: string[];
+  error?: InstallRuntimeErrorDetail;
   reportJson: Record<string, unknown>;
 }
-

@@ -7,9 +7,16 @@ import type { BootstrapReport, TaskBundle } from "../../protocol/src/index.js";
 import { initTaskBundle, readTaskBundle, taskBundlePath, validateTaskBundle } from "../../repo-proof/src/index.js";
 import { loadHappyTGEnv } from "../../shared/src/index.js";
 
-import { runHappyTGInstall } from "./install/index.js";
+import { createInstallFailureResult, runHappyTGInstall } from "./install/index.js";
 import type { InstallCommandOptions, InstallResult } from "./install/types.js";
 import { runBootstrapCommand, type BootstrapCommand } from "./index.js";
+
+export class CliUsageError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CliUsageError";
+  }
+}
 
 type CliRequest =
   | { kind: "bootstrap"; command: BootstrapCommand; json: boolean }
@@ -114,7 +121,7 @@ function takeOptionList(options: ParsedOptions, key: string): string[] {
 function requireOption(options: ParsedOptions, key: string): string {
   const value = takeOption(options, key);
   if (!value) {
-    throw new Error(`Missing required option --${key}`);
+    throw new CliUsageError(`Missing required option --${key}`);
   }
 
   return value;
@@ -143,7 +150,7 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
         bootstrapRepoRoot: takeOption(options, "bootstrap-repo-root") ? path.resolve(cwd, takeOption(options, "bootstrap-repo-root")) : undefined,
         repoMode: repoMode === "clone" || repoMode === "update" || repoMode === "current" ? repoMode : undefined,
         repoDir: takeOption(options, "repo-dir") ? path.resolve(cwd, takeOption(options, "repo-dir")) : undefined,
-        repoUrl: takeOption(options, "repo-url", "https://github.com/GermanMik/HappyTG.git"),
+        repoUrl: takeOption(options, "repo-url") || undefined,
         branch: takeOption(options, "branch", "main"),
         dirtyWorktreeStrategy: (() => {
           const strategy = takeOption(options, "dirty-worktree");
@@ -215,7 +222,7 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
       };
     }
 
-    throw new Error(`Unsupported task action: ${action ?? "missing"}`);
+    throw new CliUsageError(`Unsupported task action: ${action ?? "missing"}`);
   }
 
   const commandMap: Record<string, BootstrapCommand> = {
@@ -230,7 +237,7 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
     return { kind: "bootstrap", command: commandMap[scope], json };
   }
 
-  throw new Error(`Unsupported command: ${scope}`);
+  throw new CliUsageError(`Unsupported command: ${scope}`);
 }
 
 export function renderText(result: BootstrapReport | InstallResult | TaskBundle | TaskStatusResponse): string {
@@ -238,10 +245,19 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
     const lines = [
       `HappyTG install ${statusBadge(result.status)}`,
       `Repo: ${result.repo.sync} ${result.repo.path}`,
+      `Source: ${result.repo.source} ${result.repo.repoUrl}`,
       `Background: ${result.background.detail}`,
       `Telegram: ${result.telegram.bot?.username ? `@${result.telegram.bot.username}` : result.telegram.configured ? "configured" : "missing"}`,
       `Warnings: ${result.warnings.length}`
     ];
+
+    if (result.error) {
+      lines.push(`Error: ${result.error.message}`);
+      if (result.error.attempts !== undefined) {
+        lines.push(`Attempts: ${result.error.attempts}`);
+      }
+      lines.push(`Suggested action: ${result.error.suggestedAction}`);
+    }
 
     if (result.warnings.length > 0) {
       lines.push("");
@@ -327,9 +343,16 @@ export async function executeHappyTG(argv: string[], cwd = process.cwd()): Promi
     case "bootstrap":
       return runBootstrapCommand(request.command);
     case "install":
-      return runHappyTGInstall(request.options, {
-        runBootstrapCheck: runBootstrapCommand
-      });
+      try {
+        return await runHappyTGInstall(request.options, {
+          runBootstrapCheck: runBootstrapCommand
+        });
+      } catch (error) {
+        return createInstallFailureResult({
+          options: request.options,
+          error
+        });
+      }
     case "task-init":
       return initTaskBundle({
         repoRoot: request.repoRoot,
@@ -371,16 +394,24 @@ async function main(argv: string[]): Promise<void> {
   const result = await executeHappyTG(argv);
   if (request.json) {
     console.log(JSON.stringify(result, null, 2));
+    if ("kind" in result && result.kind === "install" && result.status === "fail") {
+      process.exitCode = 1;
+    }
     return;
   }
 
   console.log(renderText(result));
+  if ("kind" in result && result.kind === "install" && result.status === "fail") {
+    process.exitCode = 1;
+  }
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   void main(process.argv.slice(2)).catch((error) => {
     console.error(error instanceof Error ? error.message : "HappyTG CLI failed");
-    console.error(usage());
+    if (error instanceof CliUsageError) {
+      console.error(usage());
+    }
     process.exitCode = 1;
   });
 }
