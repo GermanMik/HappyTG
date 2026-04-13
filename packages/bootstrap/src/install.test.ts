@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { PassThrough } from "node:stream";
 import test from "node:test";
 
 import { runCommand } from "./install/commands.js";
 import { mergeEnvTemplate, writeMergedEnvFile } from "./install/env.js";
 import { detectLinuxFamily } from "./install/platform.js";
 import { defaultDirtyWorktreeStrategy, detectRepoModeChoices, inspectRepo } from "./install/repo.js";
-import { renderRepoModeScreen, renderWelcomeScreen } from "./install/tui.js";
+import { renderRepoModeScreen, renderTelegramScreen, renderWelcomeScreen, waitForEnter } from "./install/tui.js";
 
 async function git(args: string[], cwd: string): Promise<void> {
   const result = await runCommand({
@@ -186,4 +187,39 @@ test("retro installer renderers include active cursor and keyboard hints", () =>
   assert.match(repoMode, /Repo Mode/);
   assert.match(repoMode, /›/);
   assert.match(repoMode, /ESC cancel/);
+});
+
+test("Telegram screen renders a masked preview instead of the raw bot token", () => {
+  const screen = renderTelegramScreen({
+    form: {
+      botToken: "123456789:ABCDEFghijklmnopQRST",
+      allowedUserIds: [],
+      homeChannel: ""
+    },
+    activeRow: 0,
+    editing: false
+  });
+
+  assert.match(screen, /1234\*+QRST/);
+  assert.doesNotMatch(screen, /123456789:ABCDEFghijklmnopQRST/);
+});
+
+test("waitForEnter resolves when ENTER close is pressed on the final screen", async () => {
+  const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
+  const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
+  let rawMode = false;
+  stdin.isTTY = true;
+  stdout.isTTY = true;
+  stdin.setRawMode = ((value: boolean) => {
+    rawMode = value;
+    return stdin;
+  }) as typeof stdin.setRawMode;
+
+  const wait = waitForEnter(stdin, stdout, "ENTER close\n");
+  queueMicrotask(() => {
+    stdin.emit("keypress", "\r", { name: "return" });
+  });
+
+  await wait;
+  assert.equal(rawMode, false);
 });

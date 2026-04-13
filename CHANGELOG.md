@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.3.2
+
+### Fixed
+
+- Installer TUI now renders Telegram bot token input as a masked preview that preserves the first 4 and last 4 characters, keeps the raw secret in persisted state only, and degrades safely for short values.
+- Telegram setup validation now blocks incomplete values such as missing BotFather tokens or `@botname` usernames before runtime execution, keeping interactive and non-interactive installer failures installer-native.
+- Installer completion now normalizes outcomes across success, warning-only success, recoverable failure, and fatal failure so warning-only Telegram lookup issues no longer appear as contradictory `[FAIL]` summaries.
+- Final installer screens now close cleanly from `ENTER close`, and interactive installs no longer fall through to an extra plain-text summary after the TUI screen has already resolved.
+- Structured install results now distinguish warning-only outcomes from recoverable partial failures, including completed runs where follow-up steps such as post-checks still need attention.
+
+### Changed
+
+- Release metadata is aligned at `0.3.2` across the workspace for the installer UX/runtime follow-up release.
+
 ## v0.3.1
 
 ### Fixed

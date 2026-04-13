@@ -1,0 +1,27 @@
+
+> happytg@0.3.2 happytg /Users/mikhaylov-g/Documents/Develop/HappyTG
+> tsx packages/bootstrap/src/cli.ts "verify"
+
+HappyTG verify [FAIL]
+Summary: 1 error, 2 warnings found.
+Profile: minimal
+
+Checks:
+- Env: .env missing
+- Codex: codex-cli 0.115.0
+- Telegram: missing
+- Redis: not detected on localhost:6379
+- Ports: all critical ports free
+
+Findings:
+- WARN  `.env` was not found. Create it with `cp .env.example .env`, or export the required variables before first start.
+- ERROR Telegram bot token is not configured. Create `.env` with `cp .env.example .env`, set `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.
+- WARN  Redis was not detected locally. Start system Redis, or include `redis` when you bring up shared infra.
+
+Next steps:
+- Create `.env`: `cp .env.example .env`.
+- Set `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.
+
+Diagnostics:
+- Run `pnpm happytg verify --json` for machine-readable details.
+- Run `pnpm happytg doctor --json` for the full environment report.

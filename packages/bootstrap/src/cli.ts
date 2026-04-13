@@ -43,6 +43,20 @@ function statusBadge(status: "pass" | "warn" | "fail"): string {
   return `[${status.toUpperCase()}]`;
 }
 
+function installOutcomeSummary(outcome: InstallResult["outcome"]): string {
+  switch (outcome) {
+    case "success":
+      return "install flow is complete.";
+    case "success-with-warnings":
+      return "install flow is complete with warnings.";
+    case "recoverable-failure":
+      return "install needs follow-up before it is fully ready.";
+    case "fatal-failure":
+    default:
+      return "installer stopped before completion.";
+  }
+}
+
 function findingLabel(severity: "info" | "warn" | "error"): string {
   return severity.toUpperCase().padEnd(5, " ");
 }
@@ -244,6 +258,7 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
   if ("kind" in result && result.kind === "install") {
     const lines = [
       `HappyTG install ${statusBadge(result.status)}`,
+      `Result: ${installOutcomeSummary(result.outcome)}`,
       `Repo: ${result.repo.sync} ${result.repo.path}`,
       `Source: ${result.repo.source} ${result.repo.repoUrl}`,
       `Background: ${result.background.detail}`,
@@ -395,6 +410,13 @@ async function main(argv: string[]): Promise<void> {
   if (request.json) {
     console.log(JSON.stringify(result, null, 2));
     if ("kind" in result && result.kind === "install" && result.status === "fail") {
+      process.exitCode = 1;
+    }
+    return;
+  }
+
+  if ("kind" in result && result.kind === "install" && result.tuiHandled) {
+    if (result.status === "fail") {
       process.exitCode = 1;
     }
     return;
