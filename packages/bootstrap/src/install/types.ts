@@ -3,6 +3,7 @@ export type DirtyWorktreeStrategy = "cancel" | "stash" | "keep";
 export type BackgroundMode = "launchagent" | "scheduled-task" | "startup" | "systemd-user" | "manual" | "skip";
 export type PostInstallCheck = "setup" | "doctor" | "verify";
 export type InstallStatus = "pass" | "warn" | "fail";
+export type InstallOutcome = "success" | "success-with-warnings" | "recoverable-failure" | "fatal-failure";
 export type StepStatus = "pending" | "running" | "passed" | "warn" | "failed" | "skipped";
 export type LinuxFamily = "debian" | "fedora" | "unknown";
 export type SystemPackageManager = "brew" | "winget" | "choco" | "apt-get" | "dnf" | "manual";
@@ -15,6 +16,8 @@ export type InstallRuntimeErrorCode =
   | "windows_shim_failure"
   | "command_execution_failure"
   | "pnpm_install_failed"
+  | "installer_validation_failure"
+  | "installer_partial_failure"
   | "installer_runtime_failure";
 
 export interface InstallCommandOptions {
@@ -192,7 +195,9 @@ export interface InstallDraftState {
 export interface InstallResult {
   kind: "install";
   status: InstallStatus;
+  outcome: InstallOutcome;
   interactive: boolean;
+  tuiHandled: boolean;
   repo: {
     mode: InstallRepoMode;
     path: string;

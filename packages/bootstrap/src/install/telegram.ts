@@ -1,3 +1,5 @@
+import { telegramTokenStatus } from "../../../shared/src/index.js";
+
 import type { TelegramBotIdentity } from "./types.js";
 
 export function normalizeTelegramAllowedUserIds(values: string[]): string[] {
@@ -7,18 +9,27 @@ export function normalizeTelegramAllowedUserIds(values: string[]): string[] {
     .filter(Boolean);
 }
 
-export function maskTelegramToken(token: string): string {
+export function validateTelegramBotToken(token: string): string | undefined {
   const trimmed = token.trim();
-  if (!trimmed) {
-    return "";
+  if (trimmed.startsWith("@")) {
+    return "Telegram bot token field expects the BotFather token, not a bot username like @name.";
   }
 
-  const [prefix, suffix] = trimmed.split(":", 2);
-  if (!suffix) {
-    return "*".repeat(Math.min(trimmed.length, 8));
-  }
+  const status = telegramTokenStatus({
+    TELEGRAM_BOT_TOKEN: trimmed
+  }).status;
 
-  return `${prefix}:${"*".repeat(Math.min(Math.max(suffix.length - 4, 4), 24))}${suffix.slice(-4)}`;
+  switch (status) {
+    case "missing":
+      return "Telegram bot token is required.";
+    case "placeholder":
+      return "Telegram bot token still looks like a placeholder. Paste the real value from @BotFather.";
+    case "invalid":
+      return "Telegram bot token looks incomplete. Paste the full token from @BotFather.";
+    case "configured":
+    default:
+      return undefined;
+  }
 }
 
 export async function fetchTelegramBotIdentity(

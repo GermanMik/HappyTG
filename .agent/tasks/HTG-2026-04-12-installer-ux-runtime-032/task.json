@@ -1,0 +1,18 @@
+{
+  "id": "HTG-2026-04-12-installer-ux-runtime-032",
+  "sessionId": "ses_2026_04_12_installer_ux_runtime_032",
+  "workspaceId": "HappyTG",
+  "rootPath": "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-12-installer-ux-runtime-032",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Installer TUI UX/runtime fixes for 0.3.2",
+  "acceptanceCriteria": [
+    "Telegram token field shows masked preview while persisting raw secret only.",
+    "Installer final/result status is normalized across success, warnings, recoverable failures, and fatal failures without contradictory UI or dead-end close behavior.",
+    "Interactive and structured installer paths remain installer-native, recoverable, and consistent for warning-only Telegram lookup failures and invalid incomplete data.",
+    "Release metadata and proof bundle are updated for 0.3.2 with required verification evidence."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-12T14:47:16.965Z",
+  "updatedAt": "2026-04-13T15:31:42.000Z"
+}

@@ -1,7 +1,15 @@
 import readline from "node:readline";
 
-import type { BackgroundMode, InstallRuntimeErrorDetail, InstallStepRecord, PostInstallCheck, RepoModeChoice, TelegramSetup } from "./types.js";
-import { maskTelegramToken } from "./telegram.js";
+import type {
+  BackgroundMode,
+  InstallOutcome,
+  InstallRuntimeErrorDetail,
+  InstallStepRecord,
+  PostInstallCheck,
+  RepoModeChoice,
+  TelegramSetup
+} from "./types.js";
+import { validateTelegramBotToken } from "./telegram.js";
 
 const COLORS = {
   blue: "\u001B[38;2;77;163;255m",
@@ -59,6 +67,10 @@ function keyboardHints(extra?: string): string {
   return dim(`↑↓ navigate   SPACE toggle   ENTER confirm   ESC cancel${extra ? `   ${extra}` : ""}`);
 }
 
+function finalActionHints(actionLabel: string): string {
+  return keyboardHints(`ENTER ${actionLabel}`);
+}
+
 function renderStatusBlock(items: Array<{ status: "pass" | "warn" | "fail" | "info"; label: string; detail: string }>): string[] {
   return items.flatMap((item) => [
     `${statusIcon(item.status)} ${bright(item.label)}`,
@@ -91,6 +103,19 @@ function renderOptions(options: Array<{ label: string; detail: string; active: b
 
 function renderFrame(lines: string[]): string {
   return `${lines.join("\n").replace(/\n+$/u, "")}\n`;
+}
+
+export function renderMaskedSecretPreview(rawValue: string): string {
+  const normalized = stripBracketedPasteMarkers(rawValue).replace(/[\r\n]/gu, "").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.length <= 8) {
+    return "*".repeat(normalized.length);
+  }
+
+  return `${normalized.slice(0, 4)}${"*".repeat(normalized.length - 8)}${normalized.slice(-4)}`;
 }
 
 export function renderWelcomeScreen(input: {
@@ -161,11 +186,12 @@ export function renderTelegramScreen(input: {
   form: TelegramSetup;
   activeRow: number;
   editing: boolean;
+  validationMessage?: string;
 }): string {
   const rows = [
     {
       label: "Bot token",
-      value: input.form.botToken ? maskTelegramToken(input.form.botToken) : "<required>"
+      value: input.form.botToken ? renderMaskedSecretPreview(input.form.botToken) : "<required>"
     },
     {
       label: "Allowed user IDs",
@@ -188,6 +214,13 @@ export function renderTelegramScreen(input: {
       detail: row.value,
       active: index === input.activeRow
     }))),
+    ...(input.validationMessage
+      ? [
+        "",
+        `${statusIcon("warn")} ${bright("Validation")}`,
+        `   ${input.validationMessage}`
+      ]
+      : []),
     "",
     keyboardHints(input.editing ? "typing…" : "ENTER edit / confirm")
   ]);
@@ -274,27 +307,99 @@ export function renderProgressScreen(input: {
   return renderFrame(lines);
 }
 
+function finalHeadline(outcome: InstallOutcome): string {
+  switch (outcome) {
+    case "success":
+      return "Install flow is complete.";
+    case "success-with-warnings":
+      return "Install flow is complete with warnings.";
+    case "recoverable-failure":
+      return "Install finished with recoverable issues.";
+    case "fatal-failure":
+    default:
+      return "Installer stopped before completion.";
+  }
+}
+
+function finalTitle(outcome: InstallOutcome): string {
+  switch (outcome) {
+    case "success":
+    case "success-with-warnings":
+      return "Final Summary";
+    case "recoverable-failure":
+      return "Needs Attention";
+    case "fatal-failure":
+    default:
+      return "Installer Error";
+  }
+}
+
+function finalHeadlineStatus(outcome: InstallOutcome): "pass" | "warn" | "fail" {
+  switch (outcome) {
+    case "success":
+      return "pass";
+    case "success-with-warnings":
+      return "warn";
+    case "recoverable-failure":
+    case "fatal-failure":
+    default:
+      return "fail";
+  }
+}
+
+export function renderFinalScreen(input: {
+  outcome: InstallOutcome;
+  repoPath: string;
+  detail: string;
+  warnings: string[];
+  nextSteps: string[];
+  suggestedAction?: string;
+  closeLabel?: string;
+}): string {
+  const lines = [
+    ...header(finalTitle(input.outcome), input.repoPath),
+    `${statusIcon(finalHeadlineStatus(input.outcome))} ${bright(finalHeadline(input.outcome))}`,
+    ...renderIndentedDetail(input.detail),
+    ""
+  ];
+
+  if (input.suggestedAction) {
+    lines.push(bright("Action"));
+    lines.push(`- ${input.suggestedAction}`);
+    lines.push("");
+  }
+
+  if (input.warnings.length > 0) {
+    lines.push(bright("Warnings"));
+    lines.push(...input.warnings.map((warning) => `- ${warning}`));
+    lines.push("");
+  }
+
+  if (input.nextSteps.length > 0) {
+    lines.push(bright("Next steps"));
+    lines.push(...input.nextSteps.map((step) => `- ${step}`));
+    lines.push("");
+  }
+
+  lines.push(finalActionHints(input.closeLabel ?? "close"));
+  return renderFrame(lines);
+}
+
 export function renderFailureScreen(input: {
+  outcome: Extract<InstallOutcome, "recoverable-failure" | "fatal-failure">;
   repoPath: string;
   error: InstallRuntimeErrorDetail;
+  warnings?: string[];
+  nextSteps?: string[];
 }): string {
-  return renderFrame([
-    ...header("Installer Error", input.repoPath),
-    ...renderStatusBlock([
-      {
-        status: "fail",
-        label: input.error.message,
-        detail: input.error.lastError
-      },
-      {
-        status: input.error.retryable ? "warn" : "info",
-        label: `Suggested action${input.error.attempts ? ` (${input.error.attempts} attempts)` : ""}`,
-        detail: input.error.suggestedAction
-      }
-    ]),
-    "",
-    keyboardHints("ENTER close")
-  ]);
+  return renderFinalScreen({
+    outcome: input.outcome,
+    repoPath: input.repoPath,
+    detail: input.error.lastError,
+    warnings: input.warnings ?? [],
+    nextSteps: input.nextSteps ?? [],
+    suggestedAction: input.error.suggestedAction
+  });
 }
 
 function stripBracketedPasteMarkers(chunk: string): string {
@@ -304,7 +409,7 @@ function stripBracketedPasteMarkers(chunk: string): string {
 }
 
 function appendInputChunk(draft: string, chunk: string): string {
-  const normalized = stripBracketedPasteMarkers(chunk);
+  const normalized = stripBracketedPasteMarkers(chunk).replace(/[\r\n]/gu, "");
   if (!normalized) {
     return draft;
   }
@@ -317,6 +422,7 @@ export interface TelegramFormControllerState {
   activeRow: number;
   editing: boolean;
   draft: string;
+  validationMessage?: string;
 }
 
 export function createTelegramFormController(initial: TelegramSetup): TelegramFormControllerState {
@@ -328,7 +434,8 @@ export function createTelegramFormController(initial: TelegramSetup): TelegramFo
     },
     activeRow: 0,
     editing: false,
-    draft: ""
+    draft: "",
+    validationMessage: undefined
   };
 }
 
@@ -351,7 +458,8 @@ export function reduceTelegramFormKeypress(
     },
     activeRow: state.activeRow,
     editing: state.editing,
-    draft: state.draft
+    draft: state.draft,
+    validationMessage: state.validationMessage
   };
 
   if (!next.editing) {
@@ -365,14 +473,17 @@ export function reduceTelegramFormKeypress(
     }
     if (input.key.name === "return") {
       if (fieldOrder[next.activeRow] === "continue") {
-        if (!next.form.botToken.trim()) {
+        const validationMessage = validateTelegramBotToken(next.form.botToken);
+        if (validationMessage) {
           next.activeRow = 0;
+          next.validationMessage = validationMessage;
           return { state: next, done: false };
         }
         return { state: next, done: true };
       }
 
       next.editing = true;
+      next.validationMessage = undefined;
       next.draft = fieldOrder[next.activeRow] === "botToken"
         ? next.form.botToken
         : fieldOrder[next.activeRow] === "allowedUserIds"
@@ -395,10 +506,16 @@ export function reduceTelegramFormKeypress(
       next.form.homeChannel = next.draft.trim();
     }
     next.editing = false;
+    next.validationMessage = fieldOrder[next.activeRow] === "botToken"
+      ? validateTelegramBotToken(next.form.botToken)
+      : next.validationMessage;
     return { state: next, done: false };
   }
   if (input.key.name === "backspace") {
     next.draft = next.draft.slice(0, -1);
+    if (fieldOrder[next.activeRow] === "botToken") {
+      next.validationMessage = undefined;
+    }
     return { state: next, done: false };
   }
   if (input.key.name === "escape") {
@@ -407,34 +524,29 @@ export function reduceTelegramFormKeypress(
   }
   if (input.chunk && !input.key.ctrl && !input.key.meta && input.key.name !== "tab") {
     next.draft = appendInputChunk(next.draft, input.chunk);
+    if (fieldOrder[next.activeRow] === "botToken") {
+      next.validationMessage = undefined;
+    }
   }
   return { state: next, done: false };
 }
 
 export function renderSummaryScreen(input: {
+  outcome: InstallOutcome;
   repoPath: string;
   warnings: string[];
   nextSteps: string[];
-  backgroundDetail: string;
+  detail: string;
+  suggestedAction?: string;
 }): string {
-  const lines = [
-    ...header("Final Summary", input.repoPath),
-    `${statusIcon("pass")} ${bright("Install flow is complete.")}`,
-    `   ${input.backgroundDetail}`,
-    ""
-  ];
-
-  if (input.warnings.length > 0) {
-    lines.push(bright("Warnings"));
-    lines.push(...input.warnings.map((warning) => `- ${warning}`));
-    lines.push("");
-  }
-
-  lines.push(bright("Next steps"));
-  lines.push(...input.nextSteps.map((step) => `- ${step}`));
-  lines.push("");
-  lines.push(keyboardHints("ENTER close"));
-  return renderFrame(lines);
+  return renderFinalScreen({
+    outcome: input.outcome,
+    repoPath: input.repoPath,
+    detail: input.detail,
+    warnings: input.warnings,
+    nextSteps: input.nextSteps,
+    suggestedAction: input.suggestedAction
+  });
 }
 
 async function readKeypress(
@@ -569,7 +681,8 @@ export async function promptTelegramForm(input: {
         }
         : controller.form,
       activeRow: controller.activeRow,
-      editing: controller.editing
+      editing: controller.editing,
+      validationMessage: controller.validationMessage
     }),
     (chunk, key) => {
       const reduced = reduceTelegramFormKeypress(controller, { chunk, key });
@@ -589,9 +702,13 @@ export function renderProgress(stdout: NodeJS.WriteStream, title: string, steps:
   }));
 }
 
+function isConfirmKey(chunk: string, key: readline.Key): boolean {
+  return key.name === "return" || key.name === "enter" || chunk === "\r" || chunk === "\n";
+}
+
 export async function waitForEnter(stdin: NodeJS.ReadStream, stdout: NodeJS.WriteStream, screen: string): Promise<void> {
   await readKeypress(stdin, stdout, () => screen, (_chunk, key) => {
-    if (key.name === "return") {
+    if (isConfirmKey(_chunk, key)) {
       return true;
     }
     if (key.name === "escape" || (key.ctrl && key.name === "c")) {

@@ -15,7 +15,7 @@ import { configureBackgroundMode } from "./background.js";
 import { runCommand, runShellCommand, CommandExecutionError } from "./commands.js";
 import { resolveInstallerRepoSources } from "./config.js";
 import { writeMergedEnvFile } from "./env.js";
-import { createInstallRuntimeError, isInstallRuntimeError, isRetryableCommandOutput, toInstallRuntimeErrorDetail } from "./errors.js";
+import { createInstallRuntimeError, isRetryableCommandOutput, toInstallRuntimeErrorDetail } from "./errors.js";
 import { detectInstallerEnvironment } from "./platform.js";
 import {
   defaultDirtyWorktreeStrategy,
@@ -23,14 +23,15 @@ import {
   pickDefaultRepoMode,
   syncRepository
 } from "./repo.js";
+import { createPartialFailureDetail, deriveInstallOutcome, installStatusFromOutcome } from "./status.js";
 import { readInstallDraft, writeInstallDraft } from "./state.js";
 import {
   promptMultiSelect,
   promptSelect,
   promptTelegramForm,
   renderBackgroundModeScreen,
+  renderFinalScreen,
   renderDirtyWorktreeScreen,
-  renderFailureScreen,
   renderPostCheckScreen,
   renderProgress,
   renderRepoModeScreen,
@@ -38,7 +39,7 @@ import {
   renderWelcomeScreen,
   waitForEnter
 } from "./tui.js";
-import { fetchTelegramBotIdentity, normalizeTelegramAllowedUserIds, pairTargetLabel } from "./telegram.js";
+import { fetchTelegramBotIdentity, normalizeTelegramAllowedUserIds, pairTargetLabel, validateTelegramBotToken } from "./telegram.js";
 import type {
   BackgroundMode,
   InstallCommandOptions,
@@ -419,6 +420,16 @@ function fallbackInstallBackgroundMode(options: InstallCommandOptions): Backgrou
   return options.backgroundMode ?? "manual";
 }
 
+function installDetailFromBackground(detail: string): string {
+  return detail || "Installer finished without additional background details.";
+}
+
+function nonInteractiveTokenValidationErrorMessage(validationMessage: string): string {
+  return validationMessage.endsWith(".")
+    ? validationMessage
+    : `${validationMessage}.`;
+}
+
 export function createInstallFailureResult(input: {
   options: InstallCommandOptions;
   error: unknown;
@@ -431,11 +442,18 @@ export function createInstallFailureResult(input: {
     suggestedAction: "Review the installer output and rerun once the reported issue is fixed."
   });
   const backgroundMode = fallbackInstallBackgroundMode(input.options);
+  const outcome = deriveInstallOutcome({
+    warnings: [],
+    steps: [],
+    error: detail
+  });
 
   return {
     kind: "install",
-    status: "fail",
+    status: installStatusFromOutcome(outcome),
+    outcome,
     interactive: !input.options.nonInteractive && !input.options.json,
+    tuiHandled: false,
     repo: {
       mode: fallbackInstallRepoMode(input.options),
       path: input.options.repoDir ?? input.options.launchCwd,
@@ -472,6 +490,7 @@ export function createInstallFailureResult(input: {
     reportJson: {
       branch: input.options.branch,
       error: detail,
+      outcome,
       repoUrl: detail.repoUrl ?? input.options.repoUrl ?? "unresolved"
     }
   };
@@ -670,11 +689,18 @@ export async function runHappyTGInstall(
         });
       }
     }
+    const outcome = deriveInstallOutcome({
+      warnings,
+      steps,
+      error: detail
+    });
 
     const failureResult: InstallResult = {
       kind: "install",
-      status: "fail",
+      status: installStatusFromOutcome(outcome),
+      outcome,
       interactive,
+      tuiHandled: interactive,
       repo: {
         mode: repoMode,
         path: repoSyncResult?.path ?? selectedChoice?.path ?? repoChoices.clonePath,
@@ -703,6 +729,7 @@ export async function runHappyTGInstall(
         error: detail,
         fallbackSource: repoSources.fallback?.url,
         fallbackUsed: repoSyncResult?.fallbackUsed ?? detail.fallbackUsed ?? false,
+        outcome,
         platform: platform.platform,
         repoSource: repoSyncResult?.repoSource ?? detail.repoSource ?? draft?.repo?.source ?? "local",
         repoUrl: repoSyncResult?.repoUrl ?? detail.repoUrl ?? repoSources.primary.url
@@ -711,9 +738,13 @@ export async function runHappyTGInstall(
     await writeInstallState(failureResult, installEnv, platform.platform.platform);
 
     if (interactive) {
-      await waitForEnter(stdin, stdout, renderFailureScreen({
+      await waitForEnter(stdin, stdout, renderFinalScreen({
+        outcome,
         repoPath: failureResult.repo.path,
-        error: detail
+        detail: detail.lastError,
+        warnings: failureResult.warnings,
+        nextSteps: failureResult.nextSteps,
+        suggestedAction: detail.suggestedAction
       }));
     }
 
@@ -753,14 +784,18 @@ export async function runHappyTGInstall(
         initial: telegramInitial
       })
       : telegramInitial;
-    if (!interactive && !telegramSetup.botToken.trim()) {
-      throw createInstallRuntimeError({
-        code: "installer_runtime_failure",
-        message: "Telegram bot token is required for non-interactive install.",
-        lastError: "Telegram bot token is required for non-interactive install.",
-        retryable: false,
-        suggestedAction: "Pass --telegram-bot-token or rerun the installer interactively so the value can be captured once and resumed later."
-      });
+    if (!interactive) {
+      const tokenValidationMessage = validateTelegramBotToken(telegramSetup.botToken);
+      if (tokenValidationMessage) {
+        const message = nonInteractiveTokenValidationErrorMessage(tokenValidationMessage);
+        throw createInstallRuntimeError({
+          code: "installer_validation_failure",
+          message,
+          lastError: message,
+          retryable: false,
+          suggestedAction: "Pass a valid --telegram-bot-token or rerun the installer interactively so the value can be captured and validated before execution."
+        });
+      }
     }
     backgroundMode = interactive
       ? await promptSelect({
@@ -1094,17 +1129,19 @@ export async function runHappyTGInstall(
       interactiveTerminal: false,
       repoRoot: installerRepoRoot
     });
-    const missingRequiredStep = steps.some((step) => step.status === "failed" && step.id.startsWith("dep-"));
-    const overallStatus: InstallStatus = missingRequiredStep || steps.some((step) => step.status === "failed")
-      ? "fail"
-      : warnings.length > 0 || steps.some((step) => step.status === "warn")
-        ? "warn"
-        : "pass";
+    const partialFailure = createPartialFailureDetail(steps);
+    const outcome = deriveInstallOutcome({
+      warnings,
+      steps,
+      error: partialFailure
+    });
     const pairTarget = pairTargetLabel(botIdentity.ok ? botIdentity : undefined);
     const result: InstallResult = {
       kind: "install",
-      status: overallStatus,
+      status: installStatusFromOutcome(outcome),
+      outcome,
       interactive,
+      tuiHandled: interactive,
       repo: {
         mode: repoMode,
         path: repoSyncResult.path,
@@ -1127,12 +1164,14 @@ export async function runHappyTGInstall(
       steps,
       nextSteps: nextSteps(repoSyncResult.path, pairTarget, backgroundMode),
       warnings,
+      error: partialFailure,
       reportJson: {
         branch: options.branch,
         envWrite,
         botIdentity,
         fallbackSource: repoSources.fallback?.url,
         fallbackUsed: repoSyncResult.fallbackUsed,
+        outcome,
         pairTarget,
         packageManager: platform.platform.systemPackageManager,
         platform: platform.platform,
@@ -1158,10 +1197,14 @@ export async function runHappyTGInstall(
 
     if (interactive) {
       await waitForEnter(stdin, stdout, renderSummaryScreen({
+        outcome,
         repoPath: repoSyncResult.path,
         warnings,
         nextSteps: result.nextSteps,
-        backgroundDetail: background.detail
+        detail: outcome === "recoverable-failure"
+          ? partialFailure?.lastError ?? installDetailFromBackground(background.detail)
+          : installDetailFromBackground(background.detail),
+        suggestedAction: partialFailure?.suggestedAction
       }));
     }
 

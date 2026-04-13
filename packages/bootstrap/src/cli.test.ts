@@ -181,7 +181,9 @@ test("renderText returns a compact install summary", () => {
   const output = renderText({
     kind: "install",
     status: "warn",
+    outcome: "success-with-warnings",
     interactive: false,
+    tuiHandled: false,
     repo: {
       mode: "current",
       path: "/tmp/HappyTG",
@@ -230,7 +232,70 @@ test("renderText returns a compact install summary", () => {
   });
 
   assert.match(output, /HappyTG install \[WARN\]/);
+  assert.match(output, /Result: install flow is complete with warnings\./);
   assert.match(output, /@happytg_bot/);
   assert.match(output, /Docker Desktop was skipped/);
   assert.match(output, /pnpm daemon:pair/);
+});
+
+test("renderText explains recoverable installer failures without claiming completion", () => {
+  const output = renderText({
+    kind: "install",
+    status: "fail",
+    outcome: "recoverable-failure",
+    interactive: false,
+    tuiHandled: false,
+    repo: {
+      mode: "current",
+      path: "/tmp/HappyTG",
+      sync: "reused",
+      dirtyStrategy: "keep",
+      source: "local",
+      repoUrl: "https://github.com/GermanMik/HappyTG.git",
+      attempts: 0,
+      fallbackUsed: false
+    },
+    environment: {
+      platform: {
+        platform: "darwin",
+        arch: "arm64",
+        shell: "/bin/zsh",
+        linuxFamily: "unknown",
+        systemPackageManager: "brew",
+        repoPackageManager: "pnpm",
+        isInteractiveTerminal: false
+      },
+      dependencies: []
+    },
+    telegram: {
+      configured: true,
+      allowedUserIds: ["1001"]
+    },
+    background: {
+      mode: "manual",
+      status: "manual",
+      detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+    },
+    postChecks: [],
+    steps: [],
+    nextSteps: [
+      "pnpm dev",
+      "pnpm daemon:pair"
+    ],
+    warnings: [
+      "Telegram bot lookup: fetch failed"
+    ],
+    error: {
+      code: "installer_partial_failure",
+      message: "1 installer step still needs attention.",
+      lastError: "Run verify failed.",
+      retryable: false,
+      suggestedAction: "Resolve the reported failed steps, then rerun the installer."
+    },
+    reportJson: {}
+  });
+
+  assert.match(output, /HappyTG install \[FAIL\]/);
+  assert.match(output, /Result: install needs follow-up before it is fully ready\./);
+  assert.doesNotMatch(output, /Install flow is complete\./);
 });

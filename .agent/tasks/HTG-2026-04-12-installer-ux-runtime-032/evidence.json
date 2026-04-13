@@ -1,0 +1,117 @@
+{
+  "taskId": "HTG-2026-04-12-installer-ux-runtime-032",
+  "criteria": [
+    {
+      "criterion": "Telegram token field shows masked preview while persisting raw secret only.",
+      "artifacts": [
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/install/telegram.ts",
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "packages/bootstrap/src/install.test.ts",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/build.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Installer final/result status is normalized across success, warnings, recoverable failures, and fatal failures without contradictory UI or dead-end close behavior.",
+      "artifacts": [
+        "packages/bootstrap/src/install/status.ts",
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/cli.ts",
+        "packages/bootstrap/src/cli.test.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/build.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/typecheck.txt"
+      ]
+    },
+    {
+      "criterion": "Interactive and structured installer paths remain installer-native, recoverable, and consistent for warning-only Telegram lookup failures and invalid incomplete data.",
+      "artifacts": [
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install/telegram.ts",
+        "packages/bootstrap/src/install/status.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "packages/bootstrap/src/cli.ts",
+        "packages/bootstrap/src/cli.test.ts",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/doctor.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/verify.txt"
+      ]
+    },
+    {
+      "criterion": "Release metadata and proof bundle are updated for 0.3.2 with required verification evidence.",
+      "artifacts": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/releases/0.3.2.md",
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/shared/package.json",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/spec.md",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/verdict.json",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/problems.md",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/lint.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/typecheck.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/release-check.txt",
+        ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/bundle-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "packages/bootstrap/src/cli.ts",
+    "packages/bootstrap/src/cli.test.ts",
+    "packages/bootstrap/src/install/index.ts",
+    "packages/bootstrap/src/install/status.ts",
+    "packages/bootstrap/src/install/telegram.ts",
+    "packages/bootstrap/src/install/tui.ts",
+    "packages/bootstrap/src/install/types.ts",
+    "packages/bootstrap/src/install.runtime.test.ts",
+    "packages/bootstrap/src/install.test.ts",
+    "CHANGELOG.md",
+    "README.md",
+    "docs/releases/0.3.2.md",
+    "package.json",
+    "apps/api/package.json",
+    "apps/bot/package.json",
+    "apps/host-daemon/package.json",
+    "apps/miniapp/package.json",
+    "apps/worker/package.json",
+    "packages/approval-engine/package.json",
+    "packages/bootstrap/package.json",
+    "packages/hooks/package.json",
+    "packages/policy-engine/package.json",
+    "packages/protocol/package.json",
+    "packages/repo-proof/package.json",
+    "packages/runtime-adapters/package.json",
+    "packages/shared/package.json",
+    ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/build.txt",
+    ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/lint.txt",
+    ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/doctor.txt",
+    ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/verify.txt",
+    ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/release-check.txt",
+    ".agent/tasks/HTG-2026-04-12-installer-ux-runtime-032/raw/bundle-validate.txt"
+  ],
+  "generatedAt": "2026-04-13T15:27:34.000Z"
+}

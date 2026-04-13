@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-12-installer-ux-runtime-032",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-2-2026-04-13"
+  },
+  "checks": [
+    {
+      "name": "token-masking-and-raw-secret-state",
+      "ok": true,
+      "detail": "Telegram token input now renders a masked preview in the TUI, keeps the raw secret in persisted state only, handles paste/backspace/navigation, and rejects @botname-style usernames as invalid token input."
+    },
+    {
+      "name": "normalized-installer-outcome",
+      "ok": true,
+      "detail": "Installer final-state rendering is normalized across success, success-with-warnings, recoverable failure, and fatal failure, without the previous contradictory complete-versus-fail combination."
+    },
+    {
+      "name": "installer-native-validation-and-json-path",
+      "ok": true,
+      "detail": "Warning-only Telegram lookup failures remain success-with-warnings, invalid or incomplete non-interactive input returns structured installer-native failures, and interactive ENTER-close behavior is covered."
+    },
+    {
+      "name": "release-metadata-and-proof-bundle",
+      "ok": true,
+      "detail": "Release metadata is aligned to 0.3.2, release validation passed, the proof bundle files are populated, and task validate reports Validation: ok."
+    }
+  ],
+  "generatedAt": "2026-04-13T15:31:42.000Z"
+}
