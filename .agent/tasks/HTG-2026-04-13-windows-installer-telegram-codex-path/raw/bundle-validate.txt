@@ -1,0 +1,9 @@
+
+> happytg@0.3.2 happytg /Users/mikhaylov-g/Documents/Develop/HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "/Users/mikhaylov-g/Documents/Develop/HappyTG" "--task" "HTG-2026-04-13-windows-installer-telegram-codex-path"
+
+Task: HTG-2026-04-13-windows-installer-telegram-codex-path
+Bundle: /Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path
+Validation: ok
+Phase: complete
+Verification: passed

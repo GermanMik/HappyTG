@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-13-windows-installer-telegram-codex-path",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-1-2026-04-13"
+  },
+  "checks": [
+    {
+      "name": "telegram-lookup-classification",
+      "ok": true,
+      "detail": "Installer now separates missing token, invalid-token API rejection, and recoverable getMe lookup failures, and keeps already-known bot usernames for pair guidance when lookup is the only failing layer."
+    },
+    {
+      "name": "codex-path-recovery",
+      "ok": true,
+      "detail": "Bootstrap now retries Codex readiness through detected npm wrapper paths and downgrades runnable wrapper cases to a CODEX_PATH_PENDING warning instead of a missing-Codex cascade failure."
+    },
+    {
+      "name": "installer-warning-vs-failure-ux",
+      "ok": true,
+      "detail": "Installer results stay at warning level when Telegram getMe and post-checks only surface follow-up PATH issues, while real invalid-token and true missing-Codex cases remain distinguishable."
+    },
+    {
+      "name": "verification-commands",
+      "ok": true,
+      "detail": "Targeted runtime-adapters/bootstrap tests, full build/lint/typecheck/test all passed. Doctor/verify were also executed and still show only the expected local .env/Telegram/Redis findings of this checkout."
+    }
+  ],
+  "generatedAt": "2026-04-13T16:15:49Z"
+}

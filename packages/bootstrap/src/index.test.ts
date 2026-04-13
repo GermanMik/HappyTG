@@ -348,21 +348,20 @@ test("doctor distinguishes unavailable Codex from a missing Codex binary", async
   }
 });
 
-test("doctor reports a PATH issue when Codex wrapper files exist under the global npm prefix", async () => {
+test("doctor recovers through the npm wrapper when Codex is off PATH and leaves a PATH follow-up warning", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-codex-path-issue-"));
   try {
     const configPath = path.join(tempDir, "config.toml");
     const gitBinaryPath = path.join(tempDir, "git.cmd");
     const npmPrefix = path.join(tempDir, "global-npm");
     const npmBinDir = npmPrefix;
-    const wrapperPath = path.join(npmBinDir, "codex.cmd");
     await mkdir(npmBinDir, { recursive: true });
+    const wrapperPath = await createWindowsCodexShim(npmBinDir, "codex shim 0.118.0");
     await Promise.all([
       writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
       writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
       writeFile(gitBinaryPath, "@echo off\r\n", "utf8"),
-      createWindowsNpmPrefixShim(tempDir, npmPrefix),
-      writeFile(wrapperPath, "@echo off\r\n", "utf8")
+      createWindowsNpmPrefixShim(tempDir, npmPrefix)
     ]);
 
     const report = await runBootstrapCommand("doctor", {
@@ -385,9 +384,14 @@ test("doctor reports a PATH issue when Codex wrapper files exist under the globa
       }
     });
 
-    assert.ok(report.findings.some((item) => item.code === "CODEX_MISSING"));
-    assert.match(report.findings.find((item) => item.code === "CODEX_MISSING")?.message ?? "", /PATH issue/i);
+    assert.equal(report.status, "warn");
+    assert.ok(!report.findings.some((item) => item.code === "CODEX_MISSING"));
+    assert.ok(report.findings.some((item) => item.code === "CODEX_PATH_PENDING"));
+    assert.match(report.findings.find((item) => item.code === "CODEX_PATH_PENDING")?.message ?? "", /not on the current shell PATH yet/i);
     assert.match(report.planPreview.join("\n"), new RegExp(npmBinDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match((report.reportJson.preflight as string[]).join("\n"), /via npm wrapper; PATH follow-up still needed/);
+    assert.equal((report.reportJson.codex as { binaryPath: string }).binaryPath, wrapperPath);
+    assert.equal((report.reportJson.codexPathResolution as { pathPending: boolean }).pathPending, true);
     assert.deepEqual((report.reportJson.codexInstallCheck as { wrapperPaths: string[] }).wrapperPaths, [wrapperPath]);
   } finally {
     await rm(tempDir, { recursive: true, force: true });

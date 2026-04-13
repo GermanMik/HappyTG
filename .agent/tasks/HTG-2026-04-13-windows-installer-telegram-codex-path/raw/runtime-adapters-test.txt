@@ -1,0 +1,80 @@
+
+> @happytg/runtime-adapters@0.3.2 test /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters
+> tsx --test src/*.test.ts
+
+TAP version 13
+# Subtest: checkCodexReadiness reports available Codex and captures smoke warnings
+ok 1 - checkCodexReadiness reports available Codex and captures smoke warnings
+  ---
+  duration_ms: 415.169084
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness resolves a Windows-style codex.cmd shim from Path
+ok 2 - checkCodexReadiness resolves a Windows-style codex.cmd shim from Path
+  ---
+  duration_ms: 700.752166
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext
+ok 3 - checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext
+  ---
+  duration_ms: 574.158792
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated
+ok 4 - checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated
+  ---
+  duration_ms: 591.508042
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness treats a Windows shell command-not-found result as missing
+ok 5 - checkCodexReadiness treats a Windows shell command-not-found result as missing
+  ---
+  duration_ms: 14.058333
+  type: 'test'
+  ...
+# Subtest: checkCodexReadiness marks only true ENOENT failures as missing
+ok 6 - checkCodexReadiness marks only true ENOENT failures as missing
+  ---
+  duration_ms: 113.724625
+  type: 'test'
+  ...
+# Subtest: classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+ok 7 - classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+  ---
+  duration_ms: 4.673208
+  type: 'test'
+  ...
+# Subtest: codexCliMissingMessage explains PATH diagnosis and reinstall fallback
+ok 8 - codexCliMissingMessage explains PATH diagnosis and reinstall fallback
+  ---
+  duration_ms: 0.49825
+  type: 'test'
+  ...
+# Subtest: runCodexExec reads summary from the Codex output file
+ok 9 - runCodexExec reads summary from the Codex output file
+  ---
+  duration_ms: 158.54475
+  type: 'test'
+  ...
+# Subtest: runCodexExec marks timeout and returns a timeout summary
+ok 10 - runCodexExec marks timeout and returns a timeout summary
+  ---
+  duration_ms: 31.07175
+  type: 'test'
+  ...
+# Subtest: runCodexExec returns actionable guidance when Codex CLI is missing
+ok 11 - runCodexExec returns actionable guidance when Codex CLI is missing
+  ---
+  duration_ms: 21.418417
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3834.744959

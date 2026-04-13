@@ -9,6 +9,7 @@ import { runCommand } from "./install/commands.js";
 import { mergeEnvTemplate, writeMergedEnvFile } from "./install/env.js";
 import { detectLinuxFamily } from "./install/platform.js";
 import { defaultDirtyWorktreeStrategy, detectRepoModeChoices, inspectRepo } from "./install/repo.js";
+import { fetchTelegramBotIdentity } from "./install/telegram.js";
 import { renderRepoModeScreen, renderTelegramScreen, renderWelcomeScreen, waitForEnter } from "./install/tui.js";
 
 async function git(args: string[], cwd: string): Promise<void> {
@@ -222,4 +223,27 @@ test("waitForEnter resolves when ENTER close is pressed on the final screen", as
 
   await wait;
   assert.equal(rawMode, false);
+});
+
+test("fetchTelegramBotIdentity separates invalid-token API rejections from recoverable network lookups", async () => {
+  const invalid = await fetchTelegramBotIdentity(
+    "123456:abcdefghijklmnopqrstuvwx",
+    async () => new Response("", { status: 401 })
+  );
+  const network = await fetchTelegramBotIdentity(
+    "123456:abcdefghijklmnopqrstuvwx",
+    async () => {
+      throw new TypeError("fetch failed");
+    }
+  );
+
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.failureKind, "invalid_token");
+  assert.equal(invalid.recoverable, false);
+  assert.equal(invalid.step, "getMe");
+
+  assert.equal(network.ok, false);
+  assert.equal(network.failureKind, "network_error");
+  assert.equal(network.recoverable, true);
+  assert.equal(network.step, "getMe");
 });

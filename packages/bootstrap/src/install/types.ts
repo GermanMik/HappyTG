@@ -8,6 +8,13 @@ export type StepStatus = "pending" | "running" | "passed" | "warn" | "failed" | 
 export type LinuxFamily = "debian" | "fedora" | "unknown";
 export type SystemPackageManager = "brew" | "winget" | "choco" | "apt-get" | "dnf" | "manual";
 export type RepoSourceId = "primary" | "fallback" | "local";
+export type TelegramLookupStep = "getMe";
+export type TelegramLookupFailureKind =
+  | "missing_token"
+  | "invalid_token"
+  | "network_error"
+  | "api_error"
+  | "unexpected_response";
 export type InstallRuntimeErrorCode =
   | "repo_connectivity_failure"
   | "repo_retry_exhausted"
@@ -134,6 +141,20 @@ export interface TelegramBotIdentity {
   username?: string;
   firstName?: string;
   error?: string;
+  step?: TelegramLookupStep;
+  failureKind?: TelegramLookupFailureKind;
+  recoverable?: boolean;
+  statusCode?: number;
+}
+
+export interface TelegramLookupDiagnostic {
+  attempted: boolean;
+  step: TelegramLookupStep;
+  status: "not-attempted" | "validated" | "warning" | "failed";
+  message: string;
+  failureKind?: TelegramLookupFailureKind;
+  recoverable: boolean;
+  affectsConfiguration: boolean;
 }
 
 export interface EnvWriteResult {
@@ -214,6 +235,7 @@ export interface InstallResult {
     allowedUserIds: string[];
     homeChannel?: string;
     bot?: TelegramBotIdentity;
+    lookup?: TelegramLookupDiagnostic;
   };
   background: BackgroundSetupResult;
   postChecks: Array<{

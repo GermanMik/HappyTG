@@ -4,6 +4,7 @@ import type { BootstrapReport } from "../../../protocol/src/index.js";
 import {
   findUpwardFile,
   getLocalStateDir,
+  normalizeSpawnEnv,
   nowIso,
   parseDotEnv,
   readTextFileOrEmpty,
@@ -39,7 +40,7 @@ import {
   renderWelcomeScreen,
   waitForEnter
 } from "./tui.js";
-import { fetchTelegramBotIdentity, normalizeTelegramAllowedUserIds, pairTargetLabel, validateTelegramBotToken } from "./telegram.js";
+import { fetchTelegramBotIdentity, normalizeTelegramAllowedUserIds, pairTargetLabel, telegramLookupDiagnostic, validateTelegramBotToken } from "./telegram.js";
 import type {
   BackgroundMode,
   InstallCommandOptions,
@@ -182,7 +183,7 @@ async function addNpmGlobalBinToPath(input: {
   const binDir = input.platform === "win32" ? prefix : path.join(prefix, "bin");
   const delimiter = input.platform === "win32" ? ";" : ":";
   const currentPath = input.platform === "win32"
-    ? input.env.Path ?? input.env.PATH ?? ""
+    ? normalizeSpawnEnv(input.env, input.platform).Path ?? ""
     : input.env.PATH ?? "";
   const entries = currentPath.split(delimiter).filter(Boolean);
   if (entries.includes(binDir)) {
@@ -192,14 +193,15 @@ async function addNpmGlobalBinToPath(input: {
   setPath(input.env, input.platform, [binDir, ...entries].join(delimiter));
 }
 
-async function readExistingTelegramSetup(repoPath: string): Promise<TelegramSetup> {
+async function readExistingTelegramSetup(repoPath: string): Promise<TelegramSetup & { botUsername?: string }> {
   const envText = await readTextFileOrEmpty(path.join(repoPath, ".env"));
   const parsed = envText ? parseDotEnv(envText) : {};
 
   return {
     botToken: parsed.TELEGRAM_BOT_TOKEN ?? "",
     allowedUserIds: normalizeTelegramAllowedUserIds([parsed.TELEGRAM_ALLOWED_USER_IDS ?? ""]),
-    homeChannel: parsed.TELEGRAM_HOME_CHANNEL ?? ""
+    homeChannel: parsed.TELEGRAM_HOME_CHANNEL ?? "",
+    botUsername: parsed.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/u, "") || undefined
   };
 }
 
@@ -638,8 +640,10 @@ export async function runHappyTGInstall(
   const repoTelegramDefaults = await readExistingTelegramSetup(selectedChoice?.path ?? repoChoices.clonePath).catch(() => ({
     botToken: "",
     allowedUserIds: [],
-    homeChannel: ""
+    homeChannel: "",
+    botUsername: undefined
   }));
+  const knownBotUsername = repoTelegramDefaults.botUsername ?? "";
   const telegramInitial: TelegramSetup = {
     botToken: options.telegramBotToken ?? draft?.telegram?.botToken ?? repoTelegramDefaults.botToken,
     allowedUserIds: options.telegramAllowedUserIds.length > 0
@@ -661,6 +665,7 @@ export async function runHappyTGInstall(
   let activeStepId: string | undefined;
   let repoSyncResult: RepoSyncResult | undefined;
   let botIdentity: InstallResult["telegram"]["bot"] | undefined;
+  let telegramLookup: InstallResult["telegram"]["lookup"] | undefined;
   let background = createFallbackBackground(backgroundMode);
 
   const updateStep = (next: InstallStepRecord) => {
@@ -716,7 +721,12 @@ export async function runHappyTGInstall(
         configured: Boolean(telegramSetup.botToken),
         allowedUserIds: telegramSetup.allowedUserIds,
         homeChannel: telegramSetup.homeChannel || undefined,
-        bot: botIdentity
+        bot: botIdentity,
+        lookup: telegramLookup ?? telegramLookupDiagnostic({
+          botToken: telegramSetup.botToken,
+          identity: botIdentity,
+          knownUsername: knownBotUsername
+        })
       },
       background,
       postChecks: [],
@@ -1014,8 +1024,22 @@ export async function runHappyTGInstall(
       ? await deps.fetchTelegramBotIdentity(telegramSetup.botToken, input?.fetchImpl)
       : {
         ok: false,
-        error: "Bot token was not provided."
+        error: "Bot token was not provided.",
+        step: "getMe",
+        failureKind: "missing_token",
+        recoverable: false
       };
+    if (!botIdentity.ok && !botIdentity.username && knownBotUsername) {
+      botIdentity = {
+        ...botIdentity,
+        username: knownBotUsername
+      };
+    }
+    telegramLookup = telegramLookupDiagnostic({
+      botToken: telegramSetup.botToken,
+      identity: botIdentity,
+      knownUsername: knownBotUsername
+    });
     const envWrite = await deps.writeMergedEnvFile({
       repoRoot: repoSyncResult.path,
       env: installEnv,
@@ -1024,7 +1048,7 @@ export async function runHappyTGInstall(
         TELEGRAM_BOT_TOKEN: telegramSetup.botToken || undefined,
         TELEGRAM_ALLOWED_USER_IDS: telegramSetup.allowedUserIds.join(","),
         TELEGRAM_HOME_CHANNEL: telegramSetup.homeChannel || undefined,
-        TELEGRAM_BOT_USERNAME: botIdentity.ok ? botIdentity.username : undefined
+        TELEGRAM_BOT_USERNAME: (botIdentity.username ?? knownBotUsername) || undefined
       }
     });
     updateStep({
@@ -1044,27 +1068,26 @@ export async function runHappyTGInstall(
       status: "running",
       detail: "Validating Telegram bot token and identity."
     });
-    if (telegramSetup.botToken && botIdentity.ok) {
+    if (telegramLookup.status === "validated") {
       updateStep({
         ...steps.find((step) => step.id === "telegram-bot")!,
         status: "passed",
-        detail: botIdentity.username
+        detail: botIdentity?.username
           ? `Connected to @${botIdentity.username}.`
           : "Bot token validated."
       });
-    } else if (telegramSetup.botToken && !botIdentity.ok) {
-      warnings.push(`Telegram bot lookup: ${botIdentity.error ?? "validation failed"}`);
-      updateStep({
-        ...steps.find((step) => step.id === "telegram-bot")!,
-        status: "warn",
-        detail: botIdentity.error ?? "Unable to confirm the bot identity right now."
-      });
     } else {
-      warnings.push("Telegram bot token is still missing; later setup/doctor will keep warning until it is added.");
+      if (telegramLookup.status === "warning") {
+        warnings.push(`Telegram ${telegramLookup.step} warning: ${telegramLookup.message}`);
+      } else if (telegramLookup.status === "not-attempted") {
+        warnings.push("Telegram bot token is still missing; later setup/doctor will keep warning until it is added.");
+      }
       updateStep({
         ...steps.find((step) => step.id === "telegram-bot")!,
-        status: "warn",
-        detail: "No Telegram bot token was provided."
+        status: telegramLookup.status === "failed"
+          ? "failed"
+          : "warn",
+        detail: telegramLookup.message
       });
     }
 
@@ -1135,7 +1158,14 @@ export async function runHappyTGInstall(
       steps,
       error: partialFailure
     });
-    const pairTarget = pairTargetLabel(botIdentity.ok ? botIdentity : undefined);
+    const pairTarget = pairTargetLabel(botIdentity?.username
+      ? botIdentity
+      : knownBotUsername
+        ? {
+          ok: false,
+          username: knownBotUsername
+        }
+        : undefined);
     const result: InstallResult = {
       kind: "install",
       status: installStatusFromOutcome(outcome),
@@ -1157,7 +1187,8 @@ export async function runHappyTGInstall(
         configured: Boolean(telegramSetup.botToken),
         allowedUserIds: telegramSetup.allowedUserIds,
         homeChannel: telegramSetup.homeChannel || undefined,
-        bot: botIdentity
+        bot: botIdentity,
+        lookup: telegramLookup
       },
       background,
       postChecks: postCheckReports,
@@ -1169,6 +1200,7 @@ export async function runHappyTGInstall(
         branch: options.branch,
         envWrite,
         botIdentity,
+        telegramLookup,
         fallbackSource: repoSources.fallback?.url,
         fallbackUsed: repoSyncResult.fallbackUsed,
         outcome,
