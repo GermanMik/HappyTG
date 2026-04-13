@@ -1,0 +1,56 @@
+{
+  "taskId": "HTG-2026-04-13-windows-installer-telegram-codex-path",
+  "criteria": [
+    {
+      "criterion": "Installer distinguishes Telegram token/config failures from lookup/network/secondary secret failures.",
+      "artifacts": [
+        "packages/bootstrap/src/install/telegram.ts",
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install/types.ts",
+        "packages/bootstrap/src/cli.ts",
+        ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Windows Codex PATH diagnostics distinguish real missing Codex from recoverable PATH/shim issues without false cascade failure.",
+      "artifacts": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/runtime-adapters-test.txt",
+        ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/typecheck.txt"
+      ]
+    },
+    {
+      "criterion": "Installer summary and post-check UX separate completed install from follow-up environment issues.",
+      "artifacts": [
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/cli.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "packages/bootstrap/src/index.ts",
+        ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/test-integration.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "packages/bootstrap/src/cli.ts",
+    "packages/bootstrap/src/index.ts",
+    "packages/bootstrap/src/index.test.ts",
+    "packages/bootstrap/src/install/index.ts",
+    "packages/bootstrap/src/install/telegram.ts",
+    "packages/bootstrap/src/install/types.ts",
+    "packages/bootstrap/src/install.runtime.test.ts",
+    "packages/bootstrap/src/install.test.ts",
+    ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/runtime-adapters-test.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/build.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/lint.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/doctor.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/verify.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path/raw/bundle-validate.txt"
+  ],
+  "generatedAt": "2026-04-13T16:15:49Z"
+}

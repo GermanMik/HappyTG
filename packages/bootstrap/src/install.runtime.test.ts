@@ -339,6 +339,7 @@ test("runHappyTGInstall returns a structured runtime error for Windows shim spaw
     }, {
       deps: {
         detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
         detectRepoModeChoices: async () => ({
           clonePath: repoPath,
           currentInspection: repoInspection(tempDir),
@@ -730,7 +731,7 @@ test("Telegram setup reducer blocks invalid @bot usernames and keeps the user in
   assert.match(state.validationMessage ?? "", /BotFather token/);
 });
 
-test("runHappyTGInstall reports warning-only Telegram lookup failures as success-with-warnings", async () => {
+test("runHappyTGInstall reports warning-only Telegram getMe failures as success-with-warnings without dropping configured Telegram state", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-warning-only-"));
   const repoPath = path.join(tempDir, "HappyTG");
   await mkdir(repoPath, { recursive: true });
@@ -805,8 +806,97 @@ test("runHappyTGInstall reports warning-only Telegram lookup failures as success
     assert.equal(result.status, "warn");
     assert.equal(result.outcome, "success-with-warnings");
     assert.equal(result.error, undefined);
-    assert.deepEqual(result.warnings, ["Telegram bot lookup: fetch failed"]);
+    assert.deepEqual(result.warnings, ["Telegram getMe warning: Telegram API getMe could not confirm the bot identity: fetch failed."]);
+    assert.equal(result.telegram.configured, true);
+    assert.equal(result.telegram.lookup?.status, "warning");
+    assert.equal(result.telegram.lookup?.failureKind, "unexpected_response");
+    assert.match(result.telegram.lookup?.message ?? "", /getMe could not confirm the bot identity/i);
     assert.doesNotMatch(renderText(result), /\[FAIL\]/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall keeps an already-known Telegram username when getMe lookup fails", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-telegram-known-name-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+  await writeFile(
+    path.join(repoPath, ".env"),
+    "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\nTELEGRAM_BOT_USERNAME=known_happytg_bot\n",
+    "utf8"
+  );
+
+  try {
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: []
+    }, {
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: false,
+          changed: false,
+          addedKeys: [],
+          preservedKeys: ["TELEGRAM_BOT_USERNAME"]
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: false,
+          error: "fetch failed"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    assert.equal(result.telegram.bot?.username, "known_happytg_bot");
+    assert.match(result.telegram.lookup?.message ?? "", /Existing bot username @known_happytg_bot was kept\./);
+    assert.ok(result.nextSteps.some((step) => step.includes("@known_happytg_bot")));
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -851,6 +941,7 @@ test("runHappyTGInstall normalizes completed post-check failures into recoverabl
       }),
       deps: {
         detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
         detectRepoModeChoices: async () => ({
           clonePath: repoPath,
           currentInspection: repoInspection(tempDir),
@@ -906,6 +997,106 @@ test("runHappyTGInstall normalizes completed post-check failures into recoverabl
     assert.equal(result.error?.code, "installer_partial_failure");
     assert.match(result.error?.lastError ?? "", /Host is not paired yet/);
     assert.doesNotMatch(renderText(result), /Result: install flow is complete/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall keeps the final result at warning level when post-checks only report Codex PATH follow-up", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-postcheck-warn-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: ["setup", "doctor", "verify"]
+    }, {
+      runBootstrapCheck: async (command) => ({
+        id: `btr_${command}`,
+        hostFingerprint: "fp",
+        command,
+        status: "warn",
+        profileRecommendation: "recommended",
+        findings: [
+          {
+            code: "CODEX_PATH_PENDING",
+            severity: "warn",
+            message: "Codex CLI worked through the npm wrapper, but the shell PATH still needs an update."
+          }
+        ],
+        planPreview: ["Add the npm global bin directory to PATH and restart the shell."],
+        reportJson: {},
+        createdAt: "2026-04-13T00:00:00.000Z"
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: false,
+          error: "fetch failed"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    assert.equal(result.status, "warn");
+    assert.equal(result.outcome, "success-with-warnings");
+    assert.equal(result.error, undefined);
+    assert.deepEqual(result.postChecks.map((check) => check.status), ["warn", "warn", "warn"]);
+    assert.equal(result.steps.filter((step) => step.id.startsWith("check-")).every((step) => step.status === "warn"), true);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

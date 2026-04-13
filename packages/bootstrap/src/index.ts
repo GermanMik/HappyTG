@@ -3,7 +3,7 @@ import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 
-import type { BootstrapFinding, BootstrapReport } from "../../protocol/src/index.js";
+import type { BootstrapFinding, BootstrapReport, RuntimeReadiness } from "../../protocol/src/index.js";
 import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage } from "../../runtime-adapters/src/index.js";
 import {
   createId,
@@ -84,6 +84,14 @@ interface CodexInstallCheck {
   wrapperCandidates: string[];
   wrapperPaths: string[];
   pathLikelyIssue: boolean;
+}
+
+interface CodexReadinessResolution {
+  direct: RuntimeReadiness;
+  effective: RuntimeReadiness;
+  installCheck?: CodexInstallCheck;
+  pathPending: boolean;
+  wrapperPath?: string;
 }
 
 const criticalPortDefinitions: PortCheckDefinition[] = [
@@ -212,12 +220,15 @@ function formatCodexSummary(version: string | undefined): string {
 }
 
 function formatCodexPreflightSummary(input: {
+  pathPending?: boolean;
   available: boolean;
   missing?: boolean;
   version?: string;
 }): string {
   if (input.available) {
-    return formatCodexSummary(input.version);
+    return input.pathPending
+      ? `${formatCodexSummary(input.version)} (via npm wrapper; PATH follow-up still needed)`
+      : formatCodexSummary(input.version);
   }
 
   if (input.missing === false) {
@@ -392,6 +403,63 @@ async function detectCodexInstallCheck(
     wrapperCandidates,
     wrapperPaths,
     pathLikelyIssue: wrapperPaths.length > 0
+  };
+}
+
+async function resolveCodexReadiness(context: {
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+}): Promise<CodexReadinessResolution> {
+  const direct = await checkCodexReadiness({
+    cwd: context.cwd,
+    env: context.env,
+    platform: context.platform
+  });
+  if (direct.available || direct.missing === false) {
+    return {
+      direct,
+      effective: direct,
+      pathPending: false
+    };
+  }
+
+  const installCheck = await detectCodexInstallCheck(context.env, {
+    cwd: context.cwd,
+    platform: context.platform
+  });
+  if (!installCheck.pathLikelyIssue) {
+    return {
+      direct,
+      effective: direct,
+      installCheck,
+      pathPending: false
+    };
+  }
+
+  for (const wrapperPath of installCheck.wrapperPaths) {
+    const resolved = await checkCodexReadiness({
+      cwd: context.cwd,
+      env: context.env,
+      platform: context.platform,
+      binaryPath: wrapperPath
+    });
+    if (resolved.available || resolved.missing === false) {
+      return {
+        direct,
+        effective: resolved,
+        installCheck,
+        pathPending: resolved.available,
+        wrapperPath
+      };
+    }
+  }
+
+  return {
+    direct,
+    effective: direct,
+    installCheck,
+    pathPending: false
   };
 }
 
@@ -782,17 +850,13 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     platform
   });
   const hasGit = Boolean(gitBinaryPath);
-  const codex = await checkCodexReadiness({
+  const codexResolution = await resolveCodexReadiness({
     cwd,
     env,
     platform
   });
-  const codexInstallCheck = !codex.available && codex.missing !== false
-    ? await detectCodexInstallCheck(env, {
-      cwd,
-      platform
-    })
-    : undefined;
+  const codex = codexResolution.effective;
+  const codexInstallCheck = codexResolution.installCheck;
   const actionableSmokeWarnings = classifyCodexSmokeStderr(codex.smokeError ?? "").actionableLines;
   const tokenState = telegramTokenStatus(env);
   const [redis, portResults] = await Promise.all([
@@ -805,7 +869,12 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
 
   const preflight = [
     `Env: ${envPresenceSummary(envFilePath)}`,
-    `Codex: ${formatCodexPreflightSummary(codex)}`,
+    `Codex: ${formatCodexPreflightSummary({
+      available: codex.available,
+      missing: codex.missing,
+      version: codex.version,
+      pathPending: codexResolution.pathPending
+    })}`,
     `Telegram: ${tokenState.status === "configured" ? "configured" : tokenState.status.replaceAll("_", " ")}`,
     `Redis: ${redisSummary(redis)}`,
     `Ports: ${formatPortStateForSummary(portResults)}`
@@ -824,6 +893,16 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
       code: "GIT_MISSING",
       severity: "warn",
       message: "Git was not found in PATH. Install Git, verify `git --version`, then rerun `pnpm happytg doctor`."
+    });
+  }
+
+  if (codexResolution.pathPending) {
+    pushFinding(findings, {
+      code: "CODEX_PATH_PENDING",
+      severity: "warn",
+      message: codexInstallCheck?.npmBinDir
+        ? `Codex CLI worked through the npm wrapper at \`${codex.binaryPath}\`, but \`${codexInstallCheck.npmBinDir}\` is not on the current shell PATH yet. Update PATH or restart the shell so plain \`codex\` resolves directly.`
+        : `Codex CLI worked through the npm wrapper at \`${codex.binaryPath}\`, but the current shell PATH is still missing that directory. Update PATH or restart the shell so plain \`codex\` resolves directly.`
     });
   }
 
@@ -932,6 +1011,14 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
   if (tokenState.status !== "configured") {
     pushPlanStep(planPreview, "Set `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.");
   }
+  if (codexResolution.pathPending) {
+    pushPlanStep(
+      planPreview,
+      codexInstallCheck?.npmBinDir
+        ? `Add \`${codexInstallCheck.npmBinDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
+        : "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`."
+    );
+  }
   if (!codex.available && codex.missing !== false) {
     if (codexInstallCheck?.pathLikelyIssue) {
       pushPlanStep(
@@ -980,7 +1067,12 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
         binaryPath: gitBinaryPath ?? null
       },
       codex,
+      codexDirect: codexResolution.direct,
       codexInstallCheck: codexInstallCheck ?? null,
+      codexPathResolution: {
+        pathPending: codexResolution.pathPending,
+        wrapperPath: codexResolution.wrapperPath ?? null
+      },
       telegram: {
         status: tokenState.status,
         configured: tokenState.configured,

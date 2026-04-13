@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.3.3
+
+### Fixed
+
+- Installer Telegram diagnostics now distinguish invalid token/config problems from recoverable `getMe` lookup failures such as fetch/network errors.
+- Installer now preserves an already-known `TELEGRAM_BOT_USERNAME` for pair guidance when live Telegram identity lookup is the only failing layer, so configured bots no longer look fully unconfigured after a secondary lookup warning.
+- Windows installer/bootstrap follow-up checks now recover through runnable npm-installed Codex wrappers and downgrade that state to a PATH follow-up warning instead of cascading into a false missing-Codex failure.
+- Windows npm global bin injection inside the installer now uses normalized PATH handling, avoiding mixed-case `Path` / `PATH` loss that could make post-check execution more brittle.
+- Plain-text installer summaries now show Telegram as configured with an identity-lookup warning/failure when appropriate, reducing contradictory user-facing output.
+
+### Changed
+
+- Release metadata is aligned at `0.3.3` across the workspace for the Windows installer/runtime diagnostics follow-up release.
+
 ## v0.3.2
 
 ### Fixed

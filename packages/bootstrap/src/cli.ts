@@ -57,6 +57,26 @@ function installOutcomeSummary(outcome: InstallResult["outcome"]): string {
   }
 }
 
+function installTelegramSummary(result: InstallResult): string {
+  if (result.telegram.bot?.username) {
+    return `@${result.telegram.bot.username}`;
+  }
+
+  if (!result.telegram.configured) {
+    return "missing";
+  }
+
+  if (result.telegram.lookup?.status === "warning") {
+    return "configured (identity lookup warning)";
+  }
+
+  if (result.telegram.lookup?.status === "failed") {
+    return "configured (identity lookup failed)";
+  }
+
+  return "configured";
+}
+
 function findingLabel(severity: "info" | "warn" | "error"): string {
   return severity.toUpperCase().padEnd(5, " ");
 }
@@ -262,7 +282,7 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
       `Repo: ${result.repo.sync} ${result.repo.path}`,
       `Source: ${result.repo.source} ${result.repo.repoUrl}`,
       `Background: ${result.background.detail}`,
-      `Telegram: ${result.telegram.bot?.username ? `@${result.telegram.bot.username}` : result.telegram.configured ? "configured" : "missing"}`,
+      `Telegram: ${installTelegramSummary(result)}`,
       `Warnings: ${result.warnings.length}`
     ];
 

@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-04-13-windows-installer-telegram-codex-path",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-13-windows-installer-telegram-codex-path",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Windows installer Telegram/Codex path diagnostics",
+  "acceptanceCriteria": [
+    "Installer distinguishes Telegram token/config failures from lookup/network/secondary secret failures.",
+    "Windows Codex PATH diagnostics distinguish real missing Codex from recoverable PATH/shim issues without false cascade failure.",
+    "Installer summary and post-check UX separate completed install from follow-up environment issues."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-13T15:56:46.775Z",
+  "updatedAt": "2026-04-13T16:15:49Z"
+}
