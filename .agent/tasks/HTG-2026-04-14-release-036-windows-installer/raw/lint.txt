@@ -1,0 +1,1 @@
+Not run for this minimal bootstrap/docs/release-metadata diff.

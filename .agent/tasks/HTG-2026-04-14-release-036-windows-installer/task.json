@@ -1,0 +1,18 @@
+{
+  "id": "HTG-2026-04-14-release-036-windows-installer",
+  "sessionId": "ses_20260414_036",
+  "workspaceId": "ws_happytg",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-14-release-036-windows-installer",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Fix release 0.3.6 Windows installer paste and guidance",
+  "acceptanceCriteria": [
+    "Windows interactive Telegram token paste accepts terminal paste chunks with trailing newline or CRLF and preserves installer-native validation/masking.",
+    "Windows interactive allowed user ID paste accepts at least one pasted numeric ID and preserves typed input/navigation behavior.",
+    "Installer/bootstrap guidance explicitly names supported non-Docker infra alternatives such as system Redis or external REDIS_URL and no longer implies Docker is the only path when alternatives are already supported.",
+    "Release metadata is updated to 0.3.6 with changelog and release notes, and release validation passes."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-14T15:56:36.283Z",
+  "updatedAt": "2026-04-14T16:09:00.000Z"
+}

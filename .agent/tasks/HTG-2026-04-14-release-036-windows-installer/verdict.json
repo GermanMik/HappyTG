@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-14-release-036-windows-installer",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "fresh-verify-2026-04-14"
+  },
+  "checks": [
+    {
+      "name": "bootstrap test",
+      "ok": true,
+      "detail": "pnpm --filter @happytg/bootstrap test"
+    },
+    {
+      "name": "bootstrap typecheck",
+      "ok": true,
+      "detail": "pnpm --filter @happytg/bootstrap typecheck"
+    },
+    {
+      "name": "release check",
+      "ok": true,
+      "detail": "pnpm release:check --version 0.3.6"
+    },
+    {
+      "name": "task bundle validate",
+      "ok": true,
+      "detail": "pnpm happytg task validate --repo . --task HTG-2026-04-14-release-036-windows-installer"
+    }
+  ],
+  "generatedAt": "2026-04-14T16:09:00.000Z"
+}

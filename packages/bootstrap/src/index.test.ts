@@ -541,9 +541,66 @@ test("setup turns missing Telegram token into a short actionable first-run check
     assert.match((report.reportJson.preflight as string[]).join("\n"), /Redis: running on 127\.0\.0\.1:/);
     assert.match(report.planPreview.join("\n"), /pnpm daemon:pair/);
     assert.match(report.planPreview.join("\n"), /postgres minio/);
+    assert.match(report.planPreview.join("\n"), /skip Docker entirely|DATABASE_URL/);
     assert.match(report.planPreview.join("\n"), /Set `TELEGRAM_BOT_TOKEN`/);
   } finally {
     await closeServer(redis.server);
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("setup names existing PostgreSQL, Redis, and S3 endpoints when Redis is absent locally", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-redis-absent-"));
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const codexPath = path.join(tempDir, "codex.mjs");
+    const gitPath = path.join(tempDir, "git");
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeExecutable(
+        codexPath,
+        `
+          #!/usr/bin/env node
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex 0.115.0");
+            process.exit(0);
+          }
+          if (args[0] === "exec") {
+            console.log('{"type":"message","text":"OK"}');
+            process.exit(0);
+          }
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitPath)
+    ]);
+
+    const report = await runBootstrapCommand("setup", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: codexPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir
+      }
+    });
+
+    assert.ok(report.findings.some((item) => item.code === "REDIS_MISSING"));
+    assert.match(report.findings.find((item) => item.code === "REDIS_MISSING")?.message ?? "", /REDIS_URL/);
+    assert.match(report.planPreview.join("\n"), /DATABASE_URL/);
+    assert.match(report.planPreview.join("\n"), /REDIS_URL/);
+    assert.match(report.planPreview.join("\n"), /S3_ENDPOINT/);
+    assert.match(report.planPreview.join("\n"), /postgres redis minio/);
+  } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
 });
@@ -597,6 +654,7 @@ test("doctor reports Redis installed but stopped", async () => {
     });
 
     assert.ok(report.findings.some((item) => item.code === "REDIS_STOPPED"));
+    assert.match(report.findings.find((item) => item.code === "REDIS_STOPPED")?.message ?? "", /REDIS_URL/);
     assert.equal((report.reportJson.redis as { state: string }).state, "installed_stopped");
   } finally {
     await rm(tempDir, { recursive: true, force: true });

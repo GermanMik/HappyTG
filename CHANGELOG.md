@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.6
+
+### Fixed
+
+- Windows installer Telegram input now commits pasted terminal chunks that already include trailing newline or CRLF, so bot tokens and allowed user IDs survive real interactive paste flows.
+- Telegram allowed user ID normalization now accepts comma- or newline-separated pasted values without regressing typed editing, masking, or token validation.
+- Bootstrap Redis guidance now names supported non-Docker alternatives such as existing `REDIS_URL` / shared-service endpoints instead of implying Docker Compose is the only viable path.
+
+### Changed
+
+- Release metadata is aligned at `0.3.6` across the workspace for the Windows installer paste and dockerless-guidance follow-up release.
+
 ## v0.3.5
 
 ### Fixed

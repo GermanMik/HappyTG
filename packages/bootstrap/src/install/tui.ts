@@ -9,7 +9,7 @@ import type {
   RepoModeChoice,
   TelegramSetup
 } from "./types.js";
-import { validateTelegramBotToken } from "./telegram.js";
+import { normalizeTelegramAllowedUserIds, validateTelegramBotToken } from "./telegram.js";
 
 const COLORS = {
   blue: "\u001B[38;2;77;163;255m",
@@ -408,13 +408,57 @@ function stripBracketedPasteMarkers(chunk: string): string {
     .replace(/\u001B\[201~?/gu, "");
 }
 
-function appendInputChunk(draft: string, chunk: string): string {
-  const normalized = stripBracketedPasteMarkers(chunk).replace(/[\r\n]/gu, "");
+const TELEGRAM_FIELD_ORDER = ["botToken", "allowedUserIds", "homeChannel", "continue"] as const;
+type TelegramField = typeof TELEGRAM_FIELD_ORDER[number];
+type EditableTelegramField = Exclude<TelegramField, "continue">;
+
+function activeTelegramField(activeRow: number): TelegramField {
+  return TELEGRAM_FIELD_ORDER[activeRow] ?? "continue";
+}
+
+function draftForTelegramField(form: TelegramSetup, field: EditableTelegramField): string {
+  if (field === "botToken") {
+    return form.botToken;
+  }
+  if (field === "allowedUserIds") {
+    return form.allowedUserIds.join(", ");
+  }
+  return form.homeChannel;
+}
+
+function parseInputChunk(chunk: string): { text: string; submit: boolean } {
+  const normalized = stripBracketedPasteMarkers(chunk);
+  const trailingNewlines = normalized.match(/[\r\n]+$/u)?.[0] ?? "";
+  return {
+    text: trailingNewlines ? normalized.slice(0, -trailingNewlines.length) : normalized,
+    submit: trailingNewlines.length > 0
+  };
+}
+
+function appendInputChunk(field: EditableTelegramField, draft: string, chunk: string): string {
+  const normalized = field === "allowedUserIds"
+    ? chunk.replace(/[\r\n]+/gu, ", ")
+    : chunk.replace(/[\r\n]+/gu, "");
   if (!normalized) {
     return draft;
   }
 
   return `${draft}${normalized}`;
+}
+
+function commitTelegramDraft(state: TelegramFormControllerState, field: EditableTelegramField): void {
+  if (field === "botToken") {
+    state.form.botToken = state.draft.trim();
+    state.validationMessage = validateTelegramBotToken(state.form.botToken);
+    return;
+  }
+
+  if (field === "allowedUserIds") {
+    state.form.allowedUserIds = normalizeTelegramAllowedUserIds([state.draft]);
+    return;
+  }
+
+  state.form.homeChannel = state.draft.trim();
 }
 
 export interface TelegramFormControllerState {
@@ -449,7 +493,6 @@ export function reduceTelegramFormKeypress(
   state: TelegramFormControllerState;
   done: boolean;
 } {
-  const fieldOrder = ["botToken", "allowedUserIds", "homeChannel", "continue"] as const;
   const next: TelegramFormControllerState = {
     form: {
       botToken: state.form.botToken,
@@ -464,15 +507,16 @@ export function reduceTelegramFormKeypress(
 
   if (!next.editing) {
     if (input.key.name === "up") {
-      next.activeRow = (next.activeRow - 1 + fieldOrder.length) % fieldOrder.length;
+      next.activeRow = (next.activeRow - 1 + TELEGRAM_FIELD_ORDER.length) % TELEGRAM_FIELD_ORDER.length;
       return { state: next, done: false };
     }
     if (input.key.name === "down") {
-      next.activeRow = (next.activeRow + 1) % fieldOrder.length;
+      next.activeRow = (next.activeRow + 1) % TELEGRAM_FIELD_ORDER.length;
       return { state: next, done: false };
     }
     if (input.key.name === "return") {
-      if (fieldOrder[next.activeRow] === "continue") {
+      const activeField = activeTelegramField(next.activeRow);
+      if (activeField === "continue") {
         const validationMessage = validateTelegramBotToken(next.form.botToken);
         if (validationMessage) {
           next.activeRow = 0;
@@ -484,11 +528,7 @@ export function reduceTelegramFormKeypress(
 
       next.editing = true;
       next.validationMessage = undefined;
-      next.draft = fieldOrder[next.activeRow] === "botToken"
-        ? next.form.botToken
-        : fieldOrder[next.activeRow] === "allowedUserIds"
-          ? next.form.allowedUserIds.join(", ")
-          : next.form.homeChannel;
+      next.draft = draftForTelegramField(next.form, activeField);
       return { state: next, done: false };
     }
     if (input.key.name === "escape" || (input.key.ctrl && input.key.name === "c")) {
@@ -497,23 +537,17 @@ export function reduceTelegramFormKeypress(
     return { state: next, done: false };
   }
 
-  if (input.key.name === "return") {
-    if (fieldOrder[next.activeRow] === "botToken") {
-      next.form.botToken = next.draft.trim();
-    } else if (fieldOrder[next.activeRow] === "allowedUserIds") {
-      next.form.allowedUserIds = next.draft.split(",").map((item) => item.trim()).filter(Boolean);
-    } else if (fieldOrder[next.activeRow] === "homeChannel") {
-      next.form.homeChannel = next.draft.trim();
-    }
-    next.editing = false;
-    next.validationMessage = fieldOrder[next.activeRow] === "botToken"
-      ? validateTelegramBotToken(next.form.botToken)
-      : next.validationMessage;
-    return { state: next, done: false };
-  }
+  const activeField = activeTelegramField(next.activeRow);
+  const parsedChunk = input.chunk && !input.key.ctrl && !input.key.meta && input.key.name !== "tab"
+    ? parseInputChunk(input.chunk)
+    : {
+      text: "",
+      submit: false
+    };
+
   if (input.key.name === "backspace") {
     next.draft = next.draft.slice(0, -1);
-    if (fieldOrder[next.activeRow] === "botToken") {
+    if (activeField === "botToken") {
       next.validationMessage = undefined;
     }
     return { state: next, done: false };
@@ -522,11 +556,18 @@ export function reduceTelegramFormKeypress(
     next.editing = false;
     return { state: next, done: false };
   }
-  if (input.chunk && !input.key.ctrl && !input.key.meta && input.key.name !== "tab") {
-    next.draft = appendInputChunk(next.draft, input.chunk);
-    if (fieldOrder[next.activeRow] === "botToken") {
+  if (activeField !== "continue" && parsedChunk.text) {
+    next.draft = appendInputChunk(activeField, next.draft, parsedChunk.text);
+    if (activeField === "botToken") {
       next.validationMessage = undefined;
     }
+  }
+  if (input.key.name === "return" || parsedChunk.submit) {
+    if (activeField !== "continue") {
+      commitTelegramDraft(next, activeField);
+    }
+    next.editing = false;
+    return { state: next, done: false };
   }
   return { state: next, done: false };
 }
@@ -676,7 +717,7 @@ export async function promptTelegramForm(input: {
       form: controller.editing
         ? {
           botToken: controller.activeRow === 0 ? controller.draft : controller.form.botToken,
-          allowedUserIds: controller.activeRow === 1 ? controller.draft.split(",").map((item) => item.trim()).filter(Boolean) : controller.form.allowedUserIds,
+          allowedUserIds: controller.activeRow === 1 ? normalizeTelegramAllowedUserIds([controller.draft]) : controller.form.allowedUserIds,
           homeChannel: controller.activeRow === 2 ? controller.draft : controller.form.homeChannel
         }
         : controller.form,

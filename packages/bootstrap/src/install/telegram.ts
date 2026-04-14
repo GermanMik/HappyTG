@@ -4,7 +4,7 @@ import type { TelegramBotIdentity, TelegramLookupDiagnostic } from "./types.js";
 
 export function normalizeTelegramAllowedUserIds(values: string[]): string[] {
   return values
-    .flatMap((value) => value.split(","))
+    .flatMap((value) => value.split(/[,\r\n]+/u))
     .map((value) => value.trim())
     .filter(Boolean);
 }

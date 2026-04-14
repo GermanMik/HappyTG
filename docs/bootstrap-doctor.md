@@ -40,6 +40,8 @@ Use [Quickstart](./quickstart.md) for the shortest first run, [Installation](./i
 
 `pnpm happytg setup` remains the compact onboarding path after install or for an already-synced checkout.
 
+For the local `pnpm dev` path, Docker Compose is a convenience for shared infra, not the only supported shape. If `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` already point at reachable services, `setup` guidance can reuse them instead of assuming local Docker.
+
 It checks:
 
 - `.env` presence,

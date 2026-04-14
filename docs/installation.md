@@ -28,7 +28,7 @@ The shims only bootstrap Git / Node.js / `pnpm` enough to fetch the repo and han
 - `npm` for global Codex CLI installation
 - Codex CLI installed globally: `npm install -g @openai/codex`
 - Telegram bot token
-- PostgreSQL, Redis, and S3-compatible object storage for local or self-hosted runs
+- PostgreSQL, Redis, and S3-compatible object storage for local or self-hosted runs, either as existing services or via local Compose
 - Docker and Docker Compose for the packaged control-plane path
 
 ## Install Decision Tree
@@ -98,13 +98,15 @@ Run the first start in separate terminals so infra, pairing, and daemon startup 
 pnpm happytg install
 ```
 
-If Redis is already running on `localhost:6379`, reuse it:
+If `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` already point at reachable services, reuse them and skip Docker in this terminal.
+
+If Redis is already running on `localhost:6379` and you still want local Compose for PostgreSQL plus MinIO:
 
 ```bash
 docker compose -f infra/docker-compose.example.yml up postgres minio
 ```
 
-If Redis is missing or stopped:
+If PostgreSQL, Redis, and MinIO are not already provided elsewhere:
 
 ```bash
 docker compose -f infra/docker-compose.example.yml up postgres redis minio
@@ -173,7 +175,7 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
 ## Developer Install
 
 1. Run `pnpm happytg install` if you have not already completed the one-command flow.
-2. Start local infrastructure:
+2. Reuse existing PostgreSQL / Redis / S3-compatible services through `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT`, or start local infrastructure:
 
    ```bash
    docker compose -f infra/docker-compose.example.yml up postgres redis minio

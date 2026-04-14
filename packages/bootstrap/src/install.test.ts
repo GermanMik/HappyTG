@@ -10,7 +10,7 @@ import { mergeEnvTemplate, writeMergedEnvFile } from "./install/env.js";
 import { detectLinuxFamily } from "./install/platform.js";
 import { defaultDirtyWorktreeStrategy, detectRepoModeChoices, inspectRepo } from "./install/repo.js";
 import { fetchTelegramBotIdentity } from "./install/telegram.js";
-import { renderRepoModeScreen, renderTelegramScreen, renderWelcomeScreen, waitForEnter } from "./install/tui.js";
+import { promptTelegramForm, renderRepoModeScreen, renderTelegramScreen, renderWelcomeScreen, waitForEnter } from "./install/tui.js";
 
 async function git(args: string[], cwd: string): Promise<void> {
   const result = await runCommand({
@@ -223,6 +223,45 @@ test("waitForEnter resolves when ENTER close is pressed on the final screen", as
 
   await wait;
   assert.equal(rawMode, false);
+});
+
+test("promptTelegramForm accepts pasted token and allowed user IDs with trailing CRLF in the interactive keypress path", async () => {
+  const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
+  const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
+  let rawMode = false;
+  stdin.isTTY = true;
+  stdout.isTTY = true;
+  stdin.setRawMode = ((value: boolean) => {
+    rawMode = value;
+    return stdin;
+  }) as typeof stdin.setRawMode;
+
+  const prompt = promptTelegramForm({
+    stdin,
+    stdout,
+    initial: {
+      botToken: "",
+      allowedUserIds: [],
+      homeChannel: ""
+    }
+  });
+
+  queueMicrotask(() => {
+    stdin.emit("keypress", "\r", { name: "return" });
+    stdin.emit("keypress", "\u001B[200~123456:abcdefghijklmnopqrstuvwx\r\n\u001B[201~", {});
+    stdin.emit("keypress", "", { name: "down" });
+    stdin.emit("keypress", "\r", { name: "return" });
+    stdin.emit("keypress", "1001\r\n1002\r\n", {});
+    stdin.emit("keypress", "", { name: "down" });
+    stdin.emit("keypress", "", { name: "down" });
+    stdin.emit("keypress", "\r", { name: "return" });
+  });
+
+  const result = await prompt;
+  assert.equal(rawMode, false);
+  assert.equal(result.botToken, "123456:abcdefghijklmnopqrstuvwx");
+  assert.deepEqual(result.allowedUserIds, ["1001", "1002"]);
+  assert.equal(result.homeChannel, "");
 });
 
 test("fetchTelegramBotIdentity separates invalid-token API rejections from recoverable network lookups", async () => {

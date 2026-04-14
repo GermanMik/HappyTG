@@ -843,30 +843,32 @@ function buildSetupPlan(
 
   switch (redis.state) {
     case "running":
-      steps.push("Redis is already running locally. Reuse it and start compose infra without `redis`.");
+      steps.push("Redis is already running locally. Reuse it, and if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services, you can skip Docker entirely.");
       break;
     case "installed_stopped":
-      steps.push("Start your local Redis service, or include `redis` when you bring up infra.");
+      steps.push("Start your local Redis service, point `REDIS_URL` at an existing Redis instance, or include `redis` when you bring up shared infra.");
       break;
     case "absent":
-      steps.push("Bring up local infra with Redis included, or point `REDIS_URL` at an existing Redis instance.");
+      steps.push("If PostgreSQL, Redis, and S3-compatible storage already exist, point `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` at them; otherwise bring up shared infra with Redis included.");
       break;
     case "port_conflict":
-      steps.push("Port `6379` is busy. Reuse the existing system Redis if supported, or set `HAPPYTG_REDIS_HOST_PORT` before starting compose `redis`.");
+      steps.push("Port `6379` is busy. Reuse an existing Redis instance via `REDIS_URL`, or set `HAPPYTG_REDIS_HOST_PORT` before starting compose `redis`.");
       break;
     case "remote":
-      steps.push("Redis points to a remote URL. Verify it is reachable before first start.");
+      steps.push("Redis points to a remote URL. Verify it is reachable before first start, and skip local Docker infra entirely if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services.");
       break;
   }
 
   const infraCommand = defaultInfraComposeCommand(redis, platform);
   if (redis.state === "running") {
-    steps.push(`Start shared infra: \`${infraCommand}\`.`);
+    steps.push(`If PostgreSQL and S3-compatible storage are not already available, start the remaining shared infra: \`${infraCommand}\`.`);
   } else if (redis.state === "port_conflict") {
     steps.push(`If you need container Redis, use \`${commands.inlineEnvExample("HAPPYTG_REDIS_HOST_PORT", 6380, "docker compose -f infra/docker-compose.example.yml up redis")}\`.`);
     steps.push(`Then start the remaining shared infra: \`docker compose -f infra/docker-compose.example.yml up postgres minio\`.`);
+  } else if (redis.state === "remote") {
+    steps.push("If PostgreSQL, Redis, and S3-compatible storage are already configured and reachable, continue without Docker. Otherwise start only the missing shared services.");
   } else {
-    steps.push(`Start shared infra: \`${infraCommand}\`.`);
+    steps.push(`If you are not reusing existing PostgreSQL / Redis / S3-compatible services, start shared infra: \`${infraCommand}\`.`);
   }
 
   const occupiedHappyTGPorts = portResults.filter((item) => item.state === "occupied_expected" && ["miniapp", "api", "bot", "worker"].includes(item.id));
@@ -1008,14 +1010,14 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
       pushFinding(findings, {
         code: "REDIS_STOPPED",
         severity: "warn",
-        message: "Redis appears to be installed but not running. Start Redis, or include `redis` when you bring up shared infra."
+        message: "Redis appears to be installed but not running. Start Redis, point `REDIS_URL` at an existing Redis instance, or include `redis` when you bring up shared infra."
       });
       break;
     case "absent":
       pushFinding(findings, {
         code: "REDIS_MISSING",
         severity: "warn",
-        message: "Redis was not detected locally. Start system Redis, or include `redis` when you bring up shared infra."
+        message: "Redis was not detected locally. Start system Redis, point `REDIS_URL` at an existing Redis instance, or include `redis` when you bring up shared infra."
       });
       break;
     case "port_conflict":
