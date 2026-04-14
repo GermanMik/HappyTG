@@ -1,0 +1,42 @@
+{
+  "taskId": "HTG-2026-04-13-windows-codex-appdata-wrapper",
+  "criteria": [
+    {
+      "criterion": "Bootstrap detects runnable Codex wrappers in standard Windows npm user bin locations even when npm prefix probing is unavailable.",
+      "artifacts": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Installer post-checks treat that state as PATH follow-up warning instead of recoverable failure.",
+      "artifacts": [
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "packages/bootstrap/src/index.ts",
+        ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Diagnostics remain actionable for truly missing Codex installs.",
+      "artifacts": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/typecheck.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "packages/bootstrap/src/index.ts",
+    "packages/bootstrap/src/index.test.ts",
+    "packages/bootstrap/src/install.runtime.test.ts",
+    ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/build.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/lint.txt",
+    ".agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper/raw/bundle-validate.txt"
+  ],
+  "generatedAt": "2026-04-14T03:10:59Z"
+}

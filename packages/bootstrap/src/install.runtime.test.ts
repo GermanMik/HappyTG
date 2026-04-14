@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -12,6 +13,7 @@ import { runHappyTGInstall } from "./install/index.js";
 import { syncRepository } from "./install/repo.js";
 import { writeInstallDraft as persistInstallDraft } from "./install/state.js";
 import { createTelegramFormController, reduceTelegramFormKeypress, renderMaskedSecretPreview } from "./install/tui.js";
+import { runBootstrapCommand } from "./index.js";
 import type { InstallDraftState, InstallerEnvironment, InstallerRepoSource, RepoInspection } from "./install/types.js";
 
 async function writeExecutable(filePath: string, source: string): Promise<void> {
@@ -70,6 +72,18 @@ async function createCrossPlatformWindowsShim(tempDir: string, name: string, ver
   };
 }
 
+async function reserveFreePort(): Promise<number> {
+  const server = net.createServer();
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Failed to reserve a free port");
+  }
+  const { port } = address;
+  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  return port;
+}
+
 function baseEnvironment(): InstallerEnvironment {
   return {
     platform: {
@@ -82,6 +96,19 @@ function baseEnvironment(): InstallerEnvironment {
       isInteractiveTerminal: false
     },
     dependencies: []
+  };
+}
+
+function windowsEnvironment(): InstallerEnvironment {
+  const base = baseEnvironment();
+  return {
+    ...base,
+    platform: {
+      ...base.platform,
+      platform: "win32",
+      shell: "C:\\Windows\\System32\\cmd.exe",
+      systemPackageManager: "winget"
+    }
   };
 }
 
@@ -1098,6 +1125,163 @@ test("runHappyTGInstall keeps the final result at warning level when post-checks
     assert.deepEqual(result.postChecks.map((check) => check.status), ["warn", "warn", "warn"]);
     assert.equal(result.steps.filter((step) => step.id.startsWith("check-")).every((step) => step.status === "warn"), true);
   } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning level with real bootstrap checks", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-appdata-wrapper-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  const configPath = path.join(tempDir, "config.toml");
+  const gitBinaryPath = path.join(tempDir, "git.cmd");
+  const pnpmBinaryPath = path.join(tempDir, "pnpm.cmd");
+  const stateDir = path.join(tempDir, ".happytg-state");
+  const appDataDir = path.join(tempDir, "AppData", "Roaming");
+  const npmBinDir = path.join(appDataDir, "npm");
+  await mkdir(npmBinDir, { recursive: true });
+  const { shimPath: wrapperPath } = await createCrossPlatformWindowsShim(npmBinDir, "codex", "codex shim 0.119.0");
+
+  const previousEnv = {
+    PATH: process.env.PATH,
+    Path: process.env.Path,
+    PATHEXT: process.env.PATHEXT,
+    pathext: process.env.pathext,
+    APPDATA: process.env.APPDATA,
+    USERPROFILE: process.env.USERPROFILE,
+    HOME: process.env.HOME,
+    CODEX_CONFIG_PATH: process.env.CODEX_CONFIG_PATH,
+    HAPPYTG_STATE_DIR: process.env.HAPPYTG_STATE_DIR,
+    HAPPYTG_MINIAPP_PORT: process.env.HAPPYTG_MINIAPP_PORT,
+    HAPPYTG_API_PORT: process.env.HAPPYTG_API_PORT,
+    HAPPYTG_BOT_PORT: process.env.HAPPYTG_BOT_PORT,
+    HAPPYTG_WORKER_PORT: process.env.HAPPYTG_WORKER_PORT,
+    HAPPYTG_REDIS_HOST_PORT: process.env.HAPPYTG_REDIS_HOST_PORT,
+    REDIS_URL: process.env.REDIS_URL
+  };
+
+  try {
+    await Promise.all([
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeFile(gitBinaryPath, "@echo off\r\n", "utf8")
+    ]);
+
+    process.env.PATH = tempDir;
+    process.env.Path = "";
+    process.env.PATHEXT = "";
+    process.env.pathext = ".cmd;.exe";
+    process.env.APPDATA = appDataDir;
+    process.env.USERPROFILE = tempDir;
+    process.env.HOME = tempDir;
+    process.env.CODEX_CONFIG_PATH = configPath;
+    process.env.HAPPYTG_STATE_DIR = stateDir;
+    process.env.HAPPYTG_MINIAPP_PORT = String(await reserveFreePort());
+    process.env.HAPPYTG_API_PORT = String(await reserveFreePort());
+    process.env.HAPPYTG_BOT_PORT = String(await reserveFreePort());
+    process.env.HAPPYTG_WORKER_PORT = String(await reserveFreePort());
+    process.env.HAPPYTG_REDIS_HOST_PORT = String(await reserveFreePort());
+    process.env.REDIS_URL = "redis://example.com:6379";
+
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: ["setup", "doctor", "verify"]
+    }, {
+      runBootstrapCheck: runBootstrapCommand,
+      deps: {
+        detectInstallerEnvironment: async () => windowsEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? pnpmBinaryPath : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: pnpmBinaryPath,
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async ({ repoRoot, updates }) => {
+          const entries = Object.entries(updates).filter(([, value]) => value !== undefined);
+          const envFilePath = path.join(repoRoot, ".env");
+          await writeFile(
+            envFilePath,
+            `${entries.map(([key, value]) => `${key}=${value}`).join("\n")}\n`,
+            "utf8"
+          );
+          return {
+            envFilePath,
+            created: true,
+            changed: true,
+            addedKeys: entries.map(([key]) => key),
+            preservedKeys: []
+          };
+        },
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    const rendered = renderText(result);
+    const escapedNpmBinDir = npmBinDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    assert.equal(result.status, "warn");
+    assert.equal(result.outcome, "success-with-warnings");
+    assert.equal(result.error, undefined);
+    assert.deepEqual(result.postChecks.map((check) => check.status), ["warn", "warn", "warn"]);
+    assert.equal(result.steps.filter((step) => step.id.startsWith("check-")).every((step) => step.status === "warn"), true);
+    assert.match(result.postChecks[0]?.summary ?? "", new RegExp(escapedNpmBinDir));
+    assert.match(result.steps.find((step) => step.id === "check-setup")?.detail ?? "", new RegExp(escapedNpmBinDir));
+    assert.match(rendered, /install flow is complete with warnings/i);
+    assert.doesNotMatch(rendered, /install needs follow-up/i);
+    assert.doesNotMatch(rendered, /recoverable issues/i);
+    assert.ok(wrapperPath.endsWith("codex.cmd"));
+  } finally {
+    for (const [key, value] of Object.entries(previousEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
     await rm(tempDir, { recursive: true, force: true });
   }
 });

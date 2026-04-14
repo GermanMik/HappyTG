@@ -1,0 +1,80 @@
+
+> happytg@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG
+> turbo typecheck
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running typecheck in 13 packages
+   • Remote caching disabled
+
+@happytg/policy-engine:typecheck: cache hit, replaying logs cbbcdfac053499e3
+@happytg/host-daemon:typecheck: cache hit, replaying logs da4148f343b14799
+@happytg/policy-engine:typecheck: 
+@happytg/policy-engine:typecheck: > @happytg/policy-engine@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/policy-engine
+@happytg/policy-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:typecheck: 
+@happytg/host-daemon:typecheck: 
+@happytg/host-daemon:typecheck: > @happytg/host-daemon@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/host-daemon
+@happytg/host-daemon:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:typecheck: 
+@happytg/api:typecheck: cache hit, replaying logs 585ee91d4afed6b6
+@happytg/repo-proof:typecheck: cache hit, replaying logs 8a11f83a23d4510b
+@happytg/api:typecheck: 
+@happytg/api:typecheck: > @happytg/api@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/api
+@happytg/api:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/api:typecheck: 
+@happytg/repo-proof:typecheck: 
+@happytg/repo-proof:typecheck: > @happytg/repo-proof@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/repo-proof
+@happytg/repo-proof:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:typecheck: 
+@happytg/bot:typecheck: cache hit, replaying logs a22f23a4e855605e
+@happytg/bot:typecheck: 
+@happytg/bot:typecheck: > @happytg/bot@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/bot
+@happytg/bot:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bot:typecheck: 
+@happytg/miniapp:typecheck: cache hit, replaying logs 63de59ffe7e794d9
+@happytg/miniapp:typecheck: 
+@happytg/miniapp:typecheck: > @happytg/miniapp@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/miniapp
+@happytg/miniapp:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/miniapp:typecheck: 
+@happytg/runtime-adapters:typecheck: cache hit, replaying logs f78ae4926d3ff6bc
+@happytg/runtime-adapters:typecheck: 
+@happytg/runtime-adapters:typecheck: > @happytg/runtime-adapters@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/runtime-adapters
+@happytg/runtime-adapters:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:typecheck: 
+@happytg/shared:typecheck: cache hit, replaying logs be68f6becde4d340
+@happytg/shared:typecheck: 
+@happytg/shared:typecheck: > @happytg/shared@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/shared
+@happytg/shared:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/shared:typecheck: 
+@happytg/approval-engine:typecheck: cache hit, replaying logs d1c3bd30f291c986
+@happytg/approval-engine:typecheck: 
+@happytg/approval-engine:typecheck: > @happytg/approval-engine@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/approval-engine
+@happytg/approval-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:typecheck: 
+@happytg/worker:typecheck: cache hit, replaying logs d2df5bac3c45573f
+@happytg/worker:typecheck: 
+@happytg/worker:typecheck: > @happytg/worker@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/apps/worker
+@happytg/worker:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/worker:typecheck: 
+@happytg/bootstrap:typecheck: cache hit, replaying logs accffe1a5af3098e
+@happytg/bootstrap:typecheck: 
+@happytg/bootstrap:typecheck: > @happytg/bootstrap@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/bootstrap
+@happytg/bootstrap:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:typecheck: 
+@happytg/hooks:typecheck: cache hit, replaying logs b00687bffc0d890b
+@happytg/hooks:typecheck: 
+@happytg/hooks:typecheck: > @happytg/hooks@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/hooks
+@happytg/hooks:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:typecheck: 
+@happytg/protocol:typecheck: cache hit, replaying logs ff19dce274e7ce3c
+@happytg/protocol:typecheck: 
+@happytg/protocol:typecheck: > @happytg/protocol@0.3.3 typecheck /Users/mikhaylov-g/Documents/Develop/HappyTG/packages/protocol
+@happytg/protocol:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:typecheck: 
+
+ Tasks:    13 successful, 13 total
+Cached:    13 cached, 13 total
+  Time:    198ms >>> FULL TURBO
+

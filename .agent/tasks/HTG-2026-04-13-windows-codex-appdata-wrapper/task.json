@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-04-13-windows-codex-appdata-wrapper",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "/Users/mikhaylov-g/Documents/Develop/HappyTG/.agent/tasks/HTG-2026-04-13-windows-codex-appdata-wrapper",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Windows Codex APPDATA wrapper detection",
+  "acceptanceCriteria": [
+    "Bootstrap detects runnable Codex wrappers in standard Windows npm user bin locations even when npm prefix probing is unavailable.",
+    "Installer post-checks treat that state as PATH follow-up warning instead of recoverable failure.",
+    "Diagnostics remain actionable for truly missing Codex installs."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-14T02:59:18.821Z",
+  "updatedAt": "2026-04-14T03:10:59Z"
+}
