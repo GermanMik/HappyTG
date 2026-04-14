@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.4
+
+### Fixed
+
+- Windows bootstrap now detects runnable Codex wrappers in standard user npm bin directories such as `%APPDATA%\\npm` even when `npm prefix -g` probing is unavailable in the current shell.
+- Installer post-checks no longer escalate that Windows APPDATA wrapper case into a false missing-Codex recoverable failure; the outcome now stays at warning level with explicit PATH follow-up guidance.
+- `CODEX_PATH_PENDING` diagnostics now include the recovered wrapper directory in both findings and next-step text, making the fix actionable instead of generic.
+
+### Changed
+
+- Release metadata is aligned at `0.3.4` across the workspace for the Windows APPDATA Codex wrapper follow-up release.
+
 ## v0.3.3
 
 ### Fixed

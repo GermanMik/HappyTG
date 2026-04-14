@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-13-windows-codex-appdata-wrapper",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-1-2026-04-14"
+  },
+  "checks": [
+    {
+      "name": "bootstrap-appdata-wrapper-detection",
+      "ok": true,
+      "detail": "Bootstrap now detects Codex wrappers under standard Windows user npm bin locations such as %APPDATA%\\\\npm even when npm prefix probing is unavailable."
+    },
+    {
+      "name": "installer-warning-level-outcome",
+      "ok": true,
+      "detail": "Installer runtime coverage confirms that setup, doctor, and verify stay at warning level with the real bootstrap checks when Codex is reachable only through the APPDATA shim path."
+    },
+    {
+      "name": "diagnostic-precision",
+      "ok": true,
+      "detail": "PATH follow-up messages and plan steps now include the recovered wrapper directory, while truly missing wrapper cases still keep the missing-or-partial-install guidance."
+    },
+    {
+      "name": "verification-commands",
+      "ok": true,
+      "detail": "Bootstrap tests, workspace build, typecheck, lint, and bundle validation all passed after the fix."
+    }
+  ],
+  "generatedAt": "2026-04-14T03:10:59Z"
+}

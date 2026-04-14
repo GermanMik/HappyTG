@@ -80,6 +80,7 @@ interface CodexInstallCheck {
   npmBinaryPath: string | null;
   npmPrefix: string | null;
   npmBinDir: string | null;
+  detectedBinDir: string | null;
   prefixChecked: boolean;
   wrapperCandidates: string[];
   wrapperPaths: string[];
@@ -243,8 +244,17 @@ function codexUnavailableMessage(): string {
 }
 
 function codexMissingMessage(installCheck?: CodexInstallCheck): string {
-  if (installCheck?.prefixChecked && installCheck.pathLikelyIssue) {
-    return "Codex CLI is not on the current shell PATH yet. HappyTG found Codex wrapper files under the global npm prefix, so this looks like a PATH issue. Update PATH, restart the shell, verify `codex --version`, then run `pnpm happytg doctor`.";
+  if (installCheck?.pathLikelyIssue) {
+    const detectedBinDir = installCheck.detectedBinDir;
+    if (!installCheck.prefixChecked) {
+      return detectedBinDir
+        ? `Codex CLI is not on the current shell PATH yet. HappyTG found Codex wrapper files under \`${detectedBinDir}\`, so this looks like a PATH issue. Update PATH, restart the shell, verify \`codex --version\`, then run \`pnpm happytg doctor\`.`
+        : "Codex CLI is not on the current shell PATH yet. HappyTG found Codex wrapper files in a likely Windows npm bin location, so this looks like a PATH issue. Update PATH, restart the shell, verify `codex --version`, then run `pnpm happytg doctor`.";
+    }
+
+    return detectedBinDir
+      ? `Codex CLI is not on the current shell PATH yet. HappyTG found Codex wrapper files under \`${detectedBinDir}\`, so this looks like a PATH issue. Update PATH, restart the shell, verify \`codex --version\`, then run \`pnpm happytg doctor\`.`
+      : "Codex CLI is not on the current shell PATH yet. HappyTG found Codex wrapper files under the global npm prefix, so this looks like a PATH issue. Update PATH, restart the shell, verify `codex --version`, then run `pnpm happytg doctor`.";
   }
 
   if (installCheck?.prefixChecked) {
@@ -252,6 +262,35 @@ function codexMissingMessage(installCheck?: CodexInstallCheck): string {
   }
 
   return codexCliMissingMessage();
+}
+
+function likelyWindowsNpmBinDirs(env: NodeJS.ProcessEnv): string[] {
+  const dirs = new Set<string>();
+  const appData = env.APPDATA?.trim();
+  const userProfile = env.USERPROFILE?.trim();
+  const home = env.HOME?.trim();
+
+  if (appData) {
+    dirs.add(path.join(appData, "npm"));
+  }
+  if (userProfile) {
+    dirs.add(path.join(userProfile, "AppData", "Roaming", "npm"));
+  }
+  if (home) {
+    dirs.add(path.join(home, "AppData", "Roaming", "npm"));
+  }
+
+  return [...dirs].filter(Boolean);
+}
+
+function detectedCodexBinDir(installCheck?: CodexInstallCheck): string | null {
+  if (!installCheck) {
+    return null;
+  }
+
+  return installCheck.detectedBinDir
+    ?? installCheck.npmBinDir
+    ?? (installCheck.wrapperPaths[0] ? path.dirname(installCheck.wrapperPaths[0]) : null);
 }
 
 function formatPortStateForSummary(results: PortCheckResult[]): string {
@@ -387,6 +426,13 @@ async function detectCodexInstallCheck(
     candidateSet.add(path.join(npmBinDir, "codex.cmd"));
     candidateSet.add(path.join(npmBinDir, "codex.ps1"));
   }
+  if (options.platform === "win32") {
+    for (const dir of likelyWindowsNpmBinDirs(env)) {
+      candidateSet.add(path.join(dir, "codex"));
+      candidateSet.add(path.join(dir, "codex.cmd"));
+      candidateSet.add(path.join(dir, "codex.ps1"));
+    }
+  }
 
   const wrapperCandidates = [...candidateSet];
   const wrapperChecks = await Promise.all(wrapperCandidates.map(async (candidate) => ({
@@ -394,11 +440,13 @@ async function detectCodexInstallCheck(
     exists: await fileExists(candidate)
   })));
   const wrapperPaths = wrapperChecks.filter((entry) => entry.exists).map((entry) => entry.candidate);
+  const detectedBinDir = npmBinDir || (wrapperPaths[0] ? path.dirname(wrapperPaths[0]) : null);
 
   return {
     npmBinaryPath: npmBinaryPath ?? null,
     npmPrefix: npmPrefix || null,
     npmBinDir: npmBinDir || null,
+    detectedBinDir,
     prefixChecked: Boolean(npmBinaryPath && npmRun?.exitCode === 0 && npmPrefix),
     wrapperCandidates,
     wrapperPaths,
@@ -897,11 +945,12 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
   }
 
   if (codexResolution.pathPending) {
+    const binDir = detectedCodexBinDir(codexInstallCheck);
     pushFinding(findings, {
       code: "CODEX_PATH_PENDING",
       severity: "warn",
-      message: codexInstallCheck?.npmBinDir
-        ? `Codex CLI worked through the npm wrapper at \`${codex.binaryPath}\`, but \`${codexInstallCheck.npmBinDir}\` is not on the current shell PATH yet. Update PATH or restart the shell so plain \`codex\` resolves directly.`
+      message: binDir
+        ? `Codex CLI worked through the npm wrapper at \`${codex.binaryPath}\`, but \`${binDir}\` is not on the current shell PATH yet. Update PATH or restart the shell so plain \`codex\` resolves directly.`
         : `Codex CLI worked through the npm wrapper at \`${codex.binaryPath}\`, but the current shell PATH is still missing that directory. Update PATH or restart the shell so plain \`codex\` resolves directly.`
     });
   }
@@ -1012,19 +1061,21 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     pushPlanStep(planPreview, "Set `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.");
   }
   if (codexResolution.pathPending) {
+    const binDir = detectedCodexBinDir(codexInstallCheck);
     pushPlanStep(
       planPreview,
-      codexInstallCheck?.npmBinDir
-        ? `Add \`${codexInstallCheck.npmBinDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
+      binDir
+        ? `Add \`${binDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
         : "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`."
     );
   }
   if (!codex.available && codex.missing !== false) {
     if (codexInstallCheck?.pathLikelyIssue) {
+      const binDir = detectedCodexBinDir(codexInstallCheck);
       pushPlanStep(
         planPreview,
-        codexInstallCheck.npmBinDir
-          ? `Add \`${codexInstallCheck.npmBinDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
+        binDir
+          ? `Add \`${binDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
           : "Add the global npm bin directory to PATH, restart the shell, then verify `codex --version`."
       );
     } else {

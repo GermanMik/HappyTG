@@ -398,6 +398,56 @@ test("doctor recovers through the npm wrapper when Codex is off PATH and leaves 
   }
 });
 
+test("doctor recovers through a standard Windows APPDATA npm wrapper path when npm prefix probing is unavailable", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-codex-appdata-"));
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const gitBinaryPath = path.join(tempDir, "git.cmd");
+    const appDataDir = path.join(tempDir, "AppData", "Roaming");
+    const npmBinDir = path.join(appDataDir, "npm");
+    await mkdir(npmBinDir, { recursive: true });
+    const wrapperPath = await createWindowsCodexShim(npmBinDir, "codex shim 0.119.0");
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeFile(gitBinaryPath, "@echo off\r\n", "utf8")
+    ]);
+
+    const report = await runBootstrapCommand("doctor", {
+      cwd: tempDir,
+      platform: "win32",
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir,
+        Path: "",
+        PATHEXT: "",
+        pathext: ".cmd;.exe",
+        APPDATA: appDataDir,
+        USERPROFILE: tempDir
+      }
+    });
+
+    assert.equal(report.status, "warn");
+    assert.ok(!report.findings.some((item) => item.code === "CODEX_MISSING"));
+    assert.ok(report.findings.some((item) => item.code === "CODEX_PATH_PENDING"));
+    assert.match(report.findings.find((item) => item.code === "CODEX_PATH_PENDING")?.message ?? "", new RegExp(npmBinDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(report.planPreview.join("\n"), new RegExp(npmBinDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.equal((report.reportJson.codex as { binaryPath: string }).binaryPath, wrapperPath);
+    assert.equal((report.reportJson.codexPathResolution as { pathPending: boolean }).pathPending, true);
+    assert.deepEqual((report.reportJson.codexInstallCheck as { wrapperPaths: string[] }).wrapperPaths, [wrapperPath]);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-codex-partial-install-"));
   try {
