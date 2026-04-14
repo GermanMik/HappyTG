@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.7
+
+### Fixed
+
+- Interactive installer Telegram token entry now starts blank instead of reusing persisted token values from `.env` or saved draft state.
+- The Telegram token reducer keeps supporting clear-then-paste replacement, so replacing a token after deleting the existing draft remains stable in the interactive flow.
+- Interactive installer coverage now asserts that pre-existing token state does not leak back into the initial Telegram screen while freshly pasted tokens still save normally.
+
+### Changed
+
+- Release metadata is aligned at `0.3.7` across the workspace for the Telegram token field follow-up release.
+
 ## v0.3.6
 
 ### Fixed

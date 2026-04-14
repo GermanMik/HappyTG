@@ -672,7 +672,9 @@ export async function runHappyTGInstall(
   }));
   const knownBotUsername = repoTelegramDefaults.botUsername ?? "";
   const telegramInitial: TelegramSetup = {
-    botToken: options.telegramBotToken ?? draft?.telegram?.botToken ?? repoTelegramDefaults.botToken,
+    botToken: interactive
+      ? options.telegramBotToken ?? ""
+      : options.telegramBotToken ?? draft?.telegram?.botToken ?? repoTelegramDefaults.botToken,
     allowedUserIds: options.telegramAllowedUserIds.length > 0
       ? normalizeTelegramAllowedUserIds(options.telegramAllowedUserIds)
       : draft?.telegram?.allowedUserIds ?? repoTelegramDefaults.allowedUserIds,

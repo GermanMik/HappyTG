@@ -1,0 +1,5 @@
+
+> @happytg/bootstrap@0.3.7 lint C:\Develop\Projects\HappyTG\packages\bootstrap
+> echo "TODO: lint bootstrap"
+
+"TODO: lint bootstrap"

@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-04-14-release-037-telegram-token-field",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-14-release-037-telegram-token-field",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Fix release 0.3.7 Telegram token field",
+  "acceptanceCriteria": [
+    "Interactive Telegram token entry starts blank instead of reusing persisted token values from draft or .env.",
+    "Pasting a Telegram token into the interactive field no longer appends onto stale existing content, and clearing the field then pasting again remains supported.",
+    "Release metadata is updated to 0.3.7 and release validation passes."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-14T16:40:13.166Z",
+  "updatedAt": "2026-04-14T16:48:44.354Z"
+}

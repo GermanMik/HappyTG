@@ -1,0 +1,31 @@
+✔ syncRepository retries transient primary failures and reports attempt progress (19.3659ms)
+✔ syncRepository returns repo_retry_exhausted after 5 primary attempts (11.2283ms)
+✔ syncRepository falls back to the configured alternative source after exhausting primary retries (16.068ms)
+✔ syncRepository reports repo_fallback_failure when both configured sources fail (14.9479ms)
+(node:2016) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ runCommand normalizes Windows shim companions like pnpm.cmd (133.7365ms)
+✔ runHappyTGInstall returns a structured runtime error for Windows shim spawn failures instead of throwing usage-style failures (17.1084ms)
+✔ runHappyTGInstall returns a structured runtime error when non-interactive mode is missing a Telegram token (18.882ms)
+✔ runHappyTGInstall rejects bot usernames like @name in the token field before runtime work starts (9.9322ms)
+✔ runHappyTGInstall resumes saved installer values on rerun (17.6661ms)
+✔ Telegram setup reducer treats pasted token chunks as text and preserves editing/navigation behavior (1.6258ms)
+✔ Telegram setup reducer commits pasted token and allowed user ID chunks that include trailing CRLF (0.3482ms)
+✔ Telegram setup reducer supports clearing a prefilled token and pasting a replacement (0.3581ms)
+✔ renderMaskedSecretPreview safely degrades for short values (0.1266ms)
+✔ Telegram setup reducer blocks invalid @bot usernames and keeps the user in the form (0.2531ms)
+✔ runHappyTGInstall reports warning-only Telegram getMe failures as success-with-warnings without dropping configured Telegram state (25.7873ms)
+✔ runHappyTGInstall interactive Telegram form starts blank even when draft and .env already contain a token (112.617ms)
+✔ runHappyTGInstall keeps an already-known Telegram username when getMe lookup fails (18.5897ms)
+✔ runHappyTGInstall normalizes completed post-check failures into recoverable installer failures (20.5581ms)
+✔ runHappyTGInstall keeps the final result at warning level when post-checks only report Codex PATH follow-up (13.1629ms)
+✔ runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible in the final summary (13.5925ms)
+✔ runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning level with real bootstrap checks (816.5991ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1789.9212

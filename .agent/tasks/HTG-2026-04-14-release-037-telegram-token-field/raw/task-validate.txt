@@ -1,0 +1,9 @@
+
+> happytg@0.3.7 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-14-release-037-telegram-token-field"
+
+Task: HTG-2026-04-14-release-037-telegram-token-field
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-14-release-037-telegram-token-field
+Validation: ok
+Phase: complete
+Verification: passed

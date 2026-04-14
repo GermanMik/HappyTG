@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-14-release-037-telegram-token-field",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "fresh-verify-2026-04-14-037"
+  },
+  "checks": [
+    {
+      "name": "bootstrap test",
+      "ok": true,
+      "detail": "pnpm --filter @happytg/bootstrap test"
+    },
+    {
+      "name": "bootstrap typecheck",
+      "ok": true,
+      "detail": "pnpm --filter @happytg/bootstrap typecheck"
+    },
+    {
+      "name": "bootstrap lint",
+      "ok": true,
+      "detail": "pnpm --filter @happytg/bootstrap lint"
+    },
+    {
+      "name": "focused interactive verification",
+      "ok": true,
+      "detail": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.runtime.test.ts --test-name-pattern \"interactive Telegram form starts blank|clearing a prefilled token\""
+    },
+    {
+      "name": "release check",
+      "ok": true,
+      "detail": "pnpm release:check --version 0.3.7"
+    },
+    {
+      "name": "task bundle validate",
+      "ok": true,
+      "detail": "pnpm happytg task validate --repo . --task HTG-2026-04-14-release-037-telegram-token-field"
+    }
+  ],
+  "generatedAt": "2026-04-14T16:48:44.354Z"
+}
