@@ -1,0 +1,6 @@
+.github/workflows\release.yml:35:        uses: actions/checkout@v5
+.github/workflows\release.yml:40:        uses: pnpm/action-setup@v5
+.github/workflows\release.yml:45:        uses: actions/setup-node@v5
+.github/workflows\ci.yml:24:        uses: actions/checkout@v5
+.github/workflows\ci.yml:27:        uses: pnpm/action-setup@v5
+.github/workflows\ci.yml:32:        uses: actions/setup-node@v5

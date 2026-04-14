@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-14-gha-node24-runtime",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "workflow-static-verify-2026-04-14"
+  },
+  "checks": [
+    {
+      "name": "scope-inspection",
+      "ok": true,
+      "detail": "Repository inspection found two workflow files in scope and no local actions/reusable workflows beyond them."
+    },
+    {
+      "name": "node24-action-upgrade",
+      "ok": true,
+      "detail": "CI and Release now use actions/checkout@v5, pnpm/action-setup@v5, and actions/setup-node@v5, which move the action runtime off deprecated Node 20."
+    },
+    {
+      "name": "workflow-yaml-parse",
+      "ok": true,
+      "detail": "Both workflow files parsed successfully with js-yaml after the change."
+    },
+    {
+      "name": "deprecated-reference-scan",
+      "ok": true,
+      "detail": "A repo-wide scan within tracked files found no remaining v4/node20 references in scope."
+    }
+  ],
+  "generatedAt": "2026-04-14T10:40:00Z"
+}

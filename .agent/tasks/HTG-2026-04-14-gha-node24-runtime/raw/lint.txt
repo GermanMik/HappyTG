@@ -1,0 +1,62 @@
+{
+  "name": "CI",
+  "on": {
+    "push": {
+      "branches": [
+        "main",
+        "codex/**"
+      ]
+    },
+    "pull_request": null
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "concurrency": {
+    "group": "happytg-${{ github.workflow }}-${{ github.ref }}",
+    "cancel-in-progress": true
+  },
+  "jobs": {
+    "verify": {
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 20,
+      "steps": [
+        {
+          "name": "Checkout",
+          "uses": "actions/checkout@v5"
+        },
+        {
+          "name": "Setup pnpm",
+          "uses": "pnpm/action-setup@v5",
+          "with": {
+            "version": "10.0.0"
+          }
+        },
+        {
+          "name": "Setup Node.js",
+          "uses": "actions/setup-node@v5",
+          "with": {
+            "node-version": 22,
+            "cache": "pnpm"
+          }
+        },
+        {
+          "name": "Install dependencies",
+          "run": "pnpm install --frozen-lockfile"
+        },
+        {
+          "name": "Typecheck",
+          "run": "pnpm typecheck"
+        },
+        {
+          "name": "Test",
+          "run": "pnpm test"
+        },
+        {
+          "name": "Build",
+          "run": "pnpm build"
+        }
+      ]
+    }
+  }
+}

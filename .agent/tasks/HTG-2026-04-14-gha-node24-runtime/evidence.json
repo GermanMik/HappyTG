@@ -1,0 +1,37 @@
+{
+  "taskId": "HTG-2026-04-14-gha-node24-runtime",
+  "status": "passed",
+  "rootCause": [
+    "Both workflow files used actions/checkout@v4, actions/setup-node@v4, and pnpm/action-setup@v4.",
+    "Those upstream action tags still declare runs.using: node20, so GitHub warns even though the jobs themselves run Node 22.",
+    "No local actions or reusable workflows were present beyond .github/workflows/ci.yml and .github/workflows/release.yml."
+  ],
+  "changes": [
+    "Updated actions/checkout from v4 to v5 in CI and Release workflows.",
+    "Updated pnpm/action-setup from v4 to v5 in CI and Release workflows.",
+    "Updated actions/setup-node from v4 to v5 in CI and Release workflows."
+  ],
+  "checks": [
+    {
+      "name": "workflow-yaml-ci",
+      "ok": true,
+      "detail": "pnpm dlx js-yaml .github/workflows/ci.yml parsed successfully."
+    },
+    {
+      "name": "workflow-yaml-release",
+      "ok": true,
+      "detail": "pnpm dlx js-yaml .github/workflows/release.yml parsed successfully."
+    },
+    {
+      "name": "deprecated-reference-scan",
+      "ok": true,
+      "detail": "No tracked repo files matched actions/checkout@v4, actions/setup-node@v4, pnpm/action-setup@v4, or runs.using: node20 after the update."
+    },
+    {
+      "name": "diff-check",
+      "ok": true,
+      "detail": "git diff --check was clean for the touched workflow and proof files."
+    }
+  ],
+  "generatedAt": "2026-04-14T10:40:00Z"
+}

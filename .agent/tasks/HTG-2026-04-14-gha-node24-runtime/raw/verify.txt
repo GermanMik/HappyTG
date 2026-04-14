@@ -1,0 +1,7 @@
+actionlint: not installed locally
+git diff --check: clean
+note: Git also emitted local CRLF normalization warnings for the two workflow files when they were first modified; those are line-ending notices, not YAML or workflow validation errors.
+
+inspected files:
+.github\workflows\release.yml
+.github\workflows\ci.yml
