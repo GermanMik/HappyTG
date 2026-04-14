@@ -1,0 +1,108 @@
+{
+  "name": "Release",
+  "on": {
+    "workflow_dispatch": {
+      "inputs": {
+        "version": {
+          "description": "Release version without the leading v",
+          "required": true,
+          "type": "string"
+        },
+        "draft": {
+          "description": "Create a draft release instead of publishing immediately",
+          "required": true,
+          "default": true,
+          "type": "boolean"
+        },
+        "prerelease": {
+          "description": "Mark the GitHub Release as a prerelease",
+          "required": true,
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "permissions": {
+    "contents": "write"
+  },
+  "concurrency": {
+    "group": "happytg-release-${{ inputs.version }}",
+    "cancel-in-progress": false
+  },
+  "jobs": {
+    "publish": {
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 30,
+      "steps": [
+        {
+          "name": "Checkout",
+          "uses": "actions/checkout@v5",
+          "with": {
+            "fetch-depth": 0
+          }
+        },
+        {
+          "name": "Setup pnpm",
+          "uses": "pnpm/action-setup@v5",
+          "with": {
+            "version": "10.0.0"
+          }
+        },
+        {
+          "name": "Setup Node.js",
+          "uses": "actions/setup-node@v5",
+          "with": {
+            "node-version": 22,
+            "cache": "pnpm"
+          }
+        },
+        {
+          "name": "Install dependencies",
+          "run": "pnpm install --frozen-lockfile"
+        },
+        {
+          "name": "Require latest default-branch HEAD",
+          "env": {
+            "DEFAULT_BRANCH": "${{ github.event.repository.default_branch }}"
+          },
+          "run": "git fetch origin \"${DEFAULT_BRANCH}\" --tags\nif [ \"${GITHUB_REF_NAME}\" != \"${DEFAULT_BRANCH}\" ]; then\n  echo \"Release workflow must run from ${DEFAULT_BRANCH}, not ${GITHUB_REF_NAME}.\" >&2\n  exit 1\nfi\nif [ \"$(git rev-parse HEAD)\" != \"$(git rev-parse \"origin/${DEFAULT_BRANCH}\")\" ]; then\n  echo \"Release workflow must run from the latest commit on ${DEFAULT_BRANCH}.\" >&2\n  exit 1\nfi\n"
+        },
+        {
+          "name": "Validate release metadata",
+          "run": "pnpm release:check --version \"${{ inputs.version }}\""
+        },
+        {
+          "name": "Ensure tag and release do not already exist",
+          "env": {
+            "GITHUB_TOKEN": "${{ secrets.GITHUB_TOKEN }}",
+            "VERSION": "${{ inputs.version }}"
+          },
+          "run": "VERSION=\"${VERSION#v}\"\nTAG=\"v${VERSION}\"\nif git rev-parse -q --verify \"refs/tags/${TAG}\" >/dev/null; then\n  echo \"Tag ${TAG} already exists.\" >&2\n  exit 1\nfi\nif gh release view \"${TAG}\" >/dev/null 2>&1; then\n  echo \"GitHub Release ${TAG} already exists.\" >&2\n  exit 1\nfi\n"
+        },
+        {
+          "name": "Typecheck",
+          "run": "pnpm typecheck"
+        },
+        {
+          "name": "Test",
+          "run": "pnpm test"
+        },
+        {
+          "name": "Build",
+          "run": "pnpm build"
+        },
+        {
+          "name": "Create tag and GitHub Release",
+          "env": {
+            "DRAFT": "${{ inputs.draft }}",
+            "GITHUB_TOKEN": "${{ secrets.GITHUB_TOKEN }}",
+            "PRERELEASE": "${{ inputs.prerelease }}",
+            "VERSION": "${{ inputs.version }}"
+          },
+          "run": "VERSION=\"${VERSION#v}\"\nTAG=\"v${VERSION}\"\nARGS=(\n  \"${TAG}\"\n  \"--target\" \"${GITHUB_SHA}\"\n  \"--title\" \"HappyTG ${VERSION}\"\n  \"--notes-file\" \"docs/releases/${VERSION}.md\"\n)\nif [ \"${DRAFT}\" = \"true\" ]; then\n  ARGS+=(\"--draft\")\nfi\nif [ \"${PRERELEASE}\" = \"true\" ]; then\n  ARGS+=(\"--prerelease\")\nfi\ngh release create \"${ARGS[@]}\"\n"
+        }
+      ]
+    }
+  }
+}
