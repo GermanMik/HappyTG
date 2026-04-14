@@ -76,6 +76,33 @@ function statusFromBootstrapReport(report: BootstrapReport): InstallStatus {
   return report.status;
 }
 
+function pushUniqueLine(lines: string[], line: string): void {
+  const normalized = line.trim();
+  if (!normalized || lines.includes(normalized)) {
+    return;
+  }
+  lines.push(normalized);
+}
+
+function pushUniqueLines(lines: string[], next: readonly string[]): void {
+  for (const line of next) {
+    pushUniqueLine(lines, line);
+  }
+}
+
+function warningMessagesFromBootstrapReport(report: BootstrapReport): string[] {
+  if (report.status !== "warn") {
+    return [];
+  }
+  return report.findings
+    .filter((finding) => finding.severity === "warn")
+    .map((finding) => finding.message);
+}
+
+function nextStepsFromBootstrapReport(report: BootstrapReport): string[] {
+  return report.status === "warn" ? report.planPreview : [];
+}
+
 function packageManagerLabel(value: string): string {
   switch (value) {
     case "apt-get":
@@ -1110,6 +1137,8 @@ export async function runHappyTGInstall(
 
     const repoEnv = await buildRepoEnv(repoSyncResult.path, installEnv);
     const postCheckReports: InstallResult["postChecks"] = [];
+    const postCheckWarnings: string[] = [];
+    const postCheckNextSteps: string[] = [];
     for (const check of postChecks) {
       const stepId = `check-${check}`;
       updateStep({
@@ -1138,12 +1167,16 @@ export async function runHappyTGInstall(
           ? report.findings.map((finding) => finding.message).join(" ")
           : "Environment looks ready."
       });
+      pushUniqueLines(postCheckWarnings, warningMessagesFromBootstrapReport(report));
+      pushUniqueLines(postCheckNextSteps, nextStepsFromBootstrapReport(report));
       updateStep({
         ...steps.find((step) => step.id === stepId)!,
         status: report.status === "pass" ? "passed" : report.status === "warn" ? "warn" : "failed",
         detail: report.findings.length > 0 ? report.findings[0]!.message : "Environment looks ready."
       });
     }
+
+    pushUniqueLines(warnings, postCheckWarnings);
 
     const finalEnvironment = await deps.detectInstallerEnvironment({
       cwd,
@@ -1166,6 +1199,8 @@ export async function runHappyTGInstall(
           username: knownBotUsername
         }
         : undefined);
+    const finalNextSteps = nextSteps(repoSyncResult.path, pairTarget, backgroundMode);
+    pushUniqueLines(finalNextSteps, postCheckNextSteps);
     const result: InstallResult = {
       kind: "install",
       status: installStatusFromOutcome(outcome),
@@ -1193,7 +1228,7 @@ export async function runHappyTGInstall(
       background,
       postChecks: postCheckReports,
       steps,
-      nextSteps: nextSteps(repoSyncResult.path, pairTarget, backgroundMode),
+      nextSteps: finalNextSteps,
       warnings,
       error: partialFailure,
       reportJson: {

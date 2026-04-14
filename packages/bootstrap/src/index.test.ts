@@ -56,7 +56,7 @@ async function createWindowsCodexShim(tempDir: string, version: string): Promise
       ),
       writeFile(
         shimPath,
-        `@echo off\r\nsetlocal\r\nnode "%~dp0${scriptName}" %*\r\n`,
+        `@echo off\r\nsetlocal\r\n"${batchQuote(process.execPath)}" "%~dp0${scriptName}" %*\r\n`,
         "utf8"
       )
     ]);

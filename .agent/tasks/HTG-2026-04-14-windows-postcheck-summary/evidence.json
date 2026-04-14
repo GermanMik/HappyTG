@@ -1,0 +1,60 @@
+{
+  "taskId": "HTG-2026-04-14-windows-postcheck-summary",
+  "status": "verified",
+  "acceptanceCriteria": [
+    {
+      "criterion": "Warning-level post-check follow-up is surfaced in final installer warnings and next steps.",
+      "status": "passed"
+    },
+    {
+      "criterion": "Repeated CODEX_PATH_PENDING follow-up is deduped across setup/doctor/verify.",
+      "status": "passed"
+    },
+    {
+      "criterion": "Outcome remains success-with-warnings for warning-only Telegram plus Codex PATH scenarios.",
+      "status": "passed"
+    }
+  ],
+  "verification": [
+    {
+      "command": "pnpm --filter @happytg/bootstrap test",
+      "status": "passed",
+      "artifact": "raw/test-unit.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck.txt"
+    },
+    {
+      "command": "pnpm build",
+      "status": "passed",
+      "artifact": "raw/build.txt"
+    },
+    {
+      "command": "pnpm lint",
+      "status": "passed",
+      "artifact": "raw/lint.txt"
+    },
+    {
+      "command": "pnpm typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck-full.txt"
+    },
+    {
+      "command": "pnpm test",
+      "status": "passed",
+      "artifact": "raw/test-integration.txt"
+    },
+    {
+      "command": "pnpm release:check --version 0.3.5",
+      "status": "passed",
+      "artifact": "raw/release-check.txt"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-04-14-windows-postcheck-summary",
+      "status": "passed",
+      "artifact": "raw/task-validate.txt"
+    }
+  ]
+}

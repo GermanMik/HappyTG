@@ -1,0 +1,6 @@
+{
+  "taskId": "HTG-2026-04-14-windows-postcheck-summary",
+  "status": "complete",
+  "result": "pass",
+  "summary": "Installer final summaries now aggregate and dedupe warning-level post-check findings and plan preview items, preserving success-with-warnings while surfacing Windows Codex PATH follow-up."
+}

@@ -1,0 +1,9 @@
+
+> happytg@0.3.5 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-14-windows-postcheck-summary"
+
+Task: HTG-2026-04-14-windows-postcheck-summary
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-14-windows-postcheck-summary
+Validation: ok
+Phase: unknown
+Verification: unknown
