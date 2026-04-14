@@ -727,6 +727,35 @@ test("Telegram setup reducer treats pasted token chunks as text and preserves ed
   assert.equal(apply("", { name: "return" }), true);
 });
 
+test("Telegram setup reducer commits pasted token and allowed user ID chunks that include trailing CRLF", () => {
+  let state = createTelegramFormController({
+    botToken: "",
+    allowedUserIds: [],
+    homeChannel: ""
+  });
+
+  const apply = (chunk: string, key: { name?: string; ctrl?: boolean; meta?: boolean } = {}) => {
+    const reduced = reduceTelegramFormKeypress(state, {
+      chunk,
+      key: key as Parameters<typeof reduceTelegramFormKeypress>[1]["key"]
+    });
+    state = reduced.state;
+    return reduced.done;
+  };
+
+  apply("", { name: "return" });
+  apply("\u001B[200~123456:abcdefghijklmnopqrstuvwx\r\n\u001B[201~");
+  assert.equal(state.editing, false);
+  assert.equal(state.form.botToken, "123456:abcdefghijklmnopqrstuvwx");
+  assert.equal(state.validationMessage, undefined);
+
+  apply("", { name: "down" });
+  apply("", { name: "return" });
+  apply("1001\r\n1002\r\n");
+  assert.equal(state.editing, false);
+  assert.deepEqual(state.form.allowedUserIds, ["1001", "1002"]);
+});
+
 test("renderMaskedSecretPreview safely degrades for short values", () => {
   const longToken = "123456789:ABCDEFghijklmnopQRST";
   assert.equal(renderMaskedSecretPreview(longToken), `1234${"*".repeat(longToken.length - 8)}QRST`);

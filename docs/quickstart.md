@@ -9,7 +9,7 @@ Use [Installation](./installation.md) if you need the fuller local/self-hosted s
 ## Preflight
 
 - Run the one-command installer, or be ready to provide Git, Node.js 22+, `pnpm`, Codex CLI, and a real Telegram bot token manually.
-- Decide whether you will reuse a system Redis on `6379` or start compose `redis`.
+- Decide whether you will reuse existing PostgreSQL / Redis / S3-compatible services, or start the local Compose shared infra.
 
 ## Happy Path
 
@@ -32,6 +32,8 @@ Use [Installation](./installation.md) if you need the fuller local/self-hosted s
    ```
 
 3. Start shared infra only. Do not run the full compose app stack and `pnpm dev` together.
+
+   If `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` already point at reachable services, skip Docker and continue to `pnpm dev`.
 
    If Redis is already running locally:
 
@@ -107,6 +109,7 @@ If `3001` is already in use, pick a different `HAPPYTG_MINIAPP_PORT`.
 If `6379` is already in use:
 
 - reuse the existing system Redis and skip compose `redis`;
+- or point `REDIS_URL` at an existing reachable Redis instance;
 - or set `HAPPYTG_REDIS_HOST_PORT` to a different host port before starting compose `redis`;
 - or remove the published Redis port from the compose file if host access is not needed.
 

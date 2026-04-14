@@ -1,0 +1,89 @@
+{
+  "taskId": "HTG-2026-04-14-release-036-windows-installer",
+  "criteria": [
+    {
+      "criterion": "Windows interactive Telegram token paste accepts terminal paste chunks with trailing newline or CRLF and preserves installer-native validation/masking.",
+      "artifacts": [
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        ".agent/tasks/HTG-2026-04-14-release-036-windows-installer/raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Windows interactive allowed user ID paste accepts at least one pasted numeric ID and preserves typed input/navigation behavior.",
+      "artifacts": [
+        "packages/bootstrap/src/install/telegram.ts",
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        ".agent/tasks/HTG-2026-04-14-release-036-windows-installer/raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Installer/bootstrap guidance explicitly names supported non-Docker infra alternatives such as system Redis or external REDIS_URL and no longer implies Docker is the only path when alternatives are already supported.",
+      "artifacts": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "docs/installation.md",
+        "docs/quickstart.md",
+        "docs/bootstrap-doctor.md",
+        ".agent/tasks/HTG-2026-04-14-release-036-windows-installer/raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Release metadata is updated to 0.3.6 with changelog and release notes, and release validation passes.",
+      "artifacts": [
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/shared/package.json",
+        "CHANGELOG.md",
+        "docs/releases/0.3.6.md",
+        ".agent/tasks/HTG-2026-04-14-release-036-windows-installer/raw/release-check.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "packages/bootstrap/src/install/tui.ts",
+    "packages/bootstrap/src/install/telegram.ts",
+    "packages/bootstrap/src/install.test.ts",
+    "packages/bootstrap/src/install.runtime.test.ts",
+    "packages/bootstrap/src/index.ts",
+    "packages/bootstrap/src/index.test.ts",
+    "docs/installation.md",
+    "docs/quickstart.md",
+    "docs/bootstrap-doctor.md",
+    "package.json",
+    "apps/api/package.json",
+    "apps/bot/package.json",
+    "apps/host-daemon/package.json",
+    "apps/miniapp/package.json",
+    "apps/worker/package.json",
+    "packages/approval-engine/package.json",
+    "packages/bootstrap/package.json",
+    "packages/hooks/package.json",
+    "packages/policy-engine/package.json",
+    "packages/protocol/package.json",
+    "packages/repo-proof/package.json",
+    "packages/runtime-adapters/package.json",
+    "packages/shared/package.json",
+    "CHANGELOG.md",
+    "docs/releases/0.3.6.md",
+    ".agent/tasks/HTG-2026-04-14-release-036-windows-installer/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-04-14-release-036-windows-installer/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-04-14-release-036-windows-installer/raw/release-check.txt",
+    ".agent/tasks/HTG-2026-04-14-release-036-windows-installer/raw/task-validate.txt"
+  ],
+  "generatedAt": "2026-04-14T16:09:00.000Z"
+}
