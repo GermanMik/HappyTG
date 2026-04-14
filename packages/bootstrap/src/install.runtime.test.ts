@@ -3,6 +3,7 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
+import { PassThrough } from "node:stream";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -756,6 +757,35 @@ test("Telegram setup reducer commits pasted token and allowed user ID chunks tha
   assert.deepEqual(state.form.allowedUserIds, ["1001", "1002"]);
 });
 
+test("Telegram setup reducer supports clearing a prefilled token and pasting a replacement", () => {
+  const originalToken = "654321:oldtokenvalueabcdefghijkl";
+  const replacementToken = "123456:replacementtokenqrstuvwx";
+  let state = createTelegramFormController({
+    botToken: originalToken,
+    allowedUserIds: [],
+    homeChannel: ""
+  });
+
+  const apply = (chunk: string, key: { name?: string; ctrl?: boolean; meta?: boolean } = {}) => {
+    const reduced = reduceTelegramFormKeypress(state, {
+      chunk,
+      key: key as Parameters<typeof reduceTelegramFormKeypress>[1]["key"]
+    });
+    state = reduced.state;
+    return reduced.done;
+  };
+
+  apply("", { name: "return" });
+  for (let index = 0; index < originalToken.length; index += 1) {
+    apply("", { name: "backspace" });
+  }
+  assert.equal(state.draft, "");
+
+  apply(`\u001B[200~${replacementToken}\r\n\u001B[201~`);
+  assert.equal(state.editing, false);
+  assert.equal(state.form.botToken, replacementToken);
+});
+
 test("renderMaskedSecretPreview safely degrades for short values", () => {
   const longToken = "123456789:ABCDEFghijklmnopQRST";
   assert.equal(renderMaskedSecretPreview(longToken), `1234${"*".repeat(longToken.length - 8)}QRST`);
@@ -872,6 +902,172 @@ test("runHappyTGInstall reports warning-only Telegram getMe failures as success-
     assert.equal(result.telegram.lookup?.failureKind, "unexpected_response");
     assert.match(result.telegram.lookup?.message ?? "", /getMe could not confirm the bot identity/i);
     assert.doesNotMatch(renderText(result), /\[FAIL\]/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall interactive Telegram form starts blank even when draft and .env already contain a token", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-interactive-token-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const envToken = "999999:envtokenvalueabcdefghijk";
+  const draftToken = "888888:drafttokenvalueqrstuvw";
+  const newToken = "123456:abcdefghijklmnopqrstuvwx";
+  const transcript: string[] = [];
+  let envUpdates: Record<string, string | undefined> | undefined;
+
+  const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
+  const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
+  stdin.isTTY = true;
+  stdout.isTTY = true;
+  stdin.setRawMode = ((_: boolean) => stdin) as typeof stdin.setRawMode;
+  stdout.on("data", (chunk) => {
+    transcript.push(String(chunk));
+  });
+
+  const emitKeypress = async (chunk: string, key: { name?: string; ctrl?: boolean; meta?: boolean } = {}) => {
+    await new Promise((resolve) => setImmediate(resolve));
+    stdin.emit("keypress", chunk, key);
+  };
+  const waitForOutput = async (pattern: string | RegExp) => {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < 5000) {
+      const rendered = transcript.join("");
+      const matched = typeof pattern === "string"
+        ? rendered.includes(pattern)
+        : pattern.test(rendered);
+      if (matched) {
+        return rendered;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    throw new Error(`Timed out waiting for ${pattern.toString()}`);
+  };
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(
+      path.join(repoPath, ".env"),
+      `TELEGRAM_BOT_TOKEN=${envToken}\nTELEGRAM_HOME_CHANNEL=@existing\n`,
+      "utf8"
+    );
+
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramAllowedUserIds: [],
+      backgroundMode: "manual",
+      postChecks: []
+    }, {
+      stdin,
+      stdout,
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: {
+            ...baseEnvironment().platform,
+            isInteractiveTerminal: true
+          }
+        }),
+        readInstallDraft: async () => ({
+          version: 1,
+          telegram: {
+            botToken: draftToken,
+            allowedUserIds: ["42"],
+            homeChannel: "@draft"
+          },
+          updatedAt: "2026-04-14T00:00:00.000Z"
+        }),
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, {
+            exists: true,
+            isRepo: true,
+            emptyDirectory: false,
+            rootPath: repoPath
+          }),
+          choices: [
+            {
+              mode: "update" as const,
+              label: "Update existing checkout",
+              path: repoPath,
+              available: true,
+              detail: "Existing checkout is ready to update."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "updated",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async ({ updates }) => {
+          envUpdates = updates;
+          return {
+            envFilePath: path.join(repoPath, ".env"),
+            created: false,
+            changed: true,
+            addedKeys: Object.keys(updates),
+            preservedKeys: []
+          };
+        },
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: mode === "manual" ? "manual" : "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    await waitForOutput("Welcome / Preflight");
+    await emitKeypress("\r", { name: "return" });
+    await waitForOutput("Repo Mode");
+    await emitKeypress("\r", { name: "return" });
+    const telegramScreen = await waitForOutput("Telegram Setup");
+    assert.match(telegramScreen, /<required>/);
+    assert.doesNotMatch(telegramScreen, new RegExp(renderMaskedSecretPreview(envToken).replace(/\*/g, "\\*")));
+    assert.doesNotMatch(telegramScreen, new RegExp(renderMaskedSecretPreview(draftToken).replace(/\*/g, "\\*")));
+
+    await emitKeypress("\r", { name: "return" });
+    await emitKeypress(`\u001B[200~${newToken}\r\n\u001B[201~`);
+    await emitKeypress("", { name: "down" });
+    await emitKeypress("", { name: "down" });
+    await emitKeypress("", { name: "down" });
+    await emitKeypress("\r", { name: "return" });
+    await waitForOutput("Background Run Mode");
+    await emitKeypress("\r", { name: "return" });
+    await waitForOutput("Post-Install Checks");
+    await emitKeypress("\r", { name: "return" });
+    await waitForOutput("Final Summary");
+    await emitKeypress("\r", { name: "return" });
+
+    const result = await install;
+    assert.equal(result.status, "warn");
+    assert.equal(result.telegram.configured, true);
+    assert.equal(envUpdates?.TELEGRAM_BOT_TOKEN, newToken);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
