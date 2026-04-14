@@ -55,7 +55,7 @@ test("parseHappyTGArgs maps install flags into the installer request", () => {
   assert.equal(parsed.json, true);
   assert.equal(parsed.options.nonInteractive, true);
   assert.equal(parsed.options.repoMode, "current");
-  assert.equal(parsed.options.repoDir, "/tmp/happytg-cli/HappyTG");
+  assert.equal(parsed.options.repoDir, path.resolve("/tmp/happytg-cli", "HappyTG"));
   assert.equal(parsed.options.telegramBotToken, "123456:abcdefghijklmnopqrstuvwx");
   assert.deepEqual(parsed.options.telegramAllowedUserIds, ["1001", "1002"]);
   assert.equal(parsed.options.telegramHomeChannel, "@home");
@@ -236,6 +236,76 @@ test("renderText returns a compact install summary", () => {
   assert.match(output, /@happytg_bot/);
   assert.match(output, /Docker Desktop was skipped/);
   assert.match(output, /pnpm daemon:pair/);
+});
+
+test("renderText includes follow-up warnings and PATH next steps in install summaries", () => {
+  const npmBinDir = "C:\\Users\\tikta\\AppData\\Roaming\\npm";
+  const wrapperPath = `${npmBinDir}\\codex.cmd`;
+  const pathWarning = `Codex CLI worked through the npm wrapper at \`${wrapperPath}\`, but \`${npmBinDir}\` is not on the current shell PATH yet. Update PATH or restart the shell so plain \`codex\` resolves directly.`;
+  const pathNextStep = `Add \`${npmBinDir}\` to PATH, restart the shell, then verify \`codex --version\`.`;
+  const telegramWarning = "Telegram API getMe network request failed: fetch failed. Existing bot username @Gerta_homebot was kept.";
+  const output = renderText({
+    kind: "install",
+    status: "warn",
+    outcome: "success-with-warnings",
+    interactive: false,
+    tuiHandled: false,
+    repo: {
+      mode: "current",
+      path: "C:\\Develop\\Projects\\HappyTG",
+      sync: "reused",
+      dirtyStrategy: "keep",
+      source: "local",
+      repoUrl: "https://github.com/GermanMik/HappyTG.git",
+      attempts: 0,
+      fallbackUsed: false
+    },
+    environment: {
+      platform: {
+        platform: "win32",
+        arch: "x64",
+        shell: "C:\\Windows\\System32\\cmd.exe",
+        linuxFamily: "unknown",
+        systemPackageManager: "winget",
+        repoPackageManager: "pnpm",
+        isInteractiveTerminal: false
+      },
+      dependencies: []
+    },
+    telegram: {
+      configured: true,
+      allowedUserIds: ["1001"],
+      bot: {
+        ok: false,
+        username: "Gerta_homebot"
+      }
+    },
+    background: {
+      mode: "manual",
+      status: "manual",
+      detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+    },
+    postChecks: [],
+    steps: [],
+    nextSteps: [
+      pathNextStep,
+      "pnpm dev",
+      "pnpm daemon:pair"
+    ],
+    warnings: [
+      telegramWarning,
+      pathWarning
+    ],
+    reportJson: {}
+  });
+
+  assert.match(output, /HappyTG install \[WARN\]/);
+  assert.match(output, /Result: install flow is complete with warnings\./);
+  assert.match(output, /Warnings: 2/);
+  assert.match(output, /Next steps:/);
+  assert.match(output, /Telegram API getMe network request failed: fetch failed/);
+  assert.match(output, new RegExp(npmBinDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(output, /verify `codex --version`/);
 });
 
 test("renderText explains recoverable installer failures without claiming completion", () => {

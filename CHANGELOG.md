@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.5
+
+### Fixed
+
+- Installer final summaries now aggregate warning-level follow-up from `setup`, `doctor`, and `verify` post-checks instead of dropping those findings after step-local rendering.
+- Repeated Windows `CODEX_PATH_PENDING` follow-up from the three post-checks is now deduplicated into one final warning and one actionable PATH next step.
+- Warning-only Windows install runs now keep both Telegram lookup warnings and Codex PATH follow-up visible in the final installer summary without regressing back to a recoverable failure state.
+
+### Changed
+
+- Release metadata is aligned at `0.3.5` across the workspace for the Windows installer post-check summary follow-up release.
+
 ## v0.3.4
 
 ### Fixed

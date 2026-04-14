@@ -1,0 +1,61 @@
+
+> @happytg/bootstrap@0.3.4 test C:\Develop\Projects\HappyTG\packages\bootstrap
+> tsx --test src/*.test.ts
+
+✔ parseHappyTGArgs maps config and env nested commands (1.5795ms)
+✔ parseHappyTGArgs maps install flags into the installer request (0.3345ms)
+✔ parseHappyTGArgs uses CliUsageError for invalid CLI surfaces (0.4672ms)
+✔ executeHappyTG initializes and inspects repo-local task bundles (21.0281ms)
+✔ executeHappyTG returns a structured install failure when installer throws before its internal runtime boundary (149.4215ms)
+✔ renderText returns a compact bootstrap summary with preflight and diagnostics hints (0.725ms)
+✔ renderText returns a compact install summary (0.2872ms)
+✔ renderText includes follow-up warnings and PATH next steps in install summaries (0.1931ms)
+✔ renderText explains recoverable installer failures without claiming completion (0.1818ms)
+(node:3632) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim (256.6325ms)
+✔ verify surfaces Codex smoke warnings as warn when config exists (135.4432ms)
+✔ doctor distinguishes unavailable Codex from a missing Codex binary (72.4852ms)
+✔ doctor recovers through the npm wrapper when Codex is off PATH and leaves a PATH follow-up warning (310.26ms)
+✔ doctor recovers through a standard Windows APPDATA npm wrapper path when npm prefix probing is unavailable (224.4195ms)
+✔ doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix (121.1627ms)
+✔ setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis (136.9049ms)
+✔ doctor reports Redis installed but stopped (121.8122ms)
+✔ doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service (281.7385ms)
+✔ config-init and env-snapshot remain deterministic plan-only commands (6.4702ms)
+✔ syncRepository retries transient primary failures and reports attempt progress (12.3313ms)
+✔ syncRepository returns repo_retry_exhausted after 5 primary attempts (6.2913ms)
+✔ syncRepository falls back to the configured alternative source after exhausting primary retries (7.7408ms)
+✔ syncRepository reports repo_fallback_failure when both configured sources fail (9.5158ms)
+(node:45768) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ runCommand normalizes Windows shim companions like pnpm.cmd (102.47ms)
+✔ runHappyTGInstall returns a structured runtime error for Windows shim spawn failures instead of throwing usage-style failures (12.11ms)
+✔ runHappyTGInstall returns a structured runtime error when non-interactive mode is missing a Telegram token (13.5923ms)
+✔ runHappyTGInstall rejects bot usernames like @name in the token field before runtime work starts (8.7718ms)
+✔ runHappyTGInstall resumes saved installer values on rerun (12.985ms)
+✔ Telegram setup reducer treats pasted token chunks as text and preserves editing/navigation behavior (0.8652ms)
+✔ renderMaskedSecretPreview safely degrades for short values (0.117ms)
+✔ Telegram setup reducer blocks invalid @bot usernames and keeps the user in the form (0.1761ms)
+✔ runHappyTGInstall reports warning-only Telegram getMe failures as success-with-warnings without dropping configured Telegram state (10.6581ms)
+✔ runHappyTGInstall keeps an already-known Telegram username when getMe lookup fails (11.4385ms)
+✔ runHappyTGInstall normalizes completed post-check failures into recoverable installer failures (8.6821ms)
+✔ runHappyTGInstall keeps the final result at warning level when post-checks only report Codex PATH follow-up (9.6188ms)
+✔ runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible in the final summary (12.2072ms)
+✔ runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning level with real bootstrap checks (656.7961ms)
+✔ detectLinuxFamily classifies Debian and Fedora os-release content (10.6875ms)
+✔ detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path (1060.5293ms)
+✔ inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe (497.9027ms)
+✔ mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun (9.3661ms)
+✔ retro installer renderers include active cursor and keyboard hints (0.542ms)
+✔ Telegram screen renders a masked preview instead of the raw bot token (0.3628ms)
+✔ waitForEnter resolves when ENTER close is pressed on the final screen (1.0051ms)
+✔ fetchTelegramBotIdentity separates invalid-token API rejections from recoverable network lookups (1.5466ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1991.4078
