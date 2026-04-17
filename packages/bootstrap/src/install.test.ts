@@ -361,7 +361,7 @@ test("fetchTelegramBotIdentity classifies DNS-style fetch failures and non-JSON 
   assert.equal(nonJson.error, "Telegram API getMe returned a non-JSON response.");
 });
 
-test("fetchTelegramBotIdentity explains Windows transport-specific Telegram timeouts when PowerShell validates the token", async () => {
+test("fetchTelegramBotIdentity accepts Windows PowerShell validation as a success fallback after a Node timeout", async () => {
   const timeoutFailure = new TypeError("fetch failed");
   Object.assign(timeoutFailure, {
     cause: {
@@ -384,18 +384,12 @@ test("fetchTelegramBotIdentity explains Windows transport-specific Telegram time
     }
   );
 
-  assert.equal(network.ok, false);
-  assert.equal(network.failureKind, "network_error");
-  assert.equal(network.recoverable, true);
+  assert.equal(network.ok, true);
   assert.equal(network.username, "happytg_bot");
   assert.equal(network.transportProbeValidated, true);
-  assert.match(network.error ?? "", /Windows PowerShell Bot API probe with the same token validated @happytg_bot/i);
-  assert.match(network.error ?? "", /Node HTTPS\/undici transport/i);
-  assert.match(network.error ?? "", /MTProto instead of Bot API HTTPS/i);
-  assert.match(network.error ?? "", /HTTPS_PROXY/i);
-  assert.match(network.error ?? "", /NO_PROXY/i);
-  assert.match(network.error ?? "", /IPv4\/IPv6 routing/i);
-  assert.doesNotMatch(network.error ?? "", /Node or curl/i);
+  assert.equal(network.firstName, undefined);
+  assert.equal(network.step, "getMe");
+  assert.equal(network.error, undefined);
 });
 
 test("fetchTelegramBotIdentity promotes invalid tokens when a Windows follow-up probe reaches Telegram", async () => {

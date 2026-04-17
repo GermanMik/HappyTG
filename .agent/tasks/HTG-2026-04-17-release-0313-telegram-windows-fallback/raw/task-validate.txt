@@ -1,0 +1,10 @@
+PS> pnpm happytg task validate --repo . --task HTG-2026-04-17-release-0313-telegram-windows-fallback
+
+> happytg@0.3.13 happytg C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-17-release-0313-telegram-windows-fallback"
+
+Task: HTG-2026-04-17-release-0313-telegram-windows-fallback
+Bundle: C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\.agent\tasks\HTG-2026-04-17-release-0313-telegram-windows-fallback
+Validation: ok
+Phase: complete
+Verification: passed

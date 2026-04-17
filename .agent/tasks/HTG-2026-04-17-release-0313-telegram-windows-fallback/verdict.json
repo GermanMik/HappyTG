@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-17-release-0313-telegram-windows-fallback",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "local-verify-2026-04-17-release-0313-telegram-windows-fallback"
+  },
+  "checks": [
+    {
+      "name": "release-metadata-alignment",
+      "ok": true,
+      "detail": "Workspace package versions, CHANGELOG.md, and docs/releases/0.3.13.md are aligned at 0.3.13 and release:check passed."
+    },
+    {
+      "name": "release-branch-verification",
+      "ok": true,
+      "detail": "pnpm build, pnpm lint, pnpm typecheck, targeted bootstrap+bot tests, and pnpm test all passed after the 0.3.13 version bump."
+    },
+    {
+      "name": "source-proof-bundle-accepted",
+      "ok": true,
+      "detail": "The release scope is anchored to the completed proof bundle HTG-2026-04-17-telegram-windows-transport-fallback, and that bundle validated successfully during this release pass."
+    },
+    {
+      "name": "release-notes-truthful",
+      "ok": true,
+      "detail": "docs/releases/0.3.13.md describes the validated Windows Telegram fallback and explicitly avoids claiming that the underlying host-side Node HTTPS timeout is itself fixed."
+    }
+  ],
+  "generatedAt": "2026-04-17T14:22:14.813Z"
+}

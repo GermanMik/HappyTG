@@ -1,0 +1,285 @@
+
+> happytg@0.3.11 happytg C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback
+> tsx packages/bootstrap/src/cli.ts "install" "--json" "--non-interactive" "--repo-mode" "current" "--bootstrap-repo-root" "." "--launch-cwd" "." "--dirty-worktree" "keep" "--background" "skip" "--post-check" "setup" "--telegram-bot-token" "<REDACTED_TOKEN>"
+
+{
+  "kind": "install",
+  "status": "fail",
+  "outcome": "recoverable-failure",
+  "interactive": false,
+  "tuiHandled": false,
+  "repo": {
+    "mode": "current",
+    "path": "C:/Develop/Projects/HappyTG-telegram-windows-transport-fallback",
+    "sync": "reused",
+    "dirtyStrategy": "keep",
+    "source": "local",
+    "repoUrl": "https://github.com/GermanMik/HappyTG.git",
+    "attempts": 1,
+    "fallbackUsed": false
+  },
+  "environment": {
+    "platform": {
+      "platform": "win32",
+      "arch": "x64",
+      "shell": "C:\\WINDOWS\\system32\\cmd.exe",
+      "linuxFamily": "unknown",
+      "systemPackageManager": "choco",
+      "repoPackageManager": "pnpm",
+      "isInteractiveTerminal": false
+    },
+    "dependencies": [
+      {
+        "id": "git",
+        "label": "Git",
+        "available": true,
+        "required": true,
+        "version": "git version 2.52.0.windows.1",
+        "binaryPath": "C:\\Program Files\\Git\\cmd\\git.exe",
+        "command": "choco install git -y"
+      },
+      {
+        "id": "nodejs",
+        "label": "Node.js 22+",
+        "available": true,
+        "required": true,
+        "version": "v24.15.0",
+        "binaryPath": "C:\\Program Files\\nodejs\\node.exe",
+        "command": "choco install nodejs-lts -y"
+      },
+      {
+        "id": "pnpm",
+        "label": "pnpm",
+        "available": true,
+        "required": true,
+        "version": "10.0.0",
+        "binaryPath": "C:\\Users\\tikta\\AppData\\Local\\pnpm\\.tools\\pnpm\\10.0.0\\bin\\pnpm.cmd",
+        "manualInstruction": "Install pnpm with npm or enable it through corepack, then rerun the installer."
+      },
+      {
+        "id": "codex-cli",
+        "label": "Codex CLI",
+        "available": true,
+        "required": true,
+        "version": "codex-cli 0.118.0",
+        "binaryPath": "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd",
+        "manualInstruction": "Install the Codex CLI globally with npm after Node.js is ready, then rerun the installer."
+      },
+      {
+        "id": "docker",
+        "label": "Docker Desktop",
+        "available": true,
+        "required": false,
+        "version": "Docker version 29.3.1, build c2be9cc",
+        "binaryPath": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+        "reason": "Optional for the packaged/local infra path.",
+        "command": "choco install docker-desktop -y"
+      }
+    ]
+  },
+  "telegram": {
+    "configured": true,
+    "allowedUserIds": [
+      "1001"
+    ],
+    "bot": {
+      "ok": false,
+      "error": "Telegram API getMe rejected the configured token: Удаленный сервер возвратил ошибку: (401) Несанкционированный.. Node HTTPS also failed earlier with: Connection to api.telegram.org timed out. This means Telegram was reachable through a second transport, but the token itself is invalid.",
+      "step": "getMe",
+      "failureKind": "invalid_token",
+      "recoverable": false,
+      "statusCode": 401
+    },
+    "lookup": {
+      "attempted": true,
+      "step": "getMe",
+      "status": "failed",
+      "message": "Telegram API getMe rejected the configured token: Удаленный сервер возвратил ошибку: (401) Несанкционированный.. Node HTTPS also failed earlier with: Connection to api.telegram.org timed out. This means Telegram was reachable through a second transport, but the token itself is invalid.",
+      "failureKind": "invalid_token",
+      "recoverable": false,
+      "affectsConfiguration": true
+    }
+  },
+  "background": {
+    "mode": "skip",
+    "status": "skipped",
+    "detail": "Background daemon setup was skipped."
+  },
+  "postChecks": [
+    {
+      "command": "setup",
+      "status": "warn",
+      "summary": "Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details. HappyTG services already appear to be running on 4000. Reuse the running stack or stop it before starting another copy. Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there. Reuse the running service if it is yours, or pick a new port with `$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp`."
+    }
+  ],
+  "steps": [
+    {
+      "id": "repo-sync",
+      "label": "Sync repository",
+      "status": "passed",
+      "detail": "reused C:/Develop/Projects/HappyTG-telegram-windows-transport-fallback via local checkout."
+    },
+    {
+      "id": "dep-git",
+      "label": "Git",
+      "status": "passed",
+      "detail": "Available (git version 2.52.0.windows.1)."
+    },
+    {
+      "id": "dep-nodejs",
+      "label": "Node.js 22+",
+      "status": "passed",
+      "detail": "Available (v24.15.0)."
+    },
+    {
+      "id": "dep-pnpm",
+      "label": "pnpm",
+      "status": "passed",
+      "detail": "Available (10.0.0)."
+    },
+    {
+      "id": "dep-codex-cli",
+      "label": "Codex CLI",
+      "status": "passed",
+      "detail": "Available (codex-cli 0.118.0)."
+    },
+    {
+      "id": "dep-docker",
+      "label": "Docker Desktop",
+      "status": "passed",
+      "detail": "Available (Docker version 29.3.1, build c2be9cc)."
+    },
+    {
+      "id": "pnpm-install",
+      "label": "Install workspace dependencies",
+      "status": "passed",
+      "detail": "Workspace dependencies installed."
+    },
+    {
+      "id": "env-merge",
+      "label": "Merge environment",
+      "status": "passed",
+      "detail": "Created C:\\Develop\\Projects\\HappyTG-telegram-windows-transport-fallback\\.env."
+    },
+    {
+      "id": "telegram-bot",
+      "label": "Connect Telegram bot",
+      "status": "failed",
+      "detail": "Telegram API getMe rejected the configured token: Удаленный сервер возвратил ошибку: (401) Несанкционированный.. Node HTTPS also failed earlier with: Connection to api.telegram.org timed out. This means Telegram was reachable through a second transport, but the token itself is invalid."
+    },
+    {
+      "id": "background",
+      "label": "Configure background run mode",
+      "status": "skipped",
+      "detail": "Background daemon setup was skipped."
+    },
+    {
+      "id": "check-setup",
+      "label": "Run setup",
+      "status": "warn",
+      "detail": "Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details."
+    }
+  ],
+  "nextSteps": [
+    "cd C:/Develop/Projects/HappyTG-telegram-windows-transport-fallback",
+    "pnpm daemon:pair",
+    "Send `/pair <CODE>` to the configured Telegram bot, then start the daemon with `pnpm dev:daemon`.",
+    "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.",
+    "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.",
+    "If you keep mini app on a different port, use `$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp`."
+  ],
+  "warnings": [
+    "Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details.",
+    "Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there. Reuse the running service if it is yours, or pick a new port with `$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp`."
+  ],
+  "error": {
+    "code": "installer_partial_failure",
+    "message": "Connect Telegram bot still needs attention.",
+    "lastError": "Telegram API getMe rejected the configured token: Удаленный сервер возвратил ошибку: (401) Несанкционированный.. Node HTTPS also failed earlier with: Connection to api.telegram.org timed out. This means Telegram was reachable through a second transport, but the token itself is invalid.",
+    "retryable": false,
+    "suggestedAction": "Resolve the Connect Telegram bot issue, then rerun the installer."
+  },
+  "reportJson": {
+    "branch": "main",
+    "envWrite": {
+      "envFilePath": "C:\\Develop\\Projects\\HappyTG-telegram-windows-transport-fallback\\.env",
+      "created": true,
+      "changed": true,
+      "addedKeys": [
+        "NODE_ENV",
+        "LOG_LEVEL",
+        "HAPPYTG_API_PORT",
+        "HAPPYTG_MINIAPP_PORT",
+        "HAPPYTG_BOT_PORT",
+        "HAPPYTG_WORKER_PORT",
+        "HAPPYTG_POSTGRES_HOST_PORT",
+        "HAPPYTG_REDIS_HOST_PORT",
+        "HAPPYTG_MINIO_PORT",
+        "HAPPYTG_MINIO_CONSOLE_PORT",
+        "HAPPYTG_APP_URL",
+        "HAPPYTG_API_URL",
+        "HAPPYTG_PUBLIC_URL",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "S3_ENDPOINT",
+        "S3_REGION",
+        "S3_ACCESS_KEY",
+        "S3_SECRET_KEY",
+        "S3_BUCKET",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_ALLOWED_USER_IDS",
+        "TELEGRAM_WEBHOOK_SECRET",
+        "JWT_ISSUER",
+        "JWT_AUDIENCE",
+        "JWT_SIGNING_KEY",
+        "PAIRING_TOKEN_TTL_SECONDS",
+        "HOST_ACCESS_TOKEN_TTL_SECONDS",
+        "HOST_REFRESH_TOKEN_TTL_SECONDS",
+        "CODEX_CLI_BIN",
+        "CODEX_CONFIG_PATH",
+        "CODEX_SMOKE_PROMPT",
+        "DEFAULT_RUNTIME",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "NEXT_PUBLIC_APP_NAME",
+        "HOST_DAEMON_DEFAULT_POLL_MS",
+        "HOST_DAEMON_MAX_PARALLEL_READS",
+        "HOST_DAEMON_MUTATION_QUEUE_CONCURRENCY"
+      ],
+      "preservedKeys": []
+    },
+    "botIdentity": {
+      "ok": false,
+      "error": "Telegram API getMe rejected the configured token: Удаленный сервер возвратил ошибку: (401) Несанкционированный.. Node HTTPS also failed earlier with: Connection to api.telegram.org timed out. This means Telegram was reachable through a second transport, but the token itself is invalid.",
+      "step": "getMe",
+      "failureKind": "invalid_token",
+      "recoverable": false,
+      "statusCode": 401
+    },
+    "telegramLookup": {
+      "attempted": true,
+      "step": "getMe",
+      "status": "failed",
+      "message": "Telegram API getMe rejected the configured token: Удаленный сервер возвратил ошибку: (401) Несанкционированный.. Node HTTPS also failed earlier with: Connection to api.telegram.org timed out. This means Telegram was reachable through a second transport, but the token itself is invalid.",
+      "failureKind": "invalid_token",
+      "recoverable": false,
+      "affectsConfiguration": true
+    },
+    "fallbackSource": "https://gitclone.com/github.com/GermanMik/HappyTG.git",
+    "fallbackUsed": false,
+    "outcome": "recoverable-failure",
+    "pairTarget": "the configured Telegram bot",
+    "packageManager": "choco",
+    "platform": {
+      "platform": "win32",
+      "arch": "x64",
+      "shell": "C:\\WINDOWS\\system32\\cmd.exe",
+      "linuxFamily": "unknown",
+      "systemPackageManager": "choco",
+      "repoPackageManager": "pnpm",
+      "isInteractiveTerminal": false
+    },
+    "repoSource": "local",
+    "repoUrl": "https://github.com/GermanMik/HappyTG.git"
+  }
+}
+ ELIFECYCLE  Command failed with exit code 1.

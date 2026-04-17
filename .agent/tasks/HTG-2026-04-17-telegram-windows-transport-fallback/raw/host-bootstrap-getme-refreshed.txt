@@ -1,0 +1,1 @@
+{"ok":false,"failureKind":"invalid_token","transportProbeValidated":false,"error":"Telegram API getMe rejected the configured token: Удаленный сервер возвратил ошибку: (401) Несанкционированный.. Node HTTPS also failed earlier with: Connection to api.telegram.org timed out. This means Telegram was reachable through a second transport, but the token itself is invalid."}

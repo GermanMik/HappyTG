@@ -907,6 +907,184 @@ test("runHappyTGInstall reports warning-only Telegram getMe failures as success-
   }
 });
 
+test("runHappyTGInstall treats a transport-probe-validated Telegram identity as a normal success path", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-telegram-validated-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: []
+    }, {
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "gerta_homebot",
+          transportProbeValidated: true
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    assert.equal(result.status, "pass");
+    assert.equal(result.outcome, "success");
+    assert.equal(result.error, undefined);
+    assert.deepEqual(result.warnings, []);
+    assert.equal(result.telegram.bot?.ok, true);
+    assert.equal(result.telegram.bot?.username, "gerta_homebot");
+    assert.equal(result.telegram.bot?.transportProbeValidated, true);
+    assert.equal(result.telegram.lookup?.status, "validated");
+    assert.match(result.telegram.lookup?.message ?? "", /validated @gerta_homebot/i);
+    assert.match(result.steps.find((step) => step.id === "telegram-bot")?.detail ?? "", /Connected to @gerta_homebot/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall keeps invalid Telegram tokens as configuration failures after a transport fallback probe", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-telegram-invalid-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: []
+    }, {
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: false,
+          error: "Telegram API getMe rejected the configured token: Unauthorized. Node HTTPS also failed earlier with: Connection to api.telegram.org timed out. This means Telegram was reachable through a second transport, but the token itself is invalid.",
+          step: "getMe",
+          failureKind: "invalid_token",
+          recoverable: false,
+          statusCode: 401
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    assert.equal(result.status, "fail");
+    assert.equal(result.outcome, "recoverable-failure");
+    assert.equal(result.telegram.bot?.ok, false);
+    assert.equal(result.telegram.bot?.failureKind, "invalid_token");
+    assert.equal(result.telegram.lookup?.status, "failed");
+    assert.equal(result.telegram.lookup?.failureKind, "invalid_token");
+    assert.equal(result.telegram.lookup?.affectsConfiguration, true);
+    assert.match(result.error?.lastError ?? "", /token itself is invalid/i);
+    assert.match(result.steps.find((step) => step.id === "telegram-bot")?.detail ?? "", /rejected the configured token/i);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("runHappyTGInstall interactive Telegram form starts blank even when draft and .env already contain a token", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-interactive-token-"));
   const repoPath = path.join(tempDir, "HappyTG");

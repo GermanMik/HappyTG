@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-04-17-release-0313-telegram-windows-fallback",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG-telegram-windows-transport-fallback\\.agent\\tasks\\HTG-2026-04-17-release-0313-telegram-windows-fallback",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Release 0.3.13 Windows Telegram transport fallback",
+  "acceptanceCriteria": [
+    "Workspace versions, CHANGELOG.md, and docs/releases/0.3.13.md are aligned at 0.3.13.",
+    "Fresh release verification passes after the version bump.",
+    "Release notes truthfully describe the Windows Telegram transport fallback scope and reference the canonical fix bundle."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T14:29:00.000Z",
+  "updatedAt": "2026-04-17T14:22:14.813Z"
+}

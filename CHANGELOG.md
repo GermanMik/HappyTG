@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.13
+
+### Fixed
+
+- Windows bootstrap no longer leaves Telegram bot validation in a warning-only state when Node HTTPS/undici times out to `api.telegram.org` but a same-token Windows PowerShell `getMe` probe can still validate the bot.
+- Windows bot runtime no longer drops outbound `sendMessage` replies on transport throws from Node HTTPS; it now retries through the PowerShell Bot API path and keeps real Telegram HTTP/API failures truthful.
+- Bootstrap and bot regression coverage now explicitly locks the validated Windows fallback path while preserving invalid-token and Telegram API failure classification.
+
+### Changed
+
+- Release metadata is aligned at `0.3.13` across the workspace for the Windows Telegram transport fallback release.
+
 ## v0.3.11
 
 ### Fixed

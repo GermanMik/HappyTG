@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import type { BotDependencies } from "./handlers.js";
-import { botConfigurationMessage, createBotServer, initializeBotEnvironment } from "./index.js";
+import { botConfigurationMessage, createBotServer, createDefaultSendTelegramMessage, initializeBotEnvironment } from "./index.js";
 
 test("bot ready endpoint returns healthy when api is reachable", async () => {
   const dependencies: Partial<BotDependencies> = {
@@ -88,4 +88,98 @@ test("initializeBotEnvironment prefers a valid .env token over placeholder shell
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
+});
+
+test("createDefaultSendTelegramMessage falls back to Windows PowerShell after a Node transport timeout", async () => {
+  const timeoutFailure = new TypeError("fetch failed");
+  Object.assign(timeoutFailure, {
+    cause: {
+      code: "UND_ERR_CONNECT_TIMEOUT",
+      message: "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"
+    }
+  });
+
+  const infoLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const errorLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const fallbackCalls: Array<{
+    token: string;
+    payload: {
+      chat_id: number;
+      text: string;
+      reply_markup?: Record<string, unknown>;
+    };
+  }> = [];
+  const sendTelegramMessage = createDefaultSendTelegramMessage({
+    botToken: "123456:abcdefghijklmnopqrstuvwx",
+    platform: "win32",
+    fetchImpl: async () => {
+      throw timeoutFailure;
+    },
+    sendViaWindowsPowerShell: async (token, payload) => {
+      fallbackCalls.push({ token, payload });
+      return { ok: true };
+    },
+    logger: {
+      info(message, metadata) {
+        infoLogs.push({ message, metadata });
+      },
+      warn() {},
+      error(message, metadata) {
+        errorLogs.push({ message, metadata });
+      }
+    }
+  });
+
+  await sendTelegramMessage(42, "hello", {
+    inline_keyboard: [[{ text: "Open", callback_data: "open" }]]
+  });
+
+  assert.equal(fallbackCalls.length, 1);
+  assert.equal(fallbackCalls[0]?.token, "123456:abcdefghijklmnopqrstuvwx");
+  assert.deepEqual(fallbackCalls[0]?.payload, {
+    chat_id: 42,
+    text: "hello",
+    reply_markup: {
+      inline_keyboard: [[{ text: "Open", callback_data: "open" }]]
+    }
+  });
+  assert.equal(errorLogs.length, 0);
+  assert.match(infoLogs[0]?.message ?? "", /Windows PowerShell fallback/i);
+});
+
+test("createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful without using fallback", async () => {
+  const errorLogs: Array<{ message: string; metadata?: unknown }> = [];
+  let fallbackCalls = 0;
+  const sendTelegramMessage = createDefaultSendTelegramMessage({
+    botToken: "123456:abcdefghijklmnopqrstuvwx",
+    platform: "win32",
+    fetchImpl: async () => new Response(JSON.stringify({
+      ok: false,
+      description: "Unauthorized"
+    }), {
+      status: 401,
+      headers: {
+        "content-type": "application/json"
+      }
+    }),
+    sendViaWindowsPowerShell: async () => {
+      fallbackCalls += 1;
+      return { ok: true };
+    },
+    logger: {
+      info() {},
+      warn() {},
+      error(message, metadata) {
+        errorLogs.push({ message, metadata });
+      }
+    }
+  });
+
+  await sendTelegramMessage(42, "hello");
+
+  assert.equal(fallbackCalls, 0);
+  assert.equal(errorLogs.length, 1);
+  assert.match(errorLogs[0]?.message ?? "", /sendMessage failed/i);
+  assert.match(JSON.stringify(errorLogs[0]?.metadata ?? {}), /401/);
+  assert.match(JSON.stringify(errorLogs[0]?.metadata ?? {}), /Unauthorized/);
 });

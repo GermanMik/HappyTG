@@ -1,0 +1,94 @@
+PS> pnpm lint
+
+> happytg@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback
+> turbo lint
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running lint in 13 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/worker:lint: cache miss, executing 3d8cc6531eabe4ce
+@happytg/repo-proof:lint: cache miss, executing 610244a7b8cc782b
+@happytg/bootstrap:lint: cache miss, executing 2a0a63f35f7cc4ba
+@happytg/protocol:lint: cache miss, executing 8463d3b171d125a9
+@happytg/api:lint: cache miss, executing 96169fc5fda21128
+@happytg/miniapp:lint: cache miss, executing 7711ee19b43226bf
+@happytg/runtime-adapters:lint: cache miss, executing 093ae94907f12d87
+@happytg/policy-engine:lint: cache miss, executing c3129bec823e26d7
+@happytg/shared:lint: cache miss, executing 9ab020fa9eba7b9d
+@happytg/approval-engine:lint: cache miss, executing b6c34bab5e1602a8
+@happytg/worker:lint: 
+@happytg/worker:lint: > @happytg/worker@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\worker
+@happytg/worker:lint: > echo "TODO: lint worker"
+@happytg/worker:lint: 
+@happytg/policy-engine:lint: 
+@happytg/policy-engine:lint: > @happytg/policy-engine@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\policy-engine
+@happytg/policy-engine:lint: > echo "TODO: lint policy-engine"
+@happytg/policy-engine:lint: 
+@happytg/shared:lint: 
+@happytg/shared:lint: > @happytg/shared@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\shared
+@happytg/shared:lint: > echo "TODO: lint shared"
+@happytg/shared:lint: 
+@happytg/repo-proof:lint: 
+@happytg/worker:lint: "TODO: lint worker"
+@happytg/repo-proof:lint: > @happytg/repo-proof@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\repo-proof
+@happytg/repo-proof:lint: > echo "TODO: lint repo-proof"
+@happytg/repo-proof:lint: 
+@happytg/shared:lint: "TODO: lint shared"
+@happytg/policy-engine:lint: "TODO: lint policy-engine"
+@happytg/repo-proof:lint: "TODO: lint repo-proof"
+@happytg/bot:lint: cache miss, executing e21c8cc165ecd832
+@happytg/protocol:lint: 
+@happytg/protocol:lint: > @happytg/protocol@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\protocol
+@happytg/protocol:lint: > echo "TODO: lint protocol"
+@happytg/protocol:lint: 
+@happytg/hooks:lint: cache miss, executing 9d4518977b4fbe41
+@happytg/protocol:lint: "TODO: lint protocol"
+@happytg/host-daemon:lint: cache miss, executing 6e89b8868d540a0a
+@happytg/bootstrap:lint: 
+@happytg/bootstrap:lint: > @happytg/bootstrap@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\bootstrap
+@happytg/bootstrap:lint: > echo "TODO: lint bootstrap"
+@happytg/bootstrap:lint: 
+@happytg/runtime-adapters:lint: 
+@happytg/runtime-adapters:lint: > @happytg/runtime-adapters@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\runtime-adapters
+@happytg/runtime-adapters:lint: > echo "TODO: lint runtime-adapters"
+@happytg/runtime-adapters:lint: 
+@happytg/api:lint: 
+@happytg/api:lint: > @happytg/api@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\api
+@happytg/api:lint: > echo "TODO: lint api"
+@happytg/api:lint: 
+@happytg/bootstrap:lint: "TODO: lint bootstrap"
+@happytg/approval-engine:lint: 
+@happytg/approval-engine:lint: > @happytg/approval-engine@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\approval-engine
+@happytg/approval-engine:lint: > echo "TODO: lint approval-engine"
+@happytg/approval-engine:lint: 
+@happytg/api:lint: "TODO: lint api"
+@happytg/miniapp:lint: 
+@happytg/miniapp:lint: > @happytg/miniapp@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\miniapp
+@happytg/miniapp:lint: > echo "TODO: lint miniapp"
+@happytg/miniapp:lint: 
+@happytg/runtime-adapters:lint: "TODO: lint runtime-adapters"
+@happytg/approval-engine:lint: "TODO: lint approval-engine"
+@happytg/miniapp:lint: "TODO: lint miniapp"
+@happytg/bot:lint: 
+@happytg/bot:lint: > @happytg/bot@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\bot
+@happytg/bot:lint: > echo "TODO: lint bot"
+@happytg/bot:lint: 
+@happytg/bot:lint: "TODO: lint bot"
+@happytg/host-daemon:lint: 
+@happytg/host-daemon:lint: > @happytg/host-daemon@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\host-daemon
+@happytg/host-daemon:lint: > echo "TODO: lint host-daemon"
+@happytg/host-daemon:lint: 
+@happytg/host-daemon:lint: "TODO: lint host-daemon"
+@happytg/hooks:lint: 
+@happytg/hooks:lint: > @happytg/hooks@0.3.13 lint C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\hooks
+@happytg/hooks:lint: > echo "TODO: lint hooks"
+@happytg/hooks:lint: 
+@happytg/hooks:lint: "TODO: lint hooks"
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    1.742s 
+
