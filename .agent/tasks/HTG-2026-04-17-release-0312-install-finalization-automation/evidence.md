@@ -163,6 +163,16 @@ Recorded command outputs:
 - `raw/task-validate.txt`
   - `pnpm happytg task validate --repo . --task HTG-2026-04-17-release-0312-install-finalization-automation`
 
+### Release-tail CI fix
+
+The first release workflow attempt on GitHub Actions exposed one Linux-only bootstrap test assumption after merge:
+
+- `packages/bootstrap/src/index.test.ts`
+  - the `setup treats compatible Redis, PostgreSQL, and MinIO listeners as supported reuse while flagging unrelated conflicts` test incorrectly assumed the MinIO API suggested port must be greater than the MinIO console port
+  - on Linux, ephemeral port allocation made that assumption false even though the production logic remained correct
+
+The scoped fix changes the assertion to require the suggested MinIO API port to be greater than its own occupied port and still distinct from the other reserved ports. `raw/test-unit.txt` and `raw/test-integration.txt` were refreshed after that fix.
+
 ## Environment Truths Preserved
 
 The release does not hide real external constraints on the maintainer machine:
