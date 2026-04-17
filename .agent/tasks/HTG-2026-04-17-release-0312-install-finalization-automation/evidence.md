@@ -165,13 +165,19 @@ Recorded command outputs:
 
 ### Release-tail CI fix
 
-The first release workflow attempt on GitHub Actions exposed one Linux-only bootstrap test assumption after merge:
+The first release workflow attempts on GitHub Actions exposed two Linux-only bootstrap test assumptions after merge:
 
 - `packages/bootstrap/src/index.test.ts`
   - the `setup treats compatible Redis, PostgreSQL, and MinIO listeners as supported reuse while flagging unrelated conflicts` test incorrectly assumed the MinIO API suggested port must be greater than the MinIO console port
-  - on Linux, ephemeral port allocation made that assumption false even though the production logic remained correct
+  - the same test also hard-coded a Windows-style quoted shell example for MinIO port overrides, while Linux renders the same assignment without quotes
+  - on Linux, ephemeral port allocation and shell formatting made those assumptions false even though the production logic remained correct
 
-The scoped fix changes the assertion to require the suggested MinIO API port to be greater than its own occupied port and still distinct from the other reserved ports. `raw/test-unit.txt` and `raw/test-integration.txt` were refreshed after that fix.
+The scoped fix changes the assertions to:
+
+- require the suggested MinIO API port to be greater than its own occupied port and still distinct from the other reserved ports
+- accept both quoted and unquoted shell env assignment formats for MinIO override examples
+
+`raw/test-unit.txt` and `raw/test-integration.txt` were refreshed after those fixes.
 
 ## Environment Truths Preserved
 
