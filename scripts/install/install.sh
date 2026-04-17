@@ -19,6 +19,40 @@ have_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
+resolve_path() {
+  if [ -z "${1:-}" ]; then
+    return
+  fi
+
+  case "$1" in
+    /*)
+      printf '%s\n' "$1"
+      ;;
+    *)
+      printf '%s\n' "$(cd "$(dirname "$1")" 2>/dev/null && pwd)/$(basename "$1")"
+      ;;
+  esac
+}
+
+path_within() {
+  if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
+    return 1
+  fi
+
+  local candidate root
+  candidate="$(resolve_path "$1")"
+  root="$(resolve_path "$2")"
+
+  case "$candidate" in
+    "$root" | "$root"/*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 run_root() {
   if have_cmd sudo; then
     sudo "$@"
@@ -28,13 +62,98 @@ run_root() {
   "$@"
 }
 
-node_major() {
+NODE_PRESENT=0
+NODE_VERSION=""
+NODE_MAJOR=0
+NODE_ERROR=""
+NODE_MISSING_PRELOAD=""
+NODE_MISSING_SCOPE=""
+
+extract_missing_preload_path() {
+  printf '%s\n' "$1" | sed -n "s/.*Cannot find module '\([^']*\)'.*/\1/p" | head -n 1
+}
+
+node_probe() {
+  NODE_PRESENT=0
+  NODE_VERSION=""
+  NODE_MAJOR=0
+  NODE_ERROR=""
+  NODE_MISSING_PRELOAD=""
+  NODE_MISSING_SCOPE=""
+
   if ! have_cmd node; then
-    printf '0'
     return
   fi
 
-  node -p "process.versions.node.split('.')[0]" 2>/dev/null || printf '0'
+  NODE_PRESENT=1
+  local output status version missing_path
+  set +e
+  output="$(node -p "process.versions.node" 2>&1)"
+  status=$?
+  set -e
+
+  if [ "$status" -eq 0 ]; then
+    version="$(printf '%s\n' "$output" | head -n 1 | tr -d '\r')"
+    NODE_VERSION="$version"
+    NODE_MAJOR="${version%%.*}"
+    return
+  fi
+
+  NODE_ERROR="$output"
+  missing_path="$(extract_missing_preload_path "$output")"
+  if [ -n "$missing_path" ]; then
+    NODE_MISSING_PRELOAD="$(resolve_path "$missing_path")"
+    if path_within "$NODE_MISSING_PRELOAD" "$BOOTSTRAP_DIR"; then
+      NODE_MISSING_SCOPE="bootstrap"
+    elif path_within "$NODE_MISSING_PRELOAD" "$ORIGINAL_CWD"; then
+      NODE_MISSING_SCOPE="workspace"
+    else
+      NODE_MISSING_SCOPE="external"
+    fi
+  fi
+}
+
+use_bootstrap_safe_node_options() {
+  if [ "$NODE_MISSING_SCOPE" != "external" ] || [ -z "${NODE_OPTIONS:-}" ]; then
+    return 1
+  fi
+
+  log "Ignoring broken external NODE_OPTIONS preload for HappyTG bootstrap: $NODE_MISSING_PRELOAD. HappyTG does not manage this preload; bootstrap commands will continue with NODE_OPTIONS cleared."
+  export HAPPYTG_BOOTSTRAP_IGNORED_NODE_OPTIONS="$NODE_OPTIONS"
+  unset NODE_OPTIONS
+  return 0
+}
+
+current_node_probe() {
+  node_probe
+  if use_bootstrap_safe_node_options; then
+    node_probe
+  fi
+}
+
+node_failure_message() {
+  if [ -n "$NODE_MISSING_PRELOAD" ]; then
+    case "$NODE_MISSING_SCOPE" in
+      bootstrap)
+        printf '%s\n' "Node.js is installed, but NODE_OPTIONS requires a missing preload inside HAPPYTG_BOOTSTRAP_DIR: $NODE_MISSING_PRELOAD. Repair the bootstrap checkout or clear NODE_OPTIONS, then rerun the installer."
+        ;;
+      workspace)
+        printf '%s\n' "Node.js is installed, but NODE_OPTIONS requires a missing preload inside the selected workspace: $NODE_MISSING_PRELOAD. Repair that preload or clear NODE_OPTIONS, then rerun the installer."
+        ;;
+      *)
+        printf '%s\n' "Node.js is installed, but an external NODE_OPTIONS preload is missing: $NODE_MISSING_PRELOAD. Clear or repair NODE_OPTIONS, then rerun the installer."
+        ;;
+    esac
+    return
+  fi
+
+  printf '%s\n' "Node.js is installed, but it could not start cleanly in this shell. Clear or repair the local Node runtime settings, then rerun the installer.
+$NODE_ERROR"
+}
+
+node_major() {
+  current_node_probe
+  printf '%s' "${NODE_MAJOR:-0}"
 }
 
 ensure_git() {
@@ -72,8 +191,13 @@ ensure_git() {
 }
 
 ensure_node() {
-  if [ "$(node_major)" -ge 22 ]; then
+  current_node_probe
+  if [ "${NODE_MAJOR:-0}" -ge 22 ]; then
     return
+  fi
+
+  if [ "${NODE_PRESENT:-0}" -eq 1 ] && [ -n "$NODE_ERROR" ]; then
+    fail "$(node_failure_message)"
   fi
 
   case "$(uname -s)" in
@@ -145,7 +269,18 @@ run_shared_installer() {
 ensure_git
 have_cmd git || fail "Git is still not available on PATH. Open a new shell and rerun the installer."
 ensure_node
-[ "$(node_major)" -ge 22 ] || fail "Node.js 22+ is still not available on PATH. Open a new shell and rerun the installer."
+current_node_probe
+if [ "${NODE_MAJOR:-0}" -lt 22 ]; then
+  if [ "${NODE_PRESENT:-0}" -eq 1 ] && [ -n "$NODE_ERROR" ]; then
+    fail "$(node_failure_message)"
+  fi
+
+  if [ -n "$NODE_VERSION" ]; then
+    fail "Node.js 22+ is still not available on PATH. Found $NODE_VERSION. Open a new shell and rerun the installer."
+  fi
+
+  fail "Node.js 22+ is still not available on PATH. Open a new shell and rerun the installer."
+fi
 ensure_pnpm
 have_cmd pnpm || fail "pnpm is still not available on PATH. Open a new shell and rerun the installer."
 sync_bootstrap_repo

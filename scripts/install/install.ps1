@@ -23,16 +23,135 @@ function Refresh-Path {
   }
 }
 
-function Node-Major {
-  if (-not (Have-Cmd "node")) {
-    return 0
+function Resolve-AbsolutePath([string]$Value) {
+  if (-not $Value) {
+    return $null
   }
 
   try {
-    return [int](node -p "process.versions.node.split('.')[0]")
+    return [System.IO.Path]::GetFullPath($Value)
   } catch {
-    return 0
+    return $Value
   }
+}
+
+function Test-PathWithin([string]$Candidate, [string]$Root) {
+  $candidatePath = Resolve-AbsolutePath $Candidate
+  $rootPath = Resolve-AbsolutePath $Root
+  if (-not $candidatePath -or -not $rootPath) {
+    return $false
+  }
+
+  $trimmedRoot = $rootPath.TrimEnd('\', '/')
+  return $candidatePath.Equals($trimmedRoot, [System.StringComparison]::OrdinalIgnoreCase) `
+    -or $candidatePath.StartsWith("$trimmedRoot\", [System.StringComparison]::OrdinalIgnoreCase) `
+    -or $candidatePath.StartsWith("$trimmedRoot/", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Get-NodePreloadFailure([string]$Output) {
+  if (-not $Output) {
+    return $null
+  }
+
+  $match = [regex]::Match(
+    $Output,
+    "Cannot find module '([^']+)'.*?Require stack:\s*- internal/preload",
+    [System.Text.RegularExpressions.RegexOptions]::Singleline
+  )
+  if (-not $match.Success) {
+    return $null
+  }
+
+  $missingPath = Resolve-AbsolutePath $match.Groups[1].Value
+  $scope = if (Test-PathWithin $missingPath $BootstrapDir) {
+    "bootstrap"
+  } elseif (Test-PathWithin $missingPath $OriginalCwd) {
+    "workspace"
+  } else {
+    "external"
+  }
+
+  return [pscustomobject]@{
+    MissingPath = $missingPath
+    Scope = $scope
+  }
+}
+
+function Use-BootstrapSafeNodeOptions([pscustomobject]$PreloadFailure) {
+  if (-not $PreloadFailure -or $PreloadFailure.Scope -ne "external" -or -not $env:NODE_OPTIONS) {
+    return $false
+  }
+
+  Write-Warning "Ignoring broken external NODE_OPTIONS preload for HappyTG bootstrap: $($PreloadFailure.MissingPath). HappyTG does not manage this preload; bootstrap commands will continue with NODE_OPTIONS cleared."
+  $env:HAPPYTG_BOOTSTRAP_IGNORED_NODE_OPTIONS = $env:NODE_OPTIONS
+  Remove-Item Env:NODE_OPTIONS -ErrorAction SilentlyContinue
+  return $true
+}
+
+function Get-NodeProbe {
+  if (-not (Have-Cmd "node")) {
+    return [pscustomobject]@{
+      Present = $false
+      Version = $null
+      Major = 0
+      Error = $null
+      PreloadFailure = $null
+    }
+  }
+
+  $cmd = if ($env:ComSpec) { $env:ComSpec } else { "cmd.exe" }
+  $output = @(& $cmd /d /s /c 'node -p "process.versions.node" 2>&1')
+  $exitCode = $LASTEXITCODE
+  $text = ($output | Out-String).Trim()
+  $preloadFailure = Get-NodePreloadFailure $text
+
+  if ($exitCode -ne 0 -and (Use-BootstrapSafeNodeOptions $preloadFailure)) {
+    return Get-NodeProbe
+  }
+
+  $version = $null
+  $major = 0
+  if ($exitCode -eq 0 -and $text) {
+    $version = ($text -split "\r?\n")[0].Trim()
+    $majorMatch = [regex]::Match($version, "^v?(\d+)")
+    if ($majorMatch.Success) {
+      $major = [int]$majorMatch.Groups[1].Value
+    }
+  }
+
+  return [pscustomobject]@{
+    Present = $true
+    Version = $version
+    Major = $major
+    Error = if ($exitCode -eq 0) { $null } else { $text }
+    PreloadFailure = $preloadFailure
+  }
+}
+
+function Describe-NodeFailure([pscustomobject]$Probe) {
+  if (-not $Probe.Error) {
+    return "Node.js 22+ is not available in the current shell."
+  }
+
+  if ($Probe.PreloadFailure) {
+    switch ($Probe.PreloadFailure.Scope) {
+      "bootstrap" {
+        return "Node.js is installed, but NODE_OPTIONS requires a missing preload inside HAPPYTG_BOOTSTRAP_DIR: $($Probe.PreloadFailure.MissingPath). Repair the bootstrap checkout or clear NODE_OPTIONS, then rerun the installer."
+      }
+      "workspace" {
+        return "Node.js is installed, but NODE_OPTIONS requires a missing preload inside the selected workspace: $($Probe.PreloadFailure.MissingPath). Repair that preload or clear NODE_OPTIONS, then rerun the installer."
+      }
+      default {
+        return "Node.js is installed, but an external NODE_OPTIONS preload is missing: $($Probe.PreloadFailure.MissingPath). Clear or repair NODE_OPTIONS, then rerun the installer."
+      }
+    }
+  }
+
+  return "Node.js is installed, but it could not start cleanly in this shell. Clear or repair the local Node runtime settings, then rerun the installer.`n$($Probe.Error)"
+}
+
+function Node-Major {
+  return (Get-NodeProbe).Major
 }
 
 function Ensure-Git {
@@ -58,8 +177,13 @@ function Ensure-Git {
 }
 
 function Ensure-Node {
-  if ((Node-Major) -ge 22) {
+  $nodeProbe = Get-NodeProbe
+  if ($nodeProbe.Major -ge 22) {
     return
+  }
+
+  if ($nodeProbe.Present -and $nodeProbe.Error) {
+    Fail (Describe-NodeFailure $nodeProbe)
   }
 
   if (Have-Cmd "winget") {
@@ -140,7 +264,15 @@ function Run-SharedInstaller {
 Ensure-Git
 if (-not (Have-Cmd "git")) { Fail "Git is still not available on PATH. Open a new PowerShell session and rerun the installer." }
 Ensure-Node
-if ((Node-Major) -lt 22) { Fail "Node.js 22+ is still not available on PATH. Open a new PowerShell session and rerun the installer." }
+$nodeProbe = Get-NodeProbe
+if ($nodeProbe.Major -lt 22) {
+  if ($nodeProbe.Present -and $nodeProbe.Error) {
+    Fail (Describe-NodeFailure $nodeProbe)
+  }
+
+  $foundVersion = if ($nodeProbe.Version) { " Found $($nodeProbe.Version)." } else { "" }
+  Fail "Node.js 22+ is still not available on PATH.$foundVersion Open a new PowerShell session and rerun the installer."
+}
 Ensure-Pnpm
 if (-not (Have-Cmd "pnpm")) { Fail "pnpm is still not available on PATH. Open a new PowerShell session and rerun the installer." }
 Sync-BootstrapRepo

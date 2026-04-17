@@ -1,0 +1,20 @@
+{
+  "id": "HTG-2026-04-17-release-0311-bootstrap-install-regressions",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-release-0311-bootstrap-install-regressions",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Release 0.3.11 bootstrap/install regressions",
+  "acceptanceCriteria": [
+    "Broken preload no longer reports Node.js 22+ as missing when Node is present.",
+    "Root cause is classified explicitly as environment contamination vs repo-managed preload requirement.",
+    "install.ps1 and install.sh use the same truthful bootstrap classification strategy.",
+    "Installer warning surfaces remain truthful and do not hide real Telegram/Codex/port warnings.",
+    "TUI step indicators are readable again and no longer degrade into an unstable running glyph.",
+    "Proof bundle is complete and a fresh verifier pass succeeds."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T11:20:00.000Z",
+  "updatedAt": "2026-04-17T12:05:00.000Z"
+}

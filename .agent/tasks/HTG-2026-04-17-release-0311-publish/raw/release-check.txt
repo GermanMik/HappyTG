@@ -1,0 +1,8 @@
+COMMAND=pnpm release:check --version 0.3.11
+
+> happytg@0.3.11 release:check C:\Develop\Projects\HappyTG
+> node scripts/release/validate-release.mjs "--version" "0.3.11"
+
+Release validation passed for 0.3.11.
+Checked 14 package versions, CHANGELOG.md, and docs/releases/0.3.11.md.
+EXIT_CODE=0

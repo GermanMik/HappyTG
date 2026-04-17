@@ -1,0 +1,20 @@
+ CHANGELOG.md                           |  13 +++
+ apps/api/package.json                  |   3 +-
+ apps/bot/package.json                  |   3 +-
+ apps/host-daemon/package.json          |   3 +-
+ apps/miniapp/package.json              |   3 +-
+ apps/worker/package.json               |   3 +-
+ package.json                           |   3 +-
+ packages/approval-engine/package.json  |   3 +-
+ packages/bootstrap/package.json        |   3 +-
+ packages/bootstrap/src/install.test.ts |  20 ++++-
+ packages/bootstrap/src/install/tui.ts  |  15 +++-
+ packages/hooks/package.json            |   3 +-
+ packages/policy-engine/package.json    |   3 +-
+ packages/protocol/package.json         |   3 +-
+ packages/repo-proof/package.json       |   3 +-
+ packages/runtime-adapters/package.json |   3 +-
+ packages/shared/package.json           |   3 +-
+ scripts/install/install.ps1            | 146 +++++++++++++++++++++++++++++++--
+ scripts/install/install.sh             | 145 ++++++++++++++++++++++++++++++--
+ 19 files changed, 351 insertions(+), 30 deletions(-)

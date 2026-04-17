@@ -1,0 +1,22 @@
+Warning classification for release 0.3.11 bootstrap/install regressions
+
+1. Telegram getMe timeout / Node HTTPS-undici transport split
+- Classification: legitimate environment warning when the token is already configured and a fallback transport can still reach Telegram; not a HappyTG-managed preload requirement and not something to suppress for a green summary.
+- Evidence: packages/bootstrap/src/install/telegram.ts, packages/bootstrap/src/install.test.ts (`fetchTelegramBotIdentity explains Windows transport-specific Telegram timeouts when PowerShell validates the token`), packages/bootstrap/src/install.runtime.test.ts (`runHappyTGInstall reports warning-only Telegram getMe failures as success-with-warnings without dropping configured Telegram state`).
+- Builder-machine status: not reproduced in raw/doctor-json.txt or raw/verify-json.txt; both currently report `Telegram bot token is configured.`
+- Action: keep as warning-only when the identity cannot be confirmed but the existing username/token state is preserved; do not hide it. No new product change was required in this task beyond keeping final-summary dedupe truthful.
+
+2. Codex websocket 403 Forbidden with HTTP fallback
+- Classification: legitimate environment/runtime warning on this machine, not a HappyTG product bug.
+- Evidence: raw/doctor-json.txt and raw/verify-json.txt both report `Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP` while the checks continue.
+- Action: keep the warning visible, preserve the remediation hint to run `pnpm happytg doctor --json` for stderr details, and keep dedupe so setup/doctor/verify do not spam the same warning set repeatedly.
+
+3. Mini App port 3001 busy
+- Classification: legitimate environment warning on this machine, not a product bug.
+- Evidence: raw/doctor-json.txt and raw/verify-json.txt both report `Mini App plans to use port 3001` and identify Docker container `contacts-frontend` as the conflicting listener.
+- Action: keep the warning visible, keep the occupant identity and port-override guidance, and avoid pretending install is fully green while the conflict remains.
+
+4. Final Summary / Warnings / Next steps noise
+- Classification: diagnostics quality issue, not a reason to hide real warnings.
+- Evidence: raw/install-final-summary.txt shows one summary surface with deduped warnings and actionable next steps; packages/bootstrap/src/install.runtime.test.ts covers repeated-warning compression (`Same warning set as setup`) and next-step dedupe.
+- Action: preserve truthful warning count and concrete next steps. This task does not remove legitimate environment warnings; it only prevents bootstrap false positives and restores stable TUI indicators.

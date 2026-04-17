@@ -1,0 +1,9 @@
+COMMAND=repo-local integration evidence summary
+HappyTG does not currently expose a separate integration-test command distinct from `pnpm test` for this task surface.
+Integration-style evidence for this task is captured in the bootstrap/install repro artifacts and machine checks below:
+- raw/repro-clean-install.txt
+- raw/repro-poisoned-install-ps1.txt
+- raw/repro-poisoned-bootstrap-local-install-ps1.txt
+- raw/doctor-json.txt
+- raw/verify-json.txt
+EXIT_CODE=0

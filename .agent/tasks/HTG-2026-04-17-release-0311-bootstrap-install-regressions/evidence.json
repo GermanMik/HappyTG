@@ -1,0 +1,95 @@
+{
+  "taskId": "HTG-2026-04-17-release-0311-bootstrap-install-regressions",
+  "phase": "fresh verify passed",
+  "criteria": [
+    {
+      "criterion": "Broken preload path no longer collapses into the misleading Node.js 22+ is still not available on PATH message when Node is present.",
+      "artifacts": [
+        "raw/repro-poisoned-node.txt",
+        "raw/repro-poisoned-install-ps1.txt",
+        "scripts/install/install.ps1",
+        "packages/bootstrap/src/install.scripts.test.ts"
+      ]
+    },
+    {
+      "criterion": "Root cause is explicitly classified as external environment contamination vs repo-managed preload requirement.",
+      "artifacts": [
+        "raw/env-node-options.txt",
+        "raw/repro-poisoned-bootstrap-local-install-ps1.txt",
+        "scripts/install/install.ps1",
+        "scripts/install/install.sh",
+        "raw/install-warning-classification.txt"
+      ]
+    },
+    {
+      "criterion": "install.ps1 and install.sh both use the same truthful bootstrap classification strategy.",
+      "artifacts": [
+        "scripts/install/install.ps1",
+        "scripts/install/install.sh",
+        "packages/bootstrap/src/install.scripts.test.ts",
+        "raw/test.txt"
+      ]
+    },
+    {
+      "criterion": "Installer warning surfaces remain truthful and deduped without hiding legitimate environment warnings.",
+      "artifacts": [
+        "raw/doctor-json.txt",
+        "raw/verify-json.txt",
+        "raw/install-final-summary.txt",
+        "raw/install-warning-classification.txt",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "packages/bootstrap/src/cli.test.ts"
+      ]
+    },
+    {
+      "criterion": "TUI step indicators are readable again and no longer degrade into an unstable running glyph.",
+      "artifacts": [
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "raw/install-interactive-transcript.txt",
+        "raw/tui-render-notes.txt"
+      ]
+    },
+    {
+      "criterion": "Regression coverage and repo verification passed.",
+      "artifacts": [
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/task-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/env-node-options.txt",
+    "raw/repro-poisoned-node.txt",
+    "raw/repro-poisoned-corepack.txt",
+    "raw/repro-poisoned-pnpm.txt",
+    "raw/repro-clean-install.txt",
+    "raw/repro-poisoned-install-ps1.txt",
+    "raw/repro-poisoned-bootstrap-local-install-ps1.txt",
+    "raw/doctor-json.txt",
+    "raw/verify-json.txt",
+    "raw/install-final-summary.txt",
+    "raw/install-interactive-transcript.txt",
+    "raw/install-warning-classification.txt",
+    "raw/tui-render-notes.txt",
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/task-validate.txt"
+  ],
+  "verifier": {
+    "role": "task-verifier",
+    "agentId": "019d9b33-7336-7cf0-b47c-002832258dfe",
+    "runId": "verify-1-2026-04-17",
+    "status": "passed_after_bundle_sync"
+  },
+  "generatedAt": "2026-04-17T12:05:00.000Z"
+}

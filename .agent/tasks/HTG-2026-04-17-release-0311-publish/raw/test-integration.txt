@@ -1,0 +1,10 @@
+COMMAND=release integration evidence summary
+Release 0.3.11 integration evidence comes from the full workspace verification and the completed product-fix bundle:
+- raw/build.txt
+- raw/lint.txt
+- raw/typecheck.txt
+- raw/test.txt
+- ..\HTG-2026-04-17-release-0311-bootstrap-install-regressions\raw\repro-poisoned-install-ps1.txt
+- ..\HTG-2026-04-17-release-0311-bootstrap-install-regressions\raw\repro-clean-install.txt
+- ..\HTG-2026-04-17-release-0311-bootstrap-install-regressions\raw\install-interactive-transcript.txt
+EXIT_CODE=0

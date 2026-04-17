@@ -1,0 +1,23 @@
+ M CHANGELOG.md
+ M apps/api/package.json
+ M apps/bot/package.json
+ M apps/host-daemon/package.json
+ M apps/miniapp/package.json
+ M apps/worker/package.json
+ M package.json
+ M packages/approval-engine/package.json
+ M packages/bootstrap/package.json
+ M packages/bootstrap/src/install.test.ts
+ M packages/bootstrap/src/install/tui.ts
+ M packages/hooks/package.json
+ M packages/policy-engine/package.json
+ M packages/protocol/package.json
+ M packages/repo-proof/package.json
+ M packages/runtime-adapters/package.json
+ M packages/shared/package.json
+ M scripts/install/install.ps1
+ M scripts/install/install.sh
+?? .agent/tasks/HTG-2026-04-17-release-0311-bootstrap-install-regressions/
+?? .agent/tasks/HTG-2026-04-17-release-0311-publish/
+?? docs/releases/0.3.11.md
+?? packages/bootstrap/src/install.scripts.test.ts

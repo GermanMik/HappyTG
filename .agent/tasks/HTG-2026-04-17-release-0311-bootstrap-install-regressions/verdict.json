@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-17-release-0311-bootstrap-install-regressions",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-1-2026-04-17"
+  },
+  "checks": [
+    {
+      "name": "bootstrap-preload-root-cause",
+      "ok": true,
+      "detail": "Evidence shows an external stale NODE_OPTIONS preload path caused Node startup failure before HappyTG ran any repo-managed preload logic."
+    },
+    {
+      "name": "bootstrap-diagnostics-fix",
+      "ok": true,
+      "detail": "install.ps1 and install.sh now classify broken external vs bootstrap/workspace-local preload paths and no longer misreport Node as missing when Node is present."
+    },
+    {
+      "name": "warning-classification",
+      "ok": true,
+      "detail": "Telegram/Codex/Mini App warnings remain truthful; only diagnostics noise and false bootstrap messaging were reduced."
+    },
+    {
+      "name": "tui-indicator-fix",
+      "ok": true,
+      "detail": "The running-step glyph is now ASCII-safe and the status rows regain consistent colorized indicators."
+    },
+    {
+      "name": "repo-verification",
+      "ok": true,
+      "detail": "pnpm build, pnpm lint, pnpm typecheck, and pnpm test all passed."
+    },
+    {
+      "name": "proof-bundle-synchronized",
+      "ok": true,
+      "detail": "Canonical split test artifacts were added, verifier metadata was synchronized, and task validate was rerun after the bundle moved to complete/passed."
+    }
+  ],
+  "generatedAt": "2026-04-17T12:05:00.000Z"
+}

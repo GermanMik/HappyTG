@@ -294,11 +294,20 @@ export function renderProgressScreen(input: {
         : step.status === "failed"
           ? tint("x", COLORS.error)
           : step.status === "running"
-            ? tint("…", COLORS.violet)
+            ? tint(">", COLORS.violet)
             : step.status === "skipped"
               ? dim("-")
-              : dim("·");
-    lines.push(`${icon} ${bright(step.label)}`);
+              : dim(".");
+    const label = step.status === "passed"
+      ? tint(step.label, `${COLORS.bold}${COLORS.cyan}`)
+      : step.status === "warn"
+        ? tint(step.label, `${COLORS.bold}${COLORS.warn}`)
+        : step.status === "failed"
+          ? tint(step.label, `${COLORS.bold}${COLORS.error}`)
+          : step.status === "running"
+            ? tint(step.label, `${COLORS.bold}${COLORS.violet}`)
+            : bright(step.label);
+    lines.push(`${icon} ${label}`);
     lines.push(...renderIndentedDetail(step.detail));
   }
 
