@@ -32,6 +32,64 @@ export function validateTelegramBotToken(token: string): string | undefined {
   }
 }
 
+function errorCode(value: unknown): string | undefined {
+  if (!value || typeof value !== "object" || !("code" in value)) {
+    return undefined;
+  }
+
+  const code = (value as { code?: unknown }).code;
+  return typeof code === "string" ? code : undefined;
+}
+
+function errorMessage(value: unknown): string | undefined {
+  if (value instanceof Error) {
+    return value.message;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value && typeof value === "object" && "message" in value) {
+    const message = (value as { message?: unknown }).message;
+    return typeof message === "string" ? message : undefined;
+  }
+
+  return undefined;
+}
+
+function describeTelegramFetchError(error: unknown): string {
+  const code = errorCode(error)
+    ?? errorCode(error instanceof Error ? (error as Error & { cause?: unknown }).cause : undefined);
+  const message = errorMessage(error)?.trim()
+    ?? errorMessage(error instanceof Error ? (error as Error & { cause?: unknown }).cause : undefined)?.trim()
+    ?? "Telegram API lookup failed.";
+  const lowerMessage = message.toLowerCase();
+
+  if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
+    return "DNS lookup for api.telegram.org failed.";
+  }
+  if (code === "ETIMEDOUT" || code === "UND_ERR_CONNECT_TIMEOUT") {
+    return "Connection to api.telegram.org timed out.";
+  }
+  if (code === "ECONNREFUSED") {
+    return "Connection to api.telegram.org was refused.";
+  }
+  if (code === "ECONNRESET" || code === "UND_ERR_SOCKET") {
+    return "Connection to api.telegram.org was interrupted before Telegram replied.";
+  }
+  if (code?.startsWith("ERR_TLS") || code?.startsWith("ERR_SSL") || code?.startsWith("CERT_")
+    || /certificate|tls|ssl/iu.test(message)) {
+    return "TLS handshake with api.telegram.org failed.";
+  }
+  if (/proxy/iu.test(message)) {
+    return "The configured proxy blocked or rejected the Telegram API request.";
+  }
+  if (lowerMessage === "fetch failed") {
+    return "The network request failed before Telegram returned a response. Check proxy, TLS, firewall, and access to api.telegram.org.";
+  }
+
+  return message;
+}
+
 export async function fetchTelegramBotIdentity(
   token: string,
   fetchImpl: typeof fetch = fetch
@@ -53,8 +111,8 @@ export async function fetchTelegramBotIdentity(
       return {
         ok: false,
         error: rejectedToken
-          ? `Telegram API getMe rejected the token with HTTP ${response.status}.`
-          : `Telegram API getMe returned HTTP ${response.status}.`,
+          ? `Telegram API getMe rejected the token with HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ""}.`
+          : `Telegram Bot API returned HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ""}.`,
         step: "getMe",
         failureKind: rejectedToken ? "invalid_token" : "api_error",
         recoverable: !rejectedToken,
@@ -62,7 +120,7 @@ export async function fetchTelegramBotIdentity(
       };
     }
 
-    const body = await response.json() as {
+    type TelegramGetMeResponse = {
       ok?: boolean;
       result?: {
         id?: number;
@@ -71,6 +129,18 @@ export async function fetchTelegramBotIdentity(
       };
       description?: string;
     };
+    let body: TelegramGetMeResponse;
+    try {
+      body = await response.json() as TelegramGetMeResponse;
+    } catch {
+      return {
+        ok: false,
+        error: "Telegram API getMe returned a non-JSON response.",
+        step: "getMe",
+        failureKind: "unexpected_response",
+        recoverable: true
+      };
+    }
 
     if (!body.ok || !body.result) {
       const description = body.description ?? "Telegram API rejected the token.";
@@ -94,7 +164,7 @@ export async function fetchTelegramBotIdentity(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Telegram API lookup failed.",
+      error: describeTelegramFetchError(error),
       step: "getMe",
       failureKind: "network_error",
       recoverable: true

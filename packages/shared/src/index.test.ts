@@ -164,6 +164,27 @@ test("findExecutable honors Windows path and PATHEXT keys regardless of casing",
   }
 });
 
+test("findExecutable prefers Windows wrapper companions over bare shim files", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-wrapper-"));
+  try {
+    const bareCodex = path.join(tempDir, "codex");
+    const windowsCodex = path.join(tempDir, "codex.cmd");
+    await Promise.all([
+      writeFile(bareCodex, "#!/bin/sh\n", "utf8"),
+      writeFile(windowsCodex, "@echo off\r\n", "utf8")
+    ]);
+
+    const resolved = await findExecutable("codex", {
+      PATH: tempDir,
+      PATHEXT: ".CMD;.EXE"
+    }, "win32");
+
+    assert.equal(resolved, windowsCodex);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-dupe-"));
   try {

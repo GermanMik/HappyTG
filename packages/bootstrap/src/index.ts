@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 import type { BootstrapFinding, BootstrapReport, RuntimeReadiness } from "../../protocol/src/index.js";
-import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage } from "../../runtime-adapters/src/index.js";
+import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage, summarizeCodexSmokeStderr } from "../../runtime-adapters/src/index.js";
 import {
   createId,
   ensureDir,
@@ -46,7 +46,18 @@ interface PortCheckDefinition {
   probe: "http" | "redis" | "tcp";
 }
 
-type PortCheckState = "free" | "occupied_expected" | "occupied_external";
+type PortCheckState = "free" | "occupied_expected" | "occupied_supported" | "occupied_external";
+
+interface PortListenerInfo {
+  source: "probe" | "docker" | "unknown";
+  kind: "happytg" | "redis" | "postgres" | "minio" | "http" | "tcp" | "unknown";
+  description: string;
+  service?: string;
+  title?: string;
+  serverHeader?: string;
+  containerName?: string;
+  image?: string;
+}
 
 interface PortCheckResult {
   id: string;
@@ -58,6 +69,14 @@ interface PortCheckResult {
   overrideEnv?: string;
   command?: string;
   service?: string;
+  listener?: PortListenerInfo;
+  suggestedPort?: number;
+  planned: boolean;
+}
+
+interface DockerPublishedPort {
+  containerName: string;
+  image: string;
 }
 
 type RedisState = "absent" | "installed_stopped" | "running" | "port_conflict" | "remote";
@@ -142,28 +161,35 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     envKeys: ["HAPPYTG_REDIS_HOST_PORT"],
     defaultPort: 6379,
     probe: "redis",
-    overrideEnv: "HAPPYTG_REDIS_HOST_PORT"
+    overrideEnv: "HAPPYTG_REDIS_HOST_PORT",
+    command: "docker compose -f infra/docker-compose.example.yml up redis"
   },
   {
     id: "postgres",
     label: "Postgres host port",
-    envKeys: [],
+    envKeys: ["HAPPYTG_POSTGRES_HOST_PORT"],
     defaultPort: 5432,
-    probe: "tcp"
+    probe: "tcp",
+    overrideEnv: "HAPPYTG_POSTGRES_HOST_PORT",
+    command: "docker compose -f infra/docker-compose.example.yml up postgres"
   },
   {
     id: "minio-api",
     label: "MinIO API host port",
-    envKeys: [],
+    envKeys: ["HAPPYTG_MINIO_PORT"],
     defaultPort: 9000,
-    probe: "tcp"
+    probe: "tcp",
+    overrideEnv: "HAPPYTG_MINIO_PORT",
+    command: "docker compose -f infra/docker-compose.example.yml up minio"
   },
   {
     id: "minio-console",
     label: "MinIO console host port",
-    envKeys: [],
+    envKeys: ["HAPPYTG_MINIO_CONSOLE_PORT"],
     defaultPort: 9001,
-    probe: "tcp"
+    probe: "tcp",
+    overrideEnv: "HAPPYTG_MINIO_CONSOLE_PORT",
+    command: "docker compose -f infra/docker-compose.example.yml up minio"
   }
 ] as const;
 
@@ -177,6 +203,28 @@ function pushFinding(findings: BootstrapFinding[], finding: BootstrapFinding): v
   if (!findings.some((item) => item.code === finding.code && item.message === finding.message)) {
     findings.push(finding);
   }
+}
+
+function quoteWindowsShellArg(value: string): string {
+  if (!value) {
+    return "\"\"";
+  }
+
+  if (!/[\s"&()<>^|%!]/u.test(value)) {
+    return value;
+  }
+
+  return `"${value.replace(/%/g, "%%").replace(/"/g, "\"\"")}"`;
+}
+
+function buildWindowsShellCommand(command: string, args: string[]): string {
+  return [command, ...args]
+    .map((value) => quoteWindowsShellArg(value))
+    .join(" ");
+}
+
+function isLocalHost(host: string): boolean {
+  return ["", "localhost", "127.0.0.1", "::1"].includes(host.trim().toLowerCase());
 }
 
 function platformCommands(platform: NodeJS.Platform = process.platform): {
@@ -243,6 +291,44 @@ function codexUnavailableMessage(): string {
   return "Codex CLI was found, but `codex --version` did not complete successfully. Fix the local Codex install or shell environment, then rerun `pnpm happytg doctor --json`.";
 }
 
+function codexSmokeFailedMessage(stderr: string): string {
+  const summary = summarizeCodexSmokeStderr(stderr);
+  return summary
+    ? `Codex CLI started, but the smoke check failed: ${summary} Run \`pnpm happytg doctor --json\` for stderr details.`
+    : "Codex CLI started, but the smoke check failed. Run `pnpm happytg doctor --json` for stderr details.";
+}
+
+function codexSmokeOutputLooksSuccessful(output: string | undefined): boolean {
+  if (!output) {
+    return false;
+  }
+
+  return /"text":"OK"/u.test(output)
+    || /(^|\n)OK(\n|$)/u.test(output);
+}
+
+function codexSmokeFailureMessage(input: {
+  stderr: string;
+  output?: string;
+  timedOut?: boolean;
+}): string {
+  const summary = summarizeCodexSmokeStderr(input.stderr);
+  if (input.timedOut && codexSmokeOutputLooksSuccessful(input.output)) {
+    return summary
+      ? `Codex CLI returned the smoke reply, but the process did not exit before the timeout: ${summary} Run \`pnpm happytg doctor --json\` for stderr details.`
+      : "Codex CLI returned the smoke reply, but the process did not exit before the timeout. Run `pnpm happytg doctor --json` for stderr details.";
+  }
+
+  return codexSmokeFailedMessage(input.stderr);
+}
+
+function codexSmokeWarningsMessage(stderr: string): string {
+  const summary = summarizeCodexSmokeStderr(stderr);
+  return summary
+    ? `Codex CLI completed the smoke check with warnings: ${summary} Run \`pnpm happytg doctor --json\` for stderr details.`
+    : "Codex CLI completed the smoke check with warnings. Run `pnpm happytg doctor --json` for the detailed stderr output.";
+}
+
 function codexMissingMessage(installCheck?: CodexInstallCheck): string {
   if (installCheck?.pathLikelyIssue) {
     const detectedBinDir = installCheck.detectedBinDir;
@@ -293,15 +379,75 @@ function detectedCodexBinDir(installCheck?: CodexInstallCheck): string | null {
     ?? (installCheck.wrapperPaths[0] ? path.dirname(installCheck.wrapperPaths[0]) : null);
 }
 
+function plannedPortDefinitions(env: NodeJS.ProcessEnv): PortCheckDefinition[] {
+  return criticalPortDefinitions.filter((definition) => {
+    switch (definition.id) {
+      case "redis": {
+        const redisUrl = env.REDIS_URL?.trim();
+        if (!redisUrl) {
+          return true;
+        }
+
+        try {
+          return isLocalHost(new URL(redisUrl).hostname);
+        } catch {
+          return true;
+        }
+      }
+      case "postgres": {
+        const databaseUrl = env.DATABASE_URL?.trim();
+        if (!databaseUrl) {
+          return true;
+        }
+
+        try {
+          return isLocalHost(new URL(databaseUrl).hostname);
+        } catch {
+          return true;
+        }
+      }
+      case "minio-api":
+      case "minio-console": {
+        const s3Endpoint = env.S3_ENDPOINT?.trim();
+        if (!s3Endpoint) {
+          return true;
+        }
+
+        try {
+          return isLocalHost(new URL(s3Endpoint).hostname);
+        } catch {
+          return true;
+        }
+      }
+      default:
+        return true;
+    }
+  });
+}
+
 function formatPortStateForSummary(results: PortCheckResult[]): string {
-  const relevant = results.filter((item) => ["miniapp", "api", "bot", "worker", "redis"].includes(item.id));
-  const busy = relevant.filter((item) => item.state !== "free");
-  if (busy.length === 0) {
-    return "all critical ports free";
+  if (results.length === 0) {
+    return "no local planned ports detected";
   }
 
-  const busyDescriptions = busy.map((item) => `${item.port} ${item.state === "occupied_expected" ? "busy (HappyTG)" : "busy"}`);
-  return `${busyDescriptions.join(", ")}; others free`;
+  const free = results.filter((item) => item.state === "free").map((item) => `${item.label} ${item.port}`);
+  const reuse = results
+    .filter((item) => item.state === "occupied_expected" || item.state === "occupied_supported")
+    .map((item) => `${item.label} ${item.port}`);
+  const conflict = results.filter((item) => item.state === "occupied_external").map((item) => `${item.label} ${item.port}`);
+  const summaryParts: string[] = [];
+
+  if (conflict.length > 0) {
+    summaryParts.push(`conflicts: ${conflict.join(", ")}`);
+  }
+  if (reuse.length > 0) {
+    summaryParts.push(`reuse: ${reuse.join(", ")}`);
+  }
+  if (free.length > 0) {
+    summaryParts.push(`free: ${free.join(", ")}`);
+  }
+
+  return summaryParts.join("; ");
 }
 
 function envPresenceSummary(envFilePath: string | undefined): string {
@@ -357,13 +503,15 @@ async function runResolvedToolCommand(input: {
   const command = isJavaScriptEntrypoint(resolvedPath) ? process.execPath : resolvedPath;
   const args = isJavaScriptEntrypoint(resolvedPath) ? [resolvedPath, ...input.args] : input.args;
   const useShell = input.platform === "win32" && /\.(cmd|bat)$/i.test(resolvedPath);
+  const spawnCommand = useShell ? buildWindowsShellCommand(command, args) : command;
   const timeoutMs = input.timeoutMs ?? 10_000;
 
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const child = spawn(spawnCommand, useShell ? [] : args, {
       cwd: input.cwd,
       env: normalizeSpawnEnv(input.env, input.platform),
-      shell: useShell
+      shell: useShell,
+      stdio: ["ignore", "pipe", "pipe"]
     });
 
     let stdout = "";
@@ -520,6 +668,64 @@ function safeUrlPort(url: URL, fallback: number): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function appendDockerPortRange(portMap: Map<number, DockerPublishedPort>, hostStart: number, hostEnd: number, containerName: string, image: string): void {
+  for (let port = hostStart; port <= hostEnd; port += 1) {
+    portMap.set(port, {
+      containerName,
+      image
+    });
+  }
+}
+
+function parseDockerPublishedPorts(stdout: string): Map<number, DockerPublishedPort> {
+  const portMap = new Map<number, DockerPublishedPort>();
+
+  for (const rawLine of stdout.split(/\r?\n/u)) {
+    const line = rawLine.trim();
+    if (!line) {
+      continue;
+    }
+
+    const [containerName, portsField, image] = line.split("\t");
+    if (!containerName || !portsField || !image) {
+      continue;
+    }
+
+    for (const segment of portsField.split(",")) {
+      const match = segment.trim().match(/(?:(?:\[[^\]]+\]|[^:]+):)?(\d+)(?:-(\d+))?->(\d+)(?:-(\d+))?\/tcp/iu);
+      if (!match) {
+        continue;
+      }
+
+      const hostStart = Number(match[1]);
+      const hostEnd = Number(match[2] ?? match[1]);
+      appendDockerPortRange(portMap, hostStart, hostEnd, containerName, image);
+    }
+  }
+
+  return portMap;
+}
+
+async function detectDockerPublishedPorts(context: {
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+}): Promise<Map<number, DockerPublishedPort>> {
+  const dockerRun = await runResolvedToolCommand({
+    command: "docker",
+    args: ["ps", "--format", "{{.Names}}\t{{.Ports}}\t{{.Image}}"],
+    cwd: context.cwd,
+    env: context.env,
+    platform: context.platform,
+    timeoutMs: 5_000
+  }).catch(() => undefined);
+  if (!dockerRun || dockerRun.exitCode !== 0) {
+    return new Map();
+  }
+
+  return parseDockerPublishedPorts(dockerRun.stdout);
+}
+
 async function canConnect(host: string, port: number, timeoutMs = 400): Promise<boolean> {
   return new Promise((resolve) => {
     const socket = net.createConnection({
@@ -539,10 +745,12 @@ async function canConnect(host: string, port: number, timeoutMs = 400): Promise<
   });
 }
 
-async function detectHappyTGServiceOnPort(port: number): Promise<string | undefined> {
+async function probeGenericHttpListener(port: number): Promise<PortListenerInfo | undefined> {
   const urls = [
     `http://127.0.0.1:${port}/ready`,
-    `http://127.0.0.1:${port}/health`
+    `http://127.0.0.1:${port}/health`,
+    `http://127.0.0.1:${port}/minio/health/live`,
+    `http://127.0.0.1:${port}/`
   ];
 
   for (const url of urls) {
@@ -550,18 +758,47 @@ async function detectHappyTGServiceOnPort(port: number): Promise<string | undefi
       const response = await fetch(url, {
         signal: AbortSignal.timeout(750)
       });
-      if (!response.ok) {
-        continue;
-      }
-
       const contentType = response.headers.get("content-type") ?? "";
-      if (!contentType.includes("application/json")) {
-        continue;
+      const serverHeader = response.headers.get("server") ?? undefined;
+      const bodyText = response.ok && (contentType.includes("json") || contentType.startsWith("text/"))
+        ? await response.text()
+        : "";
+      if (contentType.includes("application/json")) {
+        try {
+          const body = JSON.parse(bodyText) as { service?: string };
+          if (body.service) {
+            return {
+              source: "probe",
+              kind: "happytg",
+              service: body.service,
+              description: `HappyTG ${body.service}`
+            };
+          }
+        } catch {
+          // Ignore malformed JSON and keep probing for another fingerprint.
+        }
       }
 
-      const body = await response.json() as { service?: string };
-      if (body.service) {
-        return body.service;
+      const titleMatch = bodyText.match(/<title>([^<]+)<\/title>/iu);
+      const title = titleMatch?.[1]?.trim();
+      if (serverHeader?.toLowerCase().includes("minio") || title?.toLowerCase().includes("minio")) {
+        return {
+          source: "probe",
+          kind: "minio",
+          description: title ? `MinIO listener (${title})` : "MinIO listener",
+          title,
+          serverHeader
+        };
+      }
+
+      if (response.ok) {
+        return {
+          source: "probe",
+          kind: "http",
+          description: title ? `HTTP listener (${title})` : `HTTP listener (${response.status})`,
+          title,
+          serverHeader
+        };
       }
     } catch {
       continue;
@@ -569,6 +806,10 @@ async function detectHappyTGServiceOnPort(port: number): Promise<string | undefi
   }
 
   return undefined;
+}
+
+async function detectHappyTGServiceOnPort(port: number): Promise<string | undefined> {
+  return (await probeGenericHttpListener(port))?.service;
 }
 
 async function probeRedis(host: string, port: number, timeoutMs = 500): Promise<boolean> {
@@ -601,10 +842,68 @@ async function probeRedis(host: string, port: number, timeoutMs = 500): Promise<
   });
 }
 
-async function detectPortCheck(definition: PortCheckDefinition, env: NodeJS.ProcessEnv): Promise<PortCheckResult> {
-  const port = definition.envKeys.length > 0
-    ? readPort(env, definition.envKeys, definition.defaultPort)
-    : definition.defaultPort;
+async function probePostgres(host: string, port: number, timeoutMs = 500): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = net.createConnection({
+      host,
+      port
+    });
+    let settled = false;
+    const finish = (result: boolean) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      socket.removeAllListeners();
+      socket.destroy();
+      resolve(result);
+    };
+
+    socket.setTimeout(timeoutMs);
+    socket.once("connect", () => {
+      socket.write(Buffer.from([0x00, 0x00, 0x00, 0x08, 0x04, 0xd2, 0x16, 0x2f]));
+    });
+    socket.on("data", (chunk) => {
+      finish(chunk.length > 0 && (chunk[0] === 0x53 || chunk[0] === 0x4e));
+    });
+    socket.once("timeout", () => finish(false));
+    socket.once("error", () => finish(false));
+  });
+}
+
+function withDockerAttribution(listener: PortListenerInfo | undefined, dockerPort: DockerPublishedPort | undefined): PortListenerInfo | undefined {
+  if (!dockerPort) {
+    return listener;
+  }
+
+  if (!listener) {
+    return {
+      source: "docker",
+      kind: "unknown",
+      description: `Docker container \`${dockerPort.containerName}\` (${dockerPort.image})`,
+      containerName: dockerPort.containerName,
+      image: dockerPort.image
+    };
+  }
+
+  return {
+    ...listener,
+    source: "docker",
+    containerName: dockerPort.containerName,
+    image: dockerPort.image,
+    description: `${listener.description} via Docker container \`${dockerPort.containerName}\` (${dockerPort.image})`
+  };
+}
+
+async function detectPortCheck(
+  definition: PortCheckDefinition,
+  port: number,
+  suggestedPort: number,
+  env: NodeJS.ProcessEnv,
+  dockerPorts: Map<number, DockerPublishedPort>
+): Promise<PortCheckResult> {
+  const dockerListener = dockerPorts.get(port);
   const connected = await canConnect("127.0.0.1", port);
   if (!connected) {
     return {
@@ -613,14 +912,17 @@ async function detectPortCheck(definition: PortCheckDefinition, env: NodeJS.Proc
       port,
       probe: definition.probe,
       state: "free",
-      detail: `${definition.label} port ${port} is free.`,
+      detail: `${definition.label} plans to use port ${port}; it is free.`,
       overrideEnv: definition.overrideEnv,
-      command: definition.command
+      command: definition.command,
+      suggestedPort,
+      planned: true
     };
   }
 
   if (definition.probe === "http") {
-    const service = await detectHappyTGServiceOnPort(port);
+    const listener = withDockerAttribution(await probeGenericHttpListener(port), dockerListener);
+    const service = listener?.service;
     if (service && service === definition.expectedService) {
       return {
         id: definition.id,
@@ -628,10 +930,13 @@ async function detectPortCheck(definition: PortCheckDefinition, env: NodeJS.Proc
         port,
         probe: definition.probe,
         state: "occupied_expected",
-        detail: `${definition.label} is already running on port ${port}.`,
+        detail: `${definition.label} plans to use port ${port}, and HappyTG ${service} is already running there${listener?.containerName ? ` via Docker container \`${listener.containerName}\`` : ""}.`,
         overrideEnv: definition.overrideEnv,
         command: definition.command,
-        service
+        service,
+        listener,
+        suggestedPort,
+        planned: true
       };
     }
 
@@ -642,28 +947,97 @@ async function detectPortCheck(definition: PortCheckDefinition, env: NodeJS.Proc
       probe: definition.probe,
       state: "occupied_external",
       detail: service
-        ? `Port ${port} is occupied by HappyTG ${service}, not ${definition.label}.`
-        : `Port ${port} is occupied by another process.`,
+        ? `${definition.label} plans to use port ${port}, but HappyTG ${service} is already running there.`
+        : `${definition.label} plans to use port ${port}, but ${listener?.description ?? "another process or listener"} is already there.`,
       overrideEnv: definition.overrideEnv,
       command: definition.command,
-      service
+      service,
+      listener,
+      suggestedPort,
+      planned: true
     };
   }
 
   if (definition.probe === "redis") {
     const redisRunning = await probeRedis("127.0.0.1", port);
+    const listener = withDockerAttribution(
+      redisRunning
+        ? {
+          source: "probe",
+          kind: "redis",
+          description: "Redis listener",
+          service: "redis"
+        }
+        : undefined,
+      dockerListener
+    );
     return {
       id: definition.id,
       label: definition.label,
       port,
       probe: definition.probe,
-      state: "occupied_external",
+      state: redisRunning ? "occupied_supported" : "occupied_external",
       detail: redisRunning
-        ? `Redis is already listening on port ${port}.`
-        : `Port ${port} is occupied by another process.`,
+        ? `${definition.label} plans to use port ${port}, and ${listener?.description ?? "Redis"} is already available there.`
+        : `${definition.label} plans to use port ${port}, but ${listener?.description ?? "another process or listener"} is already there.`,
       overrideEnv: definition.overrideEnv,
       command: definition.command,
-      service: redisRunning ? "redis" : undefined
+      service: redisRunning ? "redis" : undefined,
+      listener,
+      suggestedPort,
+      planned: true
+    };
+  }
+
+  if (definition.id === "postgres") {
+    const postgresRunning = await probePostgres("127.0.0.1", port);
+    const listener = withDockerAttribution(
+      postgresRunning
+        ? {
+          source: "probe",
+          kind: "postgres",
+          description: "PostgreSQL listener",
+          service: "postgres"
+        }
+        : undefined,
+      dockerListener
+    );
+    return {
+      id: definition.id,
+      label: definition.label,
+      port,
+      probe: definition.probe,
+      state: postgresRunning ? "occupied_supported" : "occupied_external",
+      detail: postgresRunning
+        ? `${definition.label} plans to use port ${port}, and ${listener?.description ?? "PostgreSQL"} is already available there.`
+        : `${definition.label} plans to use port ${port}, but ${listener?.description ?? "another process or listener"} is already there.`,
+      overrideEnv: definition.overrideEnv,
+      command: definition.command,
+      service: postgresRunning ? "postgres" : undefined,
+      listener,
+      suggestedPort,
+      planned: true
+    };
+  }
+
+  if (definition.id === "minio-api" || definition.id === "minio-console") {
+    const listener = withDockerAttribution(await probeGenericHttpListener(port), dockerListener);
+    const minioRunning = listener?.kind === "minio";
+    return {
+      id: definition.id,
+      label: definition.label,
+      port,
+      probe: definition.probe,
+      state: minioRunning ? "occupied_supported" : "occupied_external",
+      detail: minioRunning
+        ? `${definition.label} plans to use port ${port}, and ${listener?.description ?? "MinIO"} is already available there.`
+        : `${definition.label} plans to use port ${port}, but ${listener?.description ?? "another process or listener"} is already there.`,
+      overrideEnv: definition.overrideEnv,
+      command: definition.command,
+      service: minioRunning ? "minio" : undefined,
+      listener,
+      suggestedPort,
+      planned: true
     };
   }
 
@@ -673,14 +1047,61 @@ async function detectPortCheck(definition: PortCheckDefinition, env: NodeJS.Proc
     port,
     probe: definition.probe,
     state: "occupied_external",
-    detail: `Port ${port} is occupied.`,
+    detail: `${definition.label} plans to use port ${port}, but ${withDockerAttribution(undefined, dockerListener)?.description ?? "another process or listener"} is already there.`,
     overrideEnv: definition.overrideEnv,
-    command: definition.command
+    command: definition.command,
+    listener: withDockerAttribution(undefined, dockerListener),
+    suggestedPort,
+    planned: true
   };
 }
 
-async function detectCriticalPorts(env: NodeJS.ProcessEnv): Promise<PortCheckResult[]> {
-  return Promise.all(criticalPortDefinitions.map((definition) => detectPortCheck(definition, env)));
+async function findSuggestedPort(
+  port: number,
+  blockedPorts: Set<number>
+): Promise<number> {
+  for (let candidate = port + 1; candidate < 65_535; candidate += 1) {
+    if (blockedPorts.has(candidate)) {
+      continue;
+    }
+    if (await canConnect("127.0.0.1", candidate)) {
+      continue;
+    }
+    return candidate;
+  }
+
+  return port + 1;
+}
+
+async function detectCriticalPorts(context: {
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+}): Promise<PortCheckResult[]> {
+  const definitions = plannedPortDefinitions(context.env);
+  const dockerPorts = await detectDockerPublishedPorts(context);
+  const plannedPorts = definitions.map((definition) => ({
+    definition,
+    port: definition.envKeys.length > 0
+      ? readPort(context.env, definition.envKeys, definition.defaultPort)
+      : definition.defaultPort
+  }));
+  const blockedPorts = new Set(plannedPorts.map((item) => item.port));
+  const suggestedPorts = new Map<string, number>();
+
+  for (const plannedPort of plannedPorts) {
+    const suggestedPort = await findSuggestedPort(plannedPort.port, blockedPorts);
+    suggestedPorts.set(plannedPort.definition.id, suggestedPort);
+    blockedPorts.add(suggestedPort);
+  }
+
+  return Promise.all(plannedPorts.map((plannedPort) => detectPortCheck(
+    plannedPort.definition,
+    plannedPort.port,
+    suggestedPorts.get(plannedPort.definition.id) ?? (plannedPort.port + 1),
+    context.env,
+    dockerPorts
+  )));
 }
 
 async function detectRedis(
@@ -816,7 +1237,7 @@ function buildPortConflictMessage(result: PortCheckResult, platform: NodeJS.Plat
     return result.detail;
   }
 
-  const suggestedPort = result.port + 1;
+  const suggestedPort = result.suggestedPort ?? (result.port + 1);
   const commands = platformCommands(platform);
   return `${result.detail} Reuse the running service if it is yours, or pick a new port with \`${commands.inlineEnvExample(result.overrideEnv, suggestedPort, result.command)}\`.`;
 }
@@ -832,6 +1253,9 @@ function buildSetupPlan(
   const commands = platformCommands(platform);
   const botTarget = telegramBotTarget(context.env ?? process.env);
   const steps: string[] = [];
+  const postgresReady = portResults.some((item) => item.id === "postgres" && item.state === "occupied_supported");
+  const minioReady = portResults.some((item) => item.id === "minio-api" && item.state === "occupied_supported");
+  const sharedInfraReady = redis.state === "running" && postgresReady && minioReady;
 
   if (!envFilePath) {
     steps.push(`Create \`.env\`: \`${commands.copyEnv}\`.`);
@@ -841,26 +1265,32 @@ function buildSetupPlan(
     steps.push("Set `TELEGRAM_BOT_TOKEN` in `.env` or the shell before you start the bot.");
   }
 
-  switch (redis.state) {
-    case "running":
-      steps.push("Redis is already running locally. Reuse it, and if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services, you can skip Docker entirely.");
-      break;
-    case "installed_stopped":
-      steps.push("Start your local Redis service, point `REDIS_URL` at an existing Redis instance, or include `redis` when you bring up shared infra.");
-      break;
-    case "absent":
-      steps.push("If PostgreSQL, Redis, and S3-compatible storage already exist, point `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` at them; otherwise bring up shared infra with Redis included.");
-      break;
-    case "port_conflict":
-      steps.push("Port `6379` is busy. Reuse an existing Redis instance via `REDIS_URL`, or set `HAPPYTG_REDIS_HOST_PORT` before starting compose `redis`.");
-      break;
-    case "remote":
-      steps.push("Redis points to a remote URL. Verify it is reachable before first start, and skip local Docker infra entirely if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services.");
-      break;
+  if (sharedInfraReady) {
+    steps.push("Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.");
+  } else {
+    switch (redis.state) {
+      case "running":
+        steps.push("Redis is already running locally. Reuse it, and if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services, you can skip Docker entirely.");
+        break;
+      case "installed_stopped":
+        steps.push("Start your local Redis service, point `REDIS_URL` at an existing Redis instance, or include `redis` when you bring up shared infra.");
+        break;
+      case "absent":
+        steps.push("If PostgreSQL, Redis, and S3-compatible storage already exist, point `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` at them; otherwise bring up shared infra with Redis included.");
+        break;
+      case "port_conflict":
+        steps.push("Port `6379` is busy. Reuse an existing Redis instance via `REDIS_URL`, or set `HAPPYTG_REDIS_HOST_PORT` before starting compose `redis`.");
+        break;
+      case "remote":
+        steps.push("Redis points to a remote URL. Verify it is reachable before first start, and skip local Docker infra entirely if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services.");
+        break;
+    }
   }
 
   const infraCommand = defaultInfraComposeCommand(redis, platform);
-  if (redis.state === "running") {
+  if (sharedInfraReady) {
+    steps.push("Start repo services: `pnpm dev`.");
+  } else if (redis.state === "running") {
     steps.push(`If PostgreSQL and S3-compatible storage are not already available, start the remaining shared infra: \`${infraCommand}\`.`);
   } else if (redis.state === "port_conflict") {
     steps.push(`If you need container Redis, use \`${commands.inlineEnvExample("HAPPYTG_REDIS_HOST_PORT", 6380, "docker compose -f infra/docker-compose.example.yml up redis")}\`.`);
@@ -874,7 +1304,7 @@ function buildSetupPlan(
   const occupiedHappyTGPorts = portResults.filter((item) => item.state === "occupied_expected" && ["miniapp", "api", "bot", "worker"].includes(item.id));
   if (occupiedHappyTGPorts.length > 0) {
     steps.push("Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.");
-  } else {
+  } else if (!sharedInfraReady) {
     steps.push("Start repo services: `pnpm dev`.");
   }
 
@@ -914,7 +1344,11 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
       cwd,
       platform
     }),
-    detectCriticalPorts(env)
+    detectCriticalPorts({
+      cwd,
+      env,
+      platform
+    })
   ]);
 
   const preflight = [
@@ -985,7 +1419,11 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     pushFinding(findings, {
       code: "CODEX_SMOKE_FAILED",
       severity: "warn",
-      message: "Codex CLI started, but the smoke check did not complete. Review Codex auth/config, then rerun `pnpm happytg doctor --json`."
+      message: codexSmokeFailureMessage({
+        stderr: codex.smokeError ?? "",
+        output: codex.smokeOutput,
+        timedOut: codex.smokeTimedOut
+      })
     });
   }
 
@@ -993,7 +1431,7 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     pushFinding(findings, {
       code: "CODEX_SMOKE_WARNINGS",
       severity: "warn",
-      message: "Codex CLI completed the smoke check with warnings. Run `pnpm happytg doctor --json` for the detailed stderr output."
+      message: codexSmokeWarningsMessage(codex.smokeError ?? "")
     });
   }
 
@@ -1094,7 +1532,7 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     pushPlanStep(planPreview, "Do not run the full compose app stack and `pnpm dev` at the same time.");
   }
   for (const portResult of portResults.filter((item) => item.state === "occupied_external" && item.overrideEnv && item.command)) {
-    const example = commands.inlineEnvExample(portResult.overrideEnv!, portResult.port + 1, portResult.command!);
+    const example = commands.inlineEnvExample(portResult.overrideEnv!, portResult.suggestedPort ?? (portResult.port + 1), portResult.command!);
     pushPlanStep(planPreview, `If you keep ${portResult.label.toLowerCase()} on a different port, use \`${example}\`.`);
   }
 
@@ -1133,20 +1571,21 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
       },
       redis,
       ports: portResults,
+      plannedPorts: portResults,
       onboarding: {
         copyEnvCommand: commands.copyEnv,
         defaultInfraCommand: defaultInfraComposeCommand(redis, platform),
         pairCommand: "pnpm daemon:pair",
         daemonCommand: "pnpm dev:daemon",
         steps: context.command === "setup" ? planPreview : buildSetupPlan(context, redis, portResults, envFilePath, tokenState),
-        overrideExamples: criticalPortDefinitions
+        overrideExamples: portResults
           .filter((item) => item.overrideEnv && item.command)
           .map((item) => ({
             service: item.label,
-            defaultPort: item.defaultPort,
+            defaultPort: item.port,
             overrideEnv: item.overrideEnv,
             command: item.command,
-            shellExample: commands.inlineEnvExample(item.overrideEnv!, item.defaultPort + 1, item.command!)
+            shellExample: commands.inlineEnvExample(item.overrideEnv!, item.suggestedPort ?? (item.port + 1), item.command!)
           }))
       }
     }

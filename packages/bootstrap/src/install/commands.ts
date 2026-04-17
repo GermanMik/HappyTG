@@ -60,8 +60,22 @@ function stripWrappedQuotes(value: string): string {
   return value.trim().replace(/^"(.*)"$/u, "$1");
 }
 
-function quoteShellCommand(command: string): string {
-  return `"${command}"`;
+function quoteWindowsShellArg(value: string): string {
+  if (!value) {
+    return "\"\"";
+  }
+
+  if (!/[\s"&()<>^|%!]/u.test(value)) {
+    return value;
+  }
+
+  return `"${value.replace(/%/g, "%%").replace(/"/g, "\"\"")}"`;
+}
+
+function buildWindowsShellCommand(command: string, args: string[]): string {
+  return [command, ...args]
+    .map((value) => quoteWindowsShellArg(value))
+    .join(" ");
 }
 
 function isPathLike(command: string, platform: NodeJS.Platform): boolean {
@@ -218,16 +232,17 @@ async function spawnCommand(input: {
     cwd,
     env,
     platform,
-    shell: input.shell,
-    fallbackUsed
+      shell: input.shell,
+      fallbackUsed
   });
-  const spawnCommandValue = plan.shell ? quoteShellCommand(plan.command) : plan.command;
+  const spawnCommandValue = plan.shell ? buildWindowsShellCommand(plan.command, plan.commandArgs) : plan.command;
 
   return new Promise((resolve, reject) => {
-    const child = spawn(spawnCommandValue, plan.commandArgs, {
+    const child = spawn(spawnCommandValue, plan.shell ? [] : plan.commandArgs, {
       cwd,
       env: normalizeSpawnEnv(env, platform),
-      shell: plan.shell
+      shell: plan.shell,
+      stdio: ["ignore", "pipe", "pipe"]
     });
 
     let stdout = "";

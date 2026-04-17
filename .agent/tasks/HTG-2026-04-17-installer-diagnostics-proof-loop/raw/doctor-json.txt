@@ -1,0 +1,250 @@
+
+> happytg@0.3.7 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "doctor" "--json"
+
+(node:40100) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{
+  "id": "btr_d9aea6fbbf044f0ca0a10259",
+  "command": "doctor",
+  "createdAt": "2026-04-17T04:19:43.871Z",
+  "hostFingerprint": "ALFRED-win32-x64",
+  "status": "warn",
+  "profileRecommendation": "recommended",
+  "findings": [
+    {
+      "code": "CODEX_PATH_PENDING",
+      "severity": "warn",
+      "message": "Codex CLI worked through the npm wrapper at `C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd`, but `C:\\Users\\tikta\\AppData\\Roaming\\npm` is not on the current shell PATH yet. Update PATH or restart the shell so plain `codex` resolves directly."
+    },
+    {
+      "code": "CODEX_SMOKE_FAILED",
+      "severity": "warn",
+      "message": "Codex CLI started, but the smoke check did not complete. Review Codex auth/config, then rerun `pnpm happytg doctor --json`."
+    },
+    {
+      "code": "MINIAPP_PORT_BUSY",
+      "severity": "warn",
+      "message": "Port 3001 is occupied by another process. Reuse the running service if it is yours, or pick a new port with `$env:HAPPYTG_MINIAPP_PORT=\"3002\"; pnpm dev:miniapp`."
+    },
+    {
+      "code": "POSTGRES_PORT_BUSY",
+      "severity": "warn",
+      "message": "Port 5432 is occupied."
+    },
+    {
+      "code": "MINIO-API_PORT_BUSY",
+      "severity": "warn",
+      "message": "Port 9000 is occupied."
+    },
+    {
+      "code": "MINIO-CONSOLE_PORT_BUSY",
+      "severity": "warn",
+      "message": "Port 9001 is occupied."
+    }
+  ],
+  "planPreview": [
+    "Add `C:\\Users\\tikta\\AppData\\Roaming\\npm` to PATH, restart the shell, then verify `codex --version`.",
+    "Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port.",
+    "If you keep mini app on a different port, use `$env:HAPPYTG_MINIAPP_PORT=\"3002\"; pnpm dev:miniapp`."
+  ],
+  "reportJson": {
+    "platform": "win32-x64",
+    "env": {
+      "envFilePath": "C:\\Develop\\Projects\\HappyTG\\.env",
+      "envExamplePath": "C:\\Develop\\Projects\\HappyTG\\.env.example"
+    },
+    "preflight": [
+      "Env: .env found",
+      "Codex: codex-cli 0.118.0 (via npm wrapper; PATH follow-up still needed)",
+      "Telegram: configured",
+      "Redis: running on localhost:6379",
+      "Ports: 3001 busy, 6379 busy; others free"
+    ],
+    "git": {
+      "available": true,
+      "binaryPath": "C:\\Program Files\\Git\\cmd\\git.exe"
+    },
+    "codex": {
+      "runtime": "codex-cli",
+      "available": true,
+      "missing": false,
+      "binaryPath": "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd",
+      "version": "codex-cli 0.118.0",
+      "configPath": "C:\\Users\\tikta\\.codex\\config.toml",
+      "configExists": true,
+      "smokeOk": false,
+      "smokeOutput": "",
+      "smokeError": "error: unexpected argument 'exactly' found\n\nUsage: codex exec [OPTIONS] [PROMPT] [COMMAND]\n\nFor more information, try '--help'."
+    },
+    "codexDirect": {
+      "runtime": "codex-cli",
+      "available": false,
+      "missing": true,
+      "binaryPath": "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex",
+      "configPath": "C:\\Users\\tikta\\.codex\\config.toml",
+      "configExists": true,
+      "smokeOk": false,
+      "smokeError": "Codex CLI is not on the current shell PATH yet. Check the global npm prefix and installed Codex wrapper files to see whether this is a PATH issue or a partial install. If Codex is still missing, reinstall Codex, update PATH, verify `codex --version`, then run `pnpm happytg doctor`."
+    },
+    "codexInstallCheck": {
+      "npmBinaryPath": "C:\\Program Files\\nodejs\\npm",
+      "npmPrefix": null,
+      "npmBinDir": null,
+      "detectedBinDir": "C:\\Users\\tikta\\AppData\\Roaming\\npm",
+      "prefixChecked": false,
+      "wrapperCandidates": [
+        "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex",
+        "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd",
+        "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.ps1"
+      ],
+      "wrapperPaths": [
+        "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex",
+        "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd",
+        "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.ps1"
+      ],
+      "pathLikelyIssue": true
+    },
+    "codexPathResolution": {
+      "pathPending": true,
+      "wrapperPath": "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd"
+    },
+    "telegram": {
+      "status": "configured",
+      "configured": true,
+      "message": "Telegram bot token is configured."
+    },
+    "redis": {
+      "state": "running",
+      "url": "redis://localhost:6379",
+      "host": "localhost",
+      "port": 6379,
+      "local": true,
+      "installed": false,
+      "detail": "Redis responded to PING on localhost:6379.",
+      "executablePaths": {
+        "redisCli": null,
+        "redisServer": null
+      }
+    },
+    "ports": [
+      {
+        "id": "miniapp",
+        "label": "Mini App",
+        "port": 3001,
+        "probe": "http",
+        "state": "occupied_external",
+        "detail": "Port 3001 is occupied by another process.",
+        "overrideEnv": "HAPPYTG_MINIAPP_PORT",
+        "command": "pnpm dev:miniapp"
+      },
+      {
+        "id": "api",
+        "label": "API",
+        "port": 4000,
+        "probe": "http",
+        "state": "free",
+        "detail": "API port 4000 is free.",
+        "overrideEnv": "HAPPYTG_API_PORT",
+        "command": "pnpm dev:api"
+      },
+      {
+        "id": "bot",
+        "label": "Bot",
+        "port": 4100,
+        "probe": "http",
+        "state": "free",
+        "detail": "Bot port 4100 is free.",
+        "overrideEnv": "HAPPYTG_BOT_PORT",
+        "command": "pnpm dev:bot"
+      },
+      {
+        "id": "worker",
+        "label": "Worker probe",
+        "port": 4200,
+        "probe": "http",
+        "state": "free",
+        "detail": "Worker probe port 4200 is free.",
+        "overrideEnv": "HAPPYTG_WORKER_PORT",
+        "command": "pnpm dev:worker"
+      },
+      {
+        "id": "redis",
+        "label": "Redis host port",
+        "port": 6379,
+        "probe": "redis",
+        "state": "occupied_external",
+        "detail": "Redis is already listening on port 6379.",
+        "overrideEnv": "HAPPYTG_REDIS_HOST_PORT",
+        "service": "redis"
+      },
+      {
+        "id": "postgres",
+        "label": "Postgres host port",
+        "port": 5432,
+        "probe": "tcp",
+        "state": "occupied_external",
+        "detail": "Port 5432 is occupied."
+      },
+      {
+        "id": "minio-api",
+        "label": "MinIO API host port",
+        "port": 9000,
+        "probe": "tcp",
+        "state": "occupied_external",
+        "detail": "Port 9000 is occupied."
+      },
+      {
+        "id": "minio-console",
+        "label": "MinIO console host port",
+        "port": 9001,
+        "probe": "tcp",
+        "state": "occupied_external",
+        "detail": "Port 9001 is occupied."
+      }
+    ],
+    "onboarding": {
+      "copyEnvCommand": "Copy-Item .env.example .env",
+      "defaultInfraCommand": "docker compose -f infra/docker-compose.example.yml up postgres minio",
+      "pairCommand": "pnpm daemon:pair",
+      "daemonCommand": "pnpm dev:daemon",
+      "steps": [
+        "Redis is already running locally. Reuse it, and if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services, you can skip Docker entirely.",
+        "If PostgreSQL and S3-compatible storage are not already available, start the remaining shared infra: `docker compose -f infra/docker-compose.example.yml up postgres minio`.",
+        "Start repo services: `pnpm dev`.",
+        "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+        "Send `/pair <CODE>` to Telegram, then start the daemon with `pnpm dev:daemon`."
+      ],
+      "overrideExamples": [
+        {
+          "service": "Mini App",
+          "defaultPort": 3001,
+          "overrideEnv": "HAPPYTG_MINIAPP_PORT",
+          "command": "pnpm dev:miniapp",
+          "shellExample": "$env:HAPPYTG_MINIAPP_PORT=\"3002\"; pnpm dev:miniapp"
+        },
+        {
+          "service": "API",
+          "defaultPort": 4000,
+          "overrideEnv": "HAPPYTG_API_PORT",
+          "command": "pnpm dev:api",
+          "shellExample": "$env:HAPPYTG_API_PORT=\"4001\"; pnpm dev:api"
+        },
+        {
+          "service": "Bot",
+          "defaultPort": 4100,
+          "overrideEnv": "HAPPYTG_BOT_PORT",
+          "command": "pnpm dev:bot",
+          "shellExample": "$env:HAPPYTG_BOT_PORT=\"4101\"; pnpm dev:bot"
+        },
+        {
+          "service": "Worker probe",
+          "defaultPort": 4200,
+          "overrideEnv": "HAPPYTG_WORKER_PORT",
+          "command": "pnpm dev:worker",
+          "shellExample": "$env:HAPPYTG_WORKER_PORT=\"4201\"; pnpm dev:worker"
+        }
+      ]
+    }
+  }
+}
