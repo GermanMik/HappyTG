@@ -429,6 +429,13 @@ test("summarizeCodexSmokeStderr extracts concise actionable root causes", () => 
     "Codex could not open the Responses websocket (403 Forbidden)."
   );
   assert.equal(
+    summarizeCodexSmokeStderr([
+      "2026-04-17T04:22:49.185023Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses",
+      "2026-04-17T04:22:49.285023Z  WARN codex_core::client: falling back to HTTP"
+    ].join("\n")),
+    "Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP."
+  );
+  assert.equal(
     summarizeCodexSmokeStderr("2026-04-17T04:22:49.185023Z WARN codex_core::plugins::startup_sync: startup remote plugin sync failed\nProcess timed out after 120000ms."),
     "Codex smoke command did not exit before the 120000ms timeout."
   );

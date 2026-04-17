@@ -125,7 +125,9 @@ export function summarizeCodexSmokeStderr(stderr: string): string | undefined {
   if (lines.some((line) => /responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden/iu.test(line)
       || /session_startup_prewarm: startup websocket prewarm setup failed: unexpected status 403 Forbidden/iu.test(line)
       || /unexpected status 403 Forbidden: .*wss:\/\/chatgpt\.com\/backend-api\/codex\/responses/iu.test(line))) {
-    return "Codex could not open the Responses websocket (403 Forbidden).";
+    return lines.some((line) => /codex_core::client: falling back to http/iu.test(line))
+      ? "Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP."
+      : "Codex could not open the Responses websocket (403 Forbidden).";
   }
   if (lines.some((line) => /plugins::startup_sync: startup remote plugin sync failed/iu.test(line)
       || /plugins::manager: failed to warm featured plugin ids cache/iu.test(line))) {

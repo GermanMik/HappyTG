@@ -1,0 +1,20 @@
+{
+  "taskId": "HTG-2026-04-17-release-039-installer-publish",
+  "status": "evidence_collected",
+  "artifacts": {
+    "spec": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/spec.md",
+    "doctorJson": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/doctor-json.txt",
+    "verifyJson": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/verify-json.txt",
+    "setupJson": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/setup-json.txt",
+    "installJson": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/install-json.txt",
+    "installDraftInvalidJson": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/install-draft-invalid-json.txt",
+    "telegramProbe": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/telegram-probe.txt",
+    "telegramProbeFollowup": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/telegram-probe-followup.txt",
+    "lint": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/lint.txt",
+    "typecheck": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/typecheck.txt",
+    "testUnit": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/test-unit.txt",
+    "testIntegration": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/test-integration.txt",
+    "releaseCheck": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/release-check.txt",
+    "taskValidate": ".agent/tasks/HTG-2026-04-17-release-039-installer-publish/raw/task-validate.txt"
+  }
+}

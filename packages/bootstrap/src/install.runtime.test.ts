@@ -1473,6 +1473,116 @@ test("runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible 
   }
 });
 
+test("runHappyTGInstall semantically dedupes repeated setup next steps and compresses repeated post-check warning sets", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-semantic-dedupe-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const codexWarning = "Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details.";
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: ["setup", "doctor", "verify"]
+    }, {
+      runBootstrapCheck: async (command) => ({
+        id: `btr_${command}`,
+        hostFingerprint: "fp",
+        command,
+        status: "warn",
+        profileRecommendation: "recommended",
+        findings: [
+          {
+            code: "CODEX_SMOKE_WARNINGS",
+            severity: "warn",
+            message: codexWarning
+          }
+        ],
+        planPreview: [
+          "Start repo services: `pnpm dev`.",
+          "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+          "Send `/pair <CODE>` to Telegram, then start the daemon with `pnpm dev:daemon`."
+        ],
+        reportJson: {},
+        createdAt: "2026-04-17T00:00:00.000Z"
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "manual",
+          detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+        })
+      }
+    });
+
+    assert.equal(result.nextSteps.filter((step) => step === "pnpm dev").length, 1);
+    assert.equal(result.nextSteps.filter((step) => step === "pnpm daemon:pair").length, 1);
+    assert.equal(result.nextSteps.filter((step) => /Send `\/pair <CODE>`/u.test(step)).length, 1);
+    assert.equal(result.nextSteps.some((step) => step === "Start repo services: `pnpm dev`."), false);
+    assert.equal(result.nextSteps.some((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`."), false);
+    assert.match(result.steps.find((step) => step.id === "check-setup")?.detail ?? "", /Codex CLI completed the smoke check with warnings/i);
+    assert.equal(result.steps.find((step) => step.id === "check-doctor")?.detail, "No new warnings beyond `setup`; the same warning set was confirmed.");
+    assert.equal(result.steps.find((step) => step.id === "check-verify")?.detail, "No new warnings beyond `setup`; the same warning set was confirmed.");
+    assert.match(result.postChecks[1]?.summary ?? "", /Same warning set as setup/i);
+    assert.match(result.postChecks[2]?.summary ?? "", /Same warning set as setup/i);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning level with real bootstrap checks", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-appdata-wrapper-"));
   const repoPath = path.join(tempDir, "HappyTG");

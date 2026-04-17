@@ -1,0 +1,22 @@
+{
+  "id": "HTG-2026-04-17-release-039-installer-publish",
+  "sessionId": "ses_release_039_installer_publish",
+  "workspaceId": "ws_happytg",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-release-039-installer-publish",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Release 0.3.9 installer and publish flow",
+  "acceptanceCriteria": [
+    "Telegram diagnostics no longer collapse to a bare timeout message when safer, more precise classification is available.",
+    "Telegram diagnostics can truthfully distinguish general connectivity from Bot API HTTPS path failures where the probes allow it.",
+    "Codex websocket 403 warnings are classified correctly and do not storm across setup, doctor, verify, Final Summary, and Next steps.",
+    "Final Summary and Next steps are deduplicated, concise, truthful, and severity-correct.",
+    "Mini App port 3001 remains truthfully classified as conflict or supported reuse without misleading escalation.",
+    "Regression coverage is added for fixed product bugs and dedupe logic.",
+    "Proof bundle contains baseline reproduction, changes, evidence, verifier output, and final verdict.",
+    "Commit, push, PR, merge, and release/tag are completed only after successful fresh verify."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T08:11:54.662Z",
+  "updatedAt": "2026-04-17T11:27:28.5882018+03:00"
+}

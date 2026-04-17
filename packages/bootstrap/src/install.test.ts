@@ -320,3 +320,68 @@ test("fetchTelegramBotIdentity classifies DNS-style fetch failures and non-JSON 
   assert.equal(nonJson.failureKind, "unexpected_response");
   assert.equal(nonJson.error, "Telegram API getMe returned a non-JSON response.");
 });
+
+test("fetchTelegramBotIdentity explains Windows transport-specific Telegram timeouts when PowerShell validates the token", async () => {
+  const timeoutFailure = new TypeError("fetch failed");
+  Object.assign(timeoutFailure, {
+    cause: {
+      code: "UND_ERR_CONNECT_TIMEOUT",
+      message: "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"
+    }
+  });
+
+  const network = await fetchTelegramBotIdentity(
+    "123456:abcdefghijklmnopqrstuvwx",
+    async () => {
+      throw timeoutFailure;
+    },
+    {
+      platform: "win32",
+      probeNetworkIssue: async () => ({
+        kind: "validated",
+        username: "happytg_bot"
+      })
+    }
+  );
+
+  assert.equal(network.ok, false);
+  assert.equal(network.failureKind, "network_error");
+  assert.equal(network.recoverable, true);
+  assert.equal(network.username, "happytg_bot");
+  assert.equal(network.transportProbeValidated, true);
+  assert.match(network.error ?? "", /Windows PowerShell Bot API probe with the same token validated @happytg_bot/i);
+  assert.match(network.error ?? "", /Node HTTPS transport/i);
+  assert.match(network.error ?? "", /MTProto instead of Bot API HTTPS/i);
+});
+
+test("fetchTelegramBotIdentity promotes invalid tokens when a Windows follow-up probe reaches Telegram", async () => {
+  const timeoutFailure = new TypeError("fetch failed");
+  Object.assign(timeoutFailure, {
+    cause: {
+      code: "UND_ERR_CONNECT_TIMEOUT",
+      message: "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"
+    }
+  });
+
+  const invalid = await fetchTelegramBotIdentity(
+    "123456:abcdefghijklmnopqrstuvwx",
+    async () => {
+      throw timeoutFailure;
+    },
+    {
+      platform: "win32",
+      probeNetworkIssue: async () => ({
+        kind: "invalid_token",
+        message: "Unauthorized",
+        statusCode: 401
+      })
+    }
+  );
+
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.failureKind, "invalid_token");
+  assert.equal(invalid.recoverable, false);
+  assert.equal(invalid.statusCode, 401);
+  assert.match(invalid.error ?? "", /rejected the configured token/i);
+  assert.match(invalid.error ?? "", /Node HTTPS also failed earlier/i);
+});

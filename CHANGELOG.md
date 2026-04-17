@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.3.9
+
+### Fixed
+
+- Telegram installer `getMe` diagnostics now run a safe Windows PowerShell follow-up probe after Node HTTPS transport failures so HappyTG can distinguish Node/curl-specific Bot API timeouts from invalid tokens and from broader Bot API reachability issues.
+- Telegram warning text now explains why Telegram Desktop working on the same host does not automatically clear Bot API HTTPS failures, and invalid-token follow-up probes now stay classified as invalid token instead of degrading into a vague API warning.
+- Codex smoke warnings now say when the Responses websocket returned `403 Forbidden` but the CLI successfully fell back to HTTP, keeping the warning truthful while making its non-blocking nature explicit.
+- Installer post-check output now compresses repeated `setup`/`doctor`/`verify` warning sets and semantically deduplicates overlapping `pnpm dev`, pairing, and daemon-start next steps in the final summary.
+
+### Changed
+
+- Release metadata is aligned at `0.3.9` across the workspace for the installer publish-flow follow-up release.
+
 ## v0.3.8
 
 ### Fixed
