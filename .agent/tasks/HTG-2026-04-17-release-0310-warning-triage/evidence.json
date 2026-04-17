@@ -90,6 +90,7 @@
     "raw/verify-json-final.txt",
     "raw/install-json-final.txt",
     "raw/install-json-keep-final.txt",
+    "raw/install-json-keep-verifier.txt",
     "raw/telegram-probe.txt",
     "raw/telegram-probe-final.txt",
     "raw/codex-smoke.txt",

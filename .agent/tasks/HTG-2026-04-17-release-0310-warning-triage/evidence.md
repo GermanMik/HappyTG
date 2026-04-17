@@ -46,7 +46,7 @@
 ### Independent verifier pass
 
 - `task-verifier` run `verifier-2026-04-17T12:59:59.4864354+03:00` passed with no findings.
-- Fresh verifier reruns are captured in `raw/setup-json-verifier.txt`, `raw/doctor-json-verifier.txt`, and `raw/verify-json-verifier.txt`.
+- Fresh verifier reruns are captured in `raw/setup-json-verifier.txt`, `raw/doctor-json-verifier.txt`, `raw/verify-json-verifier.txt`, and `raw/install-json-keep-verifier.txt`.
 - `verdict.json` and `problems.md` were updated by the independent verifier after the shared onboarding contradiction fix.
 
 ## Findings
