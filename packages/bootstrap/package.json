@@ -1,6 +1,6 @@
 {
   "name": "@happytg/bootstrap",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "private": true,
   "type": "module",
   "bin": {
@@ -22,3 +22,4 @@
     "test": "tsx --test src/*.test.ts"
   }
 }
+

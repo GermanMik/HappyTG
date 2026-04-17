@@ -102,6 +102,15 @@ function nextStepSemanticKey(line: string): string {
   if (normalized.includes("send `/pair <code>`")) {
     return "complete-pairing";
   }
+  if (normalized.includes("redis, postgresql, and s3-compatible storage already look reachable locally")
+    || normalized.includes("redis is already running locally. reuse it")
+    || normalized.includes("redis is already running. use it and skip compose `redis`")) {
+    return "shared-infra-reuse";
+  }
+  if (normalized.includes("some happytg services are already running")
+    || normalized.includes("do not run the full compose app stack and `pnpm dev` at the same time")) {
+    return "running-stack";
+  }
 
   return normalized;
 }
@@ -113,6 +122,17 @@ function pushUniqueNextStep(lines: string[], line: string): void {
   }
 
   const key = nextStepSemanticKey(normalized);
+  if (key === "start-repo-services"
+    && lines.some((existing) => nextStepSemanticKey(existing) === "running-stack")) {
+    return;
+  }
+  if (key === "running-stack") {
+    for (let index = lines.length - 1; index >= 0; index -= 1) {
+      if (nextStepSemanticKey(lines[index]!) === "start-repo-services") {
+        lines.splice(index, 1);
+      }
+    }
+  }
   if (lines.some((existing) => nextStepSemanticKey(existing) === key)) {
     return;
   }

@@ -1,0 +1,46 @@
+{
+  "taskId": "HTG-2026-04-17-release-0310-warning-triage",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verifier-2026-04-17T12:59:59.4864354+03:00"
+  },
+  "checks": [
+    {
+      "name": "workspace_validation",
+      "ok": true,
+      "detail": "Fresh verifier reruns of `pnpm --filter @happytg/bootstrap test`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm release:check --version 0.3.10` all passed."
+    },
+    {
+      "name": "telegram_diagnostics",
+      "ok": true,
+      "detail": "Fresh local verifier state remains truthful: the latest reruns still show Node `UND_ERR_CONNECT_TIMEOUT` together with a PowerShell `401 Unauthorized` follow-up, and `pnpm happytg install --json --repo-mode current --dirty-worktree keep` classifies that as `invalid_token` without hiding the earlier warning-only Node HTTPS/undici timeout split already locked by `raw/telegram-probe.txt`, `raw/telegram-probe-final.txt`, `raw/install-json-keep-final.txt`, and passing bootstrap regressions."
+    },
+    {
+      "name": "codex_websocket_warning",
+      "ok": true,
+      "detail": "Fresh `setup`, `doctor`, `verify`, and `install` reruns still surface websocket `403 Forbidden` as a warn-only Codex condition with explicit HTTP fallback wording, matching the real current machine behavior instead of a blocking failure."
+    },
+    {
+      "name": "setup_doctor_verify_onboarding",
+      "ok": true,
+      "detail": "Fresh `pnpm happytg setup --json`, `pnpm happytg doctor --json`, and `pnpm happytg verify --json` confirm the shared onboarding contradiction is gone outside the install-summary path: none of those surfaces now emit both `Start repo services: pnpm dev.` and `Some HappyTG services are already running...` in the same `planPreview` or `reportJson.onboarding.steps` output."
+    },
+    {
+      "name": "final_install_summary",
+      "ok": true,
+      "detail": "The duplicate Final Summary regression remains covered by the passing bootstrap test `waitForEnter does not render the same final screen twice when ENTER closes it`, and fresh install reruns keep final `nextSteps` concise and non-contradictory without reintroducing `pnpm dev` alongside running-stack reuse guidance."
+    },
+    {
+      "name": "miniapp_port_warning",
+      "ok": true,
+      "detail": "Fresh diagnostics still attribute port 3001 to Docker container `contacts-frontend` and keep it as a concrete warn-only external conflict with one actionable override example instead of suppressing it."
+    },
+    {
+      "name": "proof_bundle_validation",
+      "ok": true,
+      "detail": "`pnpm happytg task validate --repo . --task HTG-2026-04-17-release-0310-warning-triage` still reports `Validation: ok` but keeps `Phase: fresh verify` / `Verification: pending`; updating broader task metadata was outside the allowed edit set for this verifier-only pass."
+    }
+  ],
+  "generatedAt": "2026-04-17T12:59:59.4864354+03:00"
+}

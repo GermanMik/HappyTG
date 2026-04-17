@@ -1,0 +1,108 @@
+{
+  "taskId": "HTG-2026-04-17-release-0310-warning-triage",
+  "criteria": [
+    {
+      "id": "telegram_diagnostics",
+      "status": "satisfied",
+      "summary": "Telegram wording now names Node HTTPS/undici transport, proxy env vars, WinHTTP differences, and IPv4/IPv6 routing while keeping the external warning visible across both the earlier warning-only transport split and the latest invalid-token verifier state.",
+      "artifacts": [
+        "packages/bootstrap/src/install/telegram.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "raw/telegram-probe.txt",
+        "raw/telegram-probe-final.txt",
+        "raw/install-json.txt",
+        "raw/install-json-keep-final.txt"
+      ]
+    },
+    {
+      "id": "codex_websocket_warning",
+      "status": "satisfied",
+      "summary": "Direct smoke evidence shows websocket 403 with HTTP fallback and exit code 0, so the warning remains truthful and non-blocking.",
+      "artifacts": [
+        "raw/codex-smoke.txt",
+        "raw/doctor-json-final.txt",
+        "raw/verify-json-final.txt"
+      ]
+    },
+    {
+      "id": "summary_and_next_steps",
+      "status": "satisfied",
+      "summary": "Final installer next steps no longer keep contradictory pnpm dev guidance when post-checks already detected a running stack, and the final screen no longer re-renders on close.",
+      "artifacts": [
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "raw/install-json-keep-final.txt",
+        "raw/setup-json-final.txt",
+        "raw/doctor-json-final.txt",
+        "raw/verify-json-final.txt",
+        "raw/test-bootstrap.txt"
+      ]
+    },
+    {
+      "id": "miniapp_3001",
+      "status": "satisfied",
+      "summary": "Mini App port 3001 remains a real conflict with contacts-frontend and stays visible with one override path.",
+      "artifacts": [
+        "raw/doctor-json-final.txt",
+        "raw/verify-json-final.txt",
+        "raw/install-json-keep-final.txt"
+      ]
+    },
+    {
+      "id": "regression_coverage",
+      "status": "satisfied",
+      "summary": "Scoped bootstrap/install regressions plus full build/lint/typecheck/test/release-check all passed.",
+      "artifacts": [
+        "raw/test-bootstrap.txt",
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt",
+        "raw/release-check.txt"
+      ]
+    },
+    {
+      "id": "proof_bundle",
+      "status": "satisfied",
+      "summary": "The canonical proof bundle now includes the frozen spec, evidence, verifier verdict, findings summary, canonical raw artifacts, and a passing task validation run with `Verification: passed`.",
+      "artifacts": [
+        "spec.md",
+        "evidence.md",
+        "evidence.json",
+        "problems.md",
+        "task.json",
+        "verdict.json",
+        "raw/task-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/setup-json.txt",
+    "raw/doctor-json.txt",
+    "raw/verify-json.txt",
+    "raw/install-json.txt",
+    "raw/setup-json-final.txt",
+    "raw/doctor-json-final.txt",
+    "raw/verify-json-final.txt",
+    "raw/install-json-final.txt",
+    "raw/install-json-keep-final.txt",
+    "raw/telegram-probe.txt",
+    "raw/telegram-probe-final.txt",
+    "raw/codex-smoke.txt",
+    "raw/test-bootstrap.txt",
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/release-check.txt",
+    "raw/setup-json-verifier.txt",
+    "raw/doctor-json-verifier.txt",
+    "raw/verify-json-verifier.txt",
+    "raw/task-validate.txt"
+  ],
+  "generatedAt": "2026-04-17T13:06:40.3444852+03:00"
+}

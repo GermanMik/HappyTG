@@ -1,0 +1,21 @@
+{
+  "id": "HTG-2026-04-17-release-0310-warning-triage",
+  "sessionId": "ses_release_0310_warning_triage",
+  "workspaceId": "ws_happytg",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-release-0310-warning-triage",
+  "phase": "finish/publish",
+  "mode": "proof",
+  "title": "Release 0.3.10 warning triage and publish flow",
+  "acceptanceCriteria": [
+    "Telegram diagnostics are no longer misleading and distinguish invalid token, transport-specific failures, Desktop-vs-Bot-API reachability caveats, and broader connectivity issues where safe evidence allows.",
+    "Codex websocket 403 warnings are severity-correct, wording-correct, and non-duplicated across setup, doctor, verify, and Final Summary.",
+    "Final Summary, Next steps, and end-screen output do not duplicate the same warnings or overlapping advice and remain concise and non-contradictory.",
+    "Mini App port 3001 remains truthfully classified as a real conflict or supported reuse case without duplicated or exaggerated advice.",
+    "Regression coverage exists for fixed product bugs and stable dedupe/classification paths, with any uncovered path explicitly justified.",
+    "Proof bundle contains frozen scope, reproduction artifacts, evidence, verifier output, and final verdict.",
+    "Release 0.3.10 is fully published only after a successful fresh verifier pass."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T00:00:00.000Z",
+  "updatedAt": "2026-04-17T13:04:56.9115653+03:00"
+}

@@ -1,0 +1,39 @@
+# Telegram transport probe
+Timestamp: 2026-04-17T12:07:04.2081816+03:00
+
+## Proxy context
+HTTP_PROXY=unset
+HTTPS_PROXY=unset
+ALL_PROXY=unset
+NO_PROXY=unset
+
+## WinHTTP proxy
+
+Current WinHTTP proxy settings:
+
+    Direct access (no proxy server).
+
+
+## DNS
+[
+  {
+    "Name": "api.telegram.org",
+    "QueryType": 1,
+    "IPAddress": "149.154.166.110"
+  },
+  {
+    "Name": "api.telegram.org",
+    "QueryType": 28,
+    "IPAddress": "2001:67c:4e8:f004::9"
+  }
+]
+
+## TCP 443 reachability by family
+{"ip":"149.154.166.110","success":false,"error":"timeout"}
+{"ip":"2001:67c:4e8:f004::9","success":false,"error":"Exception calling \"EndConnect\" with \"1\" argument(s): \"Сделана попытка выполнить операцию на сокете при отключенной сети.\""}
+
+## Node fetch getMe
+{"name":"TypeError","message":"fetch failed","causeCode":"UND_ERR_CONNECT_TIMEOUT","causeMessage":"Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"}
+
+## PowerShell Bot API getMe
+{"kind":"validated","firstName":"Workbot","username":"gerta_workbot"}

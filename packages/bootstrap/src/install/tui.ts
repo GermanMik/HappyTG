@@ -610,12 +610,13 @@ async function readKeypress(
     const handler = (chunk: string, key: readline.Key) => {
       try {
         const done = onKeypress(chunk, key);
-        clearScreen(stdout);
-        stdout.write(render());
         if (done) {
           stdin.off("keypress", handler);
           resolve();
+          return;
         }
+        clearScreen(stdout);
+        stdout.write(render());
       } catch (error) {
         stdin.off("keypress", handler);
         reject(error);
