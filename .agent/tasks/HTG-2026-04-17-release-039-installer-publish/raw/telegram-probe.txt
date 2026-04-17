@@ -1,0 +1,54 @@
+=== Telegram Probe ===
+time=2026-04-17T07:44:37.2527335+00:00
+tokenConfigured=True
+proxyEnv:
+  HTTP_PROXY=<unset>
+  HTTPS_PROXY=<unset>
+  NO_PROXY=<unset>
+  ALL_PROXY=<unset>
+  http_proxy=<unset>
+  https_proxy=<unset>
+  no_proxy=<unset>
+  all_proxy=<unset>
+winhttpProxy:
+
+Current WinHTTP proxy settings:
+
+    Direct access (no proxy server).
+dnsA:
+149.154.166.110
+dnsAAAA:
+2001:67c:4e8:f004::9
+testNetConnection:
+{"ComputerName":"api.telegram.org","RemoteAddress":{"AddressFamily":2,"ScopeId":null,"IsIPv6Multicast":false,"IsIPv6LinkLocal":false,"IsIPv6SiteLocal":false,"IsIPv6Teredo":false,"IsIPv6UniqueLocal":false,"IsIPv4MappedToIPv6":false,"Address":1856412309},"RemotePort":443,"TcpTestSucceeded":false}
+curlHeadIPv4:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0           00:01              0
+  0      0   0      0   0      0      0      0           00:02              0
+  0      0   0      0   0      0      0      0           00:03              0
+  0      0   0      0   0      0      0      0           00:04              0
+  0      0   0      0   0      0      0      0           00:05              0
+  0      0   0      0   0      0      0      0           00:06              0
+  0      0   0      0   0      0      0      0           00:07              0
+  0      0   0      0   0      0      0      0           00:08              0
+  0      0   0      0   0      0      0      0           00:09              0
+  0      0   0      0   0      0      0      0           00:10              0
+  0      0   0      0   0      0      0      0           00:11              0
+  0      0   0      0   0      0      0      0           00:12              0
+  0      0   0      0   0      0      0      0           00:13              0
+  0      0   0      0   0      0      0      0           00:14              0
+curl: (28) Connection timed out after 15012 milliseconds
+curlHeadIPv6:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: api.telegram.org
+powershellHead:
+ERROR: Response status code does not indicate success: 302 (Moved Temporarily).
+nodeFetch:
+{"kind":"dns.lookup","ok":true,"records":[{"address":"149.154.166.110","family":4}]}
+{"kind":"base-fetch","ok":false,"name":"TypeError","code":"UND_ERR_CONNECT_TIMEOUT","message":"Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"}
+{"kind":"getMe-fetch","ok":false,"name":"TypeError","code":"UND_ERR_CONNECT_TIMEOUT","message":"Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"}

@@ -145,6 +145,7 @@ export interface TelegramBotIdentity {
   failureKind?: TelegramLookupFailureKind;
   recoverable?: boolean;
   statusCode?: number;
+  transportProbeValidated?: boolean;
 }
 
 export interface TelegramLookupDiagnostic {

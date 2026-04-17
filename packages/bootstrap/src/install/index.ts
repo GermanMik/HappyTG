@@ -90,6 +90,59 @@ function pushUniqueLines(lines: string[], next: readonly string[]): void {
   }
 }
 
+function nextStepSemanticKey(line: string): string {
+  const normalized = line.trim().toLowerCase().replace(/\s+/gu, " ");
+
+  if (normalized === "pnpm dev" || normalized.includes("start repo services: `pnpm dev`")) {
+    return "start-repo-services";
+  }
+  if (normalized === "pnpm daemon:pair" || normalized.includes("pairing code on the execution host: `pnpm daemon:pair`")) {
+    return "request-pair-code";
+  }
+  if (normalized.includes("send `/pair <code>`")) {
+    return "complete-pairing";
+  }
+
+  return normalized;
+}
+
+function pushUniqueNextStep(lines: string[], line: string): void {
+  const normalized = line.trim();
+  if (!normalized) {
+    return;
+  }
+
+  const key = nextStepSemanticKey(normalized);
+  if (lines.some((existing) => nextStepSemanticKey(existing) === key)) {
+    return;
+  }
+
+  lines.push(normalized);
+}
+
+function pushUniqueNextSteps(lines: string[], next: readonly string[]): void {
+  for (const line of next) {
+    pushUniqueNextStep(lines, line);
+  }
+}
+
+function bootstrapReportSummary(report: BootstrapReport): string {
+  return report.findings.length > 0
+    ? report.findings.map((finding) => finding.message).join(" ")
+    : "Environment looks ready.";
+}
+
+function bootstrapReportSignature(report: BootstrapReport): string | undefined {
+  if (report.findings.length === 0) {
+    return undefined;
+  }
+
+  return report.findings
+    .map((finding) => `${finding.severity}:${finding.code}:${finding.message}`)
+    .sort()
+    .join("\n");
+}
+
 function warningMessagesFromBootstrapReport(report: BootstrapReport): string[] {
   if (report.status !== "warn") {
     return [];
@@ -137,13 +190,13 @@ function nextSteps(repoPath: string, pairTarget: string, backgroundMode: Backgro
   const steps = [
     `cd ${repoPath}`,
     "pnpm dev",
-    "pnpm daemon:pair",
-    `Send \`/pair <CODE>\` to ${pairTarget}.`
+    "pnpm daemon:pair"
   ];
 
   if (backgroundMode === "manual" || backgroundMode === "skip") {
-    steps.push("Start the daemon manually with `pnpm dev:daemon` after pairing.");
+    steps.push(`Send \`/pair <CODE>\` to ${pairTarget}, then start the daemon with \`pnpm dev:daemon\`.`);
   } else {
+    steps.push(`Send \`/pair <CODE>\` to ${pairTarget}.`);
     steps.push("The host daemon background launcher is configured; log out/in or start it once manually if needed.");
   }
 
@@ -1141,6 +1194,7 @@ export async function runHappyTGInstall(
     const postCheckReports: InstallResult["postChecks"] = [];
     const postCheckWarnings: string[] = [];
     const postCheckNextSteps: string[] = [];
+    const repeatedPostCheckSignatures = new Map<string, PostInstallCheck>();
     for (const check of postChecks) {
       const stepId = `check-${check}`;
       updateStep({
@@ -1162,19 +1216,27 @@ export async function runHappyTGInstall(
         env: repoEnv,
         platform: platform.platform.platform
       });
+      const repeatedSignature = bootstrapReportSignature(report);
+      const repeatedFrom = repeatedSignature ? repeatedPostCheckSignatures.get(repeatedSignature) : undefined;
+      const summary = bootstrapReportSummary(report);
       postCheckReports.push({
         command: check,
         status: statusFromBootstrapReport(report),
-        summary: report.findings.length > 0
-          ? report.findings.map((finding) => finding.message).join(" ")
-          : "Environment looks ready."
+        summary: repeatedFrom
+          ? `Same warning set as ${repeatedFrom}: ${summary}`
+          : summary
       });
       pushUniqueLines(postCheckWarnings, warningMessagesFromBootstrapReport(report));
-      pushUniqueLines(postCheckNextSteps, nextStepsFromBootstrapReport(report));
+      pushUniqueNextSteps(postCheckNextSteps, nextStepsFromBootstrapReport(report));
+      if (repeatedSignature && !repeatedFrom) {
+        repeatedPostCheckSignatures.set(repeatedSignature, check);
+      }
       updateStep({
         ...steps.find((step) => step.id === stepId)!,
         status: report.status === "pass" ? "passed" : report.status === "warn" ? "warn" : "failed",
-        detail: report.findings.length > 0 ? report.findings[0]!.message : "Environment looks ready."
+        detail: repeatedFrom
+          ? `No new warnings beyond \`${repeatedFrom}\`; the same warning set was confirmed.`
+          : report.findings.length > 0 ? report.findings[0]!.message : "Environment looks ready."
       });
     }
 
@@ -1202,7 +1264,7 @@ export async function runHappyTGInstall(
         }
         : undefined);
     const finalNextSteps = nextSteps(repoSyncResult.path, pairTarget, backgroundMode);
-    pushUniqueLines(finalNextSteps, postCheckNextSteps);
+    pushUniqueNextSteps(finalNextSteps, postCheckNextSteps);
     const result: InstallResult = {
       kind: "install",
       status: installStatusFromOutcome(outcome),

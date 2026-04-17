@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-17-release-039-installer-publish",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "019d9a81-78fa-7880-a628-e77b6ea38783"
+  },
+  "checks": [
+    {
+      "name": "telegram_diagnostics",
+      "ok": true,
+      "detail": "Installer diagnostics now distinguish Node HTTPS transport-specific Bot API failure from invalid token and explain why Telegram Desktop working does not prove Bot API HTTPS reachability."
+    },
+    {
+      "name": "codex_websocket_warning",
+      "ok": true,
+      "detail": "Codex websocket 403 is surfaced as a legitimate warning with explicit HTTP fallback wording instead of a misleading blocking failure."
+    },
+    {
+      "name": "summary_and_next_steps_dedupe",
+      "ok": true,
+      "detail": "Installer final summary and next steps no longer repeat pnpm dev, pairing instructions, or the same setup/doctor/verify warning set."
+    },
+    {
+      "name": "miniapp_port_warning",
+      "ok": true,
+      "detail": "Mini App port 3001 remains a truthful external conflict warning with concrete override guidance."
+    },
+    {
+      "name": "regression_coverage",
+      "ok": true,
+      "detail": "Targeted regression tests and full lint/typecheck/test/release-check validation passed for the scoped diagnostics changes."
+    },
+    {
+      "name": "proof_bundle",
+      "ok": true,
+      "detail": "The proof bundle now includes task metadata, evidence artifacts, verifier findings, and a final passed verdict."
+    }
+  ],
+  "generatedAt": "2026-04-17T11:27:28.5882018+03:00"
+}

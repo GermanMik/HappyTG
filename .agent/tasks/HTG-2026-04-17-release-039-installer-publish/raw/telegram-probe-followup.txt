@@ -1,0 +1,8 @@
+=== Telegram Probe Follow-up ===
+time=2026-04-17T07:46:18.7289065+00:00
+testNetConnectionIPv4Literal:
+{"ComputerName":"149.154.166.110","RemoteAddress":{"AddressFamily":2,"ScopeId":null,"IsIPv6Multicast":false,"IsIPv6LinkLocal":false,"IsIPv6SiteLocal":false,"IsIPv6Teredo":false,"IsIPv6UniqueLocal":false,"IsIPv4MappedToIPv6":false,"Address":1856412309},"RemotePort":443,"TcpTestSucceeded":false}
+testNetConnectionIPv6Literal:
+{"ComputerName":"2001:67c:4e8:f004::9","RemoteAddress":{"AddressFamily":23,"ScopeId":0,"IsIPv6Multicast":false,"IsIPv6LinkLocal":false,"IsIPv6SiteLocal":false,"IsIPv6Teredo":false,"IsIPv6UniqueLocal":false,"IsIPv4MappedToIPv6":false,"Address":null},"RemotePort":443,"TcpTestSucceeded":false}
+powershellGetMe:
+status=200; ok=True; username=gerta_workbot
