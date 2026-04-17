@@ -10,7 +10,15 @@ import { mergeEnvTemplate, writeMergedEnvFile } from "./install/env.js";
 import { detectLinuxFamily } from "./install/platform.js";
 import { defaultDirtyWorktreeStrategy, detectRepoModeChoices, inspectRepo } from "./install/repo.js";
 import { fetchTelegramBotIdentity } from "./install/telegram.js";
-import { promptTelegramForm, renderProgressScreen, renderRepoModeScreen, renderTelegramScreen, renderWelcomeScreen, waitForEnter } from "./install/tui.js";
+import {
+  promptTelegramForm,
+  renderFinalScreen,
+  renderProgressScreen,
+  renderRepoModeScreen,
+  renderTelegramScreen,
+  renderWelcomeScreen,
+  waitForEnter
+} from "./install/tui.js";
 
 async function git(args: string[], cwd: string): Promise<void> {
   const result = await runCommand({
@@ -221,6 +229,54 @@ test("Telegram screen renders a masked preview instead of the raw bot token", ()
 
   assert.match(screen, /1234\*+QRST/);
   assert.doesNotMatch(screen, /123456789:ABCDEFghijklmnopQRST/);
+});
+
+test("final screen groups structured finalization items and dedupes warning text", () => {
+  const screen = renderFinalScreen({
+    outcome: "success-with-warnings",
+    repoPath: "/tmp/HappyTG",
+    detail: "Installer completed with follow-up guidance.",
+    finalizationItems: [
+      {
+        id: "background-configured",
+        kind: "auto",
+        message: "Configured the background launcher."
+      },
+      {
+        id: "complete-pairing",
+        kind: "manual",
+        message: "Send `/pair ABC123` to @happytg_bot."
+      },
+      {
+        id: "shared-infra-ready",
+        kind: "reuse",
+        message: "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely."
+      },
+      {
+        id: "miniapp-port-conflict",
+        kind: "conflict",
+        message: "Mini App port 3001 is occupied by another process."
+      },
+      {
+        id: "codex-path-pending",
+        kind: "warning",
+        message: "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`."
+      }
+    ],
+    warnings: [
+      "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`."
+    ],
+    nextSteps: []
+  });
+
+  const visible = screen.replace(/\u001b\[[0-9;]*m/gu, "");
+  assert.match(visible, /Auto-run/);
+  assert.match(visible, /Requires user/);
+  assert.match(visible, /Reuse/);
+  assert.match(visible, /Conflicts/);
+  assert.match(visible, /Warnings/);
+  assert.doesNotMatch(visible, /Next steps/);
+  assert.equal(visible.split("Add the npm global bin directory to PATH").length - 1, 1);
 });
 
 test("waitForEnter resolves when ENTER close is pressed on the final screen", async () => {

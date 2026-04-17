@@ -1,0 +1,127 @@
+{
+  "taskId": "HTG-2026-04-17-release-0312-install-finalization-automation",
+  "criteria": [
+    {
+      "criterion": "Structured install finalization distinguishes auto/manual/warning/reuse/conflict/blocked guidance.",
+      "status": "pass",
+      "artifacts": [
+        "packages/bootstrap/src/finalization.ts",
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/install/types.ts",
+        "raw/setup-json-after.txt",
+        "raw/install-json-after.txt"
+      ]
+    },
+    {
+      "criterion": "Safe local steps are auto-run, already-executed steps are suppressed from pending next steps, and manual Telegram handoff remains explicit.",
+      "status": "pass",
+      "artifacts": [
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "raw/install-json-after.txt"
+      ]
+    },
+    {
+      "criterion": "TUI, plain text, and JSON surfaces stay consistent without duplicate or contradictory advice.",
+      "status": "pass",
+      "artifacts": [
+        "packages/bootstrap/src/cli.ts",
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/cli.test.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "raw/install-final-summary.txt",
+        "raw/install-json-after.txt"
+      ]
+    },
+    {
+      "criterion": "Regression coverage exists for dedupe, pair flow, infra reuse/conflict, and background launcher classification.",
+      "status": "pass",
+      "artifacts": [
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "packages/bootstrap/src/cli.test.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Proof bundle is complete and a fresh verifier pass succeeds before publish.",
+      "status": "pass",
+      "artifacts": [
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/build.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/release-check.txt",
+        "raw/task-validate.txt",
+        "verdict.json",
+        "problems.md"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "baseline-setup-before",
+      "path": "raw/setup-json-before.txt",
+      "description": "Old flat onboarding planPreview showing mixed reuse/manual/conflict guidance without classification."
+    },
+    {
+      "id": "baseline-install-before",
+      "path": "raw/install-json-before.txt",
+      "description": "Detached-HEAD baseline install attempt showing the old worktree repo-sync limitation during reproduction."
+    },
+    {
+      "id": "after-install-json",
+      "path": "raw/install-json-after.txt",
+      "description": "Current install result with structured finalization.items and legacy nextSteps reduced to unresolved manual/blocked follow-up."
+    },
+    {
+      "id": "after-install-plain",
+      "path": "raw/install-final-summary.txt",
+      "description": "Plain-text install summary with grouped sections and no duplicate mini-app conflict warning."
+    },
+    {
+      "id": "after-setup-json",
+      "path": "raw/setup-json-after.txt",
+      "description": "Current bootstrap onboarding output with typed onboarding.items."
+    },
+    {
+      "id": "verification-build",
+      "path": "raw/build.txt",
+      "description": "Repo build output."
+    },
+    {
+      "id": "verification-lint",
+      "path": "raw/lint.txt",
+      "description": "Repo lint output."
+    },
+    {
+      "id": "verification-typecheck",
+      "path": "raw/typecheck.txt",
+      "description": "Repo typecheck output."
+    },
+    {
+      "id": "verification-tests-bootstrap",
+      "path": "raw/test-unit.txt",
+      "description": "Bootstrap-focused typecheck and test output."
+    },
+    {
+      "id": "verification-tests-repo",
+      "path": "raw/test-integration.txt",
+      "description": "Repo-wide test output."
+    },
+    {
+      "id": "release-check",
+      "path": "raw/release-check.txt",
+      "description": "Release metadata validation for 0.3.12."
+    },
+    {
+      "id": "task-validate",
+      "path": "raw/task-validate.txt",
+      "description": "Task proof bundle validation output."
+    }
+  ],
+  "generatedAt": "2026-04-17T17:10:00Z"
+}

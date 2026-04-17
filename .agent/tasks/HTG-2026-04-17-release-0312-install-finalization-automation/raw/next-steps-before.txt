@@ -1,0 +1,11 @@
+Old onboarding/next-step baseline from `setup-json-before.txt`:
+
+- Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.
+- Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.
+- Request a pairing code on the execution host: `pnpm daemon:pair`.
+- Send `/pair <CODE>` to Telegram, then start the daemon with `pnpm dev:daemon`.
+- Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port.
+
+Observed defect:
+
+- Reuse guidance, manual actions, and anti-footgun advice are mixed into one flat list with no type information or dedupe boundary.

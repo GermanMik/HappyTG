@@ -1,0 +1,9 @@
+
+> happytg@0.3.12 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-17-release-0312-install-finalization-automation"
+
+Task: HTG-2026-04-17-release-0312-install-finalization-automation
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-17-release-0312-install-finalization-automation
+Validation: ok
+Phase: complete
+Verification: passed

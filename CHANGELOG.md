@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## v0.3.12
+
+### Fixed
+
+- Install finalization no longer relies on a flat `nextSteps: string[]` list. Bootstrap/install now classify follow-up as `auto`, `manual`, `warning`, `reuse`, `conflict`, or `blocked`, and the final install output is derived from that structured model.
+- Safe local install-finalization work is now performed during the flow when possible. In particular, the installer can auto-request a host pairing code when prerequisites are satisfied, while keeping the Telegram `/pair <CODE>` handoff explicit and manual.
+- Pair/background guidance now reflects the actual post-install state instead of the requested mode only. The final summary no longer claims that a launcher was configured when setup fell back to manual, and blocked Telegram validation now suppresses false pair instructions.
+- Overlapping infra and stack guidance is deduplicated across setup/doctor/verify/install surfaces so reuse hints, conflicts, and manual steps no longer contradict one another or repeat the same advice in multiple sections.
+- Install summaries now suppress duplicate warning text when the same condition is already represented as a structured conflict, keeping plain-text/TUI output concise without hiding real environment constraints.
+
+### Changed
+
+- Plain-text and TUI final summaries now render grouped sections for auto-run, requires-user, blocked, reuse, conflicts, and warnings, while legacy `nextSteps` remains a compatibility subset for pending manual/blocked actions only.
+- Release metadata is aligned at `0.3.12` across the workspace for the install finalization automation release.
+
 ## v0.3.11
 
 ### Fixed

@@ -1,3 +1,5 @@
+import type { AutomationItem } from "../finalization.js";
+
 export type InstallRepoMode = "clone" | "update" | "current";
 export type DirtyWorktreeStrategy = "cancel" | "stash" | "keep";
 export type BackgroundMode = "launchagent" | "scheduled-task" | "startup" | "systemd-user" | "manual" | "skip";
@@ -239,6 +241,9 @@ export interface InstallResult {
     lookup?: TelegramLookupDiagnostic;
   };
   background: BackgroundSetupResult;
+  finalization?: {
+    items: AutomationItem[];
+  };
   postChecks: Array<{
     command: PostInstallCheck;
     status: InstallStatus;

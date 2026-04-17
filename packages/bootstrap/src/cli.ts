@@ -7,6 +7,11 @@ import type { BootstrapReport, TaskBundle } from "../../protocol/src/index.js";
 import { initTaskBundle, readTaskBundle, taskBundlePath, validateTaskBundle } from "../../repo-proof/src/index.js";
 import { loadHappyTGEnv } from "../../shared/src/index.js";
 
+import {
+  groupAutomationItems,
+  onboardingItemsFromReport,
+  type AutomationItem
+} from "./finalization.js";
 import { createInstallFailureResult, runHappyTGInstall } from "./install/index.js";
 import type { InstallCommandOptions, InstallResult } from "./install/types.js";
 import { runBootstrapCommand, type BootstrapCommand } from "./index.js";
@@ -79,6 +84,52 @@ function installTelegramSummary(result: InstallResult): string {
 
 function findingLabel(severity: "info" | "warn" | "error"): string {
   return severity.toUpperCase().padEnd(5, " ");
+}
+
+function pushUniqueLine(lines: string[], line: string): void {
+  const normalized = line.trim();
+  if (!normalized || lines.includes(normalized)) {
+    return;
+  }
+
+  lines.push(normalized);
+}
+
+function collectWarningMessages(warnings: readonly string[], automationItems: readonly AutomationItem[]): string[] {
+  const messages: string[] = [];
+  for (const warning of warnings) {
+    pushUniqueLine(messages, warning);
+  }
+  for (const item of automationItems) {
+    if (item.kind === "warning") {
+      pushUniqueLine(messages, item.message);
+    }
+  }
+
+  return messages;
+}
+
+function appendAutomationSection(lines: string[], title: string, items: readonly AutomationItem[]): void {
+  if (items.length === 0) {
+    return;
+  }
+
+  lines.push("");
+  lines.push(`${title}:`);
+  lines.push(...items.map((item) => `- ${item.message}`));
+}
+
+function appendAutomationSections(lines: string[], items: readonly AutomationItem[]): void {
+  if (items.length === 0) {
+    return;
+  }
+
+  const grouped = groupAutomationItems(items);
+  appendAutomationSection(lines, "Auto-run", grouped.auto);
+  appendAutomationSection(lines, "Requires user", grouped.manual);
+  appendAutomationSection(lines, "Blocked", grouped.blocked);
+  appendAutomationSection(lines, "Reuse", grouped.reuse);
+  appendAutomationSection(lines, "Conflicts", grouped.conflict);
 }
 
 function summarizeFindings(result: BootstrapReport): string {
@@ -276,6 +327,8 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
 
 export function renderText(result: BootstrapReport | InstallResult | TaskBundle | TaskStatusResponse): string {
   if ("kind" in result && result.kind === "install") {
+    const finalizationItems = result.finalization?.items ?? [];
+    const warningMessages = collectWarningMessages(result.warnings, finalizationItems);
     const lines = [
       `HappyTG install ${statusBadge(result.status)}`,
       `Result: ${installOutcomeSummary(result.outcome)}`,
@@ -283,7 +336,7 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
       `Source: ${result.repo.source} ${result.repo.repoUrl}`,
       `Background: ${result.background.detail}`,
       `Telegram: ${installTelegramSummary(result)}`,
-      `Warnings: ${result.warnings.length}`
+      `Warnings: ${warningMessages.length}`
     ];
 
     if (result.error) {
@@ -294,13 +347,15 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
       lines.push(`Suggested action: ${result.error.suggestedAction}`);
     }
 
-    if (result.warnings.length > 0) {
+    appendAutomationSections(lines, finalizationItems);
+
+    if (warningMessages.length > 0) {
       lines.push("");
       lines.push("Warnings:");
-      lines.push(...result.warnings.map((warning) => `- ${warning}`));
+      lines.push(...warningMessages.map((warning) => `- ${warning}`));
     }
 
-    if (result.nextSteps.length > 0) {
+    if (finalizationItems.length === 0 && result.nextSteps.length > 0) {
       lines.push("");
       lines.push("Next steps:");
       lines.push(...result.nextSteps.map((step) => `- ${step}`));
@@ -310,6 +365,8 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
   }
 
   if ("command" in result) {
+    const onboardingItems = onboardingItemsFromReport(result);
+    const onboardingWarnings = collectWarningMessages([], onboardingItems);
     const preflight = Array.isArray((result.reportJson as { preflight?: unknown }).preflight)
       ? ((result.reportJson as { preflight: string[] }).preflight)
       : [];
@@ -331,10 +388,18 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
       lines.push(...result.findings.map((finding) => `- ${findingLabel(finding.severity)} ${finding.message}`));
     }
 
-    if (result.planPreview.length > 0) {
+    if (onboardingItems.length > 0) {
+      appendAutomationSections(lines, onboardingItems);
+    } else if (result.planPreview.length > 0) {
       lines.push("");
       lines.push(result.command === "setup" ? "First start:" : "Next steps:");
       lines.push(...result.planPreview.map((item) => `- ${item}`));
+    }
+
+    if (onboardingWarnings.length > 0) {
+      lines.push("");
+      lines.push("Warnings:");
+      lines.push(...onboardingWarnings.map((warning) => `- ${warning}`));
     }
 
     lines.push("");
