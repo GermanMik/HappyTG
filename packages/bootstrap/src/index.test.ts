@@ -985,7 +985,7 @@ test("setup treats compatible Redis, PostgreSQL, and MinIO listeners as supporte
     assert.equal(minioConsolePort?.state, "occupied_supported");
     assert.match(ports.find((item) => item.id === "miniapp")?.detail ?? "", /another process|HTTP listener/i);
     assert.match((report.reportJson.preflight as string[]).join("\n"), /reuse:/i);
-    assert.ok(minioApiPort?.suggestedPort && minioApiPort.suggestedPort > minioConsole.port);
+    assert.ok(minioApiPort?.suggestedPort && minioApiPort.suggestedPort > minioApi.port);
     assert.ok(minioConsolePort?.suggestedPort && minioConsolePort.suggestedPort > minioConsole.port);
     assert.notEqual(minioApiPort?.suggestedPort, minioApiPort?.port);
     assert.notEqual(minioApiPort?.suggestedPort, minioConsolePort?.port);
