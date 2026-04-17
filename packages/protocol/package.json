@@ -1,6 +1,6 @@
 {
   "name": "@happytg/protocol",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
@@ -11,5 +11,6 @@
     "test": "tsx --test src/*.test.ts"
   }
 }
+
 
 

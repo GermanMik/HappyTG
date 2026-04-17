@@ -15,7 +15,7 @@ import { syncRepository } from "./install/repo.js";
 import { writeInstallDraft as persistInstallDraft } from "./install/state.js";
 import { createTelegramFormController, reduceTelegramFormKeypress, renderMaskedSecretPreview } from "./install/tui.js";
 import { runBootstrapCommand } from "./index.js";
-import type { AutomationItem } from "./finalization.js";
+import { legacyPlanPreviewFromAutomation, type AutomationItem } from "./finalization.js";
 import type { InstallDraftState, InstallerEnvironment, InstallerRepoSource, RepoInspection } from "./install/types.js";
 
 async function writeExecutable(filePath: string, source: string): Promise<void> {
@@ -147,9 +147,7 @@ function reportJsonWithOnboarding(items: AutomationItem[]): { onboarding: { item
   return {
     onboarding: {
       items,
-      steps: items
-        .filter((item) => item.kind !== "auto")
-        .map((item) => item.message)
+      steps: legacyPlanPreviewFromAutomation(items)
     }
   };
 }
@@ -1456,6 +1454,18 @@ test("runHappyTGInstall keeps the final result at warning level when post-checks
   try {
     const codexWarning = "Codex CLI worked through the npm wrapper, but the shell PATH still needs an update.";
     const codexNextStep = "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`.";
+    const codexProblem = "Codex CLI is usable, but the npm global bin directory is not on PATH in the current shell yet.";
+    const codexSolutions = [
+      "Add the npm global bin directory to PATH.",
+      "Restart the shell.",
+      "Verify `codex --version`."
+    ];
+    const codexOnboardingItem: AutomationItem = {
+      id: "codex-path-pending",
+      kind: "warning",
+      message: codexProblem,
+      solutions: codexSolutions
+    };
     const result = await runHappyTGInstall({
       json: true,
       nonInteractive: true,
@@ -1483,14 +1493,8 @@ test("runHappyTGInstall keeps the final result at warning level when post-checks
             message: codexWarning
           }
         ],
-        planPreview: [codexNextStep],
-        reportJson: reportJsonWithOnboarding([
-          {
-            id: "codex-path-pending",
-            kind: "warning",
-            message: codexNextStep
-          }
-        ]),
+        planPreview: legacyPlanPreviewFromAutomation([codexOnboardingItem]),
+        reportJson: reportJsonWithOnboarding([codexOnboardingItem]),
         createdAt: "2026-04-13T00:00:00.000Z"
       }),
       deps: {
@@ -1551,12 +1555,16 @@ test("runHappyTGInstall keeps the final result at warning level when post-checks
     assert.equal(result.error, undefined);
     assert.equal(result.warnings.filter((warning) => warning === codexWarning).length, 1);
     assert.equal(result.nextSteps.filter((step) => step === codexNextStep).length, 0);
-    assert.equal(result.finalization?.items.filter((item) => item.message === codexNextStep && item.kind === "warning").length, 1);
+    const codexFinalizationItem = result.finalization?.items.find((item) => item.id === "codex-path-pending" && item.kind === "warning");
+    assert.deepEqual(codexFinalizationItem, codexOnboardingItem);
     assert.deepEqual(result.postChecks.map((check) => check.status), ["warn", "warn", "warn"]);
     assert.equal(result.steps.filter((step) => step.id.startsWith("check-")).every((step) => step.status === "warn"), true);
     const rendered = renderText(result);
     assert.equal(rendered.split(codexWarning).length - 1, 1);
-    assert.equal(rendered.split(codexNextStep).length - 1, 1);
+    assert.equal(rendered.split(codexProblem).length - 1, 1);
+    for (const solution of codexSolutions) {
+      assert.equal(rendered.split(solution).length - 1, 1);
+    }
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -1571,6 +1579,18 @@ test("runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible 
     const telegramWarning = "Telegram getMe warning: Telegram API getMe could not confirm the bot identity: fetch failed.";
     const codexWarning = "Codex CLI worked through the npm wrapper, but the shell PATH still needs an update.";
     const codexNextStep = "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`.";
+    const codexProblem = "Codex CLI is usable, but the npm global bin directory is not on PATH in the current shell yet.";
+    const codexSolutions = [
+      "Add the npm global bin directory to PATH.",
+      "Restart the shell.",
+      "Verify `codex --version`."
+    ];
+    const codexOnboardingItem: AutomationItem = {
+      id: "codex-path-pending",
+      kind: "warning",
+      message: codexProblem,
+      solutions: codexSolutions
+    };
     const result = await runHappyTGInstall({
       json: true,
       nonInteractive: true,
@@ -1598,14 +1618,8 @@ test("runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible 
             message: codexWarning
           }
         ],
-        planPreview: [codexNextStep],
-        reportJson: reportJsonWithOnboarding([
-          {
-            id: "codex-path-pending",
-            kind: "warning",
-            message: codexNextStep
-          }
-        ]),
+        planPreview: legacyPlanPreviewFromAutomation([codexOnboardingItem]),
+        reportJson: reportJsonWithOnboarding([codexOnboardingItem]),
         createdAt: "2026-04-13T00:00:00.000Z"
       }),
       deps: {
@@ -1666,12 +1680,16 @@ test("runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible 
     assert.equal(result.error, undefined);
     assert.deepEqual(result.warnings, [telegramWarning, codexWarning]);
     assert.equal(result.nextSteps.filter((step) => step === codexNextStep).length, 0);
-    assert.equal(result.finalization?.items.filter((item) => item.message === codexNextStep && item.kind === "warning").length, 1);
+    const codexFinalizationItem = result.finalization?.items.find((item) => item.id === "codex-path-pending" && item.kind === "warning");
+    assert.deepEqual(codexFinalizationItem, codexOnboardingItem);
     assert.deepEqual(result.postChecks.map((check) => check.status), ["warn", "warn", "warn"]);
     const rendered = renderText(result);
     assert.equal(rendered.split(telegramWarning).length - 1, 1);
     assert.equal(rendered.split(codexWarning).length - 1, 1);
-    assert.equal(rendered.split(codexNextStep).length - 1, 1);
+    assert.equal(rendered.split(codexProblem).length - 1, 1);
+    for (const solution of codexSolutions) {
+      assert.equal(rendered.split(solution).length - 1, 1);
+    }
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -1680,7 +1698,9 @@ test("runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible 
 test("runHappyTGInstall semantically dedupes repeated setup next steps and compresses repeated post-check warning sets", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-semantic-dedupe-"));
   const repoPath = path.join(tempDir, "HappyTG");
+  const stateDir = path.join(tempDir, ".happytg-state");
   await mkdir(repoPath, { recursive: true });
+  await writeFile(path.join(repoPath, ".env"), `HAPPYTG_STATE_DIR=${stateDir}\n`, "utf8");
 
   try {
     const codexWarning = "Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details.";
@@ -1813,7 +1833,9 @@ test("runHappyTGInstall semantically dedupes repeated setup next steps and compr
 test("runHappyTGInstall removes contradictory start commands when setup already says to reuse the running stack", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-running-stack-"));
   const repoPath = path.join(tempDir, "HappyTG");
+  const stateDir = path.join(tempDir, ".happytg-state");
   await mkdir(repoPath, { recursive: true });
+  await writeFile(path.join(repoPath, ".env"), `HAPPYTG_STATE_DIR=${stateDir}\n`, "utf8");
 
   try {
     const result = await runHappyTGInstall({
@@ -2148,7 +2170,11 @@ test("runHappyTGInstall suppresses warning duplicates when the same guidance is 
   await mkdir(repoPath, { recursive: true });
 
   try {
-    const conflictMessage = "Mini App plans to use port 3001, but another process is already there. Use `$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp`.";
+    const conflictMessage = "Mini App plans to use port 3001, but another process is already there.";
+    const conflictSolutions = [
+      "Reuse the running service if it is yours.",
+      "Pick a new port with `$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp`."
+    ];
     const result = await runHappyTGInstall({
       json: true,
       nonInteractive: true,
@@ -2181,7 +2207,8 @@ test("runHappyTGInstall suppresses warning duplicates when the same guidance is 
           {
             id: "miniapp-port-conflict",
             kind: "conflict",
-            message: conflictMessage
+            message: conflictMessage,
+            solutions: conflictSolutions
           }
         ]),
         createdAt: "2026-04-17T00:00:00.000Z"
@@ -2244,7 +2271,10 @@ test("runHappyTGInstall suppresses warning duplicates when the same guidance is 
     assert.equal(result.outcome, "success-with-warnings");
     assert.equal(result.warnings.includes(conflictMessage), false);
     assert.equal(result.finalization?.items.filter((item) => item.id === "miniapp-port-conflict" && item.kind === "conflict").length, 1);
+    assert.deepEqual(result.finalization?.items.find((item) => item.id === "miniapp-port-conflict")?.solutions, conflictSolutions);
     assert.equal(rendered.split(conflictMessage).length - 1, 1);
+    assert.equal(rendered.split(conflictSolutions[0]!).length - 1, 1);
+    assert.equal(rendered.split(conflictSolutions[1]!).length - 1, 1);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -2385,13 +2415,25 @@ test("runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning lev
     const escapedNpmBinDir = npmBinDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const codexWarning = `Codex CLI worked through the npm wrapper at \`${wrapperPath}\`, but \`${npmBinDir}\` is not on the current shell PATH yet. Update PATH or restart the shell so plain \`codex\` resolves directly.`;
     const codexNextStep = `Add \`${npmBinDir}\` to PATH, restart the shell, then verify \`codex --version\`.`;
+    const codexProblem = `Codex CLI is usable, but \`${npmBinDir}\` is not on PATH in the current shell yet.`;
+    const codexSolutions = [
+      `Add \`${npmBinDir}\` to PATH.`,
+      "Restart the shell.",
+      "Verify `codex --version`."
+    ];
 
     assert.equal(result.status, "warn");
     assert.equal(result.outcome, "success-with-warnings");
     assert.equal(result.error, undefined);
     assert.equal(result.warnings.filter((warning) => warning === codexWarning).length, 1);
     assert.equal(result.nextSteps.filter((step) => step === codexNextStep).length, 0);
-    assert.equal(result.finalization?.items.filter((item) => item.message === codexNextStep && item.kind === "warning").length, 1);
+    const codexFinalizationItem = result.finalization?.items.find((item) => item.id === "codex-path-pending" && item.kind === "warning");
+    assert.deepEqual(codexFinalizationItem, {
+      id: "codex-path-pending",
+      kind: "warning",
+      message: codexProblem,
+      solutions: codexSolutions
+    });
     assert.deepEqual(result.postChecks.map((check) => check.status), ["warn", "warn", "warn"]);
     assert.equal(result.steps.filter((step) => step.id.startsWith("check-")).every((step) => step.status === "warn"), true);
     assert.ok(result.postChecks.some((check) => new RegExp(escapedNpmBinDir).test(check.summary)));
@@ -2399,7 +2441,10 @@ test("runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning lev
     assert.doesNotMatch(rendered, /install needs follow-up/i);
     assert.doesNotMatch(rendered, /recoverable issues/i);
     assert.equal(rendered.split(codexWarning).length - 1, 1);
-    assert.equal(rendered.split(codexNextStep).length - 1, 1);
+    assert.equal(rendered.split(codexProblem).length - 1, 1);
+    for (const solution of codexSolutions) {
+      assert.equal(rendered.split(solution).length - 1, 1);
+    }
     assert.ok(wrapperPath.endsWith("codex.cmd"));
   } finally {
     for (const [key, value] of Object.entries(previousEnv)) {

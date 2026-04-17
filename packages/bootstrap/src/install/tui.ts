@@ -1,6 +1,6 @@
 import readline from "node:readline";
 
-import { groupAutomationItems, type AutomationItem } from "../finalization.js";
+import { automationItemRenderLines, groupAutomationItems, type AutomationItem } from "../finalization.js";
 import type {
   BackgroundMode,
   InstallOutcome,
@@ -101,7 +101,51 @@ function appendAutomationSection(lines: string[], title: string, items: readonly
   }
 
   lines.push(bright(title));
-  lines.push(...items.map((item) => `- ${item.message}`));
+  for (const item of items) {
+    lines.push(...automationItemRenderLines(item));
+  }
+  lines.push("");
+}
+
+function appendWarningSection(lines: string[], warnings: readonly string[], warningItems: readonly AutomationItem[]): void {
+  const rendered: string[] = [];
+  const seen = new Set<string>();
+
+  for (const warning of warnings) {
+    const normalized = warning.trim();
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    rendered.push(`- ${normalized}`);
+    seen.add(normalized);
+  }
+
+  for (const item of warningItems) {
+    const normalized = item.message.trim();
+    if (!normalized) {
+      continue;
+    }
+
+    if (!seen.has(normalized)) {
+      rendered.push(...automationItemRenderLines(item));
+      seen.add(normalized);
+      continue;
+    }
+
+    for (const solution of item.solutions ?? []) {
+      const normalizedSolution = solution.trim();
+      if (normalizedSolution) {
+        rendered.push(`  - ${normalizedSolution}`);
+      }
+    }
+  }
+
+  if (rendered.length === 0) {
+    return;
+  }
+
+  lines.push(bright("Warnings"));
+  lines.push(...rendered);
   lines.push("");
 }
 
@@ -400,25 +444,13 @@ export function renderFinalScreen(input: {
   }
 
   const grouped = input.finalizationItems ? groupAutomationItems(input.finalizationItems) : undefined;
-  const renderedWarnings: string[] = [];
-  for (const warning of input.warnings) {
-    pushUniqueLine(renderedWarnings, warning);
-  }
-  for (const warning of grouped?.warning ?? []) {
-    pushUniqueLine(renderedWarnings, warning.message);
-  }
 
   appendAutomationSection(lines, "Auto-run", grouped?.auto ?? []);
   appendAutomationSection(lines, "Requires user", grouped?.manual ?? []);
   appendAutomationSection(lines, "Blocked", grouped?.blocked ?? []);
   appendAutomationSection(lines, "Reuse", grouped?.reuse ?? []);
   appendAutomationSection(lines, "Conflicts", grouped?.conflict ?? []);
-
-  if (renderedWarnings.length > 0) {
-    lines.push(bright("Warnings"));
-    lines.push(...renderedWarnings.map((warning) => `- ${warning}`));
-    lines.push("");
-  }
+  appendWarningSection(lines, input.warnings, grouped?.warning ?? []);
 
   if (!grouped && input.nextSteps.length > 0) {
     lines.push(bright("Next steps"));

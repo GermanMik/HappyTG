@@ -255,16 +255,25 @@ test("final screen groups structured finalization items and dedupes warning text
       {
         id: "miniapp-port-conflict",
         kind: "conflict",
-        message: "Mini App port 3001 is occupied by another process."
+        message: "Mini App port 3001 is occupied by another process.",
+        solutions: [
+          "Reuse the running service if it is yours.",
+          "Or remap the port before starting the mini app."
+        ]
       },
       {
         id: "codex-path-pending",
         kind: "warning",
-        message: "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`."
+        message: "Codex CLI is usable, but the npm global bin directory is not on PATH in the current shell yet.",
+        solutions: [
+          "Add the npm global bin directory to PATH.",
+          "Restart the shell.",
+          "Verify `codex --version`."
+        ]
       }
     ],
     warnings: [
-      "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`."
+      "Codex CLI worked through the npm wrapper, but the shell PATH still needs an update."
     ],
     nextSteps: []
   });
@@ -275,8 +284,13 @@ test("final screen groups structured finalization items and dedupes warning text
   assert.match(visible, /Reuse/);
   assert.match(visible, /Conflicts/);
   assert.match(visible, /Warnings/);
+  assert.match(visible, /Reuse the running service if it is yours/);
+  assert.match(visible, /Or remap the port before starting the mini app/);
+  assert.match(visible, /Codex CLI is usable, but the npm global bin directory is not on PATH in the current shell yet/);
   assert.doesNotMatch(visible, /Next steps/);
   assert.equal(visible.split("Add the npm global bin directory to PATH").length - 1, 1);
+  assert.equal(visible.split("Restart the shell.").length - 1, 1);
+  assert.equal(visible.split("Verify `codex --version`.").length - 1, 1);
 });
 
 test("waitForEnter resolves when ENTER close is pressed on the final screen", async () => {

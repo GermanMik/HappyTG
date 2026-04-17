@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-17-installer-warning-repair",
+  "sessionId": "ses_installer_warning_repair",
+  "workspaceId": "ws_happytg",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-installer-warning-repair",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Installer warning repair proof loop",
+  "acceptanceCriteria": [
+    "setup, doctor, verify, repair, and install remain mutually coherent on the current machine.",
+    "Legitimate environment constraints remain visible and are not downgraded into false greens.",
+    "The reproduced pnpm test red is resolved with a minimal scoped fix.",
+    "No unnecessary production-code changes are made if the remaining issue is only test isolation.",
+    "The proof bundle contains the baseline evidence, classification, fix evidence, and a fresh verifier pass."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T17:46:50.1569154+03:00",
+  "updatedAt": "2026-04-17T17:46:50.1569154+03:00"
+}

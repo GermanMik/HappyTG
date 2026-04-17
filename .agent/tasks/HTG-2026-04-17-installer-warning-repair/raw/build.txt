@@ -1,0 +1,5 @@
+
+> @happytg/bootstrap@0.3.12 typecheck C:\Develop\Projects\HappyTG\packages\bootstrap
+> tsc -p tsconfig.json --noEmit
+
+

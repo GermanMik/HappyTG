@@ -1,0 +1,27 @@
+{
+  "taskId": "HTG-2026-04-17-release-0314-install-problem-solutions",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "version-alignment",
+      "ok": true,
+      "detail": "All workspace package.json files, CHANGELOG.md, and docs/releases/0.3.14.md are aligned at 0.3.14."
+    },
+    {
+      "name": "source-proof-bundles",
+      "ok": true,
+      "detail": "Both source bundles HTG-2026-04-17-installer-warning-repair and HTG-2026-04-17-install-problem-solutions validate successfully on the release branch."
+    },
+    {
+      "name": "release-verification",
+      "ok": true,
+      "detail": "pnpm build, pnpm lint, pnpm typecheck, pnpm --filter @happytg/bootstrap test, pnpm test, and pnpm release:check --version 0.3.14 all passed."
+    },
+    {
+      "name": "release-proof-bundle",
+      "ok": true,
+      "detail": "The 0.3.14 release proof bundle is complete and validates successfully."
+    }
+  ],
+  "generatedAt": "2026-04-17T19:34:27.1501197+03:00"
+}

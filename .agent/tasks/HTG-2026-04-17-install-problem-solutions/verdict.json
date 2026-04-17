@@ -1,0 +1,47 @@
+{
+  "taskId": "HTG-2026-04-17-install-problem-solutions",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "agentId": "019d9c07-eab2-77f3-b31e-92d78bdd8595",
+    "runId": "verify-2-2026-04-17"
+  },
+  "checks": [
+    {
+      "name": "structured-finalization-model",
+      "ok": true,
+      "detail": "Automation items now support optional remediation points through the `solutions` field."
+    },
+    {
+      "name": "install-cli-rendering",
+      "ok": true,
+      "detail": "Plain-text install output renders the problem as the main line and remediation steps as separate bullets."
+    },
+    {
+      "name": "install-tui-rendering",
+      "ok": true,
+      "detail": "The final TUI install screen renders the same remediation points distinctly."
+    },
+    {
+      "name": "structured-json-contract",
+      "ok": true,
+      "detail": "Install finalization / onboarding JSON keeps remediation structured instead of flattening it into warning text."
+    },
+    {
+      "name": "verification-commands",
+      "ok": true,
+      "detail": "bootstrap typecheck/tests and repo-level lint/typecheck/test all passed after the scoped fix."
+    },
+    {
+      "name": "tui-warning-solutions-regression",
+      "ok": true,
+      "detail": "The final-screen regression test now directly covers warning-item remediation bullets in addition to runtime and CLI rendering."
+    },
+    {
+      "name": "proof-bundle-finalized",
+      "ok": true,
+      "detail": "spec.md, evidence.md, evidence.json, problems.md, task.json, and verdict.json now reflect the completed proof loop and can be validated by the repo-native task validator."
+    }
+  ],
+  "generatedAt": "2026-04-17T18:23:58.4663116+03:00"
+}
