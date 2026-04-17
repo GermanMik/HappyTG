@@ -1,0 +1,26 @@
+{
+  "taskId": "HTG-2026-04-17-release-0312-install-finalization-automation",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "019d9ba4-b78f-78d2-827a-4a642f643823"
+  },
+  "checks": [
+    {
+      "name": "initial-verifier-pass",
+      "status": "needs_fix",
+      "detail": "The first verifier pass found stale 0.3.11 captures and unsynchronized bundle status files. The builder refreshed the artifacts on the 0.3.12 tree and started a fresh verifier rerun before publish."
+    },
+    {
+      "name": "fresh-verifier-pass",
+      "status": "passed",
+      "detail": "The final verifier pass reported no remaining pre-publish code or proof-bundle findings and explicitly cleared the task for publish."
+    },
+    {
+      "name": "task-validate",
+      "status": "passed",
+      "detail": "Task bundle validation passes on the final 0.3.12 task state."
+    }
+  ],
+  "generatedAt": "2026-04-17T18:18:00.000Z"
+}

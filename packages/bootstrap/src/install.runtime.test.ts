@@ -15,6 +15,7 @@ import { syncRepository } from "./install/repo.js";
 import { writeInstallDraft as persistInstallDraft } from "./install/state.js";
 import { createTelegramFormController, reduceTelegramFormKeypress, renderMaskedSecretPreview } from "./install/tui.js";
 import { runBootstrapCommand } from "./index.js";
+import type { AutomationItem } from "./finalization.js";
 import type { InstallDraftState, InstallerEnvironment, InstallerRepoSource, RepoInspection } from "./install/types.js";
 
 async function writeExecutable(filePath: string, source: string): Promise<void> {
@@ -141,6 +142,17 @@ const fallbackSource: InstallerRepoSource = {
   label: "fallback source",
   url: "https://gitclone.com/github.com/GermanMik/HappyTG.git"
 };
+
+function reportJsonWithOnboarding(items: AutomationItem[]): { onboarding: { items: AutomationItem[]; steps: string[] } } {
+  return {
+    onboarding: {
+      items,
+      steps: items
+        .filter((item) => item.kind !== "auto")
+        .map((item) => item.message)
+    }
+  };
+}
 
 test("syncRepository retries transient primary failures and reports attempt progress", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-sync-retry-"));
@@ -1152,7 +1164,7 @@ test("runHappyTGInstall keeps an already-known Telegram username when getMe look
 
     assert.equal(result.telegram.bot?.username, "known_happytg_bot");
     assert.match(result.telegram.lookup?.message ?? "", /Existing bot username @known_happytg_bot was kept\./);
-    assert.ok(result.nextSteps.some((step) => step.includes("@known_happytg_bot")));
+    assert.match(renderText(result), /Telegram: @known_happytg_bot/);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -1294,7 +1306,13 @@ test("runHappyTGInstall keeps the final result at warning level when post-checks
           }
         ],
         planPreview: [codexNextStep],
-        reportJson: {},
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "codex-path-pending",
+            kind: "warning",
+            message: codexNextStep
+          }
+        ]),
         createdAt: "2026-04-13T00:00:00.000Z"
       }),
       deps: {
@@ -1354,7 +1372,8 @@ test("runHappyTGInstall keeps the final result at warning level when post-checks
     assert.equal(result.outcome, "success-with-warnings");
     assert.equal(result.error, undefined);
     assert.equal(result.warnings.filter((warning) => warning === codexWarning).length, 1);
-    assert.equal(result.nextSteps.filter((step) => step === codexNextStep).length, 1);
+    assert.equal(result.nextSteps.filter((step) => step === codexNextStep).length, 0);
+    assert.equal(result.finalization?.items.filter((item) => item.message === codexNextStep && item.kind === "warning").length, 1);
     assert.deepEqual(result.postChecks.map((check) => check.status), ["warn", "warn", "warn"]);
     assert.equal(result.steps.filter((step) => step.id.startsWith("check-")).every((step) => step.status === "warn"), true);
     const rendered = renderText(result);
@@ -1402,7 +1421,13 @@ test("runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible 
           }
         ],
         planPreview: [codexNextStep],
-        reportJson: {},
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "codex-path-pending",
+            kind: "warning",
+            message: codexNextStep
+          }
+        ]),
         createdAt: "2026-04-13T00:00:00.000Z"
       }),
       deps: {
@@ -1462,7 +1487,8 @@ test("runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible 
     assert.equal(result.outcome, "success-with-warnings");
     assert.equal(result.error, undefined);
     assert.deepEqual(result.warnings, [telegramWarning, codexWarning]);
-    assert.equal(result.nextSteps.filter((step) => step === codexNextStep).length, 1);
+    assert.equal(result.nextSteps.filter((step) => step === codexNextStep).length, 0);
+    assert.equal(result.finalization?.items.filter((item) => item.message === codexNextStep && item.kind === "warning").length, 1);
     assert.deepEqual(result.postChecks.map((check) => check.status), ["warn", "warn", "warn"]);
     const rendered = renderText(result);
     assert.equal(rendered.split(telegramWarning).length - 1, 1);
@@ -1512,7 +1538,28 @@ test("runHappyTGInstall semantically dedupes repeated setup next steps and compr
           "Request a pairing code on the execution host: `pnpm daemon:pair`.",
           "Send `/pair <CODE>` to Telegram, then start the daemon with `pnpm dev:daemon`."
         ],
-        reportJson: {},
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "start-repo-services",
+            kind: "manual",
+            message: "Start repo services: `pnpm dev`."
+          },
+          {
+            id: "request-pair-code",
+            kind: "manual",
+            message: "Request a pairing code on the execution host: `pnpm daemon:pair`."
+          },
+          {
+            id: "complete-pairing",
+            kind: "manual",
+            message: "Send `/pair <CODE>` to Telegram."
+          },
+          {
+            id: "start-daemon",
+            kind: "manual",
+            message: "After pairing, start the daemon with `pnpm dev:daemon`."
+          }
+        ]),
         createdAt: "2026-04-17T00:00:00.000Z"
       }),
       deps: {
@@ -1568,11 +1615,13 @@ test("runHappyTGInstall semantically dedupes repeated setup next steps and compr
       }
     });
 
-    assert.equal(result.nextSteps.filter((step) => step === "pnpm dev").length, 1);
-    assert.equal(result.nextSteps.filter((step) => step === "pnpm daemon:pair").length, 1);
+    assert.equal(result.nextSteps.some((step) => step === "pnpm dev"), false);
+    assert.equal(result.nextSteps.filter((step) => step === "Start repo services: `pnpm dev`.").length, 1);
+    assert.equal(result.nextSteps.filter((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`.").length, 1);
     assert.equal(result.nextSteps.filter((step) => /Send `\/pair <CODE>`/u.test(step)).length, 1);
-    assert.equal(result.nextSteps.some((step) => step === "Start repo services: `pnpm dev`."), false);
-    assert.equal(result.nextSteps.some((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`."), false);
+    assert.equal(result.finalization?.items.filter((item) => item.id === "start-repo-services" && item.kind === "manual").length, 1);
+    assert.equal(result.finalization?.items.filter((item) => item.id === "request-pair-code" && item.kind === "manual").length, 1);
+    assert.equal(result.finalization?.items.filter((item) => item.id === "pairing-auto-request" && item.kind === "warning").length, 1);
     assert.match(result.steps.find((step) => step.id === "check-setup")?.detail ?? "", /Codex CLI completed the smoke check with warnings/i);
     assert.equal(result.steps.find((step) => step.id === "check-doctor")?.detail, "No new warnings beyond `setup`; the same warning set was confirmed.");
     assert.equal(result.steps.find((step) => step.id === "check-verify")?.detail, "No new warnings beyond `setup`; the same warning set was confirmed.");
@@ -1618,15 +1667,38 @@ test("runHappyTGInstall removes contradictory start commands when setup already 
         ],
         planPreview: [
           "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.",
-          "Start repo services: `pnpm dev`.",
           "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.",
           "Request a pairing code on the execution host: `pnpm daemon:pair`.",
-          "Send `/pair <CODE>` to Telegram, then start the daemon with `pnpm dev:daemon`.",
-          "Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port.",
-          "Do not run the full compose app stack and `pnpm dev` at the same time.",
+          "Send `/pair <CODE>` to Telegram.",
           "If you keep mini app on a different port, use `$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp`."
         ],
-        reportJson: {},
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "shared-infra-ready",
+            kind: "reuse",
+            message: "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely."
+          },
+          {
+            id: "running-stack-reuse",
+            kind: "reuse",
+            message: "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy."
+          },
+          {
+            id: "request-pair-code",
+            kind: "manual",
+            message: "Request a pairing code on the execution host: `pnpm daemon:pair`."
+          },
+          {
+            id: "complete-pairing",
+            kind: "manual",
+            message: "Send `/pair <CODE>` to Telegram."
+          },
+          {
+            id: "miniapp-port-conflict",
+            kind: "conflict",
+            message: "If you keep mini app on a different port, use `$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp`."
+          }
+        ]),
         createdAt: "2026-04-17T00:00:00.000Z"
       }),
       deps: {
@@ -1688,11 +1760,313 @@ test("runHappyTGInstall removes contradictory start commands when setup already 
     });
 
     assert.equal(result.nextSteps.includes("pnpm dev"), false);
-    assert.equal(result.nextSteps.filter((step) => step === "pnpm daemon:pair").length, 1);
-    assert.equal(result.nextSteps.filter((step) => step.includes("Redis, PostgreSQL, and S3-compatible storage already look reachable locally.")).length, 1);
-    assert.equal(result.nextSteps.some((step) => step === "Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port."), false);
-    assert.equal(result.nextSteps.filter((step) => step === "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.").length, 1);
-    assert.equal(result.nextSteps.some((step) => step === "Do not run the full compose app stack and `pnpm dev` at the same time."), false);
+    assert.equal(result.nextSteps.filter((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`.").length, 1);
+    assert.equal(result.finalization?.items.filter((item) => item.id === "shared-infra-ready" && item.kind === "reuse").length, 1);
+    assert.equal(result.finalization?.items.filter((item) => item.id === "running-stack-reuse" && item.kind === "reuse").length, 1);
+    assert.equal(result.finalization?.items.some((item) => item.id === "start-repo-services"), false);
+    assert.equal(result.finalization?.items.some((item) => item.message === "Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port."), false);
+    assert.equal(result.finalization?.items.some((item) => item.message === "Do not run the full compose app stack and `pnpm dev` at the same time."), false);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall auto-requests a pairing code and suppresses the manual request step once the code is available", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-auto-pair-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const stateDir = path.join(tempDir, ".happytg-state");
+  await mkdir(repoPath, { recursive: true });
+  await writeFile(path.join(repoPath, ".env"), `HAPPYTG_STATE_DIR=${stateDir}\n`, "utf8");
+
+  try {
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: ["setup"]
+    }, {
+      runBootstrapCheck: async (command) => ({
+        id: `btr_${command}`,
+        hostFingerprint: "fp",
+        command,
+        status: "warn",
+        profileRecommendation: "recommended",
+        findings: [],
+        planPreview: [
+          "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+          "Send `/pair <CODE>` to @happytg_bot."
+        ],
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "request-pair-code",
+            kind: "manual",
+            message: "Request a pairing code on the execution host: `pnpm daemon:pair`."
+          },
+          {
+            id: "complete-pairing",
+            kind: "manual",
+            message: "Send `/pair <CODE>` to @happytg_bot."
+          }
+        ]),
+        createdAt: "2026-04-17T00:00:00.000Z"
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async ({ args }) => ({
+          stdout: args?.[0] === "daemon:pair"
+            ? "Pair this host by sending /pair ABC123 to @happytg_bot\nHost ID: host_test\nExpires at: 2026-04-17T12:00:00.000Z\n"
+            : "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: false,
+          changed: false,
+          addedKeys: [],
+          preservedKeys: ["HAPPYTG_STATE_DIR"]
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "manual",
+          detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+        })
+      }
+    });
+
+    assert.equal(result.finalization?.items.filter((item) => item.id === "request-pair-code" && item.kind === "auto").length, 1);
+    assert.equal(result.finalization?.items.filter((item) => item.id === "complete-pairing" && item.message === "Send `/pair ABC123` to @happytg_bot.").length, 1);
+    assert.equal(result.nextSteps.some((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`."), false);
+    assert.equal(result.nextSteps.filter((step) => step === "Send `/pair ABC123` to @happytg_bot.").length, 1);
+    assert.equal(result.nextSteps.filter((step) => step === "After pairing, start the daemon with `pnpm dev:daemon`.").length, 1);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall reports requested background automation as a warning when configuration falls back to manual", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-background-fallback-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "scheduled-task",
+      postChecks: []
+    }, {
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async () => ({
+          mode: "scheduled-task",
+          status: "manual",
+          detail: "Scheduled Task setup could not be applied automatically. Start the daemon manually with `pnpm dev:daemon` after pairing."
+        })
+      }
+    });
+
+    assert.equal(result.finalization?.items.filter((item) => item.id === "background-configured" && item.kind === "warning").length, 1);
+    assert.equal(result.finalization?.items.some((item) => item.id === "background-configured" && item.kind === "auto"), false);
+    assert.match(renderText(result), /Scheduled Task setup could not be applied automatically/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall suppresses warning duplicates when the same guidance is already classified as a conflict", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-conflict-dedupe-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const conflictMessage = "Mini App plans to use port 3001, but another process is already there. Use `$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp`.";
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "skip",
+      postChecks: ["setup"]
+    }, {
+      runBootstrapCheck: async (command) => ({
+        id: `btr_${command}`,
+        hostFingerprint: "fp",
+        command,
+        status: "warn",
+        profileRecommendation: "recommended",
+        findings: [
+          {
+            code: "MINIAPP_PORT_BUSY",
+            severity: "warn",
+            message: conflictMessage
+          }
+        ],
+        planPreview: [conflictMessage],
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "miniapp-port-conflict",
+            kind: "conflict",
+            message: conflictMessage
+          }
+        ]),
+        createdAt: "2026-04-17T00:00:00.000Z"
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background daemon setup was skipped."
+        })
+      }
+    });
+
+    const rendered = renderText(result);
+
+    assert.equal(result.outcome, "success-with-warnings");
+    assert.equal(result.warnings.includes(conflictMessage), false);
+    assert.equal(result.finalization?.items.filter((item) => item.id === "miniapp-port-conflict" && item.kind === "conflict").length, 1);
+    assert.equal(rendered.split(conflictMessage).length - 1, 1);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -1838,7 +2212,8 @@ test("runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning lev
     assert.equal(result.outcome, "success-with-warnings");
     assert.equal(result.error, undefined);
     assert.equal(result.warnings.filter((warning) => warning === codexWarning).length, 1);
-    assert.equal(result.nextSteps.filter((step) => step === codexNextStep).length, 1);
+    assert.equal(result.nextSteps.filter((step) => step === codexNextStep).length, 0);
+    assert.equal(result.finalization?.items.filter((item) => item.message === codexNextStep && item.kind === "warning").length, 1);
     assert.deepEqual(result.postChecks.map((check) => check.status), ["warn", "warn", "warn"]);
     assert.equal(result.steps.filter((step) => step.id.startsWith("check-")).every((step) => step.status === "warn"), true);
     assert.ok(result.postChecks.some((check) => new RegExp(escapedNpmBinDir).test(check.summary)));

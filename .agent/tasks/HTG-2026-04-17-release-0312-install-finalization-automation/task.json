@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-17-release-0312-install-finalization-automation",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-release-0312-install-finalization-automation",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Release 0.3.12 install finalization automation",
+  "acceptanceCriteria": [
+    "Structured install finalization distinguishes auto/manual/warning/reuse/conflict/blocked guidance.",
+    "Safe local steps are auto-run, already-executed steps are suppressed from pending next steps, and manual Telegram handoff remains explicit.",
+    "TUI, plain text, and JSON surfaces stay consistent without duplicate or contradictory advice.",
+    "Regression coverage exists for dedupe, pair flow, infra reuse/conflict, and background launcher classification.",
+    "Proof bundle is complete and a fresh verifier pass succeeds before publish."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T13:11:44.051Z",
+  "updatedAt": "2026-04-17T18:18:00.000Z"
+}

@@ -698,10 +698,15 @@ test("setup turns missing Telegram token into a short actionable first-run check
     assert.ok(report.findings.some((item) => item.code === "TELEGRAM_TOKEN_MISSING"));
     assert.equal((report.reportJson.telegram as { configured: boolean }).configured, false);
     assert.match((report.reportJson.preflight as string[]).join("\n"), /Redis: running on 127\.0\.0\.1:/);
-    assert.match(report.planPreview.join("\n"), /pnpm daemon:pair/);
+    assert.match(report.planPreview.join("\n"), /Fix the Telegram bot configuration before requesting a pairing code/);
     assert.match(report.planPreview.join("\n"), /skip Docker shared infra entirely|postgres minio/);
     assert.match(report.planPreview.join("\n"), /skip Docker shared infra entirely|skip Docker entirely|DATABASE_URL/);
     assert.match(report.planPreview.join("\n"), /Set `TELEGRAM_BOT_TOKEN`/);
+    assert.equal(
+      ((report.reportJson.onboarding as { items: Array<{ id: string; kind: string }> }).items)
+        .find((item) => item.id === "request-pair-code")?.kind,
+      "blocked"
+    );
   } finally {
     await closeServer(redis.server);
     await rm(tempDir, { recursive: true, force: true });

@@ -1,5 +1,6 @@
 import readline from "node:readline";
 
+import { groupAutomationItems, type AutomationItem } from "../finalization.js";
 import type {
   BackgroundMode,
   InstallOutcome,
@@ -83,6 +84,25 @@ function renderIndentedDetail(detail: string): string[] {
     .split(/\r?\n/u)
     .filter((line) => line.length > 0)
     .map((line) => `   ${line}`);
+}
+
+function pushUniqueLine(lines: string[], line: string): void {
+  const normalized = line.trim();
+  if (!normalized || lines.includes(normalized)) {
+    return;
+  }
+
+  lines.push(normalized);
+}
+
+function appendAutomationSection(lines: string[], title: string, items: readonly AutomationItem[]): void {
+  if (items.length === 0) {
+    return;
+  }
+
+  lines.push(bright(title));
+  lines.push(...items.map((item) => `- ${item.message}`));
+  lines.push("");
 }
 
 function renderOptions(options: Array<{ label: string; detail: string; active: boolean; selected?: boolean }>): string[] {
@@ -360,6 +380,7 @@ export function renderFinalScreen(input: {
   outcome: InstallOutcome;
   repoPath: string;
   detail: string;
+  finalizationItems?: AutomationItem[];
   warnings: string[];
   nextSteps: string[];
   suggestedAction?: string;
@@ -378,13 +399,28 @@ export function renderFinalScreen(input: {
     lines.push("");
   }
 
-  if (input.warnings.length > 0) {
+  const grouped = input.finalizationItems ? groupAutomationItems(input.finalizationItems) : undefined;
+  const renderedWarnings: string[] = [];
+  for (const warning of input.warnings) {
+    pushUniqueLine(renderedWarnings, warning);
+  }
+  for (const warning of grouped?.warning ?? []) {
+    pushUniqueLine(renderedWarnings, warning.message);
+  }
+
+  appendAutomationSection(lines, "Auto-run", grouped?.auto ?? []);
+  appendAutomationSection(lines, "Requires user", grouped?.manual ?? []);
+  appendAutomationSection(lines, "Blocked", grouped?.blocked ?? []);
+  appendAutomationSection(lines, "Reuse", grouped?.reuse ?? []);
+  appendAutomationSection(lines, "Conflicts", grouped?.conflict ?? []);
+
+  if (renderedWarnings.length > 0) {
     lines.push(bright("Warnings"));
-    lines.push(...input.warnings.map((warning) => `- ${warning}`));
+    lines.push(...renderedWarnings.map((warning) => `- ${warning}`));
     lines.push("");
   }
 
-  if (input.nextSteps.length > 0) {
+  if (!grouped && input.nextSteps.length > 0) {
     lines.push(bright("Next steps"));
     lines.push(...input.nextSteps.map((step) => `- ${step}`));
     lines.push("");
@@ -398,6 +434,7 @@ export function renderFailureScreen(input: {
   outcome: Extract<InstallOutcome, "recoverable-failure" | "fatal-failure">;
   repoPath: string;
   error: InstallRuntimeErrorDetail;
+  finalizationItems?: AutomationItem[];
   warnings?: string[];
   nextSteps?: string[];
 }): string {
@@ -405,6 +442,7 @@ export function renderFailureScreen(input: {
     outcome: input.outcome,
     repoPath: input.repoPath,
     detail: input.error.lastError,
+    finalizationItems: input.finalizationItems,
     warnings: input.warnings ?? [],
     nextSteps: input.nextSteps ?? [],
     suggestedAction: input.error.suggestedAction
@@ -584,6 +622,7 @@ export function reduceTelegramFormKeypress(
 export function renderSummaryScreen(input: {
   outcome: InstallOutcome;
   repoPath: string;
+  finalizationItems?: AutomationItem[];
   warnings: string[];
   nextSteps: string[];
   detail: string;
@@ -593,6 +632,7 @@ export function renderSummaryScreen(input: {
     outcome: input.outcome,
     repoPath: input.repoPath,
     detail: input.detail,
+    finalizationItems: input.finalizationItems,
     warnings: input.warnings,
     nextSteps: input.nextSteps,
     suggestedAction: input.suggestedAction

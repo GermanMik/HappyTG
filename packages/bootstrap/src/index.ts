@@ -18,6 +18,7 @@ import {
   telegramTokenStatus,
   writeJsonFileAtomic
 } from "../../shared/src/index.js";
+import { legacyPlanPreviewFromAutomation, pushAutomationItem, type AutomationItem } from "./finalization.js";
 
 export type BootstrapCommand = "doctor" | "setup" | "repair" | "verify" | "status" | "config-init" | "env-snapshot";
 
@@ -31,6 +32,7 @@ interface DoctorContext {
 export interface DoctorDetection {
   findings: BootstrapFinding[];
   planPreview: string[];
+  onboardingItems: AutomationItem[];
   profileRecommendation: BootstrapReport["profileRecommendation"];
   reportJson: Record<string, unknown>;
 }
@@ -192,12 +194,6 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     command: "docker compose -f infra/docker-compose.example.yml up minio"
   }
 ] as const;
-
-function pushPlanStep(planPreview: string[], step: string): void {
-  if (!planPreview.includes(step)) {
-    planPreview.push(step);
-  }
-}
 
 function pushFinding(findings: BootstrapFinding[], finding: BootstrapFinding): void {
   if (!findings.some((item) => item.code === finding.code && item.message === finding.message)) {
@@ -1242,78 +1238,236 @@ function buildPortConflictMessage(result: PortCheckResult, platform: NodeJS.Plat
   return `${result.detail} Reuse the running service if it is yours, or pick a new port with \`${commands.inlineEnvExample(result.overrideEnv, suggestedPort, result.command)}\`.`;
 }
 
-function buildSetupPlan(
-  context: DoctorContext,
-  redis: RedisDetection,
-  portResults: PortCheckResult[],
-  envFilePath: string | undefined,
-  tokenState: ReturnType<typeof telegramTokenStatus>
-): string[] {
+function buildOnboardingItems(input: {
+  context: DoctorContext;
+  redis: RedisDetection;
+  portResults: PortCheckResult[];
+  envFilePath: string | undefined;
+  tokenState: ReturnType<typeof telegramTokenStatus>;
+  codexResolution: CodexReadinessResolution;
+  codexInstallCheck?: CodexInstallCheck;
+}): AutomationItem[] {
+  const {
+    context,
+    redis,
+    portResults,
+    envFilePath,
+    tokenState,
+    codexResolution,
+    codexInstallCheck
+  } = input;
   const platform = context.platform ?? process.platform;
   const commands = platformCommands(platform);
   const botTarget = telegramBotTarget(context.env ?? process.env);
-  const steps: string[] = [];
+  const items: AutomationItem[] = [];
   const postgresReady = portResults.some((item) => item.id === "postgres" && item.state === "occupied_supported");
   const minioReady = portResults.some((item) => item.id === "minio-api" && item.state === "occupied_supported");
   const sharedInfraReady = redis.state === "running" && postgresReady && minioReady;
-  const occupiedHappyTGPorts = portResults.filter((item) => item.state === "occupied_expected" && ["miniapp", "api", "bot", "worker"].includes(item.id));
+  const runningHappyTGServices = portResults.filter((item) => item.state === "occupied_expected" && ["miniapp", "api", "bot", "worker"].includes(item.id));
+  const conflictingAppPorts = portResults.filter((item) => item.state === "occupied_external" && ["miniapp", "api", "bot", "worker"].includes(item.id));
+  const apiReady = portResults.some((item) => item.id === "api" && item.state === "occupied_expected");
+
+  if (codexResolution.pathPending) {
+    const binDir = detectedCodexBinDir(codexInstallCheck);
+    pushAutomationItem(items, {
+      id: "codex-path-pending",
+      kind: "warning",
+      message: binDir
+        ? `Add \`${binDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
+        : "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`."
+    });
+  }
+
+  if (!codexResolution.effective.available && codexResolution.effective.missing !== false) {
+    if (codexInstallCheck?.pathLikelyIssue) {
+      const binDir = detectedCodexBinDir(codexInstallCheck);
+      pushAutomationItem(items, {
+        id: "codex-install",
+        kind: "blocked",
+        message: binDir
+          ? `Add \`${binDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
+          : "Add the global npm bin directory to PATH, restart the shell, then verify `codex --version`."
+      });
+    } else {
+      pushAutomationItem(items, {
+        id: "codex-install",
+        kind: "blocked",
+        message: "Reinstall Codex CLI, update PATH, then verify `codex --version`."
+      });
+    }
+  }
+
+  if (!codexResolution.effective.available && codexResolution.effective.missing === false) {
+    pushAutomationItem(items, {
+      id: "codex-runtime",
+      kind: "blocked",
+      message: `Run \`codex --version\` in this shell, fix the local Codex install/runtime, then rerun \`pnpm happytg ${context.command}\`.`
+    });
+  }
 
   if (!envFilePath) {
-    steps.push(`Create \`.env\`: \`${commands.copyEnv}\`.`);
+    pushAutomationItem(items, {
+      id: "env-create",
+      kind: "manual",
+      message: `Create \`.env\`: \`${commands.copyEnv}\`.`
+    });
   }
 
   if (tokenState.status !== "configured") {
-    steps.push("Set `TELEGRAM_BOT_TOKEN` in `.env` or the shell before you start the bot.");
+    pushAutomationItem(items, {
+      id: "telegram-token",
+      kind: "blocked",
+      message: tokenState.status === "invalid"
+        ? "Fix `TELEGRAM_BOT_TOKEN` before pairing the host or starting the bot."
+        : "Set `TELEGRAM_BOT_TOKEN` in `.env` or the shell before pairing the host or starting the bot."
+    });
   }
 
   if (sharedInfraReady) {
-    steps.push("Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.");
+    pushAutomationItem(items, {
+      id: "shared-infra-ready",
+      kind: "reuse",
+      message: "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely."
+    });
   } else {
     switch (redis.state) {
       case "running":
-        steps.push("Redis is already running locally. Reuse it, and if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services, you can skip Docker entirely.");
+        pushAutomationItem(items, {
+          id: "redis-reuse",
+          kind: "reuse",
+          message: "Redis is already running locally. Reuse it, and if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services, you can skip Docker entirely."
+        });
         break;
       case "installed_stopped":
-        steps.push("Start your local Redis service, point `REDIS_URL` at an existing Redis instance, or include `redis` when you bring up shared infra.");
+        pushAutomationItem(items, {
+          id: "redis-start",
+          kind: "manual",
+          message: "Start your local Redis service, point `REDIS_URL` at an existing Redis instance, or include `redis` when you bring up shared infra."
+        });
         break;
       case "absent":
-        steps.push("If PostgreSQL, Redis, and S3-compatible storage already exist, point `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` at them; otherwise bring up shared infra with Redis included.");
+        pushAutomationItem(items, {
+          id: "shared-infra-missing",
+          kind: "manual",
+          message: "If PostgreSQL, Redis, and S3-compatible storage already exist, point `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` at them; otherwise bring up shared infra with Redis included."
+        });
         break;
       case "port_conflict":
-        steps.push("Port `6379` is busy. Reuse an existing Redis instance via `REDIS_URL`, or set `HAPPYTG_REDIS_HOST_PORT` before starting compose `redis`.");
+        pushAutomationItem(items, {
+          id: "redis-port-conflict",
+          kind: "conflict",
+          message: "Port `6379` is busy. Reuse an existing Redis instance via `REDIS_URL`, or set `HAPPYTG_REDIS_HOST_PORT` before starting compose `redis`."
+        });
         break;
       case "remote":
-        steps.push("Redis points to a remote URL. Verify it is reachable before first start, and skip local Docker infra entirely if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services.");
+        pushAutomationItem(items, {
+          id: "redis-remote",
+          kind: "warning",
+          message: "Redis points to a remote URL. Verify it is reachable before first start, and skip local Docker infra entirely if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services."
+        });
         break;
     }
   }
 
   const infraCommand = defaultInfraComposeCommand(redis, platform);
-  if (sharedInfraReady) {
-    if (occupiedHappyTGPorts.length === 0) {
-      steps.push("Start repo services: `pnpm dev`.");
+  if (!sharedInfraReady) {
+    if (redis.state === "running") {
+      pushAutomationItem(items, {
+        id: "shared-infra-remaining",
+        kind: "manual",
+        message: `If PostgreSQL and S3-compatible storage are not already available, start the remaining shared infra: \`${infraCommand}\`.`
+      });
+    } else if (redis.state === "port_conflict") {
+      pushAutomationItem(items, {
+        id: "redis-remap",
+        kind: "conflict",
+        message: `If you need container Redis, use \`${commands.inlineEnvExample("HAPPYTG_REDIS_HOST_PORT", 6380, "docker compose -f infra/docker-compose.example.yml up redis")}\`.`
+      });
+      pushAutomationItem(items, {
+        id: "shared-infra-remaining",
+        kind: "manual",
+        message: "Then start the remaining shared infra: `docker compose -f infra/docker-compose.example.yml up postgres minio`."
+      });
+    } else if (redis.state === "remote") {
+      pushAutomationItem(items, {
+        id: "shared-infra-remote",
+        kind: "warning",
+        message: "If PostgreSQL, Redis, and S3-compatible storage are already configured and reachable, continue without Docker. Otherwise start only the missing shared services."
+      });
+    } else {
+      pushAutomationItem(items, {
+        id: "shared-infra-start",
+        kind: "manual",
+        message: `If you are not reusing existing PostgreSQL / Redis / S3-compatible services, start shared infra: \`${infraCommand}\`.`
+      });
     }
-  } else if (redis.state === "running") {
-    steps.push(`If PostgreSQL and S3-compatible storage are not already available, start the remaining shared infra: \`${infraCommand}\`.`);
-  } else if (redis.state === "port_conflict") {
-    steps.push(`If you need container Redis, use \`${commands.inlineEnvExample("HAPPYTG_REDIS_HOST_PORT", 6380, "docker compose -f infra/docker-compose.example.yml up redis")}\`.`);
-    steps.push(`Then start the remaining shared infra: \`docker compose -f infra/docker-compose.example.yml up postgres minio\`.`);
-  } else if (redis.state === "remote") {
-    steps.push("If PostgreSQL, Redis, and S3-compatible storage are already configured and reachable, continue without Docker. Otherwise start only the missing shared services.");
+  }
+
+  if (runningHappyTGServices.length > 0) {
+    pushAutomationItem(items, {
+      id: "running-stack-reuse",
+      kind: "reuse",
+      message: "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy."
+    });
+  } else if (conflictingAppPorts.length === 0) {
+    pushAutomationItem(items, {
+      id: "start-repo-services",
+      kind: "manual",
+      message: "Start repo services: `pnpm dev`."
+    });
   } else {
-    steps.push(`If you are not reusing existing PostgreSQL / Redis / S3-compatible services, start shared infra: \`${infraCommand}\`.`);
+    pushAutomationItem(items, {
+      id: "start-repo-services",
+      kind: "blocked",
+      message: "Resolve the occupied HappyTG application ports before starting another copy with `pnpm dev`."
+    });
   }
 
-  if (occupiedHappyTGPorts.length > 0) {
-    steps.push("Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.");
-  } else if (!sharedInfraReady) {
-    steps.push("Start repo services: `pnpm dev`.");
+  for (const portResult of conflictingAppPorts) {
+    pushAutomationItem(items, {
+      id: `${portResult.id}-port-conflict`,
+      kind: "conflict",
+      message: buildPortConflictMessage(portResult, platform)
+    });
   }
 
-  steps.push("Request a pairing code on the execution host: `pnpm daemon:pair`.");
-  steps.push(`Send \`/pair <CODE>\` to ${botTarget}, then start the daemon with \`pnpm dev:daemon\`.`);
+  if (tokenState.status !== "configured") {
+    pushAutomationItem(items, {
+      id: "request-pair-code",
+      kind: "blocked",
+      message: "Fix the Telegram bot configuration before requesting a pairing code."
+    });
+    return items;
+  }
 
-  return steps.slice(0, 6);
+  if (!apiReady) {
+    pushAutomationItem(items, {
+      id: "request-pair-code",
+      kind: "blocked",
+      message: "Request a pairing code after the HappyTG API is running."
+    });
+    return items;
+  }
+
+  pushAutomationItem(items, {
+    id: "request-pair-code",
+    kind: "manual",
+    message: "Request a pairing code on the execution host: `pnpm daemon:pair`."
+  });
+  pushAutomationItem(items, {
+    id: "complete-pairing",
+    kind: "manual",
+    message: botTarget === "Telegram"
+      ? "Send `/pair <CODE>` in Telegram."
+      : `Send \`/pair <CODE>\` to ${botTarget}.`
+  });
+  pushAutomationItem(items, {
+    id: "start-daemon",
+    kind: "manual",
+    message: "After pairing, start the daemon with `pnpm dev:daemon`."
+  });
+
+  return items;
 }
 
 export async function detectFindings(context: DoctorContext): Promise<DoctorDetection> {
@@ -1492,61 +1646,23 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     });
   }
 
-  const planPreview = context.command === "setup"
-    ? buildSetupPlan(context, redis, portResults, envFilePath, tokenState)
-    : [];
-
-  if (findings.some((item) => item.code === "ENV_FILE_MISSING")) {
-    pushPlanStep(planPreview, `Create \`.env\`: \`${commands.copyEnv}\`.`);
-  }
-  if (tokenState.status !== "configured") {
-    pushPlanStep(planPreview, "Set `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.");
-  }
-  if (codexResolution.pathPending) {
-    const binDir = detectedCodexBinDir(codexInstallCheck);
-    pushPlanStep(
-      planPreview,
-      binDir
-        ? `Add \`${binDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
-        : "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`."
-    );
-  }
-  if (!codex.available && codex.missing !== false) {
-    if (codexInstallCheck?.pathLikelyIssue) {
-      const binDir = detectedCodexBinDir(codexInstallCheck);
-      pushPlanStep(
-        planPreview,
-        binDir
-          ? `Add \`${binDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
-          : "Add the global npm bin directory to PATH, restart the shell, then verify `codex --version`."
-      );
-    } else {
-      pushPlanStep(planPreview, "Reinstall Codex CLI, update PATH, then verify `codex --version`.");
-    }
-  }
-  if (!codex.available && codex.missing === false) {
-    pushPlanStep(planPreview, "Run `codex --version` in this shell, fix the local Codex install/runtime, then rerun `pnpm happytg setup`.");
-  }
-  if (redis.state === "running") {
-    pushPlanStep(planPreview, "Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port.");
-  }
-  if (occupiedHappyTGServices.length > 0) {
-    pushPlanStep(planPreview, "Do not run the full compose app stack and `pnpm dev` at the same time.");
-  }
-  for (const portResult of portResults.filter((item) => item.state === "occupied_external" && item.overrideEnv && item.command)) {
-    const example = commands.inlineEnvExample(portResult.overrideEnv!, portResult.suggestedPort ?? (portResult.port + 1), portResult.command!);
-    pushPlanStep(planPreview, `If you keep ${portResult.label.toLowerCase()} on a different port, use \`${example}\`.`);
-  }
-
-  if (context.command !== "setup" && planPreview.length === 0) {
-    pushPlanStep(planPreview, "Run `pnpm happytg setup` for the guided first-start checklist.");
-  }
+  const onboardingItems = buildOnboardingItems({
+    context,
+    redis,
+    portResults,
+    envFilePath,
+    tokenState,
+    codexResolution,
+    codexInstallCheck: codexInstallCheck ?? undefined
+  });
+  const planPreview = legacyPlanPreviewFromAutomation(onboardingItems);
 
   const profileRecommendation = findings.some((item) => item.severity === "error") ? "minimal" : "recommended";
 
   return {
     findings,
     planPreview,
+    onboardingItems,
     profileRecommendation,
     reportJson: {
       platform: platformLabel,
@@ -1579,7 +1695,8 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
         defaultInfraCommand: defaultInfraComposeCommand(redis, platform),
         pairCommand: "pnpm daemon:pair",
         daemonCommand: "pnpm dev:daemon",
-        steps: context.command === "setup" ? planPreview : buildSetupPlan(context, redis, portResults, envFilePath, tokenState),
+        items: onboardingItems,
+        steps: planPreview,
         overrideExamples: portResults
           .filter((item) => item.overrideEnv && item.command)
           .map((item) => ({

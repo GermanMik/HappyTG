@@ -1,0 +1,14 @@
+
+> happytg@0.3.11 happytg C:\Users\tikta\AppData\Local\Temp\HappyTG-baseline-f77d26d
+> tsx packages/bootstrap/src/cli.ts "install" "--non-interactive" "--repo-mode" "current" "--repo-dir" "." "--background" "skip" "--post-check" "setup"
+
+HappyTG install [FAIL]
+Result: install needs follow-up before it is fully ready.
+Repo: reused C:\Users\tikta\AppData\Local\Temp\HappyTG-baseline-f77d26d
+Source: primary https://github.com/GermanMik/HappyTG.git
+Background: Installer stopped before background configuration completed.
+Telegram: configured
+Warnings: 0
+Error: fatal: 'main' is already used by worktree at 'C:/Develop/Projects/HappyTG'
+Suggested action: Verify that branch main exists locally or remotely, then rerun the installer.
+ ELIFECYCLE  Command failed with exit code 1.

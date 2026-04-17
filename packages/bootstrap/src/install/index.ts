@@ -7,10 +7,18 @@ import {
   normalizeSpawnEnv,
   nowIso,
   parseDotEnv,
+  readJsonFile,
   readTextFileOrEmpty,
   resolveExecutable,
   writeJsonFileAtomic
 } from "../../../shared/src/index.js";
+import {
+  legacyNextStepsFromAutomation,
+  onboardingItemsFromReport,
+  pushAutomationItem,
+  pushAutomationItems,
+  type AutomationItem
+} from "../finalization.js";
 
 import { configureBackgroundMode } from "./background.js";
 import { runCommand, runShellCommand, CommandExecutionError } from "./commands.js";
@@ -90,60 +98,14 @@ function pushUniqueLines(lines: string[], next: readonly string[]): void {
   }
 }
 
-function nextStepSemanticKey(line: string): string {
-  const normalized = line.trim().toLowerCase().replace(/\s+/gu, " ");
+function dedupeWarningsAgainstAutomationItems(warnings: readonly string[], automationItems: readonly AutomationItem[]): string[] {
+  const nonWarningMessages = new Set(
+    automationItems
+      .filter((item) => item.kind !== "warning")
+      .map((item) => item.message)
+  );
 
-  if (normalized === "pnpm dev" || normalized.includes("start repo services: `pnpm dev`")) {
-    return "start-repo-services";
-  }
-  if (normalized === "pnpm daemon:pair" || normalized.includes("pairing code on the execution host: `pnpm daemon:pair`")) {
-    return "request-pair-code";
-  }
-  if (normalized.includes("send `/pair <code>`")) {
-    return "complete-pairing";
-  }
-  if (normalized.includes("redis, postgresql, and s3-compatible storage already look reachable locally")
-    || normalized.includes("redis is already running locally. reuse it")
-    || normalized.includes("redis is already running. use it and skip compose `redis`")) {
-    return "shared-infra-reuse";
-  }
-  if (normalized.includes("some happytg services are already running")
-    || normalized.includes("do not run the full compose app stack and `pnpm dev` at the same time")) {
-    return "running-stack";
-  }
-
-  return normalized;
-}
-
-function pushUniqueNextStep(lines: string[], line: string): void {
-  const normalized = line.trim();
-  if (!normalized) {
-    return;
-  }
-
-  const key = nextStepSemanticKey(normalized);
-  if (key === "start-repo-services"
-    && lines.some((existing) => nextStepSemanticKey(existing) === "running-stack")) {
-    return;
-  }
-  if (key === "running-stack") {
-    for (let index = lines.length - 1; index >= 0; index -= 1) {
-      if (nextStepSemanticKey(lines[index]!) === "start-repo-services") {
-        lines.splice(index, 1);
-      }
-    }
-  }
-  if (lines.some((existing) => nextStepSemanticKey(existing) === key)) {
-    return;
-  }
-
-  lines.push(normalized);
-}
-
-function pushUniqueNextSteps(lines: string[], next: readonly string[]): void {
-  for (const line of next) {
-    pushUniqueNextStep(lines, line);
-  }
+  return warnings.filter((warning) => !nonWarningMessages.has(warning));
 }
 
 function bootstrapReportSummary(report: BootstrapReport): string {
@@ -172,8 +134,8 @@ function warningMessagesFromBootstrapReport(report: BootstrapReport): string[] {
     .map((finding) => finding.message);
 }
 
-function nextStepsFromBootstrapReport(report: BootstrapReport): string[] {
-  return report.status === "warn" ? report.planPreview : [];
+function automationItemsFromBootstrapReport(report: BootstrapReport): AutomationItem[] {
+  return report.status === "pass" ? [] : onboardingItemsFromReport(report);
 }
 
 function packageManagerLabel(value: string): string {
@@ -206,21 +168,71 @@ function platformLabel(platform: NodeJS.Platform): string {
   }
 }
 
-function nextSteps(repoPath: string, pairTarget: string, backgroundMode: BackgroundMode): string[] {
-  const steps = [
-    `cd ${repoPath}`,
-    "pnpm dev",
-    "pnpm daemon:pair"
-  ];
+interface DaemonStateSnapshot {
+  hostId?: string;
+}
 
-  if (backgroundMode === "manual" || backgroundMode === "skip") {
-    steps.push(`Send \`/pair <CODE>\` to ${pairTarget}, then start the daemon with \`pnpm dev:daemon\`.`);
-  } else {
-    steps.push(`Send \`/pair <CODE>\` to ${pairTarget}.`);
-    steps.push("The host daemon background launcher is configured; log out/in or start it once manually if needed.");
+interface PairingCommandResult {
+  pairingCode: string;
+  hostId?: string;
+  expiresAt?: string;
+}
+
+async function readDaemonStateSnapshot(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): Promise<DaemonStateSnapshot> {
+  const statePath = path.join(getLocalStateDir(env, platform), "daemon-state.json");
+  return readJsonFile<DaemonStateSnapshot>(statePath, {});
+}
+
+function pairingHandoffMessage(pairTarget: string, pairingCode: string): string {
+  return pairTarget.toLowerCase().includes("telegram")
+    ? `Send \`/pair ${pairingCode}\` in Telegram.`
+    : `Send \`/pair ${pairingCode}\` to ${pairTarget}.`;
+}
+
+function parsePairingCommandResult(output: string): PairingCommandResult | undefined {
+  const pairingCode = output.match(/\/pair\s+([A-Z0-9-]+)/u)?.[1];
+  if (!pairingCode) {
+    return undefined;
   }
 
-  return steps;
+  return {
+    pairingCode,
+    hostId: output.match(/Host ID:\s+([^\r\n]+)/u)?.[1]?.trim(),
+    expiresAt: output.match(/Expires at:\s+([^\r\n]+)/u)?.[1]?.trim()
+  };
+}
+
+async function requestPairingCode(input: {
+  env: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+  repoPath: string;
+  runCommandImpl: typeof runCommand;
+  resolveExecutableImpl: typeof resolveExecutable;
+}): Promise<PairingCommandResult | undefined> {
+  const pnpmPath = await input.resolveExecutableImpl("pnpm", {
+    cwd: input.repoPath,
+    env: input.env,
+    platform: input.platform
+  });
+  if (!pnpmPath) {
+    return undefined;
+  }
+
+  const result = await input.runCommandImpl({
+    command: pnpmPath,
+    args: ["daemon:pair"],
+    cwd: input.repoPath,
+    env: input.env,
+    platform: input.platform
+  }).catch(() => undefined);
+  if (!result) {
+    return undefined;
+  }
+  if (result.exitCode !== 0) {
+    return undefined;
+  }
+
+  return parsePairingCommandResult(`${result.stdout}\n${result.stderr}`);
 }
 
 async function buildRepoEnv(repoPath: string, baseEnv: NodeJS.ProcessEnv): Promise<NodeJS.ProcessEnv> {
@@ -234,6 +246,132 @@ async function buildRepoEnv(repoPath: string, baseEnv: NodeJS.ProcessEnv): Promi
   }
 
   return env;
+}
+
+function removeAutomationItems(items: AutomationItem[], ...ids: string[]): void {
+  for (let index = items.length - 1; index >= 0; index -= 1) {
+    if (ids.includes(items[index]!.id)) {
+      items.splice(index, 1);
+    }
+  }
+}
+
+async function buildInstallFinalizationItems(input: {
+  background: InstallResult["background"];
+  pairTarget: string;
+  platform: NodeJS.Platform;
+  postCheckItems: AutomationItem[];
+  repoEnv: NodeJS.ProcessEnv;
+  repoPath: string;
+  resolveExecutableImpl: typeof resolveExecutable;
+  runCommandImpl: typeof runCommand;
+  telegramLookup: InstallResult["telegram"]["lookup"];
+}): Promise<AutomationItem[]> {
+  const items: AutomationItem[] = [];
+  pushAutomationItems(items, input.postCheckItems);
+
+  if (input.background.status === "configured") {
+    pushAutomationItem(items, {
+      id: "background-configured",
+      kind: "auto",
+      message: input.background.detail
+    });
+  } else if (input.background.status === "manual" && input.background.mode !== "manual" && input.background.mode !== "skip") {
+    pushAutomationItem(items, {
+      id: "background-configured",
+      kind: "warning",
+      message: input.background.detail
+    });
+  } else if (input.background.status === "failed") {
+    pushAutomationItem(items, {
+      id: "background-configured",
+      kind: "blocked",
+      message: input.background.detail
+    });
+  }
+
+  if (input.telegramLookup?.status === "failed" || input.telegramLookup?.status === "not-attempted") {
+    removeAutomationItems(items, "complete-pairing", "start-daemon");
+    pushAutomationItem(items, {
+      id: "request-pair-code",
+      kind: "blocked",
+      message: input.telegramLookup?.status === "failed"
+        ? "Telegram bot validation failed, so pairing remains blocked until the bot token works."
+        : "Add a Telegram bot token before pairing the host."
+    });
+  } else {
+    const daemonState = await readDaemonStateSnapshot(input.repoEnv, input.platform);
+    if (daemonState.hostId) {
+      removeAutomationItems(items, "complete-pairing");
+      pushAutomationItem(items, {
+        id: "request-pair-code",
+        kind: "reuse",
+        message: "Existing host daemon state was detected locally. Reuse that host if it is already paired."
+      });
+      pushAutomationItem(items, {
+        id: "pairing-state-handoff",
+        kind: "manual",
+        message: "If this host still needs pairing, request a fresh code manually with `pnpm daemon:pair`."
+      });
+    } else if (items.some((item) => item.id === "request-pair-code" && item.kind === "manual")) {
+      const pairResult = await requestPairingCode({
+        env: input.repoEnv,
+        platform: input.platform,
+        repoPath: input.repoPath,
+        runCommandImpl: input.runCommandImpl,
+        resolveExecutableImpl: input.resolveExecutableImpl
+      });
+      if (pairResult) {
+        pushAutomationItem(items, {
+          id: "request-pair-code",
+          kind: "auto",
+          message: pairResult.expiresAt
+            ? `Requested a pairing code on the execution host. It expires at ${pairResult.expiresAt}.`
+            : "Requested a pairing code on the execution host."
+        });
+        pushAutomationItem(items, {
+          id: "complete-pairing",
+          kind: "manual",
+          message: pairingHandoffMessage(input.pairTarget, pairResult.pairingCode)
+        });
+      } else {
+        pushAutomationItem(items, {
+          id: "pairing-auto-request",
+          kind: "warning",
+          message: "Automatic pairing-code request did not complete. Run `pnpm daemon:pair` manually if the HappyTG API is reachable."
+        });
+      }
+    }
+  }
+
+  if (items.some((item) => item.id === "request-pair-code" && item.kind === "blocked")) {
+    removeAutomationItems(items, "complete-pairing", "pairing-state-handoff", "start-daemon");
+  }
+
+  if (input.background.status === "configured") {
+    removeAutomationItems(items, "start-daemon");
+    if (input.background.mode === "scheduled-task" || input.background.mode === "startup") {
+      pushAutomationItem(items, {
+        id: "background-activation",
+        kind: "warning",
+        message: "The host daemon background launcher is configured for the next logon. If you need it immediately after pairing, run `pnpm dev:daemon` once."
+      });
+    }
+  } else if (input.background.status === "manual") {
+    pushAutomationItem(items, {
+      id: "start-daemon",
+      kind: "manual",
+      message: "After pairing, start the daemon with `pnpm dev:daemon`."
+    });
+  } else if (input.background.status === "failed") {
+    pushAutomationItem(items, {
+      id: "start-daemon",
+      kind: "blocked",
+      message: "Background launcher setup failed. After pairing, start the daemon manually with `pnpm dev:daemon`."
+    });
+  }
+
+  return items;
 }
 
 function setPath(env: NodeJS.ProcessEnv, platform: NodeJS.Platform, nextPath: string): void {
@@ -1213,7 +1351,7 @@ export async function runHappyTGInstall(
     const repoEnv = await buildRepoEnv(repoSyncResult.path, installEnv);
     const postCheckReports: InstallResult["postChecks"] = [];
     const postCheckWarnings: string[] = [];
-    const postCheckNextSteps: string[] = [];
+    const postCheckAutomationItems: AutomationItem[] = [];
     const repeatedPostCheckSignatures = new Map<string, PostInstallCheck>();
     for (const check of postChecks) {
       const stepId = `check-${check}`;
@@ -1247,7 +1385,7 @@ export async function runHappyTGInstall(
           : summary
       });
       pushUniqueLines(postCheckWarnings, warningMessagesFromBootstrapReport(report));
-      pushUniqueNextSteps(postCheckNextSteps, nextStepsFromBootstrapReport(report));
+      pushAutomationItems(postCheckAutomationItems, automationItemsFromBootstrapReport(report));
       if (repeatedSignature && !repeatedFrom) {
         repeatedPostCheckSignatures.set(repeatedSignature, check);
       }
@@ -1283,8 +1421,19 @@ export async function runHappyTGInstall(
           username: knownBotUsername
         }
         : undefined);
-    const finalNextSteps = nextSteps(repoSyncResult.path, pairTarget, backgroundMode);
-    pushUniqueNextSteps(finalNextSteps, postCheckNextSteps);
+    const finalizationItems = await buildInstallFinalizationItems({
+      background,
+      pairTarget,
+      platform: platform.platform.platform,
+      postCheckItems: postCheckAutomationItems,
+      repoEnv,
+      repoPath: repoSyncResult.path,
+      resolveExecutableImpl: deps.resolveExecutable,
+      runCommandImpl: deps.runCommand,
+      telegramLookup
+    });
+    const finalWarnings = dedupeWarningsAgainstAutomationItems(warnings, finalizationItems);
+    const finalNextSteps = legacyNextStepsFromAutomation(finalizationItems);
     const result: InstallResult = {
       kind: "install",
       status: installStatusFromOutcome(outcome),
@@ -1310,10 +1459,13 @@ export async function runHappyTGInstall(
         lookup: telegramLookup
       },
       background,
+      finalization: {
+        items: finalizationItems
+      },
       postChecks: postCheckReports,
       steps,
       nextSteps: finalNextSteps,
-      warnings,
+      warnings: finalWarnings,
       error: partialFailure,
       reportJson: {
         branch: options.branch,
@@ -1323,6 +1475,7 @@ export async function runHappyTGInstall(
         fallbackSource: repoSources.fallback?.url,
         fallbackUsed: repoSyncResult.fallbackUsed,
         outcome,
+        finalizationItems,
         pairTarget,
         packageManager: platform.platform.systemPackageManager,
         platform: platform.platform,
@@ -1350,7 +1503,8 @@ export async function runHappyTGInstall(
       await waitForEnter(stdin, stdout, renderSummaryScreen({
         outcome,
         repoPath: repoSyncResult.path,
-        warnings,
+        finalizationItems,
+        warnings: finalWarnings,
         nextSteps: result.nextSteps,
         detail: outcome === "recoverable-failure"
           ? partialFailure?.lastError ?? installDetailFromBackground(background.detail)

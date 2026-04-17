@@ -161,6 +161,15 @@ test("renderText returns a compact bootstrap summary with preflight and diagnost
         "Env: .env found",
         "Codex: codex-cli 0.115.0"
       ],
+      onboarding: {
+        items: [
+          {
+            id: "codex-install",
+            kind: "blocked",
+            message: "Install Codex CLI and verify `codex --version`."
+          }
+        ]
+      },
       codex: {
         binaryPath: "/tmp/codex"
       }
@@ -171,13 +180,13 @@ test("renderText returns a compact bootstrap summary with preflight and diagnost
   assert.match(output, /HappyTG setup \[WARN\]/);
   assert.match(output, /Summary: 1 error found\./);
   assert.match(output, /Preflight:/);
-  assert.match(output, /First start:/);
+  assert.match(output, /Blocked:/);
   assert.match(output, /Diagnostics:/);
   assert.match(output, /pnpm happytg setup --json/);
   assert.doesNotMatch(output, /\/tmp\/codex/);
 });
 
-test("renderText returns a compact install summary", () => {
+test("renderText returns a compact install summary with structured finalization sections", () => {
   const output = renderText({
     kind: "install",
     status: "warn",
@@ -219,12 +228,28 @@ test("renderText returns a compact install summary", () => {
       status: "manual",
       detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
     },
+    finalization: {
+      items: [
+        {
+          id: "start-repo-services",
+          kind: "manual",
+          message: "Start repo services: `pnpm dev`."
+        },
+        {
+          id: "request-pair-code",
+          kind: "manual",
+          message: "Request a pairing code on the execution host: `pnpm daemon:pair`."
+        },
+        {
+          id: "complete-pairing",
+          kind: "manual",
+          message: "Send `/pair ABC123` to @happytg_bot."
+        }
+      ]
+    },
     postChecks: [],
     steps: [],
-    nextSteps: [
-      "pnpm dev",
-      "pnpm daemon:pair"
-    ],
+    nextSteps: [],
     warnings: [
       "Docker Desktop was skipped."
     ],
@@ -234,11 +259,13 @@ test("renderText returns a compact install summary", () => {
   assert.match(output, /HappyTG install \[WARN\]/);
   assert.match(output, /Result: install flow is complete with warnings\./);
   assert.match(output, /@happytg_bot/);
+  assert.match(output, /Requires user:/);
   assert.match(output, /Docker Desktop was skipped/);
   assert.match(output, /pnpm daemon:pair/);
+  assert.doesNotMatch(output, /Next steps:/);
 });
 
-test("renderText includes follow-up warnings and PATH next steps in install summaries", () => {
+test("renderText keeps warning-only follow-up separate from manual actions in install summaries", () => {
   const npmBinDir = "C:\\Users\\tikta\\AppData\\Roaming\\npm";
   const wrapperPath = `${npmBinDir}\\codex.cmd`;
   const pathWarning = `Codex CLI worked through the npm wrapper at \`${wrapperPath}\`, but \`${npmBinDir}\` is not on the current shell PATH yet. Update PATH or restart the shell so plain \`codex\` resolves directly.`;
@@ -285,13 +312,23 @@ test("renderText includes follow-up warnings and PATH next steps in install summ
       status: "manual",
       detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
     },
+    finalization: {
+      items: [
+        {
+          id: "start-repo-services",
+          kind: "manual",
+          message: "Start repo services: `pnpm dev`."
+        },
+        {
+          id: "codex-path-pending",
+          kind: "warning",
+          message: pathNextStep
+        }
+      ]
+    },
     postChecks: [],
     steps: [],
-    nextSteps: [
-      pathNextStep,
-      "pnpm dev",
-      "pnpm daemon:pair"
-    ],
+    nextSteps: [],
     warnings: [
       telegramWarning,
       pathWarning
@@ -301,11 +338,12 @@ test("renderText includes follow-up warnings and PATH next steps in install summ
 
   assert.match(output, /HappyTG install \[WARN\]/);
   assert.match(output, /Result: install flow is complete with warnings\./);
-  assert.match(output, /Warnings: 2/);
-  assert.match(output, /Next steps:/);
+  assert.match(output, /Warnings: 3/);
+  assert.match(output, /Requires user:/);
   assert.match(output, /Telegram API getMe network request failed: fetch failed/);
   assert.match(output, new RegExp(npmBinDir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(output, /verify `codex --version`/);
+  assert.doesNotMatch(output, /Next steps:/);
 });
 
 test("renderText explains recoverable installer failures without claiming completion", () => {

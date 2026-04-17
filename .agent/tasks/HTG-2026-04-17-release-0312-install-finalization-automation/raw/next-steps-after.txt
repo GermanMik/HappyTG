@@ -1,0 +1,18 @@
+Current install finalization from `install-json-after.txt` and `install-final-summary.txt`:
+
+Blocked:
+- Telegram bot validation failed, so pairing remains blocked until the bot token works.
+
+Reuse:
+- Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.
+- Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.
+
+Conflicts:
+- Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there. Reuse the running service if it is yours, or pick a new port with `$env:HAPPYTG_MINIAPP_PORT="3006"; pnpm dev:miniapp`.
+
+Warnings:
+- Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details.
+
+Observed improvement:
+
+- The final output is grouped by type and the mini-app conflict no longer appears both as a conflict and as a duplicate warning.

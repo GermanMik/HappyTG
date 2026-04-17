@@ -1,0 +1,80 @@
+
+> happytg@0.3.12 typecheck C:\Develop\Projects\HappyTG
+> turbo typecheck
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running typecheck in 13 packages
+   • Remote caching disabled
+
+@happytg/shared:typecheck: cache miss, executing 58f384ce858e5cde
+@happytg/runtime-adapters:typecheck: cache miss, executing eeeaec89ef08480a
+@happytg/bootstrap:typecheck: cache miss, executing 3fb184741cf59b2f
+@happytg/worker:typecheck: cache miss, executing 3e7a02d1a5cccbc4
+@happytg/policy-engine:typecheck: cache miss, executing 39a11c1560eeba74
+@happytg/repo-proof:typecheck: cache miss, executing f49cd4fb54471356
+@happytg/bot:typecheck: cache miss, executing 6fb51fe9fbfc45d1
+@happytg/host-daemon:typecheck: cache miss, executing aaf69f8b9e46bc73
+@happytg/api:typecheck: cache miss, executing 0bb536eb534922d7
+@happytg/protocol:typecheck: cache miss, executing bc6e5d18bca96ecd
+@happytg/runtime-adapters:typecheck: 
+@happytg/runtime-adapters:typecheck: > @happytg/runtime-adapters@0.3.12 typecheck C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:typecheck: 
+@happytg/worker:typecheck: 
+@happytg/worker:typecheck: > @happytg/worker@0.3.12 typecheck C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/worker:typecheck: 
+@happytg/bot:typecheck: 
+@happytg/bot:typecheck: > @happytg/bot@0.3.12 typecheck C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bot:typecheck: 
+@happytg/bootstrap:typecheck: 
+@happytg/bootstrap:typecheck: > @happytg/bootstrap@0.3.12 typecheck C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:typecheck: 
+@happytg/shared:typecheck: 
+@happytg/shared:typecheck: > @happytg/shared@0.3.12 typecheck C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/shared:typecheck: 
+@happytg/protocol:typecheck: 
+@happytg/protocol:typecheck: > @happytg/protocol@0.3.12 typecheck C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:typecheck: 
+@happytg/policy-engine:typecheck: 
+@happytg/policy-engine:typecheck: > @happytg/policy-engine@0.3.12 typecheck C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:typecheck: 
+@happytg/host-daemon:typecheck: 
+@happytg/host-daemon:typecheck: > @happytg/host-daemon@0.3.12 typecheck C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:typecheck: 
+@happytg/repo-proof:typecheck: 
+@happytg/repo-proof:typecheck: > @happytg/repo-proof@0.3.12 typecheck C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:typecheck: 
+@happytg/api:typecheck: 
+@happytg/api:typecheck: > @happytg/api@0.3.12 typecheck C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/api:typecheck: 
+@happytg/miniapp:typecheck: cache miss, executing 9d975ffc6ebeb79f
+@happytg/approval-engine:typecheck: cache miss, executing 8f6151500066f2cd
+@happytg/hooks:typecheck: cache miss, executing d473878c9493dd4a
+@happytg/miniapp:typecheck: 
+@happytg/miniapp:typecheck: > @happytg/miniapp@0.3.12 typecheck C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/miniapp:typecheck: 
+@happytg/approval-engine:typecheck: 
+@happytg/approval-engine:typecheck: > @happytg/approval-engine@0.3.12 typecheck C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:typecheck: 
+@happytg/hooks:typecheck: 
+@happytg/hooks:typecheck: > @happytg/hooks@0.3.12 typecheck C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:typecheck: 
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    4.602s 
+
