@@ -992,8 +992,8 @@ test("setup treats compatible Redis, PostgreSQL, and MinIO listeners as supporte
     assert.notEqual(minioConsolePort?.suggestedPort, minioApiPort?.port);
     assert.notEqual(minioConsolePort?.suggestedPort, minioConsolePort?.port);
     assert.notEqual(minioApiPort?.suggestedPort, minioConsolePort?.suggestedPort);
-    assert.match(overrideExamples.find((item) => item.service === "MinIO API host port")?.shellExample ?? "", new RegExp(`HAPPYTG_MINIO_PORT=\"${minioApiPort?.suggestedPort}\"`));
-    assert.match(overrideExamples.find((item) => item.service === "MinIO console host port")?.shellExample ?? "", new RegExp(`HAPPYTG_MINIO_CONSOLE_PORT=\"${minioConsolePort?.suggestedPort}\"`));
+    assert.match(overrideExamples.find((item) => item.service === "MinIO API host port")?.shellExample ?? "", new RegExp(`HAPPYTG_MINIO_PORT=\"?${minioApiPort?.suggestedPort}\"?`));
+    assert.match(overrideExamples.find((item) => item.service === "MinIO console host port")?.shellExample ?? "", new RegExp(`HAPPYTG_MINIO_CONSOLE_PORT=\"?${minioConsolePort?.suggestedPort}\"?`));
   } finally {
     await Promise.all([
       closeServer(busyMiniApp.server),
