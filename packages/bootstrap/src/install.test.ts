@@ -285,4 +285,38 @@ test("fetchTelegramBotIdentity separates invalid-token API rejections from recov
   assert.equal(network.failureKind, "network_error");
   assert.equal(network.recoverable, true);
   assert.equal(network.step, "getMe");
+  assert.match(network.error ?? "", /before Telegram returned a response/i);
+});
+
+test("fetchTelegramBotIdentity classifies DNS-style fetch failures and non-JSON responses", async () => {
+  const dnsFailure = new TypeError("fetch failed");
+  Object.assign(dnsFailure, {
+    cause: {
+      code: "ENOTFOUND",
+      message: "getaddrinfo ENOTFOUND api.telegram.org"
+    }
+  });
+
+  const dns = await fetchTelegramBotIdentity(
+    "123456:abcdefghijklmnopqrstuvwx",
+    async () => {
+      throw dnsFailure;
+    }
+  );
+  const nonJson = await fetchTelegramBotIdentity(
+    "123456:abcdefghijklmnopqrstuvwx",
+    async () => new Response("<html>busy</html>", {
+      status: 200,
+      headers: {
+        "content-type": "text/html"
+      }
+    })
+  );
+
+  assert.equal(dns.ok, false);
+  assert.equal(dns.failureKind, "network_error");
+  assert.equal(dns.error, "DNS lookup for api.telegram.org failed.");
+  assert.equal(nonJson.ok, false);
+  assert.equal(nonJson.failureKind, "unexpected_response");
+  assert.equal(nonJson.error, "Telegram API getMe returned a non-JSON response.");
 });

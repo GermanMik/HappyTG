@@ -1,0 +1,199 @@
+{
+  "taskId": "HTG-2026-04-17-installer-diagnostics-proof-loop",
+  "phase": "fresh verify passed",
+  "artifacts": [
+    "raw/setup-json.txt",
+    "raw/doctor-json.txt",
+    "raw/verify-json.txt",
+    "raw/setup-json-final.txt",
+    "raw/doctor-json-final.txt",
+    "raw/verify-json-final.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/test-runtime-adapters-after-stdin-fix.txt",
+    "raw/test-bootstrap-after-verifier-fix.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt"
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "telegram-diagnostics",
+      "status": "satisfied",
+      "evidence": [
+        "packages/bootstrap/src/install/telegram.ts",
+        "packages/bootstrap/src/install.test.ts"
+      ]
+    },
+    {
+      "id": "codex-wrapper-path-smoke",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "packages/shared/src/index.ts",
+        "packages/runtime-adapters/src/index.ts",
+        "packages/bootstrap/src/index.ts",
+        "raw/setup-json-final.txt",
+        "raw/doctor-json-final.txt",
+        "raw/verify-json-final.txt"
+      ]
+    },
+    {
+      "id": "ports",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "raw/setup-json-final.txt",
+        "raw/doctor-json-final.txt",
+        "raw/verify-json-final.txt"
+      ]
+    },
+    {
+      "id": "planned-ports-analysis",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "raw/setup-json-final.txt",
+        "raw/doctor-json-final.txt",
+        "raw/verify-json-final.txt"
+      ]
+    },
+    {
+      "id": "final-summary-quality",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "raw/setup-json-final.txt",
+        "raw/doctor-json-final.txt",
+        "raw/verify-json-final.txt"
+      ]
+    },
+    {
+      "id": "regression-coverage",
+      "status": "satisfied",
+      "evidence": [
+        "packages/shared/src/index.test.ts",
+        "packages/runtime-adapters/src/index.test.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "raw/test-unit.txt",
+        "raw/test-bootstrap-after-verifier-fix.txt"
+      ]
+    },
+    {
+      "id": "publish-flow",
+      "status": "pending_publish",
+      "evidence": [
+        "verdict.json"
+      ]
+    }
+  ],
+  "classifications": [
+    {
+      "area": "telegram-fetch",
+      "kind": "product_bug",
+      "summary": "Recoverable fetch failures were collapsed into a generic `fetch failed` warning."
+    },
+    {
+      "area": "codex-path-warning",
+      "kind": "mixed_bug_and_env_warning",
+      "summary": "Wrapper execution worked, but Windows path resolution and dedupe created repeated contradictory warnings."
+    },
+    {
+      "area": "codex-smoke-failure",
+      "kind": "product_bug",
+      "summary": "Windows wrapper prompt splitting plus open stdin and weak stderr classification produced a false smoke-failed state."
+    },
+    {
+      "area": "ports-5432-9000-9001",
+      "kind": "false_positive",
+      "summary": "Compatible local Postgres and MinIO listeners were reported as generic conflicts instead of supported reuse."
+    },
+    {
+      "area": "port-3001",
+      "kind": "legitimate_environment_warning",
+      "summary": "A third-party Dockerized frontend (`contacts-frontend`) is really occupying the planned Mini App port."
+    },
+    {
+      "area": "codex-websocket-403",
+      "kind": "legitimate_environment_warning",
+      "summary": "Smoke now succeeds; the remaining warning is a real websocket restriction against chatgpt.com in this environment."
+    }
+  ],
+  "plannedPorts": [
+    {
+      "component": "Mini App",
+      "port": 3001,
+      "listener": "HTTP listener `Contacts` via Docker container `contacts-frontend`",
+      "classification": "occupied_external",
+      "suggestedPort": 3006,
+      "shellExample": "$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp"
+    },
+    {
+      "component": "API",
+      "port": 4000,
+      "listener": "free",
+      "classification": "free",
+      "suggestedPort": 4001,
+      "shellExample": "$env:HAPPYTG_API_PORT=\"4001\"; pnpm dev:api"
+    },
+    {
+      "component": "Bot",
+      "port": 4100,
+      "listener": "free",
+      "classification": "free",
+      "suggestedPort": 4101,
+      "shellExample": "$env:HAPPYTG_BOT_PORT=\"4101\"; pnpm dev:bot"
+    },
+    {
+      "component": "Worker probe",
+      "port": 4200,
+      "listener": "free",
+      "classification": "free",
+      "suggestedPort": 4201,
+      "shellExample": "$env:HAPPYTG_WORKER_PORT=\"4201\"; pnpm dev:worker"
+    },
+    {
+      "component": "Redis host port",
+      "port": 6379,
+      "listener": "Redis via Docker container `shared-redis` (`redis:7-alpine`)",
+      "classification": "occupied_supported",
+      "suggestedPort": 6380,
+      "shellExample": "$env:HAPPYTG_REDIS_HOST_PORT=\"6380\"; docker compose -f infra/docker-compose.example.yml up redis"
+    },
+    {
+      "component": "Postgres host port",
+      "port": 5432,
+      "listener": "PostgreSQL via Docker container `contacts-postgres` (`postgres:16`)",
+      "classification": "occupied_supported",
+      "suggestedPort": 5433,
+      "shellExample": "$env:HAPPYTG_POSTGRES_HOST_PORT=\"5433\"; docker compose -f infra/docker-compose.example.yml up postgres"
+    },
+    {
+      "component": "MinIO API host port",
+      "port": 9000,
+      "listener": "MinIO via Docker container `nportal-minio-1`",
+      "classification": "occupied_supported",
+      "suggestedPort": 9002,
+      "shellExample": "$env:HAPPYTG_MINIO_PORT=\"9002\"; docker compose -f infra/docker-compose.example.yml up minio"
+    },
+    {
+      "component": "MinIO console host port",
+      "port": 9001,
+      "listener": "MinIO Console via Docker container `nportal-minio-1`",
+      "classification": "occupied_supported",
+      "suggestedPort": 9003,
+      "shellExample": "$env:HAPPYTG_MINIO_CONSOLE_PORT=\"9003\"; docker compose -f infra/docker-compose.example.yml up minio"
+    }
+  ],
+  "freshVerifier": {
+    "role": "task-verifier",
+    "agentId": "019d99de-3c8c-7c33-bf2b-efc0f25cfa71",
+    "runId": "verify-2-2026-04-17",
+    "status": "passed_after_bundle_sync",
+    "residualRisks": [
+      "Telegram DNS/TLS/proxy network failures were verified through regression tests rather than a live external outage on this machine.",
+      "The remaining Codex websocket 403 warning is environment-dependent and intentionally remains visible."
+    ]
+  }
+}

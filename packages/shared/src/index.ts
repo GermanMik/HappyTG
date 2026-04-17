@@ -221,7 +221,7 @@ function executableExtensions(env: NodeJS.ProcessEnv, platform: NodeJS.Platform 
     .filter(Boolean)
     .map((entry) => entry.startsWith(".") ? entry.toLowerCase() : `.${entry.toLowerCase()}`);
 
-  return ["", ...extensions];
+  return [...extensions, ""];
 }
 
 async function isExecutableFile(filePath: string, platform: NodeJS.Platform = process.platform): Promise<boolean> {

@@ -22,10 +22,15 @@ export const primaryRuntimeAdapter: RuntimeAdapter = {
 
 const BENIGN_CODEX_SMOKE_WARNING_PATTERNS = [
   /codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit/i,
+  /codex_state::runtime: failed to remove legacy logs db file .* \(os error 32\)/i,
   /codex_state::runtime: failed to open state db .*migration .*missing in the resolved migrations/i,
   /codex_core::state_db: failed to initialize state runtime .*migration .*missing in the resolved migrations/i,
+  /codex_rollout::state_db: failed to initialize state runtime .*migration .*missing in the resolved migrations/i,
   /codex_core::rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back/i,
-  /codex_core::shell_snapshot: Failed to delete shell snapshot .*No such file or directory/i
+  /codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back/i,
+  /codex_core::shell_snapshot: Failed to delete shell snapshot .*No such file or directory/i,
+  /codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell/i,
+  /Reading additional input from stdin\.\.\./i
 ] as const;
 
 function homeExpanded(configPath: string): string {
@@ -36,8 +41,22 @@ function isJavaScriptEntrypoint(filePath: string): boolean {
   return [".js", ".mjs", ".cjs"].includes(path.extname(filePath).toLowerCase());
 }
 
-function quoteShellCommand(command: string): string {
-  return `"${command}"`;
+function quoteWindowsShellArg(value: string): string {
+  if (!value) {
+    return "\"\"";
+  }
+
+  if (!/[\s"&()<>^|%!]/u.test(value)) {
+    return value;
+  }
+
+  return `"${value.replace(/%/g, "%%").replace(/"/g, "\"\"")}"`;
+}
+
+function buildWindowsShellCommand(command: string, args: string[]): string {
+  return [command, ...args]
+    .map((value) => quoteWindowsShellArg(value))
+    .join(" ");
 }
 
 function formatSpawnError(error: unknown): string {
@@ -81,6 +100,42 @@ export function classifyCodexSmokeStderr(stderr: string): {
     actionableLines,
     ignoredLines
   };
+}
+
+export function summarizeCodexSmokeStderr(stderr: string): string | undefined {
+  const actionableLines = classifyCodexSmokeStderr(stderr).actionableLines;
+  const lines = actionableLines.length > 0
+    ? actionableLines
+    : stderr
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  const firstLine = lines[0];
+  if (!firstLine) {
+    return undefined;
+  }
+
+  const timedOutMatch = stderr.match(/Process timed out after (\d+)ms\./iu);
+  if (timedOutMatch) {
+    return `Codex smoke command did not exit before the ${timedOutMatch[1]}ms timeout.`;
+  }
+  if (lines.some((line) => /unexpected argument .* found/iu.test(line))) {
+    return lines.find((line) => /unexpected argument .* found/iu.test(line)) ?? firstLine;
+  }
+  if (lines.some((line) => /responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden/iu.test(line)
+      || /session_startup_prewarm: startup websocket prewarm setup failed: unexpected status 403 Forbidden/iu.test(line)
+      || /unexpected status 403 Forbidden: .*wss:\/\/chatgpt\.com\/backend-api\/codex\/responses/iu.test(line))) {
+    return "Codex could not open the Responses websocket (403 Forbidden).";
+  }
+  if (lines.some((line) => /plugins::startup_sync: startup remote plugin sync failed/iu.test(line)
+      || /plugins::manager: failed to warm featured plugin ids cache/iu.test(line))) {
+    return "Codex could not sync plugins from chatgpt.com.";
+  }
+  if (lines.some((line) => /failed to open state db .*migration .*missing in the resolved migrations/iu.test(line))) {
+    return "Codex state DB migrations are out of sync.";
+  }
+
+  return firstLine.length > 180 ? `${firstLine.slice(0, 177)}...` : firstLine;
 }
 
 async function resolveCommandInvocation(
@@ -137,13 +192,14 @@ async function runCommand(
     && /\.(cmd|bat)$/i.test(invocation.command);
   const spawnEnv = normalizeSpawnEnv(env, platform);
   const spawnCommand = useWindowsShell
-    ? quoteShellCommand(invocation.command)
+    ? buildWindowsShellCommand(invocation.command, invocation.args)
     : invocation.command;
   return new Promise((resolve, reject) => {
-    const child = spawn(spawnCommand, invocation.args, {
+    const child = spawn(spawnCommand, useWindowsShell ? [] : invocation.args, {
       cwd,
       env: spawnEnv,
-      shell: useWindowsShell
+      shell: useWindowsShell,
+      stdio: ["ignore", "pipe", "pipe"]
     });
 
     let stdout = "";
@@ -209,6 +265,7 @@ export async function checkCodexReadiness(input?: {
     });
     const available = versionRun.exitCode === 0;
     let smokeOk = false;
+    let smokeTimedOut = false;
     let smokeOutput = "";
     let smokeError = "";
 
@@ -219,6 +276,7 @@ export async function checkCodexReadiness(input?: {
         platform
       });
       smokeOk = smokeRun.exitCode === 0;
+      smokeTimedOut = smokeRun.timedOut;
       smokeOutput = smokeRun.stdout.trim();
       smokeError = smokeRun.stderr.trim();
     }
@@ -232,6 +290,7 @@ export async function checkCodexReadiness(input?: {
       configPath,
       configExists,
       smokeOk,
+      smokeTimedOut,
       smokeOutput,
       smokeError
     };
@@ -245,6 +304,7 @@ export async function checkCodexReadiness(input?: {
       configPath,
       configExists,
       smokeOk: false,
+      smokeTimedOut: false,
       smokeError: missing ? codexCliMissingMessage() : formatSpawnError(error)
     };
   }

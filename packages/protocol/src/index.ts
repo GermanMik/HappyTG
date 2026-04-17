@@ -411,6 +411,7 @@ export interface RuntimeReadiness {
   configPath: string;
   configExists: boolean;
   smokeOk: boolean;
+  smokeTimedOut?: boolean;
   smokeOutput?: string;
   smokeError?: string;
 }

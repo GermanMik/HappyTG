@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage, runCodexExec } from "./index.js";
+import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage, runCodexExec, summarizeCodexSmokeStderr } from "./index.js";
 
 async function writeNodeEntrypoint(filePath: string, source: string): Promise<void> {
   await writeFile(filePath, `${source.trim()}\n`, "utf8");
@@ -46,6 +46,60 @@ async function createWindowsCodexShim(tempDir: string, version: string): Promise
         process.exit(0);
       }
       if (args[0] === "exec") {
+        console.log('{"type":"message","text":"OK"}');
+        process.exit(0);
+      }
+      console.error("unexpected invocation");
+      process.exit(1);
+    `
+  );
+
+  const shimPath = path.join(tempDir, "codex.cmd");
+  if (process.platform === "win32") {
+    await Promise.all([
+      writeFile(
+        path.join(tempDir, "node.cmd"),
+        `@echo off\r\n"${batchQuote(process.execPath)}" %*\r\n`,
+        "utf8"
+      ),
+      writeFile(
+        shimPath,
+        `@echo off\r\nsetlocal\r\nnode "%~dp0${scriptName}" %*\r\n`,
+        "utf8"
+      )
+    ]);
+    return { shimPath };
+  }
+
+  await writeExecutable(
+    shimPath,
+    `
+      #!/bin/sh
+      SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+      exec "${shellQuote(process.execPath)}" "$SCRIPT_DIR/${scriptName}" "$@"
+    `
+  );
+  return { shimPath };
+}
+
+async function createStrictWindowsCodexShim(tempDir: string, version: string, expectedPrompt: string): Promise<{ shimPath: string }> {
+  const scriptName = "codex-strict-shim.mjs";
+  const scriptPath = path.join(tempDir, scriptName);
+  await writeNodeEntrypoint(
+    scriptPath,
+    `
+      const args = process.argv.slice(2);
+      if (args[0] === "--version") {
+        console.log(${JSON.stringify(version)});
+        process.exit(0);
+      }
+      if (args[0] === "exec") {
+        const expected = ["exec", "--skip-git-repo-check", "--json", ${JSON.stringify(expectedPrompt)}];
+        const matches = args.length === expected.length && args.every((value, index) => value === expected[index]);
+        if (!matches) {
+          console.error(\`unexpected exec args: \${JSON.stringify(args)}\`);
+          process.exit(1);
+        }
         console.log('{"type":"message","text":"OK"}');
         process.exit(0);
       }
@@ -227,6 +281,73 @@ test("checkCodexReadiness keeps Windows shim resolution working when PATH/Path a
   }
 });
 
+test("checkCodexReadiness closes stdin so smoke runs do not hang waiting for EOF", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-stdin-"));
+  try {
+    const harness = await createCodexHarness(
+      tempDir,
+      "codex-stdin-harness.mjs",
+      `
+        import fs from "node:fs";
+        const args = process.argv.slice(2);
+        if (args[0] === "--version") {
+          console.log("codex test 1.0");
+          process.exit(0);
+        }
+        if (args[0] === "exec") {
+          fs.readFileSync(0, "utf8");
+          console.log('{"type":"message","text":"OK"}');
+          process.exit(0);
+        }
+        console.error("unexpected invocation");
+        process.exit(1);
+      `
+    );
+    const configPath = path.join(tempDir, "config.toml");
+    await writeFile(configPath, 'model = "gpt-5"\n', "utf8");
+
+    const readiness = await checkCodexReadiness({
+      binaryPath: harness.binaryPath,
+      binaryArgs: harness.binaryArgs,
+      configPath,
+      env: {
+        HAPPYTG_CODEX_EXEC_TIMEOUT_MS: "1000"
+      }
+    });
+
+    assert.equal(readiness.available, true);
+    assert.equal(readiness.smokeOk, true);
+    assert.equal(readiness.smokeTimedOut, false);
+    assert.match(readiness.smokeOutput ?? "", /"text":"OK"/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("checkCodexReadiness preserves spaced prompts when it runs through a Windows cmd wrapper", async () => {
+  const { tempRoot, tempDir } = await createTempDirWithSpace("happytg-runtime-win-prompt-");
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const prompt = "Print exactly OK and exit.";
+    const { shimPath } = await createStrictWindowsCodexShim(tempDir, "codex shim 0.118.0", prompt);
+    await writeFile(configPath, 'model = "gpt-5"\n', "utf8");
+
+    const readiness = await checkCodexReadiness({
+      binaryPath: shimPath,
+      configPath,
+      platform: "win32",
+      cwd: tempDir,
+      smokePrompt: prompt
+    });
+
+    assert.equal(readiness.available, true);
+    assert.equal(readiness.smokeOk, true);
+    assert.equal(readiness.binaryPath, shimPath);
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test("checkCodexReadiness treats a Windows shell command-not-found result as missing", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-missing-"));
   try {
@@ -279,20 +400,42 @@ test("checkCodexReadiness marks only true ENOENT failures as missing", async () 
 
 test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only", () => {
   const stderr = [
+    "2026-04-08T14:03:05Z  WARN codex_state::runtime: failed to remove legacy logs db file /Users/example/.codex/logs_2.sqlite: device or resource busy (os error 32)",
     "2026-04-08T14:03:06Z  WARN codex_state::runtime: failed to open state db at /Users/example/.codex/state_5.sqlite: migration 21 was previously applied but is missing in the resolved migrations",
-    "2026-04-08T14:03:06Z  WARN codex_core::state_db: failed to initialize state runtime at /Users/example/.codex: migration 21 was previously applied but is missing in the resolved migrations",
-    "2026-04-08T14:03:06Z  WARN codex_core::rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back",
+    "2026-04-08T14:03:06Z  WARN codex_rollout::state_db: failed to initialize state runtime at /Users/example/.codex: migration 21 was previously applied but is missing in the resolved migrations",
+    "2026-04-08T14:03:06Z  WARN codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back",
     "2026-04-08T14:03:06Z  WARN codex_core::shell_snapshot: Failed to delete shell snapshot at \"/tmp/example\": Os { code: 2, kind: NotFound, message: \"No such file or directory\" }",
+    "2026-04-08T14:03:06Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell",
+    "Reading additional input from stdin...",
     "2026-04-08T14:03:06Z ERROR codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit",
     "2026-04-08T14:03:07Z WARN custom warning"
   ].join("\n");
 
   const classified = classifyCodexSmokeStderr(stderr);
 
-  assert.equal(classified.ignoredLines.length, 5);
+  assert.equal(classified.ignoredLines.length, 8);
   assert.deepEqual(classified.actionableLines, [
     "2026-04-08T14:03:07Z WARN custom warning"
   ]);
+});
+
+test("summarizeCodexSmokeStderr extracts concise actionable root causes", () => {
+  assert.equal(
+    summarizeCodexSmokeStderr("error: unexpected argument 'exactly' found\n\nUsage: codex exec [OPTIONS] [PROMPT] [COMMAND]"),
+    "error: unexpected argument 'exactly' found"
+  );
+  assert.equal(
+    summarizeCodexSmokeStderr("2026-04-17T04:22:49.185023Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses"),
+    "Codex could not open the Responses websocket (403 Forbidden)."
+  );
+  assert.equal(
+    summarizeCodexSmokeStderr("2026-04-17T04:22:49.185023Z WARN codex_core::plugins::startup_sync: startup remote plugin sync failed\nProcess timed out after 120000ms."),
+    "Codex smoke command did not exit before the 120000ms timeout."
+  );
+  assert.equal(
+    summarizeCodexSmokeStderr("2026-04-17T04:22:49.185023Z WARN codex_core::plugins::startup_sync: startup remote plugin sync failed"),
+    "Codex could not sync plugins from chatgpt.com."
+  );
 });
 
 test("codexCliMissingMessage explains PATH diagnosis and reinstall fallback", () => {

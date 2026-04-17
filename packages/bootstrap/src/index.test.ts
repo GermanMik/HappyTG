@@ -74,6 +74,61 @@ async function createWindowsCodexShim(tempDir: string, version: string): Promise
   return shimPath;
 }
 
+async function createStrictWindowsCodexShim(tempDir: string, version: string, expectedPrompt: string): Promise<string> {
+  const scriptName = "codex-strict-shim.mjs";
+  const scriptPath = path.join(tempDir, scriptName);
+  await writeExecutable(
+    scriptPath,
+    `
+      #!/usr/bin/env node
+      const args = process.argv.slice(2);
+      if (args[0] === "--version") {
+        console.log(${JSON.stringify(version)});
+        process.exit(0);
+      }
+      if (args[0] === "exec") {
+        const expected = ["exec", "--skip-git-repo-check", "--json", ${JSON.stringify(expectedPrompt)}];
+        const matches = args.length === expected.length && args.every((value, index) => value === expected[index]);
+        if (!matches) {
+          console.error(\`unexpected exec args: \${JSON.stringify(args)}\`);
+          process.exit(1);
+        }
+        console.log('{"type":"message","text":"OK"}');
+        process.exit(0);
+      }
+      console.error("unexpected invocation");
+      process.exit(1);
+    `
+  );
+
+  const shimPath = path.join(tempDir, "codex.cmd");
+  if (process.platform === "win32") {
+    await Promise.all([
+      writeFile(
+        path.join(tempDir, "node.cmd"),
+        `@echo off\r\n"${batchQuote(process.execPath)}" %*\r\n`,
+        "utf8"
+      ),
+      writeFile(
+        shimPath,
+        `@echo off\r\nsetlocal\r\n"${batchQuote(process.execPath)}" "%~dp0${scriptName}" %*\r\n`,
+        "utf8"
+      )
+    ]);
+    return shimPath;
+  }
+
+  await writeExecutable(
+    shimPath,
+    `
+      #!/bin/sh
+      SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+      exec "${shellQuote(process.execPath)}" "$SCRIPT_DIR/${scriptName}" "$@"
+    `
+  );
+  return shimPath;
+}
+
 async function createWindowsNpmPrefixShim(tempDir: string, prefix: string): Promise<string> {
   const scriptName = "npm-prefix-shim.mjs";
   const scriptPath = path.join(tempDir, scriptName);
@@ -143,6 +198,63 @@ async function createRedisLikeServer(): Promise<{
   const address = server.address();
   if (!address || typeof address === "string") {
     throw new Error("Redis test server did not bind to a TCP port");
+  }
+  return {
+    server,
+    port: address.port
+  };
+}
+
+async function createPostgresLikeServer(): Promise<{
+  server: net.Server;
+  port: number;
+}> {
+  const server = net.createServer((socket) => {
+    socket.once("data", (chunk) => {
+      const isSslRequest = chunk.length >= 8
+        && chunk[4] === 0x04
+        && chunk[5] === 0xd2
+        && chunk[6] === 0x16
+        && chunk[7] === 0x2f;
+      socket.write(Buffer.from([isSslRequest ? 0x53 : 0x4e]));
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Postgres test server did not bind to a TCP port");
+  }
+  return {
+    server,
+    port: address.port
+  };
+}
+
+async function createMinioLikeService(title = "MinIO Console"): Promise<{
+  server: ReturnType<typeof createHttpServer>;
+  port: number;
+}> {
+  const server = createHttpServer((req, res) => {
+    if (req.url === "/minio/health/live") {
+      res.writeHead(200, {
+        "content-type": "text/plain",
+        server: "MinIO"
+      });
+      res.end("OK");
+      return;
+    }
+
+    res.writeHead(200, {
+      "content-type": "text/html",
+      server: "MinIO"
+    });
+    res.end(`<!doctype html><title>${title}</title>`);
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("MinIO-like test server did not bind to a TCP port");
   }
   return {
     server,
@@ -448,6 +560,53 @@ test("doctor recovers through a standard Windows APPDATA npm wrapper path when n
   }
 });
 
+test("doctor keeps Codex smoke green through a Windows wrapper when the prompt contains spaces", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-codex-smoke-"));
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const gitBinaryPath = path.join(tempDir, "git.cmd");
+    const npmPrefix = path.join(tempDir, "global-npm");
+    const npmBinDir = npmPrefix;
+    await mkdir(npmBinDir, { recursive: true });
+    const wrapperPath = await createStrictWindowsCodexShim(npmBinDir, "codex shim 0.120.0", "Print exactly OK and exit.");
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeFile(gitBinaryPath, "@echo off\r\n", "utf8"),
+      createWindowsNpmPrefixShim(tempDir, npmPrefix)
+    ]);
+
+    const report = await runBootstrapCommand("doctor", {
+      cwd: tempDir,
+      platform: "win32",
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir,
+        Path: "",
+        PATHEXT: "",
+        pathext: ".cmd;.exe"
+      }
+    });
+
+    assert.equal(report.status, "warn");
+    assert.ok(report.findings.some((item) => item.code === "CODEX_PATH_PENDING"));
+    assert.ok(!report.findings.some((item) => item.code === "CODEX_SMOKE_FAILED"));
+    assert.ok(!report.findings.some((item) => item.code === "CODEX_SMOKE_WARNINGS"));
+    assert.equal((report.reportJson.codex as { binaryPath: string }).binaryPath, wrapperPath);
+    assert.equal((report.reportJson.codex as { smokeOk: boolean }).smokeOk, true);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-codex-partial-install-"));
   try {
@@ -540,8 +699,8 @@ test("setup turns missing Telegram token into a short actionable first-run check
     assert.equal((report.reportJson.telegram as { configured: boolean }).configured, false);
     assert.match((report.reportJson.preflight as string[]).join("\n"), /Redis: running on 127\.0\.0\.1:/);
     assert.match(report.planPreview.join("\n"), /pnpm daemon:pair/);
-    assert.match(report.planPreview.join("\n"), /postgres minio/);
-    assert.match(report.planPreview.join("\n"), /skip Docker entirely|DATABASE_URL/);
+    assert.match(report.planPreview.join("\n"), /skip Docker shared infra entirely|postgres minio/);
+    assert.match(report.planPreview.join("\n"), /skip Docker shared infra entirely|skip Docker entirely|DATABASE_URL/);
     assert.match(report.planPreview.join("\n"), /Set `TELEGRAM_BOT_TOKEN`/);
   } finally {
     await closeServer(redis.server);
@@ -736,6 +895,105 @@ test("doctor reports an actionable mini app port conflict and distinguishes an a
     await Promise.all([
       closeServer(busyPort.server),
       closeServer(happyMiniApp.server)
+    ]);
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("setup treats compatible Redis, PostgreSQL, and MinIO listeners as supported reuse while flagging unrelated conflicts", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-port-reuse-"));
+  const busyMiniApp = await createGenericHttpService();
+  const redis = await createRedisLikeServer();
+  const postgres = await createPostgresLikeServer();
+  const minioApi = await createMinioLikeService("MinIO API");
+  const minioConsole = await createMinioLikeService("MinIO Console");
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const codexPath = path.join(tempDir, "codex.mjs");
+    const gitPath = path.join(tempDir, "git");
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeExecutable(
+        codexPath,
+        `
+          #!/usr/bin/env node
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex 0.115.0");
+            process.exit(0);
+          }
+          if (args[0] === "exec") {
+            console.log('{"type":"message","text":"OK"}');
+            process.exit(0);
+          }
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitPath)
+    ]);
+
+    const report = await runBootstrapCommand("setup", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: codexPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(busyMiniApp.port),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(redis.port),
+        HAPPYTG_POSTGRES_HOST_PORT: String(postgres.port),
+        HAPPYTG_MINIO_PORT: String(minioApi.port),
+        HAPPYTG_MINIO_CONSOLE_PORT: String(minioConsole.port),
+        REDIS_URL: `redis://127.0.0.1:${redis.port}`,
+        DATABASE_URL: `postgres://postgres:postgres@127.0.0.1:${postgres.port}/happytg`,
+        S3_ENDPOINT: `http://127.0.0.1:${minioApi.port}`,
+        PATH: tempDir
+      }
+    });
+
+    const ports = report.reportJson.ports as Array<{
+      id: string;
+      port: number;
+      state: string;
+      detail: string;
+      suggestedPort?: number;
+      listener?: { description: string };
+    }>;
+    const overrideExamples = (report.reportJson.onboarding as {
+      overrideExamples: Array<{ service: string; shellExample: string }>;
+    }).overrideExamples;
+    const minioApiPort = ports.find((item) => item.id === "minio-api");
+    const minioConsolePort = ports.find((item) => item.id === "minio-console");
+    assert.ok(report.findings.some((item) => item.code === "MINIAPP_PORT_BUSY"));
+    assert.ok(!report.findings.some((item) => item.code === "POSTGRES_PORT_BUSY"));
+    assert.ok(!report.findings.some((item) => item.code === "MINIO-API_PORT_BUSY"));
+    assert.ok(!report.findings.some((item) => item.code === "MINIO-CONSOLE_PORT_BUSY"));
+    assert.equal(ports.find((item) => item.id === "redis")?.state, "occupied_supported");
+    assert.equal(ports.find((item) => item.id === "postgres")?.state, "occupied_supported");
+    assert.equal(minioApiPort?.state, "occupied_supported");
+    assert.equal(minioConsolePort?.state, "occupied_supported");
+    assert.match(ports.find((item) => item.id === "miniapp")?.detail ?? "", /another process|HTTP listener/i);
+    assert.match((report.reportJson.preflight as string[]).join("\n"), /reuse:/i);
+    assert.ok(minioApiPort?.suggestedPort && minioApiPort.suggestedPort > minioConsole.port);
+    assert.ok(minioConsolePort?.suggestedPort && minioConsolePort.suggestedPort > minioConsole.port);
+    assert.notEqual(minioApiPort?.suggestedPort, minioApiPort?.port);
+    assert.notEqual(minioApiPort?.suggestedPort, minioConsolePort?.port);
+    assert.notEqual(minioConsolePort?.suggestedPort, minioApiPort?.port);
+    assert.notEqual(minioConsolePort?.suggestedPort, minioConsolePort?.port);
+    assert.notEqual(minioApiPort?.suggestedPort, minioConsolePort?.suggestedPort);
+    assert.match(overrideExamples.find((item) => item.service === "MinIO API host port")?.shellExample ?? "", new RegExp(`HAPPYTG_MINIO_PORT=\"${minioApiPort?.suggestedPort}\"`));
+    assert.match(overrideExamples.find((item) => item.service === "MinIO console host port")?.shellExample ?? "", new RegExp(`HAPPYTG_MINIO_CONSOLE_PORT=\"${minioConsolePort?.suggestedPort}\"`));
+  } finally {
+    await Promise.all([
+      closeServer(busyMiniApp.server),
+      closeServer(redis.server),
+      closeServer(postgres.server),
+      closeServer(minioApi.server),
+      closeServer(minioConsole.server)
     ]);
     await rm(tempDir, { recursive: true, force: true });
   }

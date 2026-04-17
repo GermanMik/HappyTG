@@ -1,0 +1,21 @@
+{
+  "id": "HTG-2026-04-17-installer-diagnostics-proof-loop",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-installer-diagnostics-proof-loop",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Installer diagnostics proof loop",
+  "acceptanceCriteria": [
+    "Telegram diagnostics no longer collapse actionable failures into an overly generic `fetch failed` message when a more precise safe classification is available.",
+    "Codex wrapper/PATH/smoke-check diagnostics do not report a contradictory repeated state when the npm wrapper is usable.",
+    "Port diagnostics distinguish supported reuse from real conflicts and remain actionable.",
+    "Planned-port analysis is proactive, component-aware, and included in concise final reporting.",
+    "Final summary is deduplicated, truthful, and severity-correct.",
+    "Regression coverage exists for root causes fixed by the code change.",
+    "Publish flow is completed only after a successful fresh verifier pass."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T08:20:45.0297719+03:00",
+  "updatedAt": "2026-04-17T08:20:45.0297719+03:00"
+}

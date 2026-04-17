@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-17-installer-diagnostics-proof-loop",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-2-2026-04-17"
+  },
+  "checks": [
+    {
+      "name": "telegram-diagnostics-classification",
+      "ok": true,
+      "detail": "Installer now distinguishes invalid-token, DNS/timeout/TLS/proxy/socket, HTTP, and non-JSON Telegram getMe failures instead of collapsing them into a generic fetch failed warning."
+    },
+    {
+      "name": "codex-wrapper-path-smoke-dedupe",
+      "ok": true,
+      "detail": "Windows wrapper resolution, prompt passing, stdin handling, and stderr summarization now keep smoke successful through codex.cmd while leaving only one truthful websocket 403 environment warning on this machine."
+    },
+    {
+      "name": "planned-port-reuse-and-alternatives",
+      "ok": true,
+      "detail": "Planned ports are analyzed proactively with listener attribution, supported-reuse classification for Redis/Postgres/MinIO, a real conflict on Mini App 3001, and non-colliding alternatives 3006/5433/9002/9003."
+    },
+    {
+      "name": "proof-bundle-synchronized",
+      "ok": true,
+      "detail": "Evidence, problems, task metadata, and verdict now match the final post-fix setup/doctor/verify artifacts and the fresh verifier result."
+    },
+    {
+      "name": "verification-commands",
+      "ok": true,
+      "detail": "Targeted shared/runtime-adapters/bootstrap tests, full lint/typecheck/test, real-machine setup/doctor/verify JSON runs, and task validate all passed after the final safe-port fix."
+    }
+  ],
+  "generatedAt": "2026-04-17T08:20:45.0297719+03:00"
+}

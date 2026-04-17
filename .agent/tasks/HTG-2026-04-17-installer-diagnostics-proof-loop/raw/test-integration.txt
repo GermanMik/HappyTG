@@ -1,0 +1,12 @@
+Integration-style evidence for this task is captured through real-machine bootstrap diagnostics rather than a separate dedicated integration test suite.
+
+Relevant artifacts:
+- `raw/setup-json.txt` and `raw/setup-json-final.txt`
+- `raw/doctor-json.txt` and `raw/doctor-json-final.txt`
+- `raw/verify-json.txt` and `raw/verify-json-final.txt`
+- `raw/test-bootstrap-after-verifier-fix.txt`
+
+Key outcome:
+- Baseline showed contradictory Codex smoke/PATH behavior, generic Telegram fetch wording, and generic port conflicts.
+- Final runs show `smokeOk=true`, proactive planned-port analysis, supported reuse for `6379/5432/9000/9001`, and one real local conflict on `3001`.
+- Final safe alternatives do not collide with other planned HappyTG ports: Mini App `3006`, Postgres `5433`, MinIO API `9002`, MinIO console `9003`.
