@@ -1,0 +1,65 @@
+{
+  "taskId": "HTG-2026-04-17-release-038-installer-diagnostics",
+  "phase": "fresh verify passed",
+  "criteria": [
+    {
+      "criterion": "Workspace package versions are aligned at 0.3.8.",
+      "artifacts": [
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/shared/package.json",
+        "raw/release-check.txt"
+      ]
+    },
+    {
+      "criterion": "CHANGELOG.md and docs/releases/0.3.8.md describe the installer diagnostics release accurately.",
+      "artifacts": [
+        "CHANGELOG.md",
+        "docs/releases/0.3.8.md",
+        "../HTG-2026-04-17-installer-diagnostics-proof-loop/evidence.md"
+      ]
+    },
+    {
+      "criterion": "Release validation and repo checks pass before publish.",
+      "artifacts": [
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt",
+        "raw/release-check.txt"
+      ]
+    },
+    {
+      "criterion": "GitHub release/tag v0.3.8 is created from the published main state using the checked-in release notes.",
+      "artifacts": [
+        "pending"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/release-check.txt",
+    "raw/build.txt",
+    "CHANGELOG.md",
+    "docs/releases/0.3.8.md"
+  ],
+  "verifier": {
+    "role": "task-verifier",
+    "agentId": "019d9a47-535c-7dd1-bdc7-5273c4e338e3",
+    "runId": "verify-1-2026-04-17",
+    "status": "passed_after_bundle_sync"
+  },
+  "generatedAt": "2026-04-17T10:25:00.000Z"
+}
