@@ -1,0 +1,221 @@
+
+> happytg@0.3.9 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "install" "--json"
+
+{
+  "kind": "install",
+  "status": "fail",
+  "outcome": "recoverable-failure",
+  "interactive": false,
+  "tuiHandled": false,
+  "repo": {
+    "mode": "current",
+    "path": "C:\\Develop\\Projects\\HappyTG",
+    "sync": "reused",
+    "dirtyStrategy": "cancel",
+    "source": "primary",
+    "repoUrl": "https://github.com/GermanMik/HappyTG.git",
+    "attempts": 0,
+    "fallbackUsed": false
+  },
+  "environment": {
+    "platform": {
+      "platform": "win32",
+      "arch": "x64",
+      "shell": "C:\\WINDOWS\\system32\\cmd.exe",
+      "linuxFamily": "unknown",
+      "systemPackageManager": "choco",
+      "repoPackageManager": "pnpm",
+      "isInteractiveTerminal": false
+    },
+    "dependencies": [
+      {
+        "id": "git",
+        "label": "Git",
+        "available": true,
+        "required": true,
+        "version": "git version 2.52.0.windows.1",
+        "binaryPath": "C:\\Program Files\\Git\\cmd\\git.exe",
+        "command": "choco install git -y"
+      },
+      {
+        "id": "nodejs",
+        "label": "Node.js 22+",
+        "available": true,
+        "required": true,
+        "version": "v24.13.0",
+        "binaryPath": "C:\\Program Files\\nodejs\\node.exe",
+        "command": "choco install nodejs-lts -y"
+      },
+      {
+        "id": "pnpm",
+        "label": "pnpm",
+        "available": true,
+        "required": true,
+        "version": "10.0.0",
+        "binaryPath": "C:\\Users\\tikta\\AppData\\Local\\pnpm\\.tools\\pnpm\\10.0.0\\bin\\pnpm.cmd",
+        "manualInstruction": "Install pnpm with npm or enable it through corepack, then rerun the installer."
+      },
+      {
+        "id": "codex-cli",
+        "label": "Codex CLI",
+        "available": true,
+        "required": true,
+        "version": "codex-cli 0.118.0",
+        "binaryPath": "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd",
+        "manualInstruction": "Install the Codex CLI globally with npm after Node.js is ready, then rerun the installer."
+      },
+      {
+        "id": "docker",
+        "label": "Docker Desktop",
+        "available": true,
+        "required": false,
+        "version": "Docker version 29.3.1, build c2be9cc",
+        "binaryPath": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+        "reason": "Optional for the packaged/local infra path.",
+        "command": "choco install docker-desktop -y"
+      }
+    ]
+  },
+  "telegram": {
+    "configured": true,
+    "allowedUserIds": [
+      "133424747"
+    ],
+    "homeChannel": "@gerta_workbot",
+    "lookup": {
+      "attempted": false,
+      "step": "getMe",
+      "status": "not-attempted",
+      "message": "Telegram bot identity lookup did not run.",
+      "recoverable": true,
+      "affectsConfiguration": false
+    }
+  },
+  "background": {
+    "mode": "scheduled-task",
+    "status": "failed",
+    "detail": "Installer stopped before background configuration completed."
+  },
+  "postChecks": [],
+  "steps": [
+    {
+      "id": "repo-sync",
+      "label": "Sync repository",
+      "status": "failed",
+      "detail": "Checkout at C:/Develop/Projects/HappyTG has local changes. Choose stash or keep."
+    },
+    {
+      "id": "dep-git",
+      "label": "Git",
+      "status": "pending",
+      "detail": "Already available."
+    },
+    {
+      "id": "dep-nodejs",
+      "label": "Node.js 22+",
+      "status": "pending",
+      "detail": "Already available."
+    },
+    {
+      "id": "dep-pnpm",
+      "label": "pnpm",
+      "status": "pending",
+      "detail": "Already available."
+    },
+    {
+      "id": "dep-codex-cli",
+      "label": "Codex CLI",
+      "status": "pending",
+      "detail": "Already available."
+    },
+    {
+      "id": "dep-docker",
+      "label": "Docker Desktop",
+      "status": "pending",
+      "detail": "Already available."
+    },
+    {
+      "id": "pnpm-install",
+      "label": "Install workspace dependencies",
+      "status": "pending",
+      "detail": "Run `pnpm install` in the selected checkout."
+    },
+    {
+      "id": "env-merge",
+      "label": "Merge environment",
+      "status": "pending",
+      "detail": "Create or merge `.env` without overwriting existing values."
+    },
+    {
+      "id": "telegram-bot",
+      "label": "Connect Telegram bot",
+      "status": "pending",
+      "detail": "Validate the token and capture bot identity for later /pair guidance."
+    },
+    {
+      "id": "background",
+      "label": "Configure background run mode",
+      "status": "pending",
+      "detail": "Create a logon task that starts the host daemon."
+    },
+    {
+      "id": "check-setup",
+      "label": "Run setup",
+      "status": "pending",
+      "detail": "Execute HappyTG setup in the selected checkout."
+    },
+    {
+      "id": "check-doctor",
+      "label": "Run doctor",
+      "status": "pending",
+      "detail": "Execute HappyTG doctor in the selected checkout."
+    },
+    {
+      "id": "check-verify",
+      "label": "Run verify",
+      "status": "pending",
+      "detail": "Execute HappyTG verify in the selected checkout."
+    }
+  ],
+  "nextSteps": [],
+  "warnings": [],
+  "error": {
+    "code": "command_execution_failure",
+    "message": "Checkout at C:/Develop/Projects/HappyTG has local changes. Choose stash or keep.",
+    "lastError": "Checkout at C:/Develop/Projects/HappyTG has local changes. Choose stash or keep.",
+    "retryable": false,
+    "suggestedAction": "Rerun the installer and choose to stash local changes or keep the current checkout as-is.",
+    "repoUrl": "https://github.com/GermanMik/HappyTG.git",
+    "repoSource": "primary",
+    "fallbackUsed": false
+  },
+  "reportJson": {
+    "branch": "main",
+    "error": {
+      "code": "command_execution_failure",
+      "message": "Checkout at C:/Develop/Projects/HappyTG has local changes. Choose stash or keep.",
+      "lastError": "Checkout at C:/Develop/Projects/HappyTG has local changes. Choose stash or keep.",
+      "retryable": false,
+      "suggestedAction": "Rerun the installer and choose to stash local changes or keep the current checkout as-is.",
+      "repoUrl": "https://github.com/GermanMik/HappyTG.git",
+      "repoSource": "primary",
+      "fallbackUsed": false
+    },
+    "fallbackSource": "https://gitclone.com/github.com/GermanMik/HappyTG.git",
+    "fallbackUsed": false,
+    "outcome": "recoverable-failure",
+    "platform": {
+      "platform": "win32",
+      "arch": "x64",
+      "shell": "C:\\WINDOWS\\system32\\cmd.exe",
+      "linuxFamily": "unknown",
+      "systemPackageManager": "choco",
+      "repoPackageManager": "pnpm",
+      "isInteractiveTerminal": false
+    },
+    "repoSource": "primary",
+    "repoUrl": "https://github.com/GermanMik/HappyTG.git"
+  }
+}
+ ELIFECYCLE  Command failed with exit code 1.

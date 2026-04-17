@@ -1,0 +1,14 @@
+# Telegram transport probe (fresh verifier state)
+Timestamp: 2026-04-17T12:47:29.4560723+03:00
+
+## Proxy context
+HTTP_PROXY=unset
+HTTPS_PROXY=unset
+ALL_PROXY=unset
+NO_PROXY=unset
+
+## Node fetch getMe
+{"name":"TypeError","message":"fetch failed","causeCode":"UND_ERR_CONNECT_TIMEOUT","causeMessage":"Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"}
+
+## PowerShell Bot API getMe
+{"message":"Response status code does not indicate success: 401 (Unauthorized).","statusCode":401,"kind":"http_error"}

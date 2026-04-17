@@ -1,6 +1,6 @@
 {
   "name": "happytg",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "private": true,
   "packageManager": "pnpm@10.0.0",
   "scripts": {
@@ -30,3 +30,4 @@
     "typescript": "^5.7.0"
   }
 }
+

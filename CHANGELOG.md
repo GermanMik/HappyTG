@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.10
+
+### Fixed
+
+- Telegram installer `getMe` warnings now call out the Node/undici HTTPS path explicitly, point to concrete proxy env vars (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), and mention IPv4/IPv6 routing differences instead of vaguely attributing the issue to "Node or curl" without evidence.
+- Installer final next steps now drop contradictory `pnpm dev` guidance when post-checks already detected a running HappyTG stack, and they collapse overlapping shared-infra / Redis / running-stack advice into a single truthful path.
+- The interactive installer no longer re-renders the exact same final screen on `ENTER`, removing duplicate `Final Summary` captures in transcript/log output while preserving the final confirmation flow.
+
+### Changed
+
+- Release metadata is aligned at `0.3.10` across the workspace for the diagnostics wording and installer-summary follow-up release.
+
 ## v0.3.9
 
 ### Fixed

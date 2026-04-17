@@ -1583,6 +1583,121 @@ test("runHappyTGInstall semantically dedupes repeated setup next steps and compr
   }
 });
 
+test("runHappyTGInstall removes contradictory start commands when setup already says to reuse the running stack", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-running-stack-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "scheduled-task",
+      postChecks: ["setup"]
+    }, {
+      runBootstrapCheck: async (command) => ({
+        id: `btr_${command}`,
+        hostFingerprint: "fp",
+        command,
+        status: "warn",
+        profileRecommendation: "recommended",
+        findings: [
+          {
+            code: "SERVICES_ALREADY_RUNNING",
+            severity: "info",
+            message: "HappyTG services already appear to be running on 4000. Reuse the running stack or stop it before starting another copy."
+          }
+        ],
+        planPreview: [
+          "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.",
+          "Start repo services: `pnpm dev`.",
+          "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.",
+          "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+          "Send `/pair <CODE>` to Telegram, then start the daemon with `pnpm dev:daemon`.",
+          "Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port.",
+          "Do not run the full compose app stack and `pnpm dev` at the same time.",
+          "If you keep mini app on a different port, use `$env:HAPPYTG_MINIAPP_PORT=\"3006\"; pnpm dev:miniapp`."
+        ],
+        reportJson: {},
+        createdAt: "2026-04-17T00:00:00.000Z"
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        writeInstallDraft: async ({ draft }) => ({
+          ...draft,
+          version: 1,
+          updatedAt: draft.updatedAt ?? "2026-04-17T00:00:00.000Z"
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    assert.equal(result.nextSteps.includes("pnpm dev"), false);
+    assert.equal(result.nextSteps.filter((step) => step === "pnpm daemon:pair").length, 1);
+    assert.equal(result.nextSteps.filter((step) => step.includes("Redis, PostgreSQL, and S3-compatible storage already look reachable locally.")).length, 1);
+    assert.equal(result.nextSteps.some((step) => step === "Redis is already running. Use it and skip compose `redis` unless you deliberately remap the host port."), false);
+    assert.equal(result.nextSteps.filter((step) => step === "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.").length, 1);
+    assert.equal(result.nextSteps.some((step) => step === "Do not run the full compose app stack and `pnpm dev` at the same time."), false);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning level with real bootstrap checks", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-appdata-wrapper-"));
   const repoPath = path.join(tempDir, "HappyTG");

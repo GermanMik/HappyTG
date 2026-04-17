@@ -32,6 +32,8 @@ interface FetchTelegramBotIdentityOptions {
   probeNetworkIssue?: (token: string) => Promise<TelegramTransportProbeResult | undefined>;
 }
 
+const NODE_TRANSPORT_ADVICE = "Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine.";
+
 export function normalizeTelegramAllowedUserIds(values: string[]): string[] {
   return values
     .flatMap((value) => value.split(/[,\r\n]+/u))
@@ -298,7 +300,7 @@ function networkFollowUpMessage(baseMessage: string, probeResult?: TelegramTrans
       const usernameLabel = probeResult.username ? ` @${probeResult.username}` : "";
       return {
         failureKind: "network_error",
-        message: `${baseMessage} A Windows PowerShell Bot API probe with the same token validated${usernameLabel} on this host, so this looks specific to Node HTTPS transport rather than a bad token or a general Telegram outage. Telegram Desktop may still work because it uses MTProto instead of Bot API HTTPS. Check IPv4 routing, firewall or AV TLS interception, and proxy rules affecting Node or curl.`,
+        message: `${baseMessage} A Windows PowerShell Bot API probe with the same token validated${usernameLabel} on this host, so this looks specific to Node HTTPS/undici transport rather than a bad token or a general Telegram outage. Telegram Desktop may still work because it uses MTProto instead of Bot API HTTPS. ${NODE_TRANSPORT_ADVICE}`,
         recoverable: true,
         username: probeResult.username,
         firstName: probeResult.firstName,
@@ -322,7 +324,7 @@ function networkFollowUpMessage(baseMessage: string, probeResult?: TelegramTrans
     case "network_error":
       return {
         failureKind: "network_error",
-        message: `${baseMessage} A Windows PowerShell Bot API probe also failed: ${probeResult.message ?? "network error"}. Telegram Desktop may still work because it uses MTProto instead of Bot API HTTPS, but Bot API HTTPS appears blocked or timing out from this machine.`,
+        message: `${baseMessage} A Windows PowerShell Bot API probe also failed: ${probeResult.message ?? "network error"}. Telegram Desktop may still work because it uses MTProto instead of Bot API HTTPS, but Bot API HTTPS appears blocked or timing out from this machine. ${NODE_TRANSPORT_ADVICE}`,
         recoverable: true
       };
     case "unexpected_response":

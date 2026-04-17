@@ -225,6 +225,28 @@ test("waitForEnter resolves when ENTER close is pressed on the final screen", as
   assert.equal(rawMode, false);
 });
 
+test("waitForEnter does not render the same final screen twice when ENTER closes it", async () => {
+  const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
+  const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
+  stdin.isTTY = true;
+  stdout.isTTY = true;
+  stdin.setRawMode = (() => stdin) as typeof stdin.setRawMode;
+
+  let rendered = "";
+  stdout.on("data", (chunk) => {
+    rendered += chunk.toString();
+  });
+
+  const screen = "Final Summary\nENTER close\n";
+  const wait = waitForEnter(stdin, stdout, screen);
+  queueMicrotask(() => {
+    stdin.emit("keypress", "\r", { name: "return" });
+  });
+
+  await wait;
+  assert.equal(rendered.split("Final Summary").length - 1, 1);
+});
+
 test("promptTelegramForm accepts pasted token and allowed user IDs with trailing CRLF in the interactive keypress path", async () => {
   const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
   const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
@@ -350,8 +372,12 @@ test("fetchTelegramBotIdentity explains Windows transport-specific Telegram time
   assert.equal(network.username, "happytg_bot");
   assert.equal(network.transportProbeValidated, true);
   assert.match(network.error ?? "", /Windows PowerShell Bot API probe with the same token validated @happytg_bot/i);
-  assert.match(network.error ?? "", /Node HTTPS transport/i);
+  assert.match(network.error ?? "", /Node HTTPS\/undici transport/i);
   assert.match(network.error ?? "", /MTProto instead of Bot API HTTPS/i);
+  assert.match(network.error ?? "", /HTTPS_PROXY/i);
+  assert.match(network.error ?? "", /NO_PROXY/i);
+  assert.match(network.error ?? "", /IPv4\/IPv6 routing/i);
+  assert.doesNotMatch(network.error ?? "", /Node or curl/i);
 });
 
 test("fetchTelegramBotIdentity promotes invalid tokens when a Windows follow-up probe reaches Telegram", async () => {

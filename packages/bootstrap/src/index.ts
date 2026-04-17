@@ -1256,6 +1256,7 @@ function buildSetupPlan(
   const postgresReady = portResults.some((item) => item.id === "postgres" && item.state === "occupied_supported");
   const minioReady = portResults.some((item) => item.id === "minio-api" && item.state === "occupied_supported");
   const sharedInfraReady = redis.state === "running" && postgresReady && minioReady;
+  const occupiedHappyTGPorts = portResults.filter((item) => item.state === "occupied_expected" && ["miniapp", "api", "bot", "worker"].includes(item.id));
 
   if (!envFilePath) {
     steps.push(`Create \`.env\`: \`${commands.copyEnv}\`.`);
@@ -1289,7 +1290,9 @@ function buildSetupPlan(
 
   const infraCommand = defaultInfraComposeCommand(redis, platform);
   if (sharedInfraReady) {
-    steps.push("Start repo services: `pnpm dev`.");
+    if (occupiedHappyTGPorts.length === 0) {
+      steps.push("Start repo services: `pnpm dev`.");
+    }
   } else if (redis.state === "running") {
     steps.push(`If PostgreSQL and S3-compatible storage are not already available, start the remaining shared infra: \`${infraCommand}\`.`);
   } else if (redis.state === "port_conflict") {
@@ -1301,7 +1304,6 @@ function buildSetupPlan(
     steps.push(`If you are not reusing existing PostgreSQL / Redis / S3-compatible services, start shared infra: \`${infraCommand}\`.`);
   }
 
-  const occupiedHappyTGPorts = portResults.filter((item) => item.state === "occupied_expected" && ["miniapp", "api", "bot", "worker"].includes(item.id));
   if (occupiedHappyTGPorts.length > 0) {
     steps.push("Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.");
   } else if (!sharedInfraReady) {

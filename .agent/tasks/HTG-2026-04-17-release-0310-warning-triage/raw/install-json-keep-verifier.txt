@@ -1,0 +1,4 @@
+
+> happytg@0.3.10 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "install" "--json" "--repo-mode" "current" "--dirty-worktree" "keep"
+

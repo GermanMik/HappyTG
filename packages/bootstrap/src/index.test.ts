@@ -891,6 +891,8 @@ test("doctor reports an actionable mini app port conflict and distinguishes an a
     );
     assert.ok(setupReport.findings.some((item) => item.code === "SERVICES_ALREADY_RUNNING"));
     assert.match(setupReport.planPreview.join("\n"), /Reuse the current stack/);
+    assert.equal(setupReport.planPreview.some((item) => item === "Start repo services: `pnpm dev`."), false);
+    assert.equal(((setupReport.reportJson.onboarding as { steps: string[] }).steps).some((item) => item === "Start repo services: `pnpm dev`."), false);
   } finally {
     await Promise.all([
       closeServer(busyPort.server),
