@@ -1,0 +1,12 @@
+COMMAND=powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install/install.ps1 --json --non-interactive --repo-mode current --repo-dir . --background skip --post-check setup
+NODE_OPTIONS=--require C:\Users\tikta\.happytg\bootstrap-repo\missing-preload.cjs
+Fail : HappyTG installer bootstrap failed: Node.js is installed, but NODE_OPTIONS requires a missing preload inside HAP
+PYTG_BOOTSTRAP_DIR: C:\Users\tikta\.happytg\bootstrap-repo\missing-preload.cjs. Repair the bootstrap checkout or clear 
+NODE_OPTIONS, then rerun the installer.
+At C:\Develop\Projects\HappyTG\scripts\install\install.ps1:186 char:5
++     Fail (Describe-NodeFailure $nodeProbe)
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Fail
+ 
+EXIT_CODE=1

@@ -1,0 +1,63 @@
+{
+  "taskId": "HTG-2026-04-17-release-0311-publish",
+  "phase": "evidence collected",
+  "criteria": [
+    {
+      "criterion": "Workspace versions, changelog, and docs/releases/0.3.11.md are aligned at 0.3.11.",
+      "artifacts": [
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/shared/package.json",
+        "CHANGELOG.md",
+        "docs/releases/0.3.11.md",
+        "raw/release-check.txt"
+      ]
+    },
+    {
+      "criterion": "Release validation and repo checks pass for 0.3.11.",
+      "artifacts": [
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/release-check.txt"
+      ]
+    },
+    {
+      "criterion": "GitHub PR, merge, tag, and release for v0.3.11 are completed from the verified diff.",
+      "artifacts": [
+        "pending"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/release-check.txt",
+    "../HTG-2026-04-17-release-0311-bootstrap-install-regressions/evidence.md"
+  ],
+  "verifier": {
+    "role": "task-verifier",
+    "agentId": "019d9b64-db3c-7522-9d49-ceae3c036805",
+    "runId": "verify-1-2026-04-17",
+    "status": "passed_pre_publish"
+  },
+  "generatedAt": "2026-04-17T12:40:00.000Z"
+}

@@ -10,7 +10,7 @@ import { mergeEnvTemplate, writeMergedEnvFile } from "./install/env.js";
 import { detectLinuxFamily } from "./install/platform.js";
 import { defaultDirtyWorktreeStrategy, detectRepoModeChoices, inspectRepo } from "./install/repo.js";
 import { fetchTelegramBotIdentity } from "./install/telegram.js";
-import { promptTelegramForm, renderRepoModeScreen, renderTelegramScreen, renderWelcomeScreen, waitForEnter } from "./install/tui.js";
+import { promptTelegramForm, renderProgressScreen, renderRepoModeScreen, renderTelegramScreen, renderWelcomeScreen, waitForEnter } from "./install/tui.js";
 
 async function git(args: string[], cwd: string): Promise<void> {
   const result = await runCommand({
@@ -188,6 +188,24 @@ test("retro installer renderers include active cursor and keyboard hints", () =>
   assert.match(repoMode, /Repo Mode/);
   assert.match(repoMode, /›/);
   assert.match(repoMode, /ESC cancel/);
+});
+
+test("progress screen uses a readable ASCII running indicator instead of a unicode ellipsis", () => {
+  const screen = renderProgressScreen({
+    title: "Preparing install.",
+    steps: [
+      {
+        id: "repo-sync",
+        label: "Sync repository",
+        status: "running",
+        detail: "Running now."
+      }
+    ]
+  });
+  const visible = screen.replace(/\u001b\[[0-9;]*m/gu, "");
+
+  assert.match(visible, /> Sync repository/);
+  assert.doesNotMatch(visible, /… Sync repository/);
 });
 
 test("Telegram screen renders a masked preview instead of the raw bot token", () => {

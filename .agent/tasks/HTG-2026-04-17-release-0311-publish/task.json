@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-04-17-release-0311-publish",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-release-0311-publish",
+  "phase": "finish/publish",
+  "mode": "proof",
+  "title": "Release 0.3.11 bootstrap/install regressions",
+  "acceptanceCriteria": [
+    "Workspace versions, changelog, and docs/releases/0.3.11.md are aligned at 0.3.11.",
+    "Release validation and repo checks pass for 0.3.11.",
+    "GitHub PR, merge, tag, and release for v0.3.11 are completed from the verified diff."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T12:18:50.540Z",
+  "updatedAt": "2026-04-17T12:40:00.000Z"
+}

@@ -1,0 +1,18 @@
+HappyTG install [WARN]
+Result: install flow is complete with warnings.
+Repo: reused C:\Develop\Projects\HappyTG
+Source: local https://github.com/GermanMik/HappyTG.git
+Background: Start the daemon manually with `pnpm dev:daemon` after pairing.
+Telegram: @Gerta_homebot
+Warnings: 3
+
+Warnings:
+- Telegram getMe warning: Telegram API getMe could not confirm the bot identity: fetch failed. Existing bot username @Gerta_homebot was kept.
+- Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details.
+- Mini App port 3001 is already in use by contacts-frontend. Reuse the running service or stop that container before launching HappyTG.
+
+Next steps:
+- Reuse the running service on port 3001 or stop contacts-frontend before starting the Mini App.
+- Run `pnpm happytg doctor --json` if you need the full Codex stderr trace.
+- pnpm dev
+- pnpm daemon:pair

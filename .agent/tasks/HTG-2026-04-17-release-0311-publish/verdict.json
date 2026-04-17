@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-17-release-0311-publish",
+  "status": "publish_ready",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-1-2026-04-17"
+  },
+  "checks": [
+    {
+      "name": "release-metadata-alignment",
+      "ok": true,
+      "detail": "Workspace package versions, CHANGELOG.md, and docs/releases/0.3.11.md are aligned at 0.3.11 and release:check passed."
+    },
+    {
+      "name": "release-branch-verification",
+      "ok": true,
+      "detail": "pnpm build, pnpm lint, pnpm typecheck, and pnpm test all passed on the release branch."
+    },
+    {
+      "name": "product-fix-source-bundle",
+      "ok": true,
+      "detail": "The release scope is anchored to the completed proof bundle HTG-2026-04-17-release-0311-bootstrap-install-regressions."
+    },
+    {
+      "name": "publish-artifacts",
+      "ok": false,
+      "detail": "Commit, push, PR, merge, tag, and GitHub Release are still pending."
+    }
+  ],
+  "generatedAt": "2026-04-17T12:40:00.000Z"
+}

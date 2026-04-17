@@ -1,0 +1,19 @@
+TUI render notes for release 0.3.11 bootstrap/install regressions
+
+1. Root cause
+- packages/bootstrap/src/install/tui.ts previously rendered the running step icon as Unicode ellipsis `…` and pending as middle dot `·`.
+- The user-visible purple `E` is consistent with terminal/font/codepage degradation of the running ellipsis glyph, not with a status-enum mismatch: the running branch was still selected, but the glyph was unstable on Windows terminals.
+
+2. Fix
+- Running icon changed from `…` to ASCII `>`.
+- Pending icon changed from `·` to ASCII `.`.
+- Step labels now inherit the same state color as the icon for passed/warn/failed/running rows, restoring readable row highlighting.
+
+3. Evidence
+- Source diff: packages/bootstrap/src/install/tui.ts
+- Regression test: packages/bootstrap/src/install.test.ts (`progress screen uses a readable ASCII running indicator instead of a unicode ellipsis`)
+- Render artifact: raw/install-interactive-transcript.txt now shows `>` for the active/running step, `!` for warning, `✓` for passed, and `.` for pending.
+
+4. Non-interactive/plain-text path
+- The plain-text/final-summary path is separate (`packages/bootstrap/src/cli.ts` renderText) and was not altered by the TUI glyph fix.
+- This task intentionally keeps the TUI change local to the interactive progress renderer and does not widen it into unrelated output refactors.

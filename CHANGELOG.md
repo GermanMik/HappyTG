@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.3.11
+
+### Fixed
+
+- Windows bootstrap no longer misreports a broken external `NODE_OPTIONS=--require ...` preload path as `Node.js 22+ is still not available on PATH` when Node is actually installed.
+- PowerShell and shell bootstrap wrappers now distinguish stale external preload contamination from missing preloads inside `HAPPYTG_BOOTSTRAP_DIR` or the selected workspace, keeping external poison recoverable while preserving truthful hard failures for HappyTG-managed paths.
+- Interactive install progress now uses ASCII-safe running and pending indicators again, restoring readable active-step rendering on Windows terminals instead of degrading into an unstable purple glyph.
+
+### Changed
+
+- Installer warning classification and final-summary guidance stay truthful for real environment warnings such as Telegram transport-specific lookup failures, Codex websocket `403` fallback, and Mini App port `3001` conflicts.
+- Release metadata is aligned at `0.3.11` across the workspace for the bootstrap/install regression follow-up release.
+
 ## v0.3.10
 
 ### Fixed

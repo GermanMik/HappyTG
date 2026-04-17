@@ -1,0 +1,5 @@
+CURRENT_NODE_OPTIONS=<unset>
+TEST_MISSING_PRELOAD=C:\Develop\__missing_happytg_preload__.cjs
+USER_EXAMPLE_PRELOAD=C:\Develop\undici-timeout-preload.cjs
+USER_EXAMPLE_EXISTS=True
+NOTE=The reported user example path exists on this builder machine, so poisoned bootstrap reproductions use TEST_MISSING_PRELOAD instead of USER_EXAMPLE_PRELOAD.

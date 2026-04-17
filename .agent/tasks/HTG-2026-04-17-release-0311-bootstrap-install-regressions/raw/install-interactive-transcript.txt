@@ -1,0 +1,15 @@
+[1m[38;2;139;92;246mHappyTG Installer[0m
+[1m[38;2;230;241;255mInstallation Progress[0m
+[2mPreparing install.[0m
+
+[38;2;139;92;246m>[0m [1m[38;2;139;92;246mSync repository[0m
+   Running now.
+[38;2;251;191;36m![0m [1m[38;2;251;191;36mRun doctor[0m
+   Port 3001 is already in use.
+[38;2;45;212;191m✓[0m [1m[38;2;45;212;191mVerify install[0m
+   Checks completed.
+[2m.[0m [1m[38;2;230;241;255mCleanup[0m
+   Waiting for prior steps.
+
+[2m↑↓ navigate   SPACE toggle   ENTER confirm   ESC cancel   progress is automatic[0m
+

@@ -1,0 +1,82 @@
+COMMAND=pnpm build
+
+> happytg@0.3.11 build C:\Develop\Projects\HappyTG
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running build in 13 packages
+   • Remote caching disabled
+
+@happytg/approval-engine:build: cache miss, executing 509421f319fe5a6a
+@happytg/bootstrap:build: cache miss, executing 8da4e0c5f7c96872
+@happytg/worker:build: cache miss, executing b7fab91514215be4
+@happytg/repo-proof:build: cache miss, executing 941046314195a996
+@happytg/host-daemon:build: cache miss, executing 7d42b2cf6053b0b4
+@happytg/hooks:build: cache miss, executing d083c6dda664e358
+@happytg/api:build: cache miss, executing 48a5e91070099656
+@happytg/shared:build: cache miss, executing 718e4bdd7d636aa6
+@happytg/bot:build: cache miss, executing 7ff802651e5a1909
+@happytg/protocol:build: cache miss, executing 94457c1850fec1ca
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.3.11 build C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.3.11 build C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.3.11 build C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.3.11 build C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.3.11 build C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.3.11 build C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.3.11 build C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.3.11 build C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.3.11 build C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build: 
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.3.11 build C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/miniapp:build: cache miss, executing 1b186d40f879c3bc
+@happytg/policy-engine:build: cache miss, executing 10deb20176880397
+@happytg/runtime-adapters:build: cache miss, executing 0577b1c4c3dd0954
+@happytg/miniapp:build: 
+@happytg/miniapp:build: > @happytg/miniapp@0.3.11 build C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.3.11 build C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.11 build C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    6.436s 
+
+EXIT_CODE=0

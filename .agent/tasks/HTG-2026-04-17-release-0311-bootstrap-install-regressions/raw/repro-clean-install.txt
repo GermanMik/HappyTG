@@ -1,0 +1,18 @@
+COMMAND=powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Develop\Projects\HappyTG\scripts\install\install.ps1" --json --non-interactive --repo-mode clone --repo-dir "C:\Users\tikta\AppData\Local\Temp\d6c62019a700416299c2247a4824885e\HappyTG-install" --background skip --post-check setup
+WORKDIR=C:\Users\tikta\AppData\Local\Temp\d6c62019a700416299c2247a4824885e
+HAPPYTG_BOOTSTRAP_DIR=C:\Users\tikta\AppData\Local\Temp\d6c62019a700416299c2247a4824885e\bootstrap-repo
+HOME=C:\Users\tikta\AppData\Local\Temp\d6c62019a700416299c2247a4824885e
+NODE_OPTIONS=<unset>
+Cloning HappyTG bootstrap checkout into C:\Users\tikta\AppData\Local\Temp\d6c62019a700416299c2247a4824885e\bootstrap-repo...
+Cloning into 'C:\Users\tikta\AppData\Local\Temp\d6c62019a700416299c2247a4824885e\bootstrap-repo'...
+Handing off to the shared HappyTG installer...
+HappyTG install [FAIL]
+Result: install needs follow-up before it is fully ready.
+Repo: reused C:\Users\tikta\AppData\Local\Temp
+Source: local https://github.com/GermanMik/HappyTG.git
+Background: Installer stopped before background configuration completed.
+Telegram: missing
+Warnings: 0
+Error: Telegram bot token is required.
+Suggested action: Pass a valid --telegram-bot-token or rerun the installer interactively so the value can be captured and validated before execution.
+EXIT_CODE=0

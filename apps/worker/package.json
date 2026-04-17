@@ -1,6 +1,6 @@
 {
   "name": "@happytg/worker",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
@@ -13,4 +13,5 @@
     "test": "tsx --test src/*.test.ts"
   }
 }
+
 
