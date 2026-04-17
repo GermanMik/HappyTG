@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.14
+
+### Fixed
+
+- Installer finalization now keeps the detected problem separate from its remediation path, so install/setup/doctor output can render solution bullets instead of burying the fix inside one long sentence.
+- Plain-text and TUI install summaries now render structured warning/conflict/problem guidance consistently, including dedicated remediation bullets for port conflicts, Telegram/token blockers, and Codex PATH follow-up.
+- Bootstrap installer regression coverage now directly exercises the TUI warning-item `solutions` path, and the remaining installer runtime tests stay hermetic against maintainer-local daemon state.
+
+### Changed
+
+- Release metadata is aligned at `0.3.14` across the workspace for the structured installer remediation follow-up release.
+
 ## v0.3.13
 
 ### Fixed

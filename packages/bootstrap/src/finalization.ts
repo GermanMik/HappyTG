@@ -6,6 +6,7 @@ export interface AutomationItem {
   id: string;
   kind: AutomationItemKind;
   message: string;
+  solutions?: string[];
 }
 
 export interface GroupedAutomationItems {
@@ -53,7 +54,7 @@ export function legacyPlanPreviewFromAutomation(
   const kinds = new Set(includeKinds);
   return items
     .filter((item) => kinds.has(item.kind))
-    .map((item) => item.message);
+    .flatMap((item) => automationItemSteps(item));
 }
 
 export function legacyNextStepsFromAutomation(items: readonly AutomationItem[]): string[] {
@@ -61,11 +62,16 @@ export function legacyNextStepsFromAutomation(items: readonly AutomationItem[]):
 }
 
 function isAutomationItem(value: unknown): value is AutomationItem {
+  const solutions = (value as AutomationItem | undefined)?.solutions;
   return Boolean(value)
     && typeof value === "object"
     && typeof (value as AutomationItem).id === "string"
     && typeof (value as AutomationItem).kind === "string"
-    && typeof (value as AutomationItem).message === "string";
+    && typeof (value as AutomationItem).message === "string"
+    && (
+      solutions === undefined
+      || (Array.isArray(solutions) && solutions.every((solution) => typeof solution === "string"))
+    );
 }
 
 export function onboardingItemsFromReport(report: BootstrapReport): AutomationItem[] {
@@ -79,4 +85,28 @@ export function onboardingItemsFromReport(report: BootstrapReport): AutomationIt
 
 export function orderedAutomationKinds(): AutomationItemKind[] {
   return [...GROUP_ORDER];
+}
+
+export function automationItemSteps(item: AutomationItem): string[] {
+  const steps = [item.message.trim()];
+  for (const solution of item.solutions ?? []) {
+    const normalized = solution.trim();
+    if (normalized) {
+      steps.push(normalized);
+    }
+  }
+
+  return steps.filter(Boolean);
+}
+
+export function automationItemRenderLines(item: AutomationItem): string[] {
+  const lines = [`- ${item.message}`];
+  for (const solution of item.solutions ?? []) {
+    const normalized = solution.trim();
+    if (normalized) {
+      lines.push(`  - ${normalized}`);
+    }
+  }
+
+  return lines;
 }

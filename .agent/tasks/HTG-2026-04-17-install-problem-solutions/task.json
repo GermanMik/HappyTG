@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-17-install-problem-solutions",
+  "sessionId": "ses_install_problem_solutions",
+  "workspaceId": "ws_happytg",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-install-problem-solutions",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Install remediation bullet proof loop",
+  "acceptanceCriteria": [
+    "Install finalization can represent a problem statement and one or more separate remediation points.",
+    "Plain-text install output renders remediation points as distinct items rather than merging them into the same sentence as the problem.",
+    "TUI final screen renders the same remediation points distinctly.",
+    "Install JSON includes the remediation points in structured finalization items.",
+    "Existing warning/reuse/conflict/manual classification stays intact and regression tests pass."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T18:17:52.7319074+03:00",
+  "updatedAt": "2026-04-17T18:23:58.4663116+03:00"
+}

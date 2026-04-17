@@ -1228,14 +1228,32 @@ function buildTokenMessage(tokenStatus: ReturnType<typeof telegramTokenStatus>, 
   }
 }
 
-function buildPortConflictMessage(result: PortCheckResult, platform: NodeJS.Platform): string {
+function buildPortConflictItem(result: PortCheckResult, platform: NodeJS.Platform): AutomationItem {
+  const commands = platformCommands(platform);
+
   if (!result.overrideEnv || !result.command) {
-    return result.detail;
+    return {
+      id: `${result.id}-port-conflict`,
+      kind: "conflict",
+      message: result.detail
+    };
   }
 
   const suggestedPort = result.suggestedPort ?? (result.port + 1);
-  const commands = platformCommands(platform);
-  return `${result.detail} Reuse the running service if it is yours, or pick a new port with \`${commands.inlineEnvExample(result.overrideEnv, suggestedPort, result.command)}\`.`;
+  return {
+    id: `${result.id}-port-conflict`,
+    kind: "conflict",
+    message: result.detail,
+    solutions: [
+      "Reuse the running service if it is yours.",
+      `Pick a new port with \`${commands.inlineEnvExample(result.overrideEnv, suggestedPort, result.command)}\`.`
+    ]
+  };
+}
+
+function buildPortConflictMessage(result: PortCheckResult, platform: NodeJS.Platform): string {
+  const item = buildPortConflictItem(result, platform);
+  return [item.message, ...(item.solutions ?? [])].join(" ");
 }
 
 function buildOnboardingItems(input: {
@@ -1273,8 +1291,15 @@ function buildOnboardingItems(input: {
       id: "codex-path-pending",
       kind: "warning",
       message: binDir
-        ? `Add \`${binDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
-        : "Add the npm global bin directory to PATH, restart the shell, then verify `codex --version`."
+        ? `Codex CLI is usable, but \`${binDir}\` is not on PATH in the current shell yet.`
+        : "Codex CLI is usable, but the npm global bin directory is not on PATH in the current shell yet.",
+      solutions: [
+        binDir
+          ? `Add \`${binDir}\` to PATH.`
+          : "Add the npm global bin directory to PATH.",
+        "Restart the shell.",
+        "Verify `codex --version`."
+      ]
     });
   }
 
@@ -1285,14 +1310,26 @@ function buildOnboardingItems(input: {
         id: "codex-install",
         kind: "blocked",
         message: binDir
-          ? `Add \`${binDir}\` to PATH, restart the shell, then verify \`codex --version\`.`
-          : "Add the global npm bin directory to PATH, restart the shell, then verify `codex --version`."
+          ? "Codex CLI wrapper files were found, but this shell still cannot resolve them directly."
+          : "Codex CLI appears installed incompletely in this shell.",
+        solutions: [
+          binDir
+            ? `Add \`${binDir}\` to PATH.`
+            : "Add the global npm bin directory to PATH.",
+          "Restart the shell.",
+          "Verify `codex --version`."
+        ]
       });
     } else {
       pushAutomationItem(items, {
         id: "codex-install",
         kind: "blocked",
-        message: "Reinstall Codex CLI, update PATH, then verify `codex --version`."
+        message: "Codex CLI is not installed correctly in this shell yet.",
+        solutions: [
+          "Reinstall Codex CLI.",
+          "Update PATH if needed.",
+          "Verify `codex --version`."
+        ]
       });
     }
   }
@@ -1301,7 +1338,12 @@ function buildOnboardingItems(input: {
     pushAutomationItem(items, {
       id: "codex-runtime",
       kind: "blocked",
-      message: `Run \`codex --version\` in this shell, fix the local Codex install/runtime, then rerun \`pnpm happytg ${context.command}\`.`
+      message: "Codex CLI was found, but it is not healthy in the current shell.",
+      solutions: [
+        "Run `codex --version` in this shell.",
+        "Fix the local Codex install/runtime.",
+        `Rerun \`pnpm happytg ${context.command}\`.`
+      ]
     });
   }
 
@@ -1318,8 +1360,17 @@ function buildOnboardingItems(input: {
       id: "telegram-token",
       kind: "blocked",
       message: tokenState.status === "invalid"
-        ? "Fix `TELEGRAM_BOT_TOKEN` before pairing the host or starting the bot."
-        : "Set `TELEGRAM_BOT_TOKEN` in `.env` or the shell before pairing the host or starting the bot."
+        ? "Telegram bot token format looks invalid."
+        : "Telegram bot token is missing.",
+      solutions: tokenState.status === "invalid"
+        ? [
+          "Update `TELEGRAM_BOT_TOKEN` in `.env` or the shell.",
+          `Rerun \`pnpm happytg ${context.command}\` after the token is fixed.`
+        ]
+        : [
+          "Set `TELEGRAM_BOT_TOKEN` in `.env` or the shell.",
+          `Rerun \`pnpm happytg ${context.command}\` after the token is set.`
+        ]
     });
   }
 
@@ -1356,7 +1407,11 @@ function buildOnboardingItems(input: {
         pushAutomationItem(items, {
           id: "redis-port-conflict",
           kind: "conflict",
-          message: "Port `6379` is busy. Reuse an existing Redis instance via `REDIS_URL`, or set `HAPPYTG_REDIS_HOST_PORT` before starting compose `redis`."
+          message: "Port `6379` is busy.",
+          solutions: [
+            "Reuse an existing Redis instance via `REDIS_URL`.",
+            "Or set `HAPPYTG_REDIS_HOST_PORT` before starting compose `redis`."
+          ]
         });
         break;
       case "remote":
@@ -1419,23 +1474,27 @@ function buildOnboardingItems(input: {
     pushAutomationItem(items, {
       id: "start-repo-services",
       kind: "blocked",
-      message: "Resolve the occupied HappyTG application ports before starting another copy with `pnpm dev`."
+      message: "Some HappyTG application ports are occupied, so another `pnpm dev` stack cannot start yet.",
+      solutions: [
+        "Resolve the listed port conflicts below.",
+        "Or reuse the running stack instead of starting another copy."
+      ]
     });
   }
 
   for (const portResult of conflictingAppPorts) {
-    pushAutomationItem(items, {
-      id: `${portResult.id}-port-conflict`,
-      kind: "conflict",
-      message: buildPortConflictMessage(portResult, platform)
-    });
+    pushAutomationItem(items, buildPortConflictItem(portResult, platform));
   }
 
   if (tokenState.status !== "configured") {
     pushAutomationItem(items, {
       id: "request-pair-code",
       kind: "blocked",
-      message: "Fix the Telegram bot configuration before requesting a pairing code."
+      message: "Pairing is blocked because Telegram bot configuration is incomplete.",
+      solutions: [
+        "Fix the Telegram bot configuration first.",
+        `Rerun \`pnpm happytg ${context.command}\` after the bot token is valid.`
+      ]
     });
     return items;
   }
@@ -1444,7 +1503,11 @@ function buildOnboardingItems(input: {
     pushAutomationItem(items, {
       id: "request-pair-code",
       kind: "blocked",
-      message: "Request a pairing code after the HappyTG API is running."
+      message: "Pairing is blocked because the HappyTG API is not running yet.",
+      solutions: [
+        "Start or reuse the HappyTG API first.",
+        "Then request a pairing code with `pnpm daemon:pair`."
+      ]
     });
     return items;
   }

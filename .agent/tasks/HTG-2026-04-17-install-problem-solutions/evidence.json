@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-17-install-problem-solutions",
+  "status": "collected",
+  "classification": {
+    "signal": "installer finalization merges problem and remediation into one sentence",
+    "type": "product bug"
+  },
+  "fix": {
+    "type": "minimal production fix with regression coverage",
+    "productionCodeChanged": true,
+    "files": [
+      "packages/bootstrap/src/finalization.ts",
+      "packages/bootstrap/src/cli.ts",
+      "packages/bootstrap/src/install/tui.ts",
+      "packages/bootstrap/src/index.ts",
+      "packages/bootstrap/src/install/index.ts",
+      "packages/bootstrap/src/cli.test.ts",
+      "packages/bootstrap/src/install.runtime.test.ts",
+      "packages/bootstrap/src/install.test.ts",
+      "packages/bootstrap/src/index.test.ts"
+    ]
+  },
+  "postFixVerification": {
+    "bootstrapTypecheck": "pass",
+    "bootstrapTest": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "test": "pass",
+    "taskValidate": "pass"
+  },
+  "notes": [
+    "Install remediation is now structured as message plus solutions, and renderers show solution bullets separately.",
+    "No live install command against the current workspace was used as the primary acceptance proof because it would mutate local install state.",
+    "A direct TUI regression assertion now covers warning-item remediation bullets in addition to runtime and CLI coverage."
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-17-release-0314-install-problem-solutions",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-release-0314-install-problem-solutions",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Release 0.3.14 structured installer remediation",
+  "acceptanceCriteria": [
+    "Workspace versions, CHANGELOG.md, and docs/releases/0.3.14.md are aligned at 0.3.14.",
+    "The validated source proof bundles for installer-warning-repair and install-problem-solutions both pass task validation on the release branch.",
+    "Fresh release verification passes after the version bump.",
+    "The release proof bundle is complete and validates successfully.",
+    "The branch is committed, pushed, and merged into main."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T18:30:00.000Z",
+  "updatedAt": "2026-04-17T19:34:27.1501197+03:00"
+}

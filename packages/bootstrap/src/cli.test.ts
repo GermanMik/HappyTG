@@ -244,6 +244,15 @@ test("renderText returns a compact install summary with structured finalization 
           id: "complete-pairing",
           kind: "manual",
           message: "Send `/pair ABC123` to @happytg_bot."
+        },
+        {
+          id: "miniapp-port-conflict",
+          kind: "conflict",
+          message: "Mini App port 3001 is occupied by another process.",
+          solutions: [
+            "Reuse the running service if it is yours.",
+            "Or set `HAPPYTG_MINIAPP_PORT=3006` before starting the mini app."
+          ]
         }
       ]
     },
@@ -262,6 +271,9 @@ test("renderText returns a compact install summary with structured finalization 
   assert.match(output, /Requires user:/);
   assert.match(output, /Docker Desktop was skipped/);
   assert.match(output, /pnpm daemon:pair/);
+  assert.match(output, /Mini App port 3001 is occupied by another process/);
+  assert.match(output, /Reuse the running service if it is yours/);
+  assert.match(output, /HAPPYTG_MINIAPP_PORT=3006/);
   assert.doesNotMatch(output, /Next steps:/);
 });
 

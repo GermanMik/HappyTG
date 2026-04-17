@@ -642,7 +642,8 @@ test("doctor recommends reinstall with PATH update when Codex wrapper files are 
 
     assert.ok(report.findings.some((item) => item.code === "CODEX_MISSING"));
     assert.match(report.findings.find((item) => item.code === "CODEX_MISSING")?.message ?? "", /missing or partial install/i);
-    assert.match(report.planPreview.join("\n"), /Reinstall Codex CLI, update PATH/);
+    assert.match(report.planPreview.join("\n"), /Reinstall Codex CLI/);
+    assert.match(report.planPreview.join("\n"), /Verify `codex --version`/);
     assert.deepEqual((report.reportJson.codexInstallCheck as { wrapperPaths: string[] }).wrapperPaths, []);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
@@ -698,7 +699,8 @@ test("setup turns missing Telegram token into a short actionable first-run check
     assert.ok(report.findings.some((item) => item.code === "TELEGRAM_TOKEN_MISSING"));
     assert.equal((report.reportJson.telegram as { configured: boolean }).configured, false);
     assert.match((report.reportJson.preflight as string[]).join("\n"), /Redis: running on 127\.0\.0\.1:/);
-    assert.match(report.planPreview.join("\n"), /Fix the Telegram bot configuration before requesting a pairing code/);
+    assert.match(report.planPreview.join("\n"), /Pairing is blocked because Telegram bot configuration is incomplete/);
+    assert.match(report.planPreview.join("\n"), /Fix the Telegram bot configuration first/);
     assert.match(report.planPreview.join("\n"), /skip Docker shared infra entirely|postgres minio/);
     assert.match(report.planPreview.join("\n"), /skip Docker shared infra entirely|skip Docker entirely|DATABASE_URL/);
     assert.match(report.planPreview.join("\n"), /Set `TELEGRAM_BOT_TOKEN`/);
@@ -898,6 +900,13 @@ test("doctor reports an actionable mini app port conflict and distinguishes an a
     assert.match(setupReport.planPreview.join("\n"), /Reuse the current stack/);
     assert.equal(setupReport.planPreview.some((item) => item === "Start repo services: `pnpm dev`."), false);
     assert.equal(((setupReport.reportJson.onboarding as { steps: string[] }).steps).some((item) => item === "Start repo services: `pnpm dev`."), false);
+    const miniAppConflict = ((report.reportJson.onboarding as {
+      items: Array<{ id: string; message: string; solutions?: string[] }>;
+    }).items).find((item) => item.id === "miniapp-port-conflict");
+    assert.equal(miniAppConflict?.message.includes("already there"), true);
+    assert.equal(miniAppConflict?.solutions?.[0], "Reuse the running service if it is yours.");
+    assert.match(miniAppConflict?.solutions?.[1] ?? "", /HAPPYTG_MINIAPP_PORT/);
+    assert.match(miniAppConflict?.solutions?.[1] ?? "", /pnpm dev:miniapp/);
   } finally {
     await Promise.all([
       closeServer(busyPort.server),

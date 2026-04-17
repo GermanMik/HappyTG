@@ -1,0 +1,37 @@
+{
+  "taskId": "HTG-2026-04-17-installer-warning-repair",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "agentId": "019d9bdb-808d-7b62-9fad-7c69611c5d4b",
+    "runId": "verify-1-2026-04-17"
+  },
+  "checks": [
+    {
+      "name": "diagnostics-coherence",
+      "ok": true,
+      "detail": "Fresh baseline and independent verifier runs both reproduced the same setup/doctor/verify/repair signals: CODEX_SMOKE_WARNINGS, SERVICES_ALREADY_RUNNING, and MINIAPP_PORT_BUSY, with matching wording and guidance."
+    },
+    {
+      "name": "telegram-invalid-token-classification",
+      "ok": true,
+      "detail": "The current install-time Telegram result is truthfully classified as invalid_token because the Windows fallback reached Telegram and received HTTP 401, even though direct Node HTTPS timed out earlier."
+    },
+    {
+      "name": "bootstrap-test-hermeticity",
+      "ok": true,
+      "detail": "The only scoped fix isolates HAPPYTG_STATE_DIR in two installer regression tests so they no longer read the maintainer machine's real ~/.happytg daemon state."
+    },
+    {
+      "name": "verification-commands",
+      "ok": true,
+      "detail": "pnpm --filter @happytg/bootstrap typecheck, pnpm --filter @happytg/bootstrap test, pnpm lint, pnpm typecheck, and pnpm test all passed after the fix."
+    },
+    {
+      "name": "proof-bundle-finalized",
+      "ok": true,
+      "detail": "spec.md, evidence.md, evidence.json, problems.md, task.json, and verdict.json now reflect the completed proof loop and fresh verifier outcome."
+    }
+  ],
+  "generatedAt": "2026-04-17T17:46:50.1569154+03:00"
+}

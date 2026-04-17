@@ -1,0 +1,21 @@
+{
+  "taskId": "HTG-2026-04-17-release-0314-install-problem-solutions",
+  "status": "collected",
+  "baseVersion": "0.3.13",
+  "targetVersion": "0.3.14",
+  "branch": "codex/release-0.3.14-install-problem-solutions",
+  "sourceTasks": [
+    "HTG-2026-04-17-installer-warning-repair",
+    "HTG-2026-04-17-install-problem-solutions"
+  ],
+  "verification": {
+    "build": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "bootstrapTest": "pass",
+    "test": "pass",
+    "releaseCheck": "pass",
+    "sourceTaskValidate": "pass",
+    "taskValidate": "pass"
+  }
+}

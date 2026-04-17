@@ -1,0 +1,76 @@
+{
+  "taskId": "HTG-2026-04-17-installer-warning-repair",
+  "status": "collected",
+  "baseline": {
+    "setup": "warn",
+    "doctor": "warn",
+    "verify": "warn",
+    "repair": "warn",
+    "install": "recoverable-failure",
+    "lint": "pass",
+    "typecheck": "pass",
+    "test": "fail"
+  },
+  "classifications": [
+    {
+      "surface": "setup/doctor/verify/repair",
+      "signal": "CODEX_SMOKE_WARNINGS",
+      "classification": "truthful environment warning"
+    },
+    {
+      "surface": "setup/doctor/verify/repair",
+      "signal": "SERVICES_ALREADY_RUNNING",
+      "classification": "truthful environment warning"
+    },
+    {
+      "surface": "setup/doctor/verify/repair",
+      "signal": "MINIAPP_PORT_BUSY",
+      "classification": "truthful environment warning"
+    },
+    {
+      "surface": "setup/doctor/verify/repair",
+      "signal": "pairing/manual next steps",
+      "classification": "expected manual handoff"
+    },
+    {
+      "surface": "install",
+      "signal": "Telegram getMe invalid_token",
+      "classification": "truthful environment warning"
+    },
+    {
+      "surface": "install",
+      "signal": "pairing blocked until token works",
+      "classification": "expected manual handoff"
+    },
+    {
+      "surface": "historical user log",
+      "signal": "pairing code FSEQ58",
+      "classification": "stale artifact"
+    },
+    {
+      "surface": "pnpm test",
+      "signal": "bootstrap install regression failures caused by real ~/.happytg daemon state",
+      "classification": "false positive / misclassification"
+    }
+  ],
+  "fix": {
+    "type": "test-isolation",
+    "files": [
+      "packages/bootstrap/src/install.runtime.test.ts"
+    ],
+    "productionCodeChanged": false
+  },
+  "postFixVerification": {
+    "bootstrapTypecheck": "pass",
+    "bootstrapTest": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "test": "pass",
+    "taskValidate": "pass"
+  },
+  "verifier": {
+    "role": "task-verifier",
+    "agentId": "019d9bdb-808d-7b62-9fad-7c69611c5d4b",
+    "status": "passed"
+  }
+}

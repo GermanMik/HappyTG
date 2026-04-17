@@ -8,6 +8,7 @@ import { initTaskBundle, readTaskBundle, taskBundlePath, validateTaskBundle } fr
 import { loadHappyTGEnv } from "../../shared/src/index.js";
 
 import {
+  automationItemRenderLines,
   groupAutomationItems,
   onboardingItemsFromReport,
   type AutomationItem
@@ -116,7 +117,51 @@ function appendAutomationSection(lines: string[], title: string, items: readonly
 
   lines.push("");
   lines.push(`${title}:`);
-  lines.push(...items.map((item) => `- ${item.message}`));
+  for (const item of items) {
+    lines.push(...automationItemRenderLines(item));
+  }
+}
+
+function appendWarningSection(lines: string[], warnings: readonly string[], warningItems: readonly AutomationItem[]): void {
+  const rendered: string[] = [];
+  const seen = new Set<string>();
+
+  for (const warning of warnings) {
+    const normalized = warning.trim();
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    rendered.push(`- ${normalized}`);
+    seen.add(normalized);
+  }
+
+  for (const item of warningItems) {
+    const normalized = item.message.trim();
+    if (!normalized) {
+      continue;
+    }
+
+    if (!seen.has(normalized)) {
+      rendered.push(...automationItemRenderLines(item));
+      seen.add(normalized);
+      continue;
+    }
+
+    for (const solution of item.solutions ?? []) {
+      const normalizedSolution = solution.trim();
+      if (normalizedSolution) {
+        rendered.push(`  - ${normalizedSolution}`);
+      }
+    }
+  }
+
+  if (rendered.length === 0) {
+    return;
+  }
+
+  lines.push("");
+  lines.push("Warnings:");
+  lines.push(...rendered);
 }
 
 function appendAutomationSections(lines: string[], items: readonly AutomationItem[]): void {
@@ -328,6 +373,7 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
 export function renderText(result: BootstrapReport | InstallResult | TaskBundle | TaskStatusResponse): string {
   if ("kind" in result && result.kind === "install") {
     const finalizationItems = result.finalization?.items ?? [];
+    const groupedFinalization = groupAutomationItems(finalizationItems);
     const warningMessages = collectWarningMessages(result.warnings, finalizationItems);
     const lines = [
       `HappyTG install ${statusBadge(result.status)}`,
@@ -348,12 +394,7 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
     }
 
     appendAutomationSections(lines, finalizationItems);
-
-    if (warningMessages.length > 0) {
-      lines.push("");
-      lines.push("Warnings:");
-      lines.push(...warningMessages.map((warning) => `- ${warning}`));
-    }
+    appendWarningSection(lines, result.warnings, groupedFinalization.warning);
 
     if (finalizationItems.length === 0 && result.nextSteps.length > 0) {
       lines.push("");
@@ -366,7 +407,7 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
 
   if ("command" in result) {
     const onboardingItems = onboardingItemsFromReport(result);
-    const onboardingWarnings = collectWarningMessages([], onboardingItems);
+    const groupedOnboarding = groupAutomationItems(onboardingItems);
     const preflight = Array.isArray((result.reportJson as { preflight?: unknown }).preflight)
       ? ((result.reportJson as { preflight: string[] }).preflight)
       : [];
@@ -395,12 +436,7 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
       lines.push(result.command === "setup" ? "First start:" : "Next steps:");
       lines.push(...result.planPreview.map((item) => `- ${item}`));
     }
-
-    if (onboardingWarnings.length > 0) {
-      lines.push("");
-      lines.push("Warnings:");
-      lines.push(...onboardingWarnings.map((warning) => `- ${warning}`));
-    }
+    appendWarningSection(lines, [], groupedOnboarding.warning);
 
     lines.push("");
     lines.push("Diagnostics:");

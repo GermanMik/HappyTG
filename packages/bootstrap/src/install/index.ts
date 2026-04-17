@@ -296,8 +296,17 @@ async function buildInstallFinalizationItems(input: {
       id: "request-pair-code",
       kind: "blocked",
       message: input.telegramLookup?.status === "failed"
-        ? "Telegram bot validation failed, so pairing remains blocked until the bot token works."
-        : "Add a Telegram bot token before pairing the host."
+        ? "Pairing remains blocked because Telegram bot validation failed."
+        : "Pairing remains blocked because the Telegram bot token is missing.",
+      solutions: input.telegramLookup?.status === "failed"
+        ? [
+          "Fix `TELEGRAM_BOT_TOKEN` in `.env` or the shell.",
+          "Rerun `pnpm happytg install` after the bot token works."
+        ]
+        : [
+          "Add `TELEGRAM_BOT_TOKEN` before pairing the host.",
+          "Rerun `pnpm happytg install` after the token is set."
+        ]
     });
   } else {
     const daemonState = await readDaemonStateSnapshot(input.repoEnv, input.platform);

@@ -1,0 +1,10 @@
+
+> happytg@0.3.12 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-17-installer-warning-repair"
+
+Task: HTG-2026-04-17-installer-warning-repair
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-17-installer-warning-repair
+Validation: ok
+Phase: complete
+Verification: passed
+
