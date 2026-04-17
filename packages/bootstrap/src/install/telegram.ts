@@ -416,6 +416,15 @@ export async function fetchTelegramBotIdentity(
     const probeResult = shouldRunFollowUpProbe
       ? await (options?.probeNetworkIssue ?? probeTelegramGetMeViaWindowsPowerShell)(token)
       : undefined;
+    if (probeResult?.kind === "validated") {
+      return {
+        ok: true,
+        username: probeResult.username,
+        firstName: probeResult.firstName,
+        step: "getMe",
+        transportProbeValidated: true
+      };
+    }
     const followUp = networkFollowUpMessage(describedError.message, probeResult);
     return {
       ok: false,

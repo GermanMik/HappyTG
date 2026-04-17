@@ -1,0 +1,1 @@
+{"ok":true,"username":"Gerta_homebot","step":"getMe","transportProbeValidated":true}

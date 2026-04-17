@@ -1,0 +1,81 @@
+PS> pnpm build
+
+> happytg@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running build in 13 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/bootstrap:build: cache miss, executing 879ff678d5ee1835
+@happytg/bot:build: cache hit, replaying logs 3d65ef05c6308375
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+@happytg/protocol:build: cache hit, replaying logs 5519a4d1af9f48ec
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/policy-engine:build: cache hit, replaying logs 0fc03a5714f6dbfc
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+@happytg/runtime-adapters:build: cache hit, replaying logs b64990c10185019d
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/shared:build: cache hit, replaying logs 436e0fdb36e499b6
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/miniapp:build: cache hit, replaying logs cb212104af151535
+@happytg/miniapp:build: 
+@happytg/miniapp:build: > @happytg/miniapp@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/hooks:build: cache hit, replaying logs b2ff2db3440048ea
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/host-daemon:build: cache hit, replaying logs b4f165d76cbf4407
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/repo-proof:build: cache hit, replaying logs 4bb01c644fc7352d
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build: 
+@happytg/approval-engine:build: cache hit, replaying logs 7255d52ac88528f3
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+@happytg/worker:build: cache hit, replaying logs 6c494253537c6055
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+@happytg/api:build: cache hit, replaying logs 5be06e9500b316eb
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.3.11 build C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+
+ Tasks:    13 successful, 13 total
+Cached:    12 cached, 13 total
+  Time:    2.749s 
+

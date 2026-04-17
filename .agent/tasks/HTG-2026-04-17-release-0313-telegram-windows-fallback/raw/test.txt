@@ -1,0 +1,316 @@
+PS> pnpm test
+
+> happytg@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback
+> turbo test
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running test in 13 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/bootstrap:test: cache miss, executing 91b569eae827a8c2
+@happytg/bot:test: cache miss, executing f4cfc58012a7357e
+@happytg/worker:test: cache miss, executing c8a19cee33a1c0bd
+@happytg/api:test: cache miss, executing 4639435665554dba
+@happytg/repo-proof:test: cache miss, executing 6eca834d8f154dc0
+@happytg/approval-engine:test: cache miss, executing 72108e5018bbf72c
+@happytg/runtime-adapters:test: cache miss, executing 9042b0f6dc6c9546
+@happytg/policy-engine:test: cache miss, executing 28a63f637014a43e
+@happytg/shared:test: cache miss, executing f5a5499c4d308148
+@happytg/hooks:test: cache miss, executing ff990e02d4d6b42d
+@happytg/bootstrap:test: 
+@happytg/bootstrap:test: > @happytg/bootstrap@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\bootstrap
+@happytg/bootstrap:test: > tsx --test src/*.test.ts
+@happytg/bootstrap:test: 
+@happytg/worker:test: 
+@happytg/worker:test: > @happytg/worker@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\worker
+@happytg/worker:test: > tsx --test src/*.test.ts
+@happytg/worker:test: 
+@happytg/approval-engine:test: 
+@happytg/approval-engine:test: > @happytg/approval-engine@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\approval-engine
+@happytg/approval-engine:test: > tsx --test src/*.test.ts
+@happytg/approval-engine:test: 
+@happytg/repo-proof:test: 
+@happytg/repo-proof:test: > @happytg/repo-proof@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\repo-proof
+@happytg/repo-proof:test: > tsx --test src/*.test.ts
+@happytg/repo-proof:test: 
+@happytg/bot:test: 
+@happytg/bot:test: > @happytg/bot@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\bot
+@happytg/bot:test: > tsx --test src/*.test.ts
+@happytg/bot:test: 
+@happytg/runtime-adapters:test: 
+@happytg/runtime-adapters:test: > @happytg/runtime-adapters@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\runtime-adapters
+@happytg/runtime-adapters:test: > tsx --test src/*.test.ts
+@happytg/runtime-adapters:test: 
+@happytg/api:test: 
+@happytg/api:test: > @happytg/api@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\api
+@happytg/api:test: > tsx --test src/*.test.ts
+@happytg/api:test: 
+@happytg/policy-engine:test: 
+@happytg/policy-engine:test: > @happytg/policy-engine@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\policy-engine
+@happytg/policy-engine:test: > tsx --test src/*.test.ts
+@happytg/policy-engine:test: 
+@happytg/shared:test: 
+@happytg/shared:test: > @happytg/shared@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\shared
+@happytg/shared:test: > tsx --test src/*.test.ts
+@happytg/shared:test: 
+@happytg/hooks:test: 
+@happytg/hooks:test: > @happytg/hooks@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\hooks
+@happytg/hooks:test: > tsx --test src/*.test.ts
+@happytg/hooks:test: 
+@happytg/bot:test: ✔ resume command sends session transition summary (1.903ms)
+@happytg/bot:test: ✔ doctor command resolves telegram identity and creates bootstrap session (1.6646ms)
+@happytg/bot:test: ✔ verify command surfaces approval keyboard when required (0.5833ms)
+@happytg/bot:test: ✔ approval callback resolves with the linked HappyTG user (0.5613ms)
+@happytg/approval-engine:test: ✔ createApprovalRequest creates pending approval with expiry (3.7217ms)
+@happytg/approval-engine:test: ✔ resolveApprovalRequest updates state and emits decision (0.5174ms)
+@happytg/approval-engine:test: ✔ refreshExpiredApproval marks pending request as expired (0.2776ms)
+@happytg/approval-engine:test: ℹ tests 3
+@happytg/approval-engine:test: ℹ suites 0
+@happytg/approval-engine:test: ℹ pass 3
+@happytg/approval-engine:test: ℹ fail 0
+@happytg/approval-engine:test: ℹ cancelled 0
+@happytg/approval-engine:test: ℹ skipped 0
+@happytg/approval-engine:test: ℹ todo 0
+@happytg/approval-engine:test: ℹ duration_ms 609.2872
+@happytg/bot:test: ✔ bot ready endpoint returns healthy when api is reachable (60.2443ms)
+@happytg/bot:test: ✔ bot ready endpoint returns 503 when api is unreachable (32.171ms)
+@happytg/bot:test: ✔ botConfigurationMessage stays actionable without exposing secrets (1.0348ms)
+@happytg/bot:test: ✔ initializeBotEnvironment prefers a valid .env token over placeholder shell state (23.6048ms)
+@happytg/bot:test: ✔ createDefaultSendTelegramMessage falls back to Windows PowerShell after a Node transport timeout (2.4947ms)
+@happytg/bot:test: ✔ createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful without using fallback (3.9227ms)
+@happytg/repo-proof:test: ✔ repo proof bundle can be initialized, frozen, validated, and verified (92.1928ms)
+@happytg/hooks:test: ✔ defineHook creates an enabled hook definition for the requested point (1.7697ms)
+@happytg/hooks:test: ✔ executeHook returns a completed execution envelope (1.6357ms)
+@happytg/bot:test: ℹ tests 10
+@happytg/bot:test: ℹ suites 0
+@happytg/bot:test: ℹ pass 10
+@happytg/bot:test: ℹ fail 0
+@happytg/bot:test: ℹ cancelled 0
+@happytg/bot:test: ℹ skipped 0
+@happytg/bot:test: ℹ todo 0
+@happytg/bot:test: ℹ duration_ms 759.2866
+@happytg/shared:test: ✔ resolveHome and atomic file helpers round-trip data (40.7401ms)
+@happytg/shared:test: ✔ resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides (0.5773ms)
+@happytg/shared:test: ✔ resolveHome honors Windows home overrides with case-insensitive env keys (0.2561ms)
+@happytg/shared:test: ✔ findExecutable searches PATH and appends Windows executable extensions (11.4792ms)
+@happytg/shared:test: ✔ findExecutable honors Windows path and PATHEXT keys regardless of casing (6.8556ms)
+@happytg/shared:test: ✔ findExecutable prefers Windows wrapper companions over bare shim files (5.0621ms)
+@happytg/worker:test: ✔ worker readiness becomes healthy after a successful tick (18.7647ms)
+@happytg/shared:test: ✔ findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys (7.134ms)
+@happytg/api:test: ✔ api ready endpoint returns store metadata (58.9756ms)
+@happytg/shared:test: ✔ loadHappyTGEnv fills missing values without overriding existing env (4.8699ms)
+@happytg/shared:test: ✔ normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT (0.3743ms)
+@happytg/shared:test: ✔ telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values (0.45ms)
+@happytg/hooks:test: ℹ tests 2
+@happytg/hooks:test: ℹ suites 0
+@happytg/hooks:test: ℹ pass 2
+@happytg/hooks:test: ℹ fail 0
+@happytg/hooks:test: ℹ cancelled 0
+@happytg/hooks:test: ℹ skipped 0
+@happytg/hooks:test: ℹ todo 0
+@happytg/hooks:test: ℹ duration_ms 674.7352
+@happytg/repo-proof:test: ℹ tests 1
+@happytg/repo-proof:test: ℹ suites 0
+@happytg/repo-proof:test: ℹ pass 1
+@happytg/repo-proof:test: ℹ fail 0
+@happytg/repo-proof:test: ℹ cancelled 0
+@happytg/repo-proof:test: ℹ skipped 0
+@happytg/repo-proof:test: ℹ todo 0
+@happytg/repo-proof:test: ℹ duration_ms 816.1045
+@happytg/worker:test: ✔ worker ready endpoint returns 503 before first tick (66.7142ms)
+@happytg/protocol:test: cache miss, executing eea8236c273c2f35
+@happytg/shared:test: ✔ FileStateStore serializes concurrent updates through its queue (54.1016ms)
+@happytg/worker:test: ✔ reconcileSessionsAndDispatches moves active sessions to reconnecting when host is stale (2.7604ms)
+@happytg/worker:test: ✔ markExpiredApprovalSessions pauses awaiting approval sessions (0.4833ms)
+@happytg/worker:test: ℹ tests 4
+@happytg/worker:test: ℹ suites 0
+@happytg/worker:test: ℹ pass 4
+@happytg/worker:test: ℹ fail 0
+@happytg/worker:test: ℹ cancelled 0
+@happytg/worker:test: ℹ skipped 0
+@happytg/worker:test: ℹ todo 0
+@happytg/worker:test: ℹ duration_ms 923.8019
+@happytg/shared:test: ✔ createJsonServer resolves route params and query data (63.6442ms)
+@happytg/bootstrap:test: ✔ parseHappyTGArgs maps config and env nested commands (7.632ms)
+@happytg/bootstrap:test: ✔ parseHappyTGArgs maps install flags into the installer request (0.6023ms)
+@happytg/bootstrap:test: ✔ parseHappyTGArgs uses CliUsageError for invalid CLI surfaces (0.6073ms)
+@happytg/shared:test: ✔ createJsonServer returns a structured 500 when handler throws (24.5128ms)
+@happytg/miniapp:test: cache miss, executing 586e32697283c713
+@happytg/host-daemon:test: cache miss, executing b52f557eb8e119bf
+@happytg/shared:test: ℹ tests 13
+@happytg/shared:test: ℹ suites 0
+@happytg/shared:test: ℹ pass 13
+@happytg/shared:test: ℹ fail 0
+@happytg/shared:test: ℹ cancelled 0
+@happytg/shared:test: ℹ skipped 0
+@happytg/shared:test: ℹ todo 0
+@happytg/shared:test: ℹ duration_ms 948.394
+@happytg/policy-engine:test: ✔ evaluatePolicies returns deny before lower-layer approval or allow (3.0575ms)
+@happytg/policy-engine:test: ✔ evaluatePolicies requires approval when no deny matches (0.3727ms)
+@happytg/policy-engine:test: ℹ tests 2
+@happytg/policy-engine:test: ℹ suites 0
+@happytg/policy-engine:test: ℹ pass 2
+@happytg/policy-engine:test: ℹ fail 0
+@happytg/policy-engine:test: ℹ cancelled 0
+@happytg/policy-engine:test: ℹ skipped 0
+@happytg/policy-engine:test: ℹ todo 0
+@happytg/policy-engine:test: ℹ duration_ms 1050.9792
+@happytg/bootstrap:test: ✔ executeHappyTG initializes and inspects repo-local task bundles (135.7417ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness reports available Codex and captures smoke warnings (283.2648ms)
+@happytg/api:test: ✔ proof session creates task bundle and approval, then approval dispatches session (148.809ms)
+@happytg/api:test: ✔ quick session dispatches immediately without approval (52.6976ms)
+@happytg/api:test: ✔ session timeline and task artifact reads are available for mini app inspection (63.2545ms)
+@happytg/api:test: ✔ bootstrap sessions dispatch deterministic doctor runs and support resume state transitions (33.1289ms)
+@happytg/api:test: ℹ tests 5
+@happytg/api:test: ℹ suites 0
+@happytg/api:test: ℹ pass 5
+@happytg/api:test: ℹ fail 0
+@happytg/api:test: ℹ cancelled 0
+@happytg/api:test: ℹ skipped 0
+@happytg/api:test: ℹ todo 0
+@happytg/api:test: ℹ duration_ms 1232.735
+@happytg/bootstrap:test: ✔ executeHappyTG returns a structured install failure when installer throws before its internal runtime boundary (279.587ms)
+@happytg/bootstrap:test: ✔ renderText returns a compact bootstrap summary with preflight and diagnostics hints (0.9519ms)
+@happytg/bootstrap:test: ✔ renderText returns a compact install summary (0.4269ms)
+@happytg/bootstrap:test: ✔ renderText includes follow-up warnings and PATH next steps in install summaries (0.2601ms)
+@happytg/bootstrap:test: ✔ renderText explains recoverable installer failures without claiming completion (0.2389ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from Path (354.2761ms)
+@happytg/bootstrap:test: ✔ doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim (618.7322ms)
+@happytg/miniapp:test: 
+@happytg/miniapp:test: > @happytg/miniapp@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\miniapp
+@happytg/miniapp:test: > tsx --test src/*.test.ts
+@happytg/miniapp:test: 
+@happytg/protocol:test: 
+@happytg/protocol:test: > @happytg/protocol@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\packages\protocol
+@happytg/protocol:test: > tsx --test src/*.test.ts
+@happytg/protocol:test: 
+@happytg/bootstrap:test: ✔ verify surfaces Codex smoke warnings as warn when config exists (220.0588ms)
+@happytg/host-daemon:test: 
+@happytg/host-daemon:test: > @happytg/host-daemon@0.3.13 test C:\Develop\Projects\HappyTG-telegram-windows-transport-fallback\apps\host-daemon
+@happytg/host-daemon:test: > tsx --test src/*.test.ts
+@happytg/host-daemon:test: 
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext (280.6955ms)
+@happytg/bootstrap:test: ✔ doctor distinguishes unavailable Codex from a missing Codex binary (125.4495ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated (310.8134ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness closes stdin so smoke runs do not hang waiting for EOF (227.1979ms)
+@happytg/bootstrap:test: ✔ doctor recovers through the npm wrapper when Codex is off PATH and leaves a PATH follow-up warning (491.7046ms)
+@happytg/protocol:test: ✔ createEmptyStore returns the canonical empty control-plane shape (1.8603ms)
+@happytg/protocol:test: ✔ protocol enums include resumability, proof, and bootstrap contracts (0.2969ms)
+@happytg/protocol:test: ℹ tests 2
+@happytg/protocol:test: ℹ suites 0
+@happytg/protocol:test: ℹ pass 2
+@happytg/protocol:test: ℹ fail 0
+@happytg/protocol:test: ℹ cancelled 0
+@happytg/protocol:test: ℹ skipped 0
+@happytg/protocol:test: ℹ todo 0
+@happytg/protocol:test: ℹ duration_ms 433.209
+@happytg/miniapp:test: ✔ mini app ready endpoint returns 503 when api health fails (67.5595ms)
+@happytg/host-daemon:test: ✔ defaultWorkspaces prefers configured workspace paths (2.6728ms)
+@happytg/host-daemon:test: ✔ compactJournal keeps running entries and trims stale completed entries (0.3815ms)
+@happytg/host-daemon:test: ✔ sandboxForDispatch preserves read-only safety for doctor and verify paths (0.2833ms)
+@happytg/host-daemon:test: ✔ parseVerifierVerdict keys off the first line only (0.2132ms)
+@happytg/host-daemon:test: ✔ startup guidance stays actionable and repeated notices are suppressed (0.9386ms)
+@happytg/host-daemon:test: ✔ summarizeBootstrapReport includes top finding codes (0.3838ms)
+@happytg/miniapp:test: ✔ overview page renders hosts, sessions, approvals, and tasks (74.4565ms)
+@happytg/miniapp:test: ✔ task page renders canonical artifacts and escapes file content (8.5782ms)
+@happytg/miniapp:test: ✔ session page renders timeline, summary, and task link (15.5828ms)
+@happytg/miniapp:test: ✔ startMiniAppServer returns an actionable message when the port is already in use (3.3962ms)
+@happytg/host-daemon:test: ℹ tests 6
+@happytg/host-daemon:test: ℹ suites 0
+@happytg/host-daemon:test: ℹ pass 6
+@happytg/host-daemon:test: ℹ fail 0
+@happytg/host-daemon:test: ℹ cancelled 0
+@happytg/host-daemon:test: ℹ skipped 0
+@happytg/host-daemon:test: ℹ todo 0
+@happytg/host-daemon:test: ℹ duration_ms 616.5423
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness preserves spaced prompts when it runs through a Windows cmd wrapper (378.0452ms)
+@happytg/miniapp:test: ℹ tests 5
+@happytg/miniapp:test: ℹ suites 0
+@happytg/miniapp:test: ℹ pass 5
+@happytg/miniapp:test: ℹ fail 0
+@happytg/miniapp:test: ℹ cancelled 0
+@happytg/miniapp:test: ℹ skipped 0
+@happytg/miniapp:test: ℹ todo 0
+@happytg/miniapp:test: ℹ duration_ms 714.155
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness treats a Windows shell command-not-found result as missing (6.6443ms)
+@happytg/bootstrap:test: ✔ doctor recovers through a standard Windows APPDATA npm wrapper path when npm prefix probing is unavailable (387.2413ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness marks only true ENOENT failures as missing (91.5865ms)
+@happytg/runtime-adapters:test: ✔ classifyCodexSmokeStderr ignores known benign Codex internal warnings only (2.3158ms)
+@happytg/runtime-adapters:test: ✔ summarizeCodexSmokeStderr extracts concise actionable root causes (1.807ms)
+@happytg/runtime-adapters:test: ✔ codexCliMissingMessage explains PATH diagnosis and reinstall fallback (0.2336ms)
+@happytg/runtime-adapters:test: ✔ runCodexExec reads summary from the Codex output file (78.0646ms)
+@happytg/runtime-adapters:test: ✔ runCodexExec marks timeout and returns a timeout summary (28.0631ms)
+@happytg/runtime-adapters:test: ✔ runCodexExec returns actionable guidance when Codex CLI is missing (3.8318ms)
+@happytg/runtime-adapters:test: ℹ tests 14
+@happytg/runtime-adapters:test: ℹ suites 0
+@happytg/runtime-adapters:test: ℹ pass 14
+@happytg/runtime-adapters:test: ℹ fail 0
+@happytg/runtime-adapters:test: ℹ cancelled 0
+@happytg/runtime-adapters:test: ℹ skipped 0
+@happytg/runtime-adapters:test: ℹ todo 0
+@happytg/runtime-adapters:test: ℹ duration_ms 2864.8364
+@happytg/bootstrap:test: ✔ doctor keeps Codex smoke green through a Windows wrapper when the prompt contains spaces (380.4795ms)
+@happytg/bootstrap:test: ✔ doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix (124.1262ms)
+@happytg/bootstrap:test: ✔ setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis (157.8793ms)
+@happytg/bootstrap:test: ✔ setup names existing PostgreSQL, Redis, and S3 endpoints when Redis is absent locally (157.557ms)
+@happytg/bootstrap:test: ✔ doctor reports Redis installed but stopped (158.8609ms)
+@happytg/bootstrap:test: ✔ doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service (304.2741ms)
+@happytg/bootstrap:test: ✔ setup treats compatible Redis, PostgreSQL, and MinIO listeners as supported reuse while flagging unrelated conflicts (147.2097ms)
+@happytg/bootstrap:test: ✔ config-init and env-snapshot remain deterministic plan-only commands (7.5476ms)
+@happytg/bootstrap:test: ✔ syncRepository retries transient primary failures and reports attempt progress (79.3455ms)
+@happytg/bootstrap:test: ✔ syncRepository returns repo_retry_exhausted after 5 primary attempts (68.9479ms)
+@happytg/bootstrap:test: ✔ syncRepository falls back to the configured alternative source after exhausting primary retries (32.2535ms)
+@happytg/bootstrap:test: ✔ syncRepository reports repo_fallback_failure when both configured sources fail (47.8789ms)
+@happytg/bootstrap:test: ✔ runCommand normalizes Windows shim companions like pnpm.cmd (188.7773ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall returns a structured runtime error for Windows shim spawn failures instead of throwing usage-style failures (23.7875ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall returns a structured runtime error when non-interactive mode is missing a Telegram token (13.2042ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall rejects bot usernames like @name in the token field before runtime work starts (12.7823ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall resumes saved installer values on rerun (20.2209ms)
+@happytg/bootstrap:test: ✔ Telegram setup reducer treats pasted token chunks as text and preserves editing/navigation behavior (1.718ms)
+@happytg/bootstrap:test: ✔ Telegram setup reducer commits pasted token and allowed user ID chunks that include trailing CRLF (0.3539ms)
+@happytg/bootstrap:test: ✔ Telegram setup reducer supports clearing a prefilled token and pasting a replacement (0.2974ms)
+@happytg/bootstrap:test: ✔ renderMaskedSecretPreview safely degrades for short values (0.175ms)
+@happytg/bootstrap:test: ✔ Telegram setup reducer blocks invalid @bot usernames and keeps the user in the form (0.2674ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall reports warning-only Telegram getMe failures as success-with-warnings without dropping configured Telegram state (17.5288ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall treats a transport-probe-validated Telegram identity as a normal success path (13.8688ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps invalid Telegram tokens as configuration failures after a transport fallback probe (14.0344ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive Telegram form starts blank even when draft and .env already contain a token (124.5735ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps an already-known Telegram username when getMe lookup fails (24.8956ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall normalizes completed post-check failures into recoverable installer failures (14.5686ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps the final result at warning level when post-checks only report Codex PATH follow-up (16.9105ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible in the final summary (19.5141ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall semantically dedupes repeated setup next steps and compresses repeated post-check warning sets (18.1063ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall removes contradictory start commands when setup already says to reuse the running stack (9.1549ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning level with real bootstrap checks (1072.6794ms)
+@happytg/bootstrap:test: ✔ install.ps1 clears only broken external NODE_OPTIONS preload and does not misdiagnose Node as missing (1563.587ms)
+@happytg/bootstrap:test: ✔ install.ps1 keeps missing preload failures inside HAPPYTG_BOOTSTRAP_DIR as a hard error (965.206ms)
+@happytg/bootstrap:test: ✔ install.sh mirrors the external NODE_OPTIONS preload sanitization without a false Node-missing diagnosis (725.4992ms)
+@happytg/bootstrap:test: ✔ detectLinuxFamily classifies Debian and Fedora os-release content (74.9225ms)
+@happytg/bootstrap:test: ✔ detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path (1470.984ms)
+@happytg/bootstrap:test: ✔ inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe (573.5746ms)
+@happytg/bootstrap:test: ✔ mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun (12.89ms)
+@happytg/bootstrap:test: ✔ retro installer renderers include active cursor and keyboard hints (1.062ms)
+@happytg/bootstrap:test: ✔ progress screen uses a readable ASCII running indicator instead of a unicode ellipsis (0.7235ms)
+@happytg/bootstrap:test: ✔ Telegram screen renders a masked preview instead of the raw bot token (0.764ms)
+@happytg/bootstrap:test: ✔ waitForEnter resolves when ENTER close is pressed on the final screen (1.433ms)
+@happytg/bootstrap:test: ✔ waitForEnter does not render the same final screen twice when ENTER closes it (0.3107ms)
+@happytg/bootstrap:test: ✔ promptTelegramForm accepts pasted token and allowed user IDs with trailing CRLF in the interactive keypress path (2.3576ms)
+@happytg/bootstrap:test: ✔ fetchTelegramBotIdentity separates invalid-token API rejections from recoverable network lookups (2.3574ms)
+@happytg/bootstrap:test: ✔ fetchTelegramBotIdentity classifies DNS-style fetch failures and non-JSON responses (1.9179ms)
+@happytg/bootstrap:test: ✔ fetchTelegramBotIdentity accepts Windows PowerShell validation as a success fallback after a Node timeout (0.2239ms)
+@happytg/bootstrap:test: ✔ fetchTelegramBotIdentity promotes invalid tokens when a Windows follow-up probe reaches Telegram (0.3646ms)
+@happytg/bootstrap:test: ℹ tests 64
+@happytg/bootstrap:test: ℹ suites 0
+@happytg/bootstrap:test: ℹ pass 64
+@happytg/bootstrap:test: ℹ fail 0
+@happytg/bootstrap:test: ℹ cancelled 0
+@happytg/bootstrap:test: ℹ skipped 0
+@happytg/bootstrap:test: ℹ todo 0
+@happytg/bootstrap:test: ℹ duration_ms 4097.2297
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    5.473s 
+

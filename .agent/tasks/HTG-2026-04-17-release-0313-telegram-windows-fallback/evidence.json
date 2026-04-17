@@ -1,0 +1,80 @@
+{
+  "taskId": "HTG-2026-04-17-release-0313-telegram-windows-fallback",
+  "criteria": [
+    {
+      "criterion": "Workspace versions, CHANGELOG.md, and docs/releases/0.3.13.md are aligned at 0.3.13.",
+      "summary": "All checked workspace manifests now report 0.3.13, CHANGELOG.md contains a v0.3.13 entry, docs/releases/0.3.13.md exists, and release:check accepts the alignment.",
+      "artifacts": [
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/shared/package.json",
+        "CHANGELOG.md",
+        "docs/releases/0.3.13.md",
+        "raw/release-check.txt"
+      ]
+    },
+    {
+      "criterion": "Fresh release verification passes after the version bump.",
+      "summary": "The release branch passed build, lint, typecheck, targeted bootstrap+bot tests, full test, release:check, source bundle validation, and release bundle validation after bumping the workspace to 0.3.13.",
+      "artifacts": [
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/release-check.txt",
+        "raw/source-task-validate.txt",
+        "raw/task-validate.txt"
+      ]
+    },
+    {
+      "criterion": "Release notes truthfully describe the Windows Telegram transport fallback scope and reference the canonical fix bundle.",
+      "summary": "The release notes describe the validated fallback behavior, avoid claiming the underlying host network is fixed, and point to the canonical proof bundle for the product change.",
+      "artifacts": [
+        "docs/releases/0.3.13.md",
+        ".agent/tasks/HTG-2026-04-17-telegram-windows-transport-fallback/evidence.md",
+        "raw/source-task-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "package.json",
+    "apps/api/package.json",
+    "apps/bot/package.json",
+    "apps/host-daemon/package.json",
+    "apps/miniapp/package.json",
+    "apps/worker/package.json",
+    "packages/approval-engine/package.json",
+    "packages/bootstrap/package.json",
+    "packages/hooks/package.json",
+    "packages/policy-engine/package.json",
+    "packages/protocol/package.json",
+    "packages/repo-proof/package.json",
+    "packages/runtime-adapters/package.json",
+    "packages/shared/package.json",
+    "CHANGELOG.md",
+    "docs/releases/0.3.13.md",
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/release-check.txt",
+    "raw/source-task-validate.txt",
+    "raw/task-validate.txt"
+  ],
+  "generatedAt": "2026-04-17T14:22:14.813Z"
+}

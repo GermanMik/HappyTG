@@ -1,0 +1,70 @@
+{
+  "taskId": "HTG-2026-04-17-telegram-windows-transport-fallback",
+  "criteria": [
+    {
+      "criterion": "Bootstrap getMe no longer warns on Windows when PowerShell can validate the same token after a Node HTTPS timeout.",
+      "summary": "The transport-success path is locked by automated helper and install-runtime tests. The live host still reproduces the original Node HTTPS timeout, and the updated token stored in the isolated worktree .env now validates @Gerta_homebot through the PowerShell-assisted fallback, while the earlier source .env 401 artifacts remain as a negative control for invalid credentials.",
+      "artifacts": [
+        "packages/bootstrap/src/install/telegram.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "raw/host-direct-node-getme.txt",
+        "raw/host-powershell-getme-current.txt",
+        "raw/host-powershell-getme-worktree-current.txt",
+        "raw/host-bootstrap-getme-current.txt",
+        "raw/host-bootstrap-getme-worktree-current.txt",
+        "raw/install-json.txt",
+        "raw/install-json-worktree-current.txt",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Bot sendMessage no longer drops outbound replies on Windows when Node HTTPS fails but PowerShell Bot API requests succeed.",
+      "summary": "The bot runtime now retries sendMessage through Windows PowerShell only when Node HTTPS transport throws, and dedicated bot tests prove the fallback succeeds without hiding Telegram HTTP responses.",
+      "artifacts": [
+        "apps/bot/src/index.ts",
+        "apps/bot/src/index.test.ts",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Regression coverage proves the Windows fallback path without masking invalid-token or Bot API HTTP failures.",
+      "summary": "Scoped bootstrap/bot tests, full repo build/lint/typecheck/test, bundle validation, and live success-plus-failure artifacts all show the product now distinguishes transport recovery from invalid-token failure instead of flattening everything into a network warning.",
+      "artifacts": [
+        "raw/build.txt",
+        "raw/install-json.txt",
+        "raw/install-json-worktree-current.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/host-powershell-getme-current.txt",
+        "raw/host-powershell-getme-worktree-current.txt",
+        "raw/host-bootstrap-getme-current.txt",
+        "raw/host-bootstrap-getme-worktree-current.txt",
+        "raw/task-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "apps/bot/src/index.ts",
+    "apps/bot/src/index.test.ts",
+    "packages/bootstrap/src/install/telegram.ts",
+    "packages/bootstrap/src/install.test.ts",
+    "packages/bootstrap/src/install.runtime.test.ts",
+    "raw/build.txt",
+    "raw/install-json.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/host-direct-node-getme.txt",
+    "raw/host-powershell-getme-current.txt",
+    "raw/host-powershell-getme-worktree-current.txt",
+    "raw/host-bootstrap-getme-current.txt",
+    "raw/host-bootstrap-getme-worktree-current.txt",
+    "raw/install-json-worktree-current.txt",
+    "raw/task-validate.txt"
+  ],
+  "generatedAt": "2026-04-17T14:17:42.876Z"
+}

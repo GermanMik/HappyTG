@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-17-telegram-windows-transport-fallback",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "local-verify-2026-04-17-telegram-windows-transport-fallback"
+  },
+  "checks": [
+    {
+      "name": "host-node-timeout-still-reproduces",
+      "ok": true,
+      "detail": "The isolated worktree still reproduces the original host-side Node HTTPS getMe timeout: raw/host-direct-node-getme.txt shows `fetch failed` with `UND_ERR_CONNECT_TIMEOUT` against api.telegram.org."
+    },
+    {
+      "name": "bootstrap-install-fallback-regressions-covered",
+      "ok": true,
+      "detail": "packages/bootstrap/src/install.test.ts and packages/bootstrap/src/install.runtime.test.ts now cover both the helper-level validated fallback path and the full install-path success case where a PowerShell-validated bot identity no longer degrades to warning state."
+    },
+    {
+      "name": "bot-sendmessage-fallback-covered",
+      "ok": true,
+      "detail": "apps/bot/src/index.ts now retries Windows sendMessage transport failures through PowerShell, and apps/bot/src/index.test.ts proves fallback success plus truthful handling of Telegram HTTP failures."
+    },
+    {
+      "name": "live-worktree-token-validates-via-fallback",
+      "ok": true,
+      "detail": "Current worktree artifacts raw/host-powershell-getme-worktree-current.txt, raw/host-bootstrap-getme-worktree-current.txt, and raw/install-json-worktree-current.txt show the updated isolated-worktree .env token validates @Gerta_homebot and allows the install path to pass the Telegram step via the PowerShell-assisted fallback."
+    },
+    {
+      "name": "source-env-invalid-token-stays-truthful",
+      "ok": true,
+      "detail": "The earlier source-worktree artifacts raw/host-powershell-getme-current.txt, raw/host-bootstrap-getme-current.txt, and raw/install-json.txt still show `401 Unauthorized`, proving invalid credentials are reported as configuration failure rather than being masked by the Windows transport fallback."
+    },
+    {
+      "name": "repo-verification-passed",
+      "ok": true,
+      "detail": "Full repo build, lint, typecheck, and test all passed in the isolated worktree; see raw/build.txt, raw/lint.txt, raw/typecheck.txt, and raw/test-integration.txt."
+    }
+  ],
+  "generatedAt": "2026-04-17T14:17:42.876Z"
+}
