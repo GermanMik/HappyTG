@@ -1,0 +1,18 @@
+{
+  "id": "HTG-2026-04-17-release-038-installer-diagnostics",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-release-038-installer-diagnostics",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Release 0.3.8 installer diagnostics",
+  "acceptanceCriteria": [
+    "Workspace package versions are aligned at 0.3.8.",
+    "CHANGELOG.md and docs/releases/0.3.8.md describe the installer diagnostics release accurately.",
+    "Release validation and repo checks pass before publish.",
+    "GitHub release/tag v0.3.8 is created from the published main state using the checked-in release notes."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T10:20:00.000Z",
+  "updatedAt": "2026-04-17T10:25:00.000Z"
+}

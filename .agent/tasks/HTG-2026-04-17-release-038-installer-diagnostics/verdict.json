@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-17-release-038-installer-diagnostics",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-1-2026-04-17"
+  },
+  "checks": [
+    {
+      "name": "workspace-version-alignment",
+      "ok": true,
+      "detail": "All 14 checked package manifests now report version 0.3.8 and release:check passed."
+    },
+    {
+      "name": "release-notes-accuracy",
+      "ok": true,
+      "detail": "CHANGELOG.md and docs/releases/0.3.8.md accurately describe the already-merged installer diagnostics release."
+    },
+    {
+      "name": "repo-checks",
+      "ok": true,
+      "detail": "pnpm lint, pnpm typecheck, pnpm test, and pnpm release:check --version 0.3.8 all passed on the release branch."
+    },
+    {
+      "name": "proof-bundle-synchronized",
+      "ok": true,
+      "detail": "The proof bundle now records the verifier result and validates with Phase complete / Verification passed."
+    }
+  ],
+  "generatedAt": "2026-04-17T10:25:00.000Z"
+}

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.3.8
+
+### Fixed
+
+- Telegram `getMe` diagnostics now distinguish DNS, timeout, TLS, proxy, HTTP, and non-JSON failures instead of collapsing them into a generic `fetch failed` warning.
+- Windows Codex wrapper detection and smoke checks no longer produce contradictory repeated PATH and smoke-failure warnings when the npm-installed `codex.cmd` wrapper is runnable.
+- Planned-port diagnostics now attribute listeners, distinguish supported reuse of local Redis/Postgres/MinIO services from real conflicts, and suggest non-colliding alternative ports for actual conflicts such as Mini App port `3001`.
+
+### Changed
+
+- Final installer/setup/doctor/verify summaries are now deduplicated against the full planned-port set and keep only truthful environment warnings after the diagnostics fixes land.
+- Release metadata is aligned at `0.3.8` across the workspace for the installer diagnostics follow-up release.
+
 ## v0.3.7
 
 ### Fixed

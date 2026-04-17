@@ -1,0 +1,8 @@
+Integration-specific product changes were not part of release 0.3.8 metadata prep.
+
+Relevant integration-style evidence for the shipped installer diagnostics is preserved in the source proof bundle:
+- `.agent/tasks/HTG-2026-04-17-installer-diagnostics-proof-loop/raw/setup-json-final.txt`
+- `.agent/tasks/HTG-2026-04-17-installer-diagnostics-proof-loop/raw/doctor-json-final.txt`
+- `.agent/tasks/HTG-2026-04-17-installer-diagnostics-proof-loop/raw/verify-json-final.txt`
+
+Release 0.3.8 itself validates release metadata and repository-wide checks rather than reintroducing new runtime changes.
