@@ -425,3 +425,15 @@ export function createBotHandlers(dependencies: BotDependencies) {
     handleCallbackQuery
   };
 }
+
+export async function dispatchTelegramUpdate(
+  handlers: ReturnType<typeof createBotHandlers>,
+  update: TelegramUpdate
+): Promise<void> {
+  if (update.message) {
+    await handlers.handleMessage(update.message);
+  }
+  if (update.callback_query) {
+    await handlers.handleCallbackQuery(update.callback_query);
+  }
+}

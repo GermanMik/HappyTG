@@ -1,0 +1,24 @@
+
+> @happytg/bot@0.3.14 test C:\Develop\Projects\HappyTG\apps\bot
+> tsx --test src/*.test.ts
+
+✔ resume command sends session transition summary (1.7852ms)
+✔ doctor command resolves telegram identity and creates bootstrap session (1.445ms)
+✔ verify command surfaces approval keyboard when required (0.5618ms)
+✔ approval callback resolves with the linked HappyTG user (0.5548ms)
+✔ bot ready endpoint returns healthy when api is reachable (30.7475ms)
+✔ bot ready endpoint returns 503 when api is unreachable (10.1841ms)
+✔ botConfigurationMessage stays actionable without exposing secrets (0.321ms)
+✔ initializeBotEnvironment prefers a valid .env token over placeholder shell state (5.4045ms)
+✔ createDefaultSendTelegramMessage falls back to Windows PowerShell after a Node transport timeout (1.4145ms)
+✔ createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful without using fallback (2.3791ms)
+✔ resolveTelegramUpdateMode auto-selects polling for local urls and webhook for public urls (0.5601ms)
+✔ createTelegramPollingRuntime clears webhook and dispatches polled updates (1.2324ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 495.598

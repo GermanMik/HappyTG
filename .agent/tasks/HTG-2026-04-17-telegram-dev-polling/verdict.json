@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-17-telegram-dev-polling",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "manual-fresh-verify-2026-04-17-telegram-dev-polling"
+  },
+  "checks": [
+    {
+      "name": "pnpm typecheck",
+      "ok": true,
+      "detail": "turbo typecheck passed across 13 packages."
+    },
+    {
+      "name": "pnpm lint",
+      "ok": true,
+      "detail": "turbo lint completed; packages currently emit TODO lint placeholders but no failures."
+    },
+    {
+      "name": "pnpm test",
+      "ok": true,
+      "detail": "turbo test passed across the workspace, including the new bot polling coverage."
+    },
+    {
+      "name": "pnpm build",
+      "ok": true,
+      "detail": "turbo build passed across 13 packages."
+    },
+    {
+      "name": "pnpm happytg task validate",
+      "ok": true,
+      "detail": "Task bundle validates with required proof files present."
+    }
+  ],
+  "generatedAt": "2026-04-17T17:07:11.822Z"
+}

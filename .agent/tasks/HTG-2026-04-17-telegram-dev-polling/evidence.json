@@ -1,0 +1,71 @@
+{
+  "taskId": "HTG-2026-04-17-telegram-dev-polling",
+  "criteria": [
+    {
+      "criterion": "Local bot runtime receives Telegram messages without an externally configured webhook.",
+      "artifacts": [
+        "raw/manual-mode.txt",
+        "raw/typecheck.txt",
+        "raw/lint.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/build.txt",
+        "raw/task-validate.txt",
+        "apps/bot/src/index.ts",
+        "apps/bot/src/index.test.ts",
+        "apps/bot/src/handlers.ts",
+        ".env.example",
+        "docs/configuration.md"
+      ]
+    },
+    {
+      "criterion": "Webhook mode remains available for deployed setups without double-processing updates.",
+      "artifacts": [
+        "raw/manual-mode.txt",
+        "raw/typecheck.txt",
+        "raw/lint.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/build.txt",
+        "raw/task-validate.txt",
+        "apps/bot/src/index.ts",
+        "apps/bot/src/index.test.ts",
+        "apps/bot/src/handlers.ts",
+        ".env.example",
+        "docs/configuration.md"
+      ]
+    },
+    {
+      "criterion": "Regression coverage proves incoming Telegram updates are polled and dispatched to existing handlers.",
+      "artifacts": [
+        "raw/manual-mode.txt",
+        "raw/typecheck.txt",
+        "raw/lint.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/build.txt",
+        "raw/task-validate.txt",
+        "apps/bot/src/index.ts",
+        "apps/bot/src/index.test.ts",
+        "apps/bot/src/handlers.ts",
+        ".env.example",
+        "docs/configuration.md"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/manual-mode.txt",
+    "raw/typecheck.txt",
+    "raw/lint.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt",
+    "raw/task-validate.txt",
+    "apps/bot/src/index.ts",
+    "apps/bot/src/index.test.ts",
+    "apps/bot/src/handlers.ts",
+    ".env.example",
+    "docs/configuration.md"
+  ],
+  "generatedAt": "2026-04-17T17:07:11.820Z"
+}

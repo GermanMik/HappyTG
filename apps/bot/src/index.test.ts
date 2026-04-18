@@ -5,7 +5,14 @@ import path from "node:path";
 import test from "node:test";
 
 import type { BotDependencies } from "./handlers.js";
-import { botConfigurationMessage, createBotServer, createDefaultSendTelegramMessage, initializeBotEnvironment } from "./index.js";
+import {
+  botConfigurationMessage,
+  createBotServer,
+  createDefaultSendTelegramMessage,
+  createTelegramPollingRuntime,
+  initializeBotEnvironment,
+  resolveTelegramUpdateMode
+} from "./index.js";
 
 test("bot ready endpoint returns healthy when api is reachable", async () => {
   const dependencies: Partial<BotDependencies> = {
@@ -182,4 +189,79 @@ test("createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful wit
   assert.match(errorLogs[0]?.message ?? "", /sendMessage failed/i);
   assert.match(JSON.stringify(errorLogs[0]?.metadata ?? {}), /401/);
   assert.match(JSON.stringify(errorLogs[0]?.metadata ?? {}), /Unauthorized/);
+});
+
+test("resolveTelegramUpdateMode auto-selects polling for local urls and webhook for public urls", () => {
+  assert.equal(resolveTelegramUpdateMode({
+    TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+    HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+  }), "polling");
+
+  assert.equal(resolveTelegramUpdateMode({
+    TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+    HAPPYTG_PUBLIC_URL: "https://happytg.example.com"
+  }), "webhook");
+
+  assert.equal(resolveTelegramUpdateMode({
+    TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+    TELEGRAM_UPDATES_MODE: "disabled"
+  }), "disabled");
+
+  assert.equal(resolveTelegramUpdateMode({}), "disabled");
+});
+
+test("createTelegramPollingRuntime clears webhook and dispatches polled updates", async () => {
+  const fetchCalls: Array<{ url: string; method: string; body?: string }> = [];
+  const dispatchedUpdateIds: number[] = [];
+  const runtime = createTelegramPollingRuntime({
+    botToken: "123456:abcdefghijklmnopqrstuvwx",
+    updateMode: "polling",
+    fetchImpl: async (input, init) => {
+      fetchCalls.push({
+        url: String(input),
+        method: init?.method ?? "GET",
+        body: typeof init?.body === "string" ? init.body : undefined
+      });
+
+      if (String(input).includes("/deleteWebhook")) {
+        return new Response(JSON.stringify({ ok: true, result: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" }
+        });
+      }
+
+      if (String(input).includes("/getUpdates")) {
+        return new Response(JSON.stringify({
+          ok: true,
+          result: [
+            {
+              update_id: 41,
+              message: {
+                message_id: 9,
+                text: "/start",
+                chat: { id: 77 },
+                from: { id: 88, username: "dev" }
+              }
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { "content-type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unexpected Telegram API call: ${String(input)}`);
+    },
+    async dispatchUpdate(update) {
+      dispatchedUpdateIds.push(update.update_id);
+    }
+  });
+
+  const processed = await runtime.pollOnce();
+
+  assert.equal(processed, 1);
+  assert.deepEqual(dispatchedUpdateIds, [41]);
+  assert.match(fetchCalls[0]?.url ?? "", /deleteWebhook/);
+  assert.match(fetchCalls[1]?.url ?? "", /getUpdates/);
+  assert.match(fetchCalls[1]?.body ?? "", /"offset":0/);
 });

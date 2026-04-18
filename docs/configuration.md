@@ -12,6 +12,7 @@
 - `DATABASE_URL`
 - `REDIS_URL`
 - `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_UPDATES_MODE`
 - `TELEGRAM_BOT_USERNAME`
 - `TELEGRAM_ALLOWED_USER_IDS`
 - `TELEGRAM_HOME_CHANNEL`
@@ -24,6 +25,12 @@
 - `HAPPYTG_BOT_PORT`
 - `HAPPYTG_WORKER_PORT`
 - `HAPPYTG_REDIS_HOST_PORT`
+
+## Telegram Update Delivery
+
+- `TELEGRAM_UPDATES_MODE=auto` selects polling when `HAPPYTG_PUBLIC_URL` looks local and webhook mode when it looks public.
+- Set `TELEGRAM_UPDATES_MODE=polling` to force `getUpdates` in development or degraded setups.
+- Set `TELEGRAM_UPDATES_MODE=webhook` when Telegram is already delivering updates to your public `/telegram/webhook` endpoint.
 
 ## Policy Configuration
 

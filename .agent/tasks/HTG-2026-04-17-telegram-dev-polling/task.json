@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-04-17-telegram-dev-polling",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-17-telegram-dev-polling",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Telegram dev polling intake",
+  "acceptanceCriteria": [
+    "Local bot runtime receives Telegram messages without an externally configured webhook.",
+    "Webhook mode remains available for deployed setups without double-processing updates.",
+    "Regression coverage proves incoming Telegram updates are polled and dispatched to existing handlers."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-17T17:01:56.192Z",
+  "updatedAt": "2026-04-17T17:07:11.822Z"
+}

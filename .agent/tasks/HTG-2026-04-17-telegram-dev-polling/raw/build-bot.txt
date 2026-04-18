@@ -1,0 +1,4 @@
+
+> @happytg/bot@0.3.14 build C:\Develop\Projects\HappyTG\apps\bot
+> tsc -p tsconfig.json
+
