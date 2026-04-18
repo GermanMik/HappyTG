@@ -406,6 +406,7 @@ async function resolvePortConflictsBeforePostChecks(input: {
     env?: NodeJS.ProcessEnv;
     platform?: NodeJS.Platform;
   }) => Promise<BootstrapReport>;
+  updateProgressDetail?: (detail: string) => void;
   writeMergedEnvFileImpl: typeof writeMergedEnvFile;
 }): Promise<{
   report: BootstrapReport;
@@ -460,6 +461,9 @@ async function resolvePortConflictsBeforePostChecks(input: {
       });
     }
 
+    input.updateProgressDetail?.(
+      `Saving \`${conflict.overrideEnv}=${selectedPort}\` in ${path.join(input.repoPath, ".env")}.\nRe-running planned port preflight so the installer can continue.`
+    );
     const envWrite = await input.writeMergedEnvFileImpl({
       repoRoot: input.repoPath,
       env: input.installEnv,
@@ -1582,13 +1586,18 @@ export async function runHappyTGInstall(
         interactive,
         stdin,
         stdout,
-        repoPath: repoSyncResult.path,
-        repoEnv,
-        installEnv,
-        platform: platform.platform.platform,
-        runBootstrapCheck: input.runBootstrapCheck,
-        writeMergedEnvFileImpl: deps.writeMergedEnvFile
-      });
+      repoPath: repoSyncResult.path,
+      repoEnv,
+      installEnv,
+      platform: platform.platform.platform,
+      runBootstrapCheck: input.runBootstrapCheck,
+      updateProgressDetail: (detail) => updateStep({
+        ...steps.find((step) => step.id === "port-preflight")!,
+        status: "running",
+        detail
+      }),
+      writeMergedEnvFileImpl: deps.writeMergedEnvFile
+    });
       repoEnv = portPreflight.repoEnv;
       preflightSetupReport = portPreflight.report;
       appliedPortOverrides = portPreflight.appliedOverrides;

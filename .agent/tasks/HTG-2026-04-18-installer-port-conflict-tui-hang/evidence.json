@@ -1,0 +1,43 @@
+{
+  "taskId": "HTG-2026-04-18-installer-port-conflict-tui-hang",
+  "status": "passed",
+  "commands": [
+    {
+      "name": "build",
+      "command": "pnpm --filter @happytg/bootstrap run build",
+      "artifact": "raw/build.txt",
+      "status": "passed"
+    },
+    {
+      "name": "lint",
+      "command": "pnpm --filter @happytg/bootstrap run lint",
+      "artifact": "raw/lint.txt",
+      "status": "passed"
+    },
+    {
+      "name": "typecheck",
+      "command": "pnpm --filter @happytg/bootstrap run typecheck",
+      "artifact": "raw/typecheck.txt",
+      "status": "passed"
+    },
+    {
+      "name": "test-unit",
+      "command": "pnpm --filter @happytg/bootstrap run test",
+      "artifact": "raw/test-unit.txt",
+      "status": "passed"
+    },
+    {
+      "name": "test-interactive",
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern \"promptSelect|promptPortValue|port preflight|waitForEnter\" src/install.test.ts src/install.runtime.test.ts",
+      "artifact": "raw/test-integration.txt",
+      "status": "passed"
+    }
+  ],
+  "artifacts": [
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-18-installer-port-preflight-progress-indicator",
+  "status": "passed",
+  "summary": "The installer now shows a clear progress state after port-conflict confirmation while saving the selected override and rerunning planned-port preflight, with deterministic runtime coverage proving the intermediate screen is visible."
+}

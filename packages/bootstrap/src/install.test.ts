@@ -11,6 +11,8 @@ import { detectLinuxFamily } from "./install/platform.js";
 import { defaultDirtyWorktreeStrategy, detectRepoModeChoices, inspectRepo } from "./install/repo.js";
 import { fetchTelegramBotIdentity } from "./install/telegram.js";
 import {
+  promptSelect,
+  promptPortValue,
   promptTelegramForm,
   renderFinalScreen,
   renderProgressScreen,
@@ -333,6 +335,71 @@ test("waitForEnter does not render the same final screen twice when ENTER closes
 
   await wait;
   assert.equal(rendered.split("Final Summary").length - 1, 1);
+});
+
+test("promptSelect resolves on enter for single-select menus", async () => {
+  const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
+  const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
+  stdin.isTTY = true;
+  stdout.isTTY = true;
+  stdin.setRawMode = (() => stdin) as typeof stdin.setRawMode;
+
+  const prompt = promptSelect({
+    stdin,
+    stdout,
+    items: ["use:3005", "manual", "abort"] as const,
+    initial: "use:3005",
+    render: (active) => `${active}\n`
+  });
+
+  queueMicrotask(() => {
+    stdin.emit("keypress", "", { name: "down" });
+    stdin.emit("keypress", "\r", { name: "enter" });
+  });
+
+  const selected = await prompt;
+  assert.equal(selected, "manual");
+});
+
+test("promptPortValue keeps validation visible after invalid input and accepts a later enter-confirmed retry", async () => {
+  const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
+  const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
+  let rendered = "";
+  stdin.isTTY = true;
+  stdout.isTTY = true;
+  stdin.setRawMode = (() => stdin) as typeof stdin.setRawMode;
+  stdout.on("data", (chunk) => {
+    rendered += chunk.toString();
+  });
+
+  const prompt = promptPortValue({
+    stdin,
+    stdout,
+    serviceLabel: "Mini App",
+    occupiedPort: 3001,
+    overrideEnv: "HAPPYTG_MINIAPP_PORT",
+    envFilePath: "/tmp/HappyTG/.env",
+    suggestedPorts: [3005, 3006, 3007],
+    validate: (value) => value === "3001"
+      ? "Port 3001 is already occupied for Mini App. Choose a different port."
+      : undefined
+  });
+
+  queueMicrotask(() => {
+    stdin.emit("keypress", "3001", {});
+    stdin.emit("keypress", "\r", { name: "enter" });
+    stdin.emit("keypress", "", { name: "backspace" });
+    stdin.emit("keypress", "", { name: "backspace" });
+    stdin.emit("keypress", "", { name: "backspace" });
+    stdin.emit("keypress", "", { name: "backspace" });
+    stdin.emit("keypress", "3556", {});
+    stdin.emit("keypress", "\r", { name: "enter" });
+  });
+
+  const selected = await prompt;
+  assert.equal(selected, 3556);
+  assert.match(rendered, /Validation/);
+  assert.match(rendered, /Port 3001 is already occupied for Mini App/);
 });
 
 test("promptTelegramForm accepts pasted token and allowed user IDs with trailing CRLF in the interactive keypress path", async () => {

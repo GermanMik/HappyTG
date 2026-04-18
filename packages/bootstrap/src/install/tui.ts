@@ -676,7 +676,7 @@ export function reduceTelegramFormKeypress(
       next.activeRow = (next.activeRow + 1) % TELEGRAM_FIELD_ORDER.length;
       return { state: next, done: false };
     }
-    if (input.key.name === "return") {
+    if (isConfirmKey(input.chunk, input.key)) {
       const activeField = activeTelegramField(next.activeRow);
       if (activeField === "continue") {
         const validationMessage = validateTelegramBotToken(next.form.botToken);
@@ -724,7 +724,7 @@ export function reduceTelegramFormKeypress(
       next.validationMessage = undefined;
     }
   }
-  if (input.key.name === "return" || parsedChunk.submit) {
+  if (isConfirmKey(input.chunk, input.key) || parsedChunk.submit) {
     if (activeField !== "continue") {
       commitTelegramDraft(next, activeField);
     }
@@ -814,7 +814,7 @@ export async function promptSelect<T extends string>(input: {
       activeIndex = (activeIndex + 1) % input.items.length;
       return false;
     }
-    if (key.name === "return") {
+    if (isConfirmKey(_chunk, key)) {
       confirmed = input.items[activeIndex]!;
       return true;
     }
@@ -856,7 +856,7 @@ export async function promptMultiSelect<T extends string>(input: {
       }
       return false;
     }
-    if (key.name === "return") {
+    if (isConfirmKey(_chunk, key)) {
       return true;
     }
     if (key.name === "escape" || (key.ctrl && key.name === "c")) {
@@ -948,7 +948,7 @@ export async function promptPortValue(input: {
         draft = `${draft}${parsedChunk.text.replace(/[^\d]/gu, "")}`;
         validationMessage = undefined;
       }
-      if (key.name === "return" || parsedChunk.submit) {
+      if (isConfirmKey(chunk, key) || parsedChunk.submit) {
         validationMessage = input.validate(draft);
         if (validationMessage) {
           return false;

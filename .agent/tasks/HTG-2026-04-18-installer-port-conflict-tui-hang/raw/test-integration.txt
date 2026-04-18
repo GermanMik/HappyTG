@@ -1,0 +1,17 @@
+✔ runHappyTGInstall interactive port preflight offers three suggested ports and saves the selected override (122.7266ms)
+✔ runHappyTGInstall interactive port preflight accepts a manual port override (123.1815ms)
+✔ runHappyTGInstall interactive port preflight keeps the custom-port prompt active after invalid input and then accepts enter-confirmed retry (127.0519ms)
+✔ runHappyTGInstall interactive port preflight skips port changes for supported reuse (91.7837ms)
+✔ runHappyTGInstall interactive port preflight can abort instead of silently rebinding (112.3361ms)
+✔ waitForEnter resolves when ENTER close is pressed on the final screen (2.2144ms)
+✔ waitForEnter does not render the same final screen twice when ENTER closes it (0.3683ms)
+✔ promptSelect resolves on enter for single-select menus (0.4695ms)
+✔ promptPortValue keeps validation visible after invalid input and accepts a later enter-confirmed retry (1.2151ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 918.3058

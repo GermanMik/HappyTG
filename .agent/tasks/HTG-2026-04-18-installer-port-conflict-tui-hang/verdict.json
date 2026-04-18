@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-18-installer-port-conflict-tui-hang",
+  "status": "passed",
+  "summary": "Shared installer confirm-key handling now accepts Enter consistently across single-select and manual port prompts, and deterministic interactive regressions cover suggested-port, manual-entry, invalid-entry recovery, and abort."
+}

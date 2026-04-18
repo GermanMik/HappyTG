@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-18-installer-port-conflict-tui-hang",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-18-installer-port-conflict-tui-hang",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Fix installer port conflict TUI hang on confirm",
+  "acceptanceCriteria": [
+    "Choosing a suggested port completes the prompt, writes the selected HAPPYTG_*_PORT override into the existing installer .env path, reruns preflight, and continues the install flow.",
+    "Choosing Enter custom port accepts a valid port, rejects invalid input with a product-level validation message, and continues without hanging.",
+    "Choosing Abort install exits the step predictably without hidden config changes or hangs.",
+    "Supported reuse behavior remains unchanged and does not trigger pointless port rebinding.",
+    "Deterministic regression coverage exercises the interactive path for suggested-port, manual-port, abort, and prompt completion so the hang is caught in tests."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-18T00:00:00.000Z",
+  "updatedAt": "2026-04-18T18:44:15.4654302+03:00"
+}
