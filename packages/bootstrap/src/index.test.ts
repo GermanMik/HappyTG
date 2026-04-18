@@ -904,9 +904,11 @@ test("doctor reports an actionable mini app port conflict and distinguishes an a
       items: Array<{ id: string; message: string; solutions?: string[] }>;
     }).items).find((item) => item.id === "miniapp-port-conflict");
     assert.equal(miniAppConflict?.message.includes("already there"), true);
-    assert.equal(miniAppConflict?.solutions?.[0], "Reuse the running service if it is yours.");
-    assert.match(miniAppConflict?.solutions?.[1] ?? "", /HAPPYTG_MINIAPP_PORT/);
-    assert.match(miniAppConflict?.solutions?.[1] ?? "", /pnpm dev:miniapp/);
+    assert.equal(miniAppConflict?.solutions?.[0], "This is a conflict, not a supported HappyTG reuse path.");
+    assert.match(miniAppConflict?.solutions?.[1] ?? "", /Nearest free ports:/);
+    assert.match(miniAppConflict?.solutions?.[2] ?? "", /HAPPYTG_MINIAPP_PORT/);
+    assert.match(miniAppConflict?.solutions?.[2] ?? "", /PORT/);
+    assert.match(miniAppConflict?.solutions?.[2] ?? "", /pnpm dev:miniapp/);
   } finally {
     await Promise.all([
       closeServer(busyPort.server),
@@ -977,6 +979,7 @@ test("setup treats compatible Redis, PostgreSQL, and MinIO listeners as supporte
       state: string;
       detail: string;
       suggestedPort?: number;
+      suggestedPorts?: number[];
       listener?: { description: string };
     }>;
     const overrideExamples = (report.reportJson.onboarding as {
@@ -992,10 +995,17 @@ test("setup treats compatible Redis, PostgreSQL, and MinIO listeners as supporte
     assert.equal(ports.find((item) => item.id === "postgres")?.state, "occupied_supported");
     assert.equal(minioApiPort?.state, "occupied_supported");
     assert.equal(minioConsolePort?.state, "occupied_supported");
+    assert.equal(ports.find((item) => item.id === "miniapp")?.suggestedPorts?.length, 3);
+    assert.deepEqual(
+      ports.find((item) => item.id === "miniapp")?.suggestedPorts?.[0],
+      ports.find((item) => item.id === "miniapp")?.suggestedPort
+    );
     assert.match(ports.find((item) => item.id === "miniapp")?.detail ?? "", /another process|HTTP listener/i);
     assert.match((report.reportJson.preflight as string[]).join("\n"), /reuse:/i);
     assert.ok(minioApiPort?.suggestedPort && minioApiPort.suggestedPort > minioApi.port);
     assert.ok(minioConsolePort?.suggestedPort && minioConsolePort.suggestedPort > minioConsole.port);
+    assert.equal(minioApiPort?.suggestedPorts?.length, 3);
+    assert.equal(minioConsolePort?.suggestedPorts?.length, 3);
     assert.notEqual(minioApiPort?.suggestedPort, minioApiPort?.port);
     assert.notEqual(minioApiPort?.suggestedPort, minioConsolePort?.port);
     assert.notEqual(minioConsolePort?.suggestedPort, minioApiPort?.port);
@@ -1011,6 +1021,72 @@ test("setup treats compatible Redis, PostgreSQL, and MinIO listeners as supporte
       closeServer(minioApi.server),
       closeServer(minioConsole.server)
     ]);
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("setup respects PORT fallback when app-specific port overrides are absent", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-port-env-fallback-"));
+  const busyMiniApp = await createGenericHttpService();
+  try {
+    const configPath = path.join(tempDir, "config.toml");
+    const codexPath = path.join(tempDir, "codex.mjs");
+    const gitPath = path.join(tempDir, "git");
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeExecutable(
+        codexPath,
+        `
+          #!/usr/bin/env node
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex 0.115.0");
+            process.exit(0);
+          }
+          if (args[0] === "exec") {
+            console.log('{"type":"message","text":"OK"}');
+            process.exit(0);
+          }
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitPath)
+    ]);
+
+    const report = await runBootstrapCommand("setup", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: codexPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        PORT: String(busyMiniApp.port),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir
+      }
+    });
+
+    const miniAppPort = (report.reportJson.ports as Array<{
+      id: string;
+      port: number;
+      detail: string;
+    }>).find((item) => item.id === "miniapp");
+    const miniAppConflict = ((report.reportJson.onboarding as {
+      items: Array<{ id: string; solutions?: string[] }>;
+    }).items).find((item) => item.id === "miniapp-port-conflict");
+
+    assert.equal(miniAppPort?.port, busyMiniApp.port);
+    assert.match(miniAppPort?.detail ?? "", new RegExp(`port ${busyMiniApp.port}`));
+    assert.ok(report.findings.some((item) => item.code === "MINIAPP_PORT_BUSY"));
+    assert.match(miniAppConflict?.solutions?.[1] ?? "", /Nearest free ports:/);
+    assert.match(miniAppConflict?.solutions?.[2] ?? "", /HAPPYTG_MINIAPP_PORT\/PORT/);
+  } finally {
+    await closeServer(busyMiniApp.server);
     await rm(tempDir, { recursive: true, force: true });
   }
 });

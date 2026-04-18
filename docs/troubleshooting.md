@@ -10,7 +10,8 @@ Use [Quickstart](./quickstart.md) for the standard first-run flow, [Bootstrap Do
 | Codex smoke check fails | `codex --version`, `~/.codex/config.toml`, network access required by Codex | Rerun `pnpm happytg doctor` and `pnpm happytg verify`; use `--json` when you need detailed stderr. |
 | `Codex: detected but unavailable` | Codex binary exists but fails in this shell | Fix the local Codex install/runtime, then rerun `pnpm happytg doctor --json`. |
 | Redis blocks first start | Redis state in the preflight summary | Reuse system Redis on `6379`, start Redis, or remap `HAPPYTG_REDIS_HOST_PORT`. |
-| Mini App says port `3001` is already in use | Whether another HappyTG Mini App is already running | Reuse it, or override `HAPPYTG_MINIAPP_PORT`. |
+| Mini App says port `3001` is already in use | Whether `pnpm happytg setup --json` identifies HappyTG Mini App or another listener on `3001` | Reuse the running Mini App only when setup identifies HappyTG Mini App there; otherwise treat it as a conflict and override `HAPPYTG_MINIAPP_PORT` or `PORT`. |
+| API says port `4000` is already in use | Whether `pnpm happytg setup --json` identifies HappyTG API or another listener on `4000` | Reuse the running API only when setup identifies HappyTG API there; otherwise treat it as a conflict and override `HAPPYTG_API_PORT` or `PORT`. |
 | Resume does not restore session | Control plane event log, host daemon local state, idempotency state | Confirm the session was not already terminally completed or cancelled. |
 | Telegram shows stale state | Worker health and projection freshness | Compare bot output with Mini App session history and refresh projections. |
 
@@ -21,3 +22,5 @@ $env:HAPPYTG_MINIAPP_PORT=3002; pnpm dev:miniapp
 $env:HAPPYTG_API_PORT=4001; pnpm dev:api
 $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.example.yml up redis
 ```
+
+Interactive `pnpm happytg install` now surfaces the same port classification before later startup guidance and lets you pick one of the nearest free ports, enter a custom port, or abort instead of silently rebinding.

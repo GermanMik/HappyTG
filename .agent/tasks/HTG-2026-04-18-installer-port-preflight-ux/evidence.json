@@ -1,0 +1,67 @@
+{
+  "taskId": "HTG-2026-04-18-installer-port-preflight-ux",
+  "criteria": [
+    {
+      "criterion": "Installer preflights all planned HappyTG ports before service start and distinguishes supported reuse from real conflicts.",
+      "artifacts": [
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/build.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/release-check.txt",
+        "raw/setup-json.txt",
+        "raw/doctor-json.txt",
+        "raw/verify-json.txt",
+        "raw/task-validate.txt",
+        "raw/source-task-validate.txt"
+      ]
+    },
+    {
+      "criterion": "Interactive install offers three nearby free ports, manual entry, and abort, then saves the explicit override into .env without silent rebinds.",
+      "artifacts": [
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/build.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/release-check.txt",
+        "raw/setup-json.txt",
+        "raw/doctor-json.txt",
+        "raw/verify-json.txt",
+        "raw/task-validate.txt",
+        "raw/source-task-validate.txt"
+      ]
+    },
+    {
+      "criterion": "Bootstrap/setup diagnostics preserve env override precedence, expose listener attribution, and stay covered by deterministic regression tests and proof artifacts.",
+      "artifacts": [
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/build.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/release-check.txt",
+        "raw/setup-json.txt",
+        "raw/doctor-json.txt",
+        "raw/verify-json.txt",
+        "raw/task-validate.txt",
+        "raw/source-task-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/build.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/release-check.txt",
+    "raw/setup-json.txt",
+    "raw/doctor-json.txt",
+    "raw/verify-json.txt",
+    "raw/task-validate.txt",
+    "raw/source-task-validate.txt"
+  ],
+  "generatedAt": "2026-04-18T14:35:15.194Z"
+}

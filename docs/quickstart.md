@@ -104,7 +104,11 @@ The host daemon is separate from `pnpm dev`; start it with `pnpm dev:daemon` aft
 | Worker probe | `4200` | `HAPPYTG_WORKER_PORT=4201` | `HAPPYTG_WORKER_PORT=4201 pnpm dev:worker` | `$env:HAPPYTG_WORKER_PORT=4201; pnpm dev:worker` |
 | Compose Redis host port | `6379` | `HAPPYTG_REDIS_HOST_PORT=6380` | `HAPPYTG_REDIS_HOST_PORT=6380 docker compose -f infra/docker-compose.example.yml up redis` | `$env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.example.yml up redis` |
 
-If `3001` is already in use, pick a different `HAPPYTG_MINIAPP_PORT`.
+If `3001` is already in use, run `pnpm happytg setup --json` first: if it reports an existing HappyTG Mini App, reuse it; if it names another listener, treat that as a conflict and choose `HAPPYTG_MINIAPP_PORT` or `PORT`.
+
+If `4000` is already in use, reuse the running HappyTG API only when `pnpm happytg setup --json` identifies it as HappyTG API; otherwise treat the existing listener as a conflict and use `HAPPYTG_API_PORT` or `PORT`.
+
+Interactive `pnpm happytg install` follows the same rule set: it preflights the planned ports, shows the detected listener, offers 3 nearby free ports for real conflicts, and writes the explicit `HAPPYTG_*_PORT` choice back to `.env` before later startup guidance.
 
 If `6379` is already in use:
 

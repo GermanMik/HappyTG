@@ -1,0 +1,603 @@
+
+> happytg@0.3.15 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "verify" "--json"
+
+{
+  "id": "btr_87bc8b079b1e469bbd899de8",
+  "command": "verify",
+  "createdAt": "2026-04-18T14:34:01.336Z",
+  "hostFingerprint": "ALFRED-win32-x64",
+  "status": "warn",
+  "profileRecommendation": "recommended",
+  "findings": [
+    {
+      "code": "CODEX_SMOKE_WARNINGS",
+      "severity": "warn",
+      "message": "Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details."
+    },
+    {
+      "code": "SERVICES_ALREADY_RUNNING",
+      "severity": "info",
+      "message": "HappyTG services already appear to be running on 4000. Reuse the running stack or stop it before starting another copy."
+    },
+    {
+      "code": "MINIAPP_PORT_BUSY",
+      "severity": "warn",
+      "message": "Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there. This is a conflict, not a supported HappyTG reuse path. Nearest free ports: 3005, 3006, 3007. Choose one with `HAPPYTG_MINIAPP_PORT/PORT` or enter your own port manually. For example: `$env:HAPPYTG_MINIAPP_PORT=\"3005\"; pnpm dev:miniapp`."
+    }
+  ],
+  "planPreview": [
+    "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.",
+    "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.",
+    "Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there.",
+    "This is a conflict, not a supported HappyTG reuse path.",
+    "Nearest free ports: 3005, 3006, 3007.",
+    "Choose one with `HAPPYTG_MINIAPP_PORT/PORT` or enter your own port manually. For example: `$env:HAPPYTG_MINIAPP_PORT=\"3005\"; pnpm dev:miniapp`.",
+    "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+    "Send `/pair <CODE>` to @gerta_workbot.",
+    "After pairing, start the daemon with `pnpm dev:daemon`."
+  ],
+  "reportJson": {
+    "platform": "win32-x64",
+    "env": {
+      "envFilePath": "C:\\Develop\\Projects\\HappyTG\\.env",
+      "envExamplePath": "C:\\Develop\\Projects\\HappyTG\\.env.example"
+    },
+    "preflight": [
+      "Env: .env found",
+      "Codex: codex-cli 0.118.0",
+      "Telegram: configured",
+      "Redis: running on localhost:6379",
+      "Ports: conflicts: Mini App 3001; reuse: API 4000, Redis host port 6379, Postgres host port 5432, MinIO API host port 9000, MinIO console host port 9001; free: Bot 4100, Worker probe 4200"
+    ],
+    "git": {
+      "available": true,
+      "binaryPath": "C:\\Program Files\\Git\\cmd\\git.exe"
+    },
+    "codex": {
+      "runtime": "codex-cli",
+      "available": true,
+      "missing": false,
+      "binaryPath": "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd",
+      "version": "codex-cli 0.118.0",
+      "configPath": "C:\\Users\\tikta\\.codex\\config.toml",
+      "configExists": true,
+      "smokeOk": true,
+      "smokeTimedOut": false,
+      "smokeOutput": "{\"type\":\"thread.started\",\"thread_id\":\"019da102-d03d-7c41-8d5c-6058440b84c2\"}\n{\"type\":\"turn.started\"}\n{\"type\":\"error\",\"message\":\"Reconnecting... 2/5 (unexpected status 403 Forbidden: 154c\\r\\n<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\\\"no-js ie6 oldie\\\" lang=\\\"en-US\\\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\\\"no-js ie7 oldie\\\" lang=\\\"en-US\\\"> <![endi, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462aa3cb88d7e-HEL)\"}\n{\"type\":\"error\",\"message\":\"Reconnecting... 3/5 (unexpected status 403 Forbidden: 154c\\r\\n<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\\\"no-js ie6 oldie\\\" lang=\\\"en-US\\\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\\\"no-js ie7 oldie\\\" lang=\\\"en-US\\\"> <![, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462ad2dbb8d73-HEL)\"}\n{\"type\":\"error\",\"message\":\"Reconnecting... 4/5 (unexpected status 403 Forbidden: 154c\\r\\n<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\\\"no-js ie6 oldie\\\" lang=\\\"en-US\\\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\\\"no-js ie7 oldie\\\" lang=\\\"en-US\\\"> <![endi, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462b2898b5288-HEL)\"}\n{\"type\":\"error\",\"message\":\"Reconnecting... 5/5 (unexpected status 403 Forbidden: 154c\\r\\n<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\\\"no-js ie6 oldie\\\" lang=\\\"en-US\\\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\\\"no-js ie7 oldie\\\" lang=\\\"en-US\\\"> <![en, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462bdee4c8d89-HEL)\"}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_0\",\"type\":\"mcp_tool_call\",\"server\":\"echovault\",\"tool\":\"memory_context\",\"arguments\":{\"project\":\"HappyTG\",\"limit\":3},\"result\":null,\"error\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_0\",\"type\":\"mcp_tool_call\",\"server\":\"echovault\",\"tool\":\"memory_context\",\"arguments\":{\"project\":\"HappyTG\",\"limit\":3},\"result\":null,\"error\":{\"message\":\"user cancelled MCP tool call\"},\"status\":\"failed\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_1\",\"type\":\"mcp_tool_call\",\"server\":\"echovault\",\"tool\":\"memory_search\",\"arguments\":{\"project\":\"HappyTG\",\"query\":\"exact OK response\",\"limit\":3},\"result\":null,\"error\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_1\",\"type\":\"mcp_tool_call\",\"server\":\"echovault\",\"tool\":\"memory_search\",\"arguments\":{\"project\":\"HappyTG\",\"query\":\"exact OK response\",\"limit\":3},\"result\":null,\"error\":{\"message\":\"user cancelled MCP tool call\"},\"status\":\"failed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_2\",\"type\":\"agent_message\",\"text\":\"OK\"}}\n{\"type\":\"turn.completed\",\"usage\":{\"input_tokens\":108202,\"cached_input_tokens\":57728,\"output_tokens\":665}}",
+      "smokeError": "2026-04-18T14:33:29.379536Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:29.406454Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:33:29.406842Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-shm: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:33:29.406946Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-wal: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:33:29.415128Z  WARN codex_state::runtime: failed to open state db at C:\\Users\\tikta\\.codex\\state_5.sqlite: migration 23 was previously applied but is missing in the resolved migrations\n2026-04-18T14:33:29.415151Z  WARN codex_rollout::state_db: failed to initialize state runtime at C:\\Users\\tikta\\.codex: migration 23 was previously applied but is missing in the resolved migrations\n2026-04-18T14:33:29.416512Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell\nReading additional input from stdin...\n2026-04-18T14:33:29.794371Z  WARN codex_core::plugins::startup_sync: startup remote plugin sync failed; will retry on next app-server start error=remote plugin sync request to https://chatgpt.com/backend-api/plugins/list failed with status 403 Forbidden: <html>\n  <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <style global>body{font-family:Arial,Helvetica,sans-serif}.container{align-items:center;display:flex;flex-direction:column;gap:2rem;height:100%;justify-content:center;width:100%}@keyframes enlarge-appear{0%{opacity:0;transform:scale(75%) rotate(-90deg)}to{opacity:1;transform:scale(100%) rotate(0deg)}}.logo{color:#8e8ea0}.scale-appear{animation:enlarge-appear .4s ease-out}@media (min-width:768px){.scale-appear{height:48px;width:48px}}.data:empty{display:none}.data{border-radius:5px;color:#8e8ea0;text-align:center}@media (prefers-color-scheme:dark){body{background-color:#343541}.logo{color:#acacbe}}</style>\n  <meta http-equiv=\"refresh\" content=\"360\"></head>\n  <body>\n    <div class=\"container\">\n      <div class=\"logo\">\n        <svg\n          width=\"41\"\n          height=\"41\"\n          viewBox=\"0 0 41 41\"\n          fill=\"none\"\n          xmlns=\"http://www.w3.org/2000/svg\"\n          strokeWidth=\"2\"\n          class=\"scale-appear\"\n        >\n          <path\n            d=\"M37.5324 16.8707C37.9808 15.5241 38.1363 14.0974 37.9886 12.6859C37.8409 11.2744 37.3934 9.91076 36.676 8.68622C35.6126 6.83404 33.9882 5.3676 32.0373 4.4985C30.0864 3.62941 27.9098 3.40259 25.8215 3.85078C24.8796 2.7893 23.7219 1.94125 22.4257 1.36341C21.1295 0.785575 19.7249 0.491269 18.3058 0.500197C16.1708 0.495044 14.0893 1.16803 12.3614 2.42214C10.6335 3.67624 9.34853 5.44666 8.6917 7.47815C7.30085 7.76286 5.98686 8.3414 4.8377 9.17505C3.68854 10.0087 2.73073 11.0782 2.02839 12.312C0.956464 14.1591 0.498905 16.2988 0.721698 18.4228C0.944492 20.5467 1.83612 22.5449 3.268 24.1293C2.81966 25.4759 2.66413 26.9026 2.81182 28.3141C2.95951 29.7256 3.40701 31.0892 4.12437 32.3138C5.18791 34.1659 6.8123 35.6322 8.76321 36.5013C10.7141 37.3704 12.8907 37.5973 14.9789 37.1492C15.9208 38.2107 17.0786 39.0587 18.3747 39.6366C19.6709 40.2144 21.0755 40.5087 22.4946 40.4998C24.6307 40.5054 26.7133 39.8321 28.4418 38.5772C30.1704 37.3223 31.4556 35.5506 32.1119 33.5179C33.5027 33.2332 34.8167 32.6547 35.9659 31.821C37.115 30.9874 38.0728 29.9178 38.7752 28.684C39.8458 26.8371 40.3023 24.6979 40.0789 22.5748C39.8556 20.4517 38.9639 18.4544 37.5324 16.8707ZM22.4978 37.8849C20.7443 37.8874 19.0459 37.2733 17.6994 36.1501C17.7601 36.117 17.8666 36.0586 17.936 36.0161L25.9004 31.4156C26.1003 31.3019 26.2663 31.137 26.3813 30.9378C26.4964 30.7386 26.5563 30.5124 26.5549 30.2825V19.0542L29.9213 20.998C29.9389 21.0068 29.9541 21.0198 29.9656 21.0359C29.977 21.052 29.9842 21.0707 29.9867 21.0902V30.3889C29.9842 32.375 29.1946 34.2791 27.7909 35.6841C26.3872 37.0892 24.4838 37.8806 22.4978 37.8849ZM6.39227 31.0064C5.51397 29.4888 5.19742 27.7107 5.49804 25.9832C5.55718 26.0187 5.66048 26.0818 5.73461 26.1244L13.699 30.7248C13.8975 30.8408 14.1233 30.902 14.3532 30.902C14.583 30.902 14.8088 30.8408 15.0073 30.7248L24.731 25.1103V28.9979C24.7321 29.0177 24.7283 29.0376 24.7199 29.0556C24.7115 29.0736 24.6988 29.0893 24.6829 29.1012L16.6317 33.7497C14.9096 34.7416 12.8643 35.0097 10.9447 34.4954C9.02506 33.9811 7.38785 32.7263 6.39227 31.0064ZM4.29707 13.6194C5.17156 12.0998 6.55279 10.9364 8.19885 10.3327C8.19885 10.4013 8.19491 10.5228 8.19491 10.6071V19.808C8.19351 20.0378 8.25334 20.2638 8.36823 20.4629C8.48312 20.6619 8.64893 20.8267 8.84863 20.9404L18.5723 26.5542L15.206 28.4979C15.1894 28.5089 15.1703 28.5155 15.1505 28.5173C15.1307 28.5191 15.1107 28.516 15.0924 28.5082L7.04046 23.8557C5.32135 22.8601 4.06716 21.2235 3.55289 19.3046C3.03862 17.3858 3.30624 15.3413 4.29707 13.6194ZM31.955 20.0556L22.2312 14.4411L25.5976 12.4981C25.6142 12.4872 25.6333 12.4805 25.6531 12.4787C25.6729 12.4769 25.6928 12.4801 25.7111 12.4879L33.7631 17.1364C34.9967 17.849 36.0017 18.8982 36.6606 20.1613C37.3194 21.4244 37.6047 22.849 37.4832 24.2684C37.3617 25.6878 36.8382 27.0432 35.9743 28.1759C35.1103 29.3086 33.9415 30.1717 32.6047 30.6641C32.6047 30.5947 32.6047 30.4733 32.6047 30.3889V21.188C32.6066 20.9586 32.5474 20.7328 32.4332 20.5338C32.319 20.3348 32.154 20.1698 31.955 20.0556ZM35.3055 15.0128C35.2464 14.9765 35.1431 14.9142 35.069 14.8717L27.1045 10.2712C26.906 10.1554 26.6803 10.0943 26.4504 10.0943C26.2206 10.0943 25.9948 10.1554 25.7963 10.2712L16.0726 15.8858V11.9982C16.0715 11.9783 16.0753 11.9585 16.0837 11.9405C16.0921 11.9225 16.1048 11.9068 16.1207 11.8949L24.1719 7.25025C25.4053 6.53903 26.8158 6.19376 28.2383 6.25482C29.6608 6.31589 31.0364 6.78077 32.2044 7.59508C33.3723 8.40939 34.2842 9.53945 34.8334 10.8531C35.3826 12.1667 35.5464 13.6095 35.3055 15.0128ZM14.2424 21.9419L10.8752 19.9981C10.8576 19.9893 10.8423 19.9763 10.8309 19.9602C10.8195 19.9441 10.8122 19.9254 10.8098 19.9058V10.6071C10.8107 9.18295 11.2173 7.78848 11.9819 6.58696C12.7466 5.38544 13.8377 4.42659 15.1275 3.82264C16.4173 3.21869 17.8524 2.99464 19.2649 3.1767C20.6775 3.35876 22.0089 3.93941 23.1034 4.85067C23.0427 4.88379 22.937 4.94215 22.8668 4.98473L14.9024 9.58517C14.7025 9.69878 14.5366 9.86356 14.4215 10.0626C14.3065 10.2616 14.2466 10.4877 14.2479 10.7175L14.2424 21.9419ZM16.071 17.9991L20.4018 15.4978L24.7325 17.9975V22.9985L20.4018 25.4983L16.071 22.9985V17.9991Z\"\n            fill=\"currentColor\"\n          />\n        </svg>\n      </div>\n      <div class=\"data\"><div class=\"main-wrapper\" role=\"main\"><div class=\"main-content\"><noscript><div class=\"h2\"><span id=\"challenge-error-text\">Enable JavaScript and cookies to continue</span></div></noscript></div></div><script>(function(){window._cf_chl_opt = {cFPWv: 'g',cH: '6uQLI6HHorkx1zuOub.jenBwcVMQ9h8u0.DcBl5DU08-1776522809-1.2.1.1-agzcq1413AcRq78_614_.kSw_yQDINVDuAItPY2OPnKVvlUv3u0dlirRdgBUihgo',cITimeS: '1776522809',cRay: '9ee46288ea439875',cTplB: '0',cTplC:1,cTplO:0,cTplV:5,cType: 'managed',cUPMDTk:\"/backend-api/plugins/list?__cf_chl_tk=_d2Ok12OPqZ6DU94su.Y6Q_sB7HVdHSD5PBgArzAyME-1776522809-1.0.1.1-O2sworNjyDiAMQacAv9e3LzpJO9ZWPKCboPuJEhxfLs\",cvId: '3',cZone: 'chatgpt.com',fa:\"/backend-api/plugins/list?__cf_chl_f_tk=_d2Ok12OPqZ6DU94su.Y6Q_sB7HVdHSD5PBgArzAyME-1776522809-1.0.1.1-O2sworNjyDiAMQacAv9e3LzpJO9ZWPKCboPuJEhxfLs\",md: 'p0dKylPDovhIJyfCZijuT8sussqVHNpH1mZ_taS3wZg-1776522809-1.2.1.1-n1oMShdM2TFCzQR.tw1RlQ4j5cX.GvtDia.Rf0Ij2HG6fbaFdjHfalurl62a0_v7ImiDIEJ0Kk.gdG_yKXsx3hCeEPdETuUjPISfdu_IeulfChu23Ta_L6eZa71SobbYVreGM00b1KDbBGLCss27wItJ_63HpnR_MNGDBQHQC7DmDzrZ2VqMv8GvfY4265kgMqeXEOHE4fWZzZIoyxGcuMW3Fq4Gzr.GaBNKCqEyXlhQvnJEsXXYIFFpxY4jAA51noI.hhLVVsl4M0qk5MgGxfHbG.Nuzv5qGVWWy3nQIdQP79rffT.9FdlAaYnMKgiCoaHbGTrZViIESED5I2q08Wgdv8sSixdRn3tCflbIzIRTB0Kvdar_IC76IIrHjfl8Gupk6RqunwH.YrgsgK0ppoEq2ZiLdn15WVQMpmf02DwpzualRrRN.Ta1.n7gnjMbM6.wgYbrMUjsOeEHRsjYOvre4UPjXbLsVD7zP_5BQZo.GF6T.0BkK5FU7Ym5ENRMpYzAMhuQUXl2qUeA0EJ6I1s6x3f1EUMPE4XSjxHuCEXfTDkjiAajNSpAx9C.wacNSOsM7UJmSp0yfXLHxfZoeiGX6H15.ippL_EeYF_TEmzyzIsc5RUi_b6MkLXYOS9XdlM3UVetDtnP2rQ5TiuIAWJzhB9r9EetouQ94nhk0_miKWLBDWgt1f0.TjHomqsdBjyzWX8_geZZ5Ma7js7xhHuG.sT5p7nORgPbC_ru7VxDLUu22_6ok7VP_WvQ0YepLqQ788ojODua7jSqC31mMdyAVXTbgSIzwQ964Uz.lV888ksCFbSSuUTWBOoAREmaGANm4.n_Dn0u7a.yukX84BanPoACFUb.2T2ovBd.qEd5mcyYxrZgn6mot_5bI3eE4DcHOh1JQoC3M9IEA9YucETNpHObR...DEbelJZ35n2eQYEKfaTsDGG_XxeM28upU0tuVoObQ6jzS71TuW1v8fLw4vn8rRyzWkTjoKAbBRhSkVeC0A1QfYqyJkp_N3Wa7ZkSINOnAixOkI.LiMALkg',mdrd: 'RE_ydHsR4hu5yjjOuAg8HisM2mfrL87JIfuec3hG0Zo-1776522809-1.2.1.1-AbA05zLDrghQIzYHSfKade.NY9.p98l9D2g4XlekXtzyvIHb9rGoo21vHM9dDyRF95UoLY9g3pzzQOJZpKrk5SuI.qH1AnpFN5repmNAg9ftugEwNIn83QqQKsQtsuOaP7L2o1HAfMNS5VO8IWSoGgT5SOI6dPnM4WmzA9Dqx.ntOoDAMymSKA_zBzveNsLSx_mahNIkiOCjXcMkZ5whAl8g5JzuNw1p_5pV9Or30iCF0XPmJD5kzNGwEnG_1GYtEbzURWR_DZb.zgAqPqfQw_IexzdZwfd6X1BW6PXw4lcYumjzuMheFgfgnDe9Hw9J_5kZRoc4OeiK_3QS35.FgDf6TgW1g2pJ30lTl_UQOr0S_RoIGbRU7Ilr2t_LbXOWOksTSKWfS8wExOhZqAuUIMaubs9yX09n0pFvYQGa_NcNI7s2_D4PjIRxlseF3gjAKKfDcthBZYCoRwsdEn1dkxiE2QuD4Z7.eZU3FNJ8X2QLS0bEC0calTQ9dwf7s8VVbrEtD6wVa7Hyz_KovmumbycWExxNgSyobWJWE2JBD7zm_lOjJtVGY5BYwtgQt.yFLZAXpHvFXPkOxrza4ZOxipt5qdUHwlmxpksaUV_1ktBxg5qDMkBjIs6jdY5tlOn8tDNlJzmgxxYolkv2ggSFABRp35JKWuXWBRa2lYYzGc8jO4zF4tSWu4yT2ma3Iis16nCw7Yy6EKvOwyKxwEJgCcN1wapcU_0d8LBKvozVgZilpRE7irV7ekqRIfOe0q6b_GD7kq6_ISfcbrZxD3ok5ML9rkRHQkxwwqBrbPf_jcKUqLRfZPw4avGPD3ht.7dHOBzkeqjlz1vcU9cRIU_uaGxwR6YRQFQX097j1krK3QxI1QFyWLtvUa2DwUXpM2zALbZmmkSlfSIhRUJbjfSRYKi2X5IuMqFke8EroHWBZv_GkcP5.ar7HrBtOoBo2YBKsP.5K3oLvTB0mewkrq0XEakudBrRQ3JGWnPbFFrQ6rSxIJsWf3wCJqfTxgNoNT4lLH3UJJQXh5oXesgsj7124bTOV9VU3un9GOhEGx5bf2NzWwlR56h7gexju1xMgGzkpaX3QFf_pmUuSYxTHN6_QnQWOfNfMJA1VTc52QtVB2I93TUDCq01Uq62_QyasJUJxZFLufpp5syzsCvT6NfKxFnSBkNIORt912xZjMKpsB5gI21i2ydL6gbAhG7vVwHe8QIAVxvarUGkrB85py.Pwjcsi9GJG6J.aIOlnAVO7R.sudxQpjBmA8cuWTealpG3LEDqfu15HRtvbHcsw9U.yJsO1ICks6CtpvGQdqWsR3iJAN2fZvEH7lwwCyZ9318A7Tw2B3LZ8lJp43kglOTWZfFn3dM7r4.Ip8QvikPgEr.R_Ncuq2kp1l37YkuA34qbg2Fsiia0X5dWCnd7d84KEsbMzxayWSdQsyohGbQERDmkL_kmVZZ88.SA2y.dJ4pXQ58ssyA0J002cm_18R7OErcqQucpMJf_eYGN6jGexGCMRplByaPbadlPN_zcrq6CG6VAv.UoQku69pRFCDb_w7FCL7hMLFR3PF4p7zC7wpP2uP9LHXlKqFZ.m0RSqjxR98FAJq19JuEMHeVqu_GtyWAkIrBfMxuGJx1c7m8jnJrGbRWlD3DNk_c403SGvn4DSWvjVkRpiYK.sAFxGHQ4KH239.418Uj0lvVqnwReOMS5AbuGO5oT6GjQjvuJXLrS5N8RpfgGB2SS3XUgVAMCOG7sJ1uhJKW4qKLigKNGGMn8O3bowA9haafC5Tgf1ijEoy6O9ce02onRhpfkKJ9tf1WrcGc.OWRhmCn7vZ98JuTZfdNq8GZylq8K72dkCRsy3w4FN0SNekd5bT8e1VmcfUNKZQz62bTUvloXM8Dg1owbi7rXv80LPgDHJKnnchHrTLuHnGHMTH2e9XpWS3VQFAOPVBHNsfHsa2YhvMbjdXAlTn.RNRBvDRteSuoaTJ_Itp8UJE9H6VcNPdvINzgeJ5BUzRa5kDZv7k5tMqJdP1Uw8oz5sLkMYwtK_pLtlJQxVgqtpZUUV3Do6lTRJgXR1i_PTroHXX1XrOKDGqVRtONblysloG6eo4hXpHp08abQAfxz9n7VdZDsCmuMA9vdPloe5wnB48gR.g7wmg210ecFmNF_iVHpbgddN.chsqQwllgxoeYp3UsowpnLrY3ibH4bNDvGERaJ4VC_0ZPeZGVSwm.cJ44rPShNszFsioYPTlJetGLKSnpPVtOyOccE6yPArHPHWa5Xz5pzdaJn6MufROQ.qi1f9bjauH8Rz2SlpiazfZeio3bdu9N9suIcnQ',};var a = document.createElement('script');a.src = '/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1?ray=9ee46288ea439875';window._cf_chl_opt.cOgUHash = location.hash === '' && location.href.indexOf('#') !== -1 ? '#' : location.hash;window._cf_chl_opt.cOgUQuery = location.search === '' && location.href.slice(0, location.href.length - window._cf_chl_opt.cOgUHash.length).indexOf('?') !== -1 ? '?' : location.search;if (window.history && window.history.replaceState) {var ogU = location.pathname + window._cf_chl_opt.cOgUQuery + window._cf_chl_opt.cOgUHash;history.replaceState(null, null,\"/backend-api/plugins/list?__cf_chl_rt_tk=_d2Ok12OPqZ6DU94su.Y6Q_sB7HVdHSD5PBgArzAyME-1776522809-1.0.1.1-O2sworNjyDiAMQacAv9e3LzpJO9ZWPKCboPuJEhxfLs\"+ window._cf_chl_opt.cOgUHash);a.onload = function() {history.replaceState(null, null, ogU);}}document.getElementsByTagName('head')[0].appendChild(a);}());</script></div>\n    </div>\n  </body>\n</html>\n\n2026-04-18T14:33:29.798165Z  WARN codex_core::plugins::manager: failed to warm featured plugin ids cache error=remote plugin sync request to https://chatgpt.com/backend-api/plugins/featured failed with status 403 Forbidden: <html>\n  <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <style global>body{font-family:Arial,Helvetica,sans-serif}.container{align-items:center;display:flex;flex-direction:column;gap:2rem;height:100%;justify-content:center;width:100%}@keyframes enlarge-appear{0%{opacity:0;transform:scale(75%) rotate(-90deg)}to{opacity:1;transform:scale(100%) rotate(0deg)}}.logo{color:#8e8ea0}.scale-appear{animation:enlarge-appear .4s ease-out}@media (min-width:768px){.scale-appear{height:48px;width:48px}}.data:empty{display:none}.data{border-radius:5px;color:#8e8ea0;text-align:center}@media (prefers-color-scheme:dark){body{background-color:#343541}.logo{color:#acacbe}}</style>\n  <meta http-equiv=\"refresh\" content=\"360\"></head>\n  <body>\n    <div class=\"container\">\n      <div class=\"logo\">\n        <svg\n          width=\"41\"\n          height=\"41\"\n          viewBox=\"0 0 41 41\"\n          fill=\"none\"\n          xmlns=\"http://www.w3.org/2000/svg\"\n          strokeWidth=\"2\"\n          class=\"scale-appear\"\n        >\n          <path\n            d=\"M37.5324 16.8707C37.9808 15.5241 38.1363 14.0974 37.9886 12.6859C37.8409 11.2744 37.3934 9.91076 36.676 8.68622C35.6126 6.83404 33.9882 5.3676 32.0373 4.4985C30.0864 3.62941 27.9098 3.40259 25.8215 3.85078C24.8796 2.7893 23.7219 1.94125 22.4257 1.36341C21.1295 0.785575 19.7249 0.491269 18.3058 0.500197C16.1708 0.495044 14.0893 1.16803 12.3614 2.42214C10.6335 3.67624 9.34853 5.44666 8.6917 7.47815C7.30085 7.76286 5.98686 8.3414 4.8377 9.17505C3.68854 10.0087 2.73073 11.0782 2.02839 12.312C0.956464 14.1591 0.498905 16.2988 0.721698 18.4228C0.944492 20.5467 1.83612 22.5449 3.268 24.1293C2.81966 25.4759 2.66413 26.9026 2.81182 28.3141C2.95951 29.7256 3.40701 31.0892 4.12437 32.3138C5.18791 34.1659 6.8123 35.6322 8.76321 36.5013C10.7141 37.3704 12.8907 37.5973 14.9789 37.1492C15.9208 38.2107 17.0786 39.0587 18.3747 39.6366C19.6709 40.2144 21.0755 40.5087 22.4946 40.4998C24.6307 40.5054 26.7133 39.8321 28.4418 38.5772C30.1704 37.3223 31.4556 35.5506 32.1119 33.5179C33.5027 33.2332 34.8167 32.6547 35.9659 31.821C37.115 30.9874 38.0728 29.9178 38.7752 28.684C39.8458 26.8371 40.3023 24.6979 40.0789 22.5748C39.8556 20.4517 38.9639 18.4544 37.5324 16.8707ZM22.4978 37.8849C20.7443 37.8874 19.0459 37.2733 17.6994 36.1501C17.7601 36.117 17.8666 36.0586 17.936 36.0161L25.9004 31.4156C26.1003 31.3019 26.2663 31.137 26.3813 30.9378C26.4964 30.7386 26.5563 30.5124 26.5549 30.2825V19.0542L29.9213 20.998C29.9389 21.0068 29.9541 21.0198 29.9656 21.0359C29.977 21.052 29.9842 21.0707 29.9867 21.0902V30.3889C29.9842 32.375 29.1946 34.2791 27.7909 35.6841C26.3872 37.0892 24.4838 37.8806 22.4978 37.8849ZM6.39227 31.0064C5.51397 29.4888 5.19742 27.7107 5.49804 25.9832C5.55718 26.0187 5.66048 26.0818 5.73461 26.1244L13.699 30.7248C13.8975 30.8408 14.1233 30.902 14.3532 30.902C14.583 30.902 14.8088 30.8408 15.0073 30.7248L24.731 25.1103V28.9979C24.7321 29.0177 24.7283 29.0376 24.7199 29.0556C24.7115 29.0736 24.6988 29.0893 24.6829 29.1012L16.6317 33.7497C14.9096 34.7416 12.8643 35.0097 10.9447 34.4954C9.02506 33.9811 7.38785 32.7263 6.39227 31.0064ZM4.29707 13.6194C5.17156 12.0998 6.55279 10.9364 8.19885 10.3327C8.19885 10.4013 8.19491 10.5228 8.19491 10.6071V19.808C8.19351 20.0378 8.25334 20.2638 8.36823 20.4629C8.48312 20.6619 8.64893 20.8267 8.84863 20.9404L18.5723 26.5542L15.206 28.4979C15.1894 28.5089 15.1703 28.5155 15.1505 28.5173C15.1307 28.5191 15.1107 28.516 15.0924 28.5082L7.04046 23.8557C5.32135 22.8601 4.06716 21.2235 3.55289 19.3046C3.03862 17.3858 3.30624 15.3413 4.29707 13.6194ZM31.955 20.0556L22.2312 14.4411L25.5976 12.4981C25.6142 12.4872 25.6333 12.4805 25.6531 12.4787C25.6729 12.4769 25.6928 12.4801 25.7111 12.4879L33.7631 17.1364C34.9967 17.849 36.0017 18.8982 36.6606 20.1613C37.3194 21.4244 37.6047 22.849 37.4832 24.2684C37.3617 25.6878 36.8382 27.0432 35.9743 28.1759C35.1103 29.3086 33.9415 30.1717 32.6047 30.6641C32.6047 30.5947 32.6047 30.4733 32.6047 30.3889V21.188C32.6066 20.9586 32.5474 20.7328 32.4332 20.5338C32.319 20.3348 32.154 20.1698 31.955 20.0556ZM35.3055 15.0128C35.2464 14.9765 35.1431 14.9142 35.069 14.8717L27.1045 10.2712C26.906 10.1554 26.6803 10.0943 26.4504 10.0943C26.2206 10.0943 25.9948 10.1554 25.7963 10.2712L16.0726 15.8858V11.9982C16.0715 11.9783 16.0753 11.9585 16.0837 11.9405C16.0921 11.9225 16.1048 11.9068 16.1207 11.8949L24.1719 7.25025C25.4053 6.53903 26.8158 6.19376 28.2383 6.25482C29.6608 6.31589 31.0364 6.78077 32.2044 7.59508C33.3723 8.40939 34.2842 9.53945 34.8334 10.8531C35.3826 12.1667 35.5464 13.6095 35.3055 15.0128ZM14.2424 21.9419L10.8752 19.9981C10.8576 19.9893 10.8423 19.9763 10.8309 19.9602C10.8195 19.9441 10.8122 19.9254 10.8098 19.9058V10.6071C10.8107 9.18295 11.2173 7.78848 11.9819 6.58696C12.7466 5.38544 13.8377 4.42659 15.1275 3.82264C16.4173 3.21869 17.8524 2.99464 19.2649 3.1767C20.6775 3.35876 22.0089 3.93941 23.1034 4.85067C23.0427 4.88379 22.937 4.94215 22.8668 4.98473L14.9024 9.58517C14.7025 9.69878 14.5366 9.86356 14.4215 10.0626C14.3065 10.2616 14.2466 10.4877 14.2479 10.7175L14.2424 21.9419ZM16.071 17.9991L20.4018 15.4978L24.7325 17.9975V22.9985L20.4018 25.4983L16.071 22.9985V17.9991Z\"\n            fill=\"currentColor\"\n          />\n        </svg>\n      </div>\n      <div class=\"data\"><div class=\"main-wrapper\" role=\"main\"><div class=\"main-content\"><noscript><div class=\"h2\"><span id=\"challenge-error-text\">Enable JavaScript and cookies to continue</span></div></noscript></div></div><script>(function(){window._cf_chl_opt = {cFPWv: 'g',cH: 'AYx.MevFs71gepVSpvy224xSFTw8Y0Tw1OMQeXGPKFM-1776522809-1.2.1.1-U2k51fQV.R4ylvfSCukMvAhrspcfIlB9f3ewNIj.0MB_4BKIgqp2pyTGsJeW3Vb7',cITimeS: '1776522809',cRay: '9ee46288fc99bcc9',cTplB: '0',cTplC:1,cTplO:0,cTplV:5,cType: 'managed',cUPMDTk:\"/backend-api/plugins/featured?platform=codex&__cf_chl_tk=ytU2gDYDG2AZjx8tMXMwdVbpq.ryalfSCh0RAaBG.Hk-1776522809-1.0.1.1-5KKWwW0L8gSsbQJeINo9n0Q0BfZ_eBguLS4AtfVwMpE\",cvId: '3',cZone: 'chatgpt.com',fa:\"/backend-api/plugins/featured?platform=codex&__cf_chl_f_tk=ytU2gDYDG2AZjx8tMXMwdVbpq.ryalfSCh0RAaBG.Hk-1776522809-1.0.1.1-5KKWwW0L8gSsbQJeINo9n0Q0BfZ_eBguLS4AtfVwMpE\",md: 'rLbfzciCjb.EHwDMxHr_e7Zj33PKeMZjUjNRshK9MWo-1776522809-1.2.1.1-PQD5k3ptTpBFRolfNmJHTzsJGAgknxu5mWB5aYkN1L5guIFpKwV4YMaKpg1MQnRxWWnpCMFgArqPnnZ_fzosXO5s0jDPpFVI05z.W0mA2ZGjDmKJ_RXStobC1RJlCu7hXbW.ejpHng.9N54skuEroKj9K.1kjKhbPF5e0.6C_rgldUgro0AxpjhsafUs8s9K5t7n_qAdMOYcH.4QqlM3DgX28YveFOmfNdZXQ1EF1rx7KHYpyimywakAuKoESck2Eq3xyML6G2os.KeOGfeypcWo5fd7W2aL..rk6RhjOrh73T83A8EAKzrDfLz7pW_aYzNo40UDUJnPHpIWfZMo98B2ibJdt92Hv._ZQgk2VmIwjSi4x98ao0BOECgw1jmv.KU6UnzBFS2PbQRP6SjRLqnXSKs.TkSE8xM9qEtZsYf_bgOCVyPcWA3dOrJOm7gGznU.3SrAROaAbEvUrGzMpRCVfuiIF8lhBIhsPu2HAI9V7ffmFIZTd1iMeeG9_O6rI3l_80plJe4rcxvNMnEJwMVEb5Qe1Mj_n08yxN2qzxWXJWeYLWsFnr0TY8G.3P.hsEdXj3SzOt2mGLmh8rEzqJlaQ4J0MHk73DmtP8CHymz3DlIksV0iOb5aI4Ma_hW6lZW6fCXPculJ.TJpdZmkP2jVhUoHhP2srcS0xZXTT4TzraR8dQqPZrowH7xr_mzZJYcBMmcHcx0QUmsohuql18ilLmo_1WWHisB4OfNxo7dYGwm51vfLhSg5hla_4K2IwBfC3aqkrlUFUdxBJgRdke1.bL7PslOZJhDF.8u_tuyqdInmNKsj53xdcLbhPfY2ipuMlgAKqj8Qv5wKhybAcuacJ0LwgeXh_Ma.NR3B7uaR6Gpm0cvzaTE5BWqxCy.n.SMtUfkjOJsixtiw0KpR8zlh9iXNs5Gtbg9Q9koKIp9uhHMuoabvDmhR53zNEFS58EHkJg11pqRzoWW5QdMD8OS7BbsGMmDRVj7iBrkBqU6Qq252HPzgXbGoHJcIev3zySylxIuEJyeJLcxf5KZXvOlQX8VZNFrO2Wk5RdBs6umWHtK5Pbqqf8hSOG5r_zi0',mdrd: 'rXEOaV1SxlO7ePHsemdeRCY7D85nqlkSTT5GweK3PkQ-1776522809-1.2.1.1-oKUofYWgNjp4bWx1BZkR6ziVTnglJnrBDEUtcILaUc6tckiC2WlIKdE0O4e6vooii.Rvfu4IDnhyVolrm.ABzzpeHnWvM8SCupoNaNBv6cTP0qZ4Crk425.YLzO4dIccW8QhFI3CYqUvnyHFElw2QvmvZkW06VDlYrvpuiL._JBhOjIVnCYstOAAKQPpNQsnOXpziez.kjR6vlfe9wPsCWhO7llUQGCQs3hoedIequzBii4b3Y58.wEpF.LyKCkWgmmsCdzT_0u51ibHFZHHpCn2ETCWM5Jq9f4mhlNYgmLKKTYL7cN06TDekj4.7NGYYmbASky2XffHnOPSleRS2FbBHBY6TUpKmKwlxqYkPNihkJRNZFzUkRF98_X2k3__2LvHk9RuzzBG9Rah0tQ70ljJYRDxSaPwIQDdGQpVGTHVyuTCQA4bAOGBmEX.iJv89Ardt5tial.WuGwwn7cY7sJgPTv02KS_dfl56l20TydG.Nn12_xhHmsqt_wDKuRuvW_DmYNUJWR3ZQLBDgLlz2sQE8coB6Tygk_G9dtnzAdPlF2meF09WKBy82nnmvSCT6g_u9h0CiNa8Hvp.dmUaVhLOsNloFIe.eFtorxema3EicaPCAeoiiwDhzDK1l_gOm890yRGoyCpskv5Sda3xLQV5_9RkcyeJ1lf2BeOLpTHMjl84wAwWmpEPXvCNpf9Jxr70nbC4VyqhQrot6L1WzWbuGEZUdudf6Jb5U_doDnoqTwVcQGjhqVXHNp0K1MmpAYf0mch2zxc.rdfzsrSNLMXCxpHqaF0aJWg2MGbBSlD3qoTnVBcuXHJiWmnZL0RmIGNMVDeWI5TWD0xJv4H.ed11lo28ZzM.Pm4zHwdSQ1HZ9F8ufdlWcl9vqFlM0La4b9723dY64qBXYXlTcOKsuC2OHeUMqXxYGRCh8znCe63pW3KP7QF79a_XEDzmfG_OW_iMef5EXiUN_9Zvomm.RabvjEKDaD8BfvVvJUU4SyXfmM8.1y4ApQPgauTE4U0Tx.7cJZyB1FcW.zZbhP213qiTLaF51fQ62P63Zz08706PsUPNWjIu.2aADqFGEZ.JCuxZqDurWnrcvWRFsQw7qakOBuv7JhBiQ_cnTp5lYaWdAjdfLW6aXzdlvSc4V93rrz.PP8POEIKzP0HlJCEC5CfmA5631_xbHqRRZ0JIQCnsTgaK46WwBa7IDu9BDtHGvwLUTqwNrvMjRwMl.xtsrEludRMAcXNT.p3yzpa.Lv70IZVlss1Q8wlouipLimgzWhj6_Gqd.TItFNwalzmVYkvA.23bn7A6ElfdexbP3CiqGWgW3jJT0Oi_dwmJntixXWPDtULYw56A.DjyV_viC0SSUbPyYLkBxB1pdSPnsRTztyQm_IX9wydstzxAJn123dzcaTI4nF8fFcTCxiI5RKgqyxuogKaqtlXwIIZF0WZhyZoSz29TtIpGnhCbKgHP8VBiwCq.2TUlI5WsoeGerbgesdHriyXiYzWKzifOaSZyWb8iarnajXl9XaWlZR0UgyXJWsC6bLiOowz_iTIkgvHSn5cNoqHoqZSeGntZ0agk1qqQaTR1ewGq7GkJmxJpoF06Ut8mGRF8ek25Yx62rELXOOjPODgKN.Wu_ar5Ovfgbjma03Bvx09AgySDz.K1QHAcquLIXR69fU1Axy75tFirpuvMe.QRmCloQoMwX_Xo3wHVZKYlG4vX2NOp.usGVdDb9LltRe4.T8VdBR3Y7TeggaD.KET_.xgwGduUjveQPTVK5p.LvbTcQWNP0whAZpUKf4nqwGFvr_hrsz3Nz6a7vuRdjbt7rUU9NjQdwL4XDBwxRk5on0vq__O7yRKsZdzY4f9Wgyd.CyB8uZx6PZuSLLw1XWbHK4Iu7qPSxrrhUmvmVqMyDHIEcfztG0NDAenOWdnTwk9i54Zd2DEitFNbEl5fgnfLFDr2R1gVJwTXfBl6H9xd7m26727tbAiRIQkDtGpGskk7eIu6bzO6ZzO620BejYbi7CkKv7RrM0ixNcfGre.DX4.7vaWCq1.s2Xn_uKOzVClw5yOwlZUCpl_KmfXwD5IBGYa9P4EtSbU0NFbXFrXuPvh1EtmrKbaq_7.Cv13x6GcTJXmMmwW.p5ptn01v0cOqZZK3a9Xs4nsQb4Qcb3A4mTtA6zoO_2rr2gqo4rveQeQJ_J96QiXXrHxP2RzpkaPpLWdwc59WtBgPSNQZM8X2bjwqCqp81xlYCvpv3oeeWs9s0bgz21NghYzKeN7CEXjTIyn2D8dbNXL_yRI9ZOGnnJGI.B.7KvE86VR5BzxEGP83mfecOTn.A',};var a = document.createElement('script');a.src = '/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1?ray=9ee46288fc99bcc9';window._cf_chl_opt.cOgUHash = location.hash === '' && location.href.indexOf('#') !== -1 ? '#' : location.hash;window._cf_chl_opt.cOgUQuery = location.search === '' && location.href.slice(0, location.href.length - window._cf_chl_opt.cOgUHash.length).indexOf('?') !== -1 ? '?' : location.search;if (window.history && window.history.replaceState) {var ogU = location.pathname + window._cf_chl_opt.cOgUQuery + window._cf_chl_opt.cOgUHash;history.replaceState(null, null,\"/backend-api/plugins/featured?platform=codex&__cf_chl_rt_tk=ytU2gDYDG2AZjx8tMXMwdVbpq.ryalfSCh0RAaBG.Hk-1776522809-1.0.1.1-5KKWwW0L8gSsbQJeINo9n0Q0BfZ_eBguLS4AtfVwMpE\"+ window._cf_chl_opt.cOgUHash);a.onload = function() {history.replaceState(null, null, ogU);}}document.getElementsByTagName('head')[0].appendChild(a);}());</script></div>\n    </div>\n  </body>\n</html>\n\n2026-04-18T14:33:30.046265Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:30.047660Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:30.098840Z  WARN codex_core::plugins::manager: failed to refresh curated plugin cache after sync: failed to refresh curated plugin cache for github@openai-curated: failed to back up plugin cache entry: Отказано в доступе. (os error 5)\n2026-04-18T14:33:31.762197Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:33.962160Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:33.966652Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:33.967896Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:33.983930Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:33.985379Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.008170Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.009692Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.032124Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.033199Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.053515Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.054564Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.077327Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.078593Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.230253Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:34.233502Z  WARN codex_core::session_startup_prewarm: startup websocket prewarm setup failed: unexpected status 403 Forbidden: 154c\r\n<!DOCTYPE html>\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462a4ab53962c-HEL\n2026-04-18T14:33:34.471127Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:34.482515Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.484731Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.508281Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.509981Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.538660Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.540231Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.563854Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.564892Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.586032Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.587465Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.615420Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.616726Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.758174Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:34.759463Z  WARN codex_core::codex: stream disconnected - retrying sampling request (1/5 in 216ms)...\n2026-04-18T14:33:35.102926Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:35.103973Z  WARN codex_core::codex: stream disconnected - retrying sampling request (2/5 in 361ms)...\n2026-04-18T14:33:35.577085Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:35.578517Z  WARN codex_core::codex: stream disconnected - retrying sampling request (3/5 in 757ms)...\n2026-04-18T14:33:36.428960Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:36.430214Z  WARN codex_core::codex: stream disconnected - retrying sampling request (4/5 in 1.696s)...\n2026-04-18T14:33:38.247545Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:38.248733Z  WARN codex_core::codex: stream disconnected - retrying sampling request (5/5 in 3.42s)...\n2026-04-18T14:33:41.788930Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:41.790611Z  WARN codex_core::client: falling back to HTTP\n2026-04-18T14:33:56.193402Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:56.197382Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.198725Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.210405Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.211422Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.226887Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.227825Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.243582Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.244499Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.261715Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.262786Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.282624Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.283586Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:34:00.109563Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.109756Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-shm: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.109823Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-wal: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.111466Z  WARN codex_state::runtime: failed to open state db at C:\\Users\\tikta\\.codex\\state_5.sqlite: migration 23 was previously applied but is missing in the resolved migrations\n2026-04-18T14:34:00.112213Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.112384Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-shm: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.112458Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-wal: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.113956Z  WARN codex_state::runtime: failed to open state db at C:\\Users\\tikta\\.codex\\state_5.sqlite: migration 23 was previously applied but is missing in the resolved migrations\n2026-04-18T14:34:00.145154Z  WARN codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back"
+    },
+    "codexDirect": {
+      "runtime": "codex-cli",
+      "available": true,
+      "missing": false,
+      "binaryPath": "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd",
+      "version": "codex-cli 0.118.0",
+      "configPath": "C:\\Users\\tikta\\.codex\\config.toml",
+      "configExists": true,
+      "smokeOk": true,
+      "smokeTimedOut": false,
+      "smokeOutput": "{\"type\":\"thread.started\",\"thread_id\":\"019da102-d03d-7c41-8d5c-6058440b84c2\"}\n{\"type\":\"turn.started\"}\n{\"type\":\"error\",\"message\":\"Reconnecting... 2/5 (unexpected status 403 Forbidden: 154c\\r\\n<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\\\"no-js ie6 oldie\\\" lang=\\\"en-US\\\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\\\"no-js ie7 oldie\\\" lang=\\\"en-US\\\"> <![endi, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462aa3cb88d7e-HEL)\"}\n{\"type\":\"error\",\"message\":\"Reconnecting... 3/5 (unexpected status 403 Forbidden: 154c\\r\\n<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\\\"no-js ie6 oldie\\\" lang=\\\"en-US\\\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\\\"no-js ie7 oldie\\\" lang=\\\"en-US\\\"> <![, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462ad2dbb8d73-HEL)\"}\n{\"type\":\"error\",\"message\":\"Reconnecting... 4/5 (unexpected status 403 Forbidden: 154c\\r\\n<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\\\"no-js ie6 oldie\\\" lang=\\\"en-US\\\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\\\"no-js ie7 oldie\\\" lang=\\\"en-US\\\"> <![endi, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462b2898b5288-HEL)\"}\n{\"type\":\"error\",\"message\":\"Reconnecting... 5/5 (unexpected status 403 Forbidden: 154c\\r\\n<!DOCTYPE html>\\n<!--[if lt IE 7]> <html class=\\\"no-js ie6 oldie\\\" lang=\\\"en-US\\\"> <![endif]-->\\n<!--[if IE 7]>    <html class=\\\"no-js ie7 oldie\\\" lang=\\\"en-US\\\"> <![en, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462bdee4c8d89-HEL)\"}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_0\",\"type\":\"mcp_tool_call\",\"server\":\"echovault\",\"tool\":\"memory_context\",\"arguments\":{\"project\":\"HappyTG\",\"limit\":3},\"result\":null,\"error\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_0\",\"type\":\"mcp_tool_call\",\"server\":\"echovault\",\"tool\":\"memory_context\",\"arguments\":{\"project\":\"HappyTG\",\"limit\":3},\"result\":null,\"error\":{\"message\":\"user cancelled MCP tool call\"},\"status\":\"failed\"}}\n{\"type\":\"item.started\",\"item\":{\"id\":\"item_1\",\"type\":\"mcp_tool_call\",\"server\":\"echovault\",\"tool\":\"memory_search\",\"arguments\":{\"project\":\"HappyTG\",\"query\":\"exact OK response\",\"limit\":3},\"result\":null,\"error\":null,\"status\":\"in_progress\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_1\",\"type\":\"mcp_tool_call\",\"server\":\"echovault\",\"tool\":\"memory_search\",\"arguments\":{\"project\":\"HappyTG\",\"query\":\"exact OK response\",\"limit\":3},\"result\":null,\"error\":{\"message\":\"user cancelled MCP tool call\"},\"status\":\"failed\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_2\",\"type\":\"agent_message\",\"text\":\"OK\"}}\n{\"type\":\"turn.completed\",\"usage\":{\"input_tokens\":108202,\"cached_input_tokens\":57728,\"output_tokens\":665}}",
+      "smokeError": "2026-04-18T14:33:29.379536Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:29.406454Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:33:29.406842Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-shm: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:33:29.406946Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-wal: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:33:29.415128Z  WARN codex_state::runtime: failed to open state db at C:\\Users\\tikta\\.codex\\state_5.sqlite: migration 23 was previously applied but is missing in the resolved migrations\n2026-04-18T14:33:29.415151Z  WARN codex_rollout::state_db: failed to initialize state runtime at C:\\Users\\tikta\\.codex: migration 23 was previously applied but is missing in the resolved migrations\n2026-04-18T14:33:29.416512Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell\nReading additional input from stdin...\n2026-04-18T14:33:29.794371Z  WARN codex_core::plugins::startup_sync: startup remote plugin sync failed; will retry on next app-server start error=remote plugin sync request to https://chatgpt.com/backend-api/plugins/list failed with status 403 Forbidden: <html>\n  <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <style global>body{font-family:Arial,Helvetica,sans-serif}.container{align-items:center;display:flex;flex-direction:column;gap:2rem;height:100%;justify-content:center;width:100%}@keyframes enlarge-appear{0%{opacity:0;transform:scale(75%) rotate(-90deg)}to{opacity:1;transform:scale(100%) rotate(0deg)}}.logo{color:#8e8ea0}.scale-appear{animation:enlarge-appear .4s ease-out}@media (min-width:768px){.scale-appear{height:48px;width:48px}}.data:empty{display:none}.data{border-radius:5px;color:#8e8ea0;text-align:center}@media (prefers-color-scheme:dark){body{background-color:#343541}.logo{color:#acacbe}}</style>\n  <meta http-equiv=\"refresh\" content=\"360\"></head>\n  <body>\n    <div class=\"container\">\n      <div class=\"logo\">\n        <svg\n          width=\"41\"\n          height=\"41\"\n          viewBox=\"0 0 41 41\"\n          fill=\"none\"\n          xmlns=\"http://www.w3.org/2000/svg\"\n          strokeWidth=\"2\"\n          class=\"scale-appear\"\n        >\n          <path\n            d=\"M37.5324 16.8707C37.9808 15.5241 38.1363 14.0974 37.9886 12.6859C37.8409 11.2744 37.3934 9.91076 36.676 8.68622C35.6126 6.83404 33.9882 5.3676 32.0373 4.4985C30.0864 3.62941 27.9098 3.40259 25.8215 3.85078C24.8796 2.7893 23.7219 1.94125 22.4257 1.36341C21.1295 0.785575 19.7249 0.491269 18.3058 0.500197C16.1708 0.495044 14.0893 1.16803 12.3614 2.42214C10.6335 3.67624 9.34853 5.44666 8.6917 7.47815C7.30085 7.76286 5.98686 8.3414 4.8377 9.17505C3.68854 10.0087 2.73073 11.0782 2.02839 12.312C0.956464 14.1591 0.498905 16.2988 0.721698 18.4228C0.944492 20.5467 1.83612 22.5449 3.268 24.1293C2.81966 25.4759 2.66413 26.9026 2.81182 28.3141C2.95951 29.7256 3.40701 31.0892 4.12437 32.3138C5.18791 34.1659 6.8123 35.6322 8.76321 36.5013C10.7141 37.3704 12.8907 37.5973 14.9789 37.1492C15.9208 38.2107 17.0786 39.0587 18.3747 39.6366C19.6709 40.2144 21.0755 40.5087 22.4946 40.4998C24.6307 40.5054 26.7133 39.8321 28.4418 38.5772C30.1704 37.3223 31.4556 35.5506 32.1119 33.5179C33.5027 33.2332 34.8167 32.6547 35.9659 31.821C37.115 30.9874 38.0728 29.9178 38.7752 28.684C39.8458 26.8371 40.3023 24.6979 40.0789 22.5748C39.8556 20.4517 38.9639 18.4544 37.5324 16.8707ZM22.4978 37.8849C20.7443 37.8874 19.0459 37.2733 17.6994 36.1501C17.7601 36.117 17.8666 36.0586 17.936 36.0161L25.9004 31.4156C26.1003 31.3019 26.2663 31.137 26.3813 30.9378C26.4964 30.7386 26.5563 30.5124 26.5549 30.2825V19.0542L29.9213 20.998C29.9389 21.0068 29.9541 21.0198 29.9656 21.0359C29.977 21.052 29.9842 21.0707 29.9867 21.0902V30.3889C29.9842 32.375 29.1946 34.2791 27.7909 35.6841C26.3872 37.0892 24.4838 37.8806 22.4978 37.8849ZM6.39227 31.0064C5.51397 29.4888 5.19742 27.7107 5.49804 25.9832C5.55718 26.0187 5.66048 26.0818 5.73461 26.1244L13.699 30.7248C13.8975 30.8408 14.1233 30.902 14.3532 30.902C14.583 30.902 14.8088 30.8408 15.0073 30.7248L24.731 25.1103V28.9979C24.7321 29.0177 24.7283 29.0376 24.7199 29.0556C24.7115 29.0736 24.6988 29.0893 24.6829 29.1012L16.6317 33.7497C14.9096 34.7416 12.8643 35.0097 10.9447 34.4954C9.02506 33.9811 7.38785 32.7263 6.39227 31.0064ZM4.29707 13.6194C5.17156 12.0998 6.55279 10.9364 8.19885 10.3327C8.19885 10.4013 8.19491 10.5228 8.19491 10.6071V19.808C8.19351 20.0378 8.25334 20.2638 8.36823 20.4629C8.48312 20.6619 8.64893 20.8267 8.84863 20.9404L18.5723 26.5542L15.206 28.4979C15.1894 28.5089 15.1703 28.5155 15.1505 28.5173C15.1307 28.5191 15.1107 28.516 15.0924 28.5082L7.04046 23.8557C5.32135 22.8601 4.06716 21.2235 3.55289 19.3046C3.03862 17.3858 3.30624 15.3413 4.29707 13.6194ZM31.955 20.0556L22.2312 14.4411L25.5976 12.4981C25.6142 12.4872 25.6333 12.4805 25.6531 12.4787C25.6729 12.4769 25.6928 12.4801 25.7111 12.4879L33.7631 17.1364C34.9967 17.849 36.0017 18.8982 36.6606 20.1613C37.3194 21.4244 37.6047 22.849 37.4832 24.2684C37.3617 25.6878 36.8382 27.0432 35.9743 28.1759C35.1103 29.3086 33.9415 30.1717 32.6047 30.6641C32.6047 30.5947 32.6047 30.4733 32.6047 30.3889V21.188C32.6066 20.9586 32.5474 20.7328 32.4332 20.5338C32.319 20.3348 32.154 20.1698 31.955 20.0556ZM35.3055 15.0128C35.2464 14.9765 35.1431 14.9142 35.069 14.8717L27.1045 10.2712C26.906 10.1554 26.6803 10.0943 26.4504 10.0943C26.2206 10.0943 25.9948 10.1554 25.7963 10.2712L16.0726 15.8858V11.9982C16.0715 11.9783 16.0753 11.9585 16.0837 11.9405C16.0921 11.9225 16.1048 11.9068 16.1207 11.8949L24.1719 7.25025C25.4053 6.53903 26.8158 6.19376 28.2383 6.25482C29.6608 6.31589 31.0364 6.78077 32.2044 7.59508C33.3723 8.40939 34.2842 9.53945 34.8334 10.8531C35.3826 12.1667 35.5464 13.6095 35.3055 15.0128ZM14.2424 21.9419L10.8752 19.9981C10.8576 19.9893 10.8423 19.9763 10.8309 19.9602C10.8195 19.9441 10.8122 19.9254 10.8098 19.9058V10.6071C10.8107 9.18295 11.2173 7.78848 11.9819 6.58696C12.7466 5.38544 13.8377 4.42659 15.1275 3.82264C16.4173 3.21869 17.8524 2.99464 19.2649 3.1767C20.6775 3.35876 22.0089 3.93941 23.1034 4.85067C23.0427 4.88379 22.937 4.94215 22.8668 4.98473L14.9024 9.58517C14.7025 9.69878 14.5366 9.86356 14.4215 10.0626C14.3065 10.2616 14.2466 10.4877 14.2479 10.7175L14.2424 21.9419ZM16.071 17.9991L20.4018 15.4978L24.7325 17.9975V22.9985L20.4018 25.4983L16.071 22.9985V17.9991Z\"\n            fill=\"currentColor\"\n          />\n        </svg>\n      </div>\n      <div class=\"data\"><div class=\"main-wrapper\" role=\"main\"><div class=\"main-content\"><noscript><div class=\"h2\"><span id=\"challenge-error-text\">Enable JavaScript and cookies to continue</span></div></noscript></div></div><script>(function(){window._cf_chl_opt = {cFPWv: 'g',cH: '6uQLI6HHorkx1zuOub.jenBwcVMQ9h8u0.DcBl5DU08-1776522809-1.2.1.1-agzcq1413AcRq78_614_.kSw_yQDINVDuAItPY2OPnKVvlUv3u0dlirRdgBUihgo',cITimeS: '1776522809',cRay: '9ee46288ea439875',cTplB: '0',cTplC:1,cTplO:0,cTplV:5,cType: 'managed',cUPMDTk:\"/backend-api/plugins/list?__cf_chl_tk=_d2Ok12OPqZ6DU94su.Y6Q_sB7HVdHSD5PBgArzAyME-1776522809-1.0.1.1-O2sworNjyDiAMQacAv9e3LzpJO9ZWPKCboPuJEhxfLs\",cvId: '3',cZone: 'chatgpt.com',fa:\"/backend-api/plugins/list?__cf_chl_f_tk=_d2Ok12OPqZ6DU94su.Y6Q_sB7HVdHSD5PBgArzAyME-1776522809-1.0.1.1-O2sworNjyDiAMQacAv9e3LzpJO9ZWPKCboPuJEhxfLs\",md: 'p0dKylPDovhIJyfCZijuT8sussqVHNpH1mZ_taS3wZg-1776522809-1.2.1.1-n1oMShdM2TFCzQR.tw1RlQ4j5cX.GvtDia.Rf0Ij2HG6fbaFdjHfalurl62a0_v7ImiDIEJ0Kk.gdG_yKXsx3hCeEPdETuUjPISfdu_IeulfChu23Ta_L6eZa71SobbYVreGM00b1KDbBGLCss27wItJ_63HpnR_MNGDBQHQC7DmDzrZ2VqMv8GvfY4265kgMqeXEOHE4fWZzZIoyxGcuMW3Fq4Gzr.GaBNKCqEyXlhQvnJEsXXYIFFpxY4jAA51noI.hhLVVsl4M0qk5MgGxfHbG.Nuzv5qGVWWy3nQIdQP79rffT.9FdlAaYnMKgiCoaHbGTrZViIESED5I2q08Wgdv8sSixdRn3tCflbIzIRTB0Kvdar_IC76IIrHjfl8Gupk6RqunwH.YrgsgK0ppoEq2ZiLdn15WVQMpmf02DwpzualRrRN.Ta1.n7gnjMbM6.wgYbrMUjsOeEHRsjYOvre4UPjXbLsVD7zP_5BQZo.GF6T.0BkK5FU7Ym5ENRMpYzAMhuQUXl2qUeA0EJ6I1s6x3f1EUMPE4XSjxHuCEXfTDkjiAajNSpAx9C.wacNSOsM7UJmSp0yfXLHxfZoeiGX6H15.ippL_EeYF_TEmzyzIsc5RUi_b6MkLXYOS9XdlM3UVetDtnP2rQ5TiuIAWJzhB9r9EetouQ94nhk0_miKWLBDWgt1f0.TjHomqsdBjyzWX8_geZZ5Ma7js7xhHuG.sT5p7nORgPbC_ru7VxDLUu22_6ok7VP_WvQ0YepLqQ788ojODua7jSqC31mMdyAVXTbgSIzwQ964Uz.lV888ksCFbSSuUTWBOoAREmaGANm4.n_Dn0u7a.yukX84BanPoACFUb.2T2ovBd.qEd5mcyYxrZgn6mot_5bI3eE4DcHOh1JQoC3M9IEA9YucETNpHObR...DEbelJZ35n2eQYEKfaTsDGG_XxeM28upU0tuVoObQ6jzS71TuW1v8fLw4vn8rRyzWkTjoKAbBRhSkVeC0A1QfYqyJkp_N3Wa7ZkSINOnAixOkI.LiMALkg',mdrd: 'RE_ydHsR4hu5yjjOuAg8HisM2mfrL87JIfuec3hG0Zo-1776522809-1.2.1.1-AbA05zLDrghQIzYHSfKade.NY9.p98l9D2g4XlekXtzyvIHb9rGoo21vHM9dDyRF95UoLY9g3pzzQOJZpKrk5SuI.qH1AnpFN5repmNAg9ftugEwNIn83QqQKsQtsuOaP7L2o1HAfMNS5VO8IWSoGgT5SOI6dPnM4WmzA9Dqx.ntOoDAMymSKA_zBzveNsLSx_mahNIkiOCjXcMkZ5whAl8g5JzuNw1p_5pV9Or30iCF0XPmJD5kzNGwEnG_1GYtEbzURWR_DZb.zgAqPqfQw_IexzdZwfd6X1BW6PXw4lcYumjzuMheFgfgnDe9Hw9J_5kZRoc4OeiK_3QS35.FgDf6TgW1g2pJ30lTl_UQOr0S_RoIGbRU7Ilr2t_LbXOWOksTSKWfS8wExOhZqAuUIMaubs9yX09n0pFvYQGa_NcNI7s2_D4PjIRxlseF3gjAKKfDcthBZYCoRwsdEn1dkxiE2QuD4Z7.eZU3FNJ8X2QLS0bEC0calTQ9dwf7s8VVbrEtD6wVa7Hyz_KovmumbycWExxNgSyobWJWE2JBD7zm_lOjJtVGY5BYwtgQt.yFLZAXpHvFXPkOxrza4ZOxipt5qdUHwlmxpksaUV_1ktBxg5qDMkBjIs6jdY5tlOn8tDNlJzmgxxYolkv2ggSFABRp35JKWuXWBRa2lYYzGc8jO4zF4tSWu4yT2ma3Iis16nCw7Yy6EKvOwyKxwEJgCcN1wapcU_0d8LBKvozVgZilpRE7irV7ekqRIfOe0q6b_GD7kq6_ISfcbrZxD3ok5ML9rkRHQkxwwqBrbPf_jcKUqLRfZPw4avGPD3ht.7dHOBzkeqjlz1vcU9cRIU_uaGxwR6YRQFQX097j1krK3QxI1QFyWLtvUa2DwUXpM2zALbZmmkSlfSIhRUJbjfSRYKi2X5IuMqFke8EroHWBZv_GkcP5.ar7HrBtOoBo2YBKsP.5K3oLvTB0mewkrq0XEakudBrRQ3JGWnPbFFrQ6rSxIJsWf3wCJqfTxgNoNT4lLH3UJJQXh5oXesgsj7124bTOV9VU3un9GOhEGx5bf2NzWwlR56h7gexju1xMgGzkpaX3QFf_pmUuSYxTHN6_QnQWOfNfMJA1VTc52QtVB2I93TUDCq01Uq62_QyasJUJxZFLufpp5syzsCvT6NfKxFnSBkNIORt912xZjMKpsB5gI21i2ydL6gbAhG7vVwHe8QIAVxvarUGkrB85py.Pwjcsi9GJG6J.aIOlnAVO7R.sudxQpjBmA8cuWTealpG3LEDqfu15HRtvbHcsw9U.yJsO1ICks6CtpvGQdqWsR3iJAN2fZvEH7lwwCyZ9318A7Tw2B3LZ8lJp43kglOTWZfFn3dM7r4.Ip8QvikPgEr.R_Ncuq2kp1l37YkuA34qbg2Fsiia0X5dWCnd7d84KEsbMzxayWSdQsyohGbQERDmkL_kmVZZ88.SA2y.dJ4pXQ58ssyA0J002cm_18R7OErcqQucpMJf_eYGN6jGexGCMRplByaPbadlPN_zcrq6CG6VAv.UoQku69pRFCDb_w7FCL7hMLFR3PF4p7zC7wpP2uP9LHXlKqFZ.m0RSqjxR98FAJq19JuEMHeVqu_GtyWAkIrBfMxuGJx1c7m8jnJrGbRWlD3DNk_c403SGvn4DSWvjVkRpiYK.sAFxGHQ4KH239.418Uj0lvVqnwReOMS5AbuGO5oT6GjQjvuJXLrS5N8RpfgGB2SS3XUgVAMCOG7sJ1uhJKW4qKLigKNGGMn8O3bowA9haafC5Tgf1ijEoy6O9ce02onRhpfkKJ9tf1WrcGc.OWRhmCn7vZ98JuTZfdNq8GZylq8K72dkCRsy3w4FN0SNekd5bT8e1VmcfUNKZQz62bTUvloXM8Dg1owbi7rXv80LPgDHJKnnchHrTLuHnGHMTH2e9XpWS3VQFAOPVBHNsfHsa2YhvMbjdXAlTn.RNRBvDRteSuoaTJ_Itp8UJE9H6VcNPdvINzgeJ5BUzRa5kDZv7k5tMqJdP1Uw8oz5sLkMYwtK_pLtlJQxVgqtpZUUV3Do6lTRJgXR1i_PTroHXX1XrOKDGqVRtONblysloG6eo4hXpHp08abQAfxz9n7VdZDsCmuMA9vdPloe5wnB48gR.g7wmg210ecFmNF_iVHpbgddN.chsqQwllgxoeYp3UsowpnLrY3ibH4bNDvGERaJ4VC_0ZPeZGVSwm.cJ44rPShNszFsioYPTlJetGLKSnpPVtOyOccE6yPArHPHWa5Xz5pzdaJn6MufROQ.qi1f9bjauH8Rz2SlpiazfZeio3bdu9N9suIcnQ',};var a = document.createElement('script');a.src = '/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1?ray=9ee46288ea439875';window._cf_chl_opt.cOgUHash = location.hash === '' && location.href.indexOf('#') !== -1 ? '#' : location.hash;window._cf_chl_opt.cOgUQuery = location.search === '' && location.href.slice(0, location.href.length - window._cf_chl_opt.cOgUHash.length).indexOf('?') !== -1 ? '?' : location.search;if (window.history && window.history.replaceState) {var ogU = location.pathname + window._cf_chl_opt.cOgUQuery + window._cf_chl_opt.cOgUHash;history.replaceState(null, null,\"/backend-api/plugins/list?__cf_chl_rt_tk=_d2Ok12OPqZ6DU94su.Y6Q_sB7HVdHSD5PBgArzAyME-1776522809-1.0.1.1-O2sworNjyDiAMQacAv9e3LzpJO9ZWPKCboPuJEhxfLs\"+ window._cf_chl_opt.cOgUHash);a.onload = function() {history.replaceState(null, null, ogU);}}document.getElementsByTagName('head')[0].appendChild(a);}());</script></div>\n    </div>\n  </body>\n</html>\n\n2026-04-18T14:33:29.798165Z  WARN codex_core::plugins::manager: failed to warm featured plugin ids cache error=remote plugin sync request to https://chatgpt.com/backend-api/plugins/featured failed with status 403 Forbidden: <html>\n  <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <style global>body{font-family:Arial,Helvetica,sans-serif}.container{align-items:center;display:flex;flex-direction:column;gap:2rem;height:100%;justify-content:center;width:100%}@keyframes enlarge-appear{0%{opacity:0;transform:scale(75%) rotate(-90deg)}to{opacity:1;transform:scale(100%) rotate(0deg)}}.logo{color:#8e8ea0}.scale-appear{animation:enlarge-appear .4s ease-out}@media (min-width:768px){.scale-appear{height:48px;width:48px}}.data:empty{display:none}.data{border-radius:5px;color:#8e8ea0;text-align:center}@media (prefers-color-scheme:dark){body{background-color:#343541}.logo{color:#acacbe}}</style>\n  <meta http-equiv=\"refresh\" content=\"360\"></head>\n  <body>\n    <div class=\"container\">\n      <div class=\"logo\">\n        <svg\n          width=\"41\"\n          height=\"41\"\n          viewBox=\"0 0 41 41\"\n          fill=\"none\"\n          xmlns=\"http://www.w3.org/2000/svg\"\n          strokeWidth=\"2\"\n          class=\"scale-appear\"\n        >\n          <path\n            d=\"M37.5324 16.8707C37.9808 15.5241 38.1363 14.0974 37.9886 12.6859C37.8409 11.2744 37.3934 9.91076 36.676 8.68622C35.6126 6.83404 33.9882 5.3676 32.0373 4.4985C30.0864 3.62941 27.9098 3.40259 25.8215 3.85078C24.8796 2.7893 23.7219 1.94125 22.4257 1.36341C21.1295 0.785575 19.7249 0.491269 18.3058 0.500197C16.1708 0.495044 14.0893 1.16803 12.3614 2.42214C10.6335 3.67624 9.34853 5.44666 8.6917 7.47815C7.30085 7.76286 5.98686 8.3414 4.8377 9.17505C3.68854 10.0087 2.73073 11.0782 2.02839 12.312C0.956464 14.1591 0.498905 16.2988 0.721698 18.4228C0.944492 20.5467 1.83612 22.5449 3.268 24.1293C2.81966 25.4759 2.66413 26.9026 2.81182 28.3141C2.95951 29.7256 3.40701 31.0892 4.12437 32.3138C5.18791 34.1659 6.8123 35.6322 8.76321 36.5013C10.7141 37.3704 12.8907 37.5973 14.9789 37.1492C15.9208 38.2107 17.0786 39.0587 18.3747 39.6366C19.6709 40.2144 21.0755 40.5087 22.4946 40.4998C24.6307 40.5054 26.7133 39.8321 28.4418 38.5772C30.1704 37.3223 31.4556 35.5506 32.1119 33.5179C33.5027 33.2332 34.8167 32.6547 35.9659 31.821C37.115 30.9874 38.0728 29.9178 38.7752 28.684C39.8458 26.8371 40.3023 24.6979 40.0789 22.5748C39.8556 20.4517 38.9639 18.4544 37.5324 16.8707ZM22.4978 37.8849C20.7443 37.8874 19.0459 37.2733 17.6994 36.1501C17.7601 36.117 17.8666 36.0586 17.936 36.0161L25.9004 31.4156C26.1003 31.3019 26.2663 31.137 26.3813 30.9378C26.4964 30.7386 26.5563 30.5124 26.5549 30.2825V19.0542L29.9213 20.998C29.9389 21.0068 29.9541 21.0198 29.9656 21.0359C29.977 21.052 29.9842 21.0707 29.9867 21.0902V30.3889C29.9842 32.375 29.1946 34.2791 27.7909 35.6841C26.3872 37.0892 24.4838 37.8806 22.4978 37.8849ZM6.39227 31.0064C5.51397 29.4888 5.19742 27.7107 5.49804 25.9832C5.55718 26.0187 5.66048 26.0818 5.73461 26.1244L13.699 30.7248C13.8975 30.8408 14.1233 30.902 14.3532 30.902C14.583 30.902 14.8088 30.8408 15.0073 30.7248L24.731 25.1103V28.9979C24.7321 29.0177 24.7283 29.0376 24.7199 29.0556C24.7115 29.0736 24.6988 29.0893 24.6829 29.1012L16.6317 33.7497C14.9096 34.7416 12.8643 35.0097 10.9447 34.4954C9.02506 33.9811 7.38785 32.7263 6.39227 31.0064ZM4.29707 13.6194C5.17156 12.0998 6.55279 10.9364 8.19885 10.3327C8.19885 10.4013 8.19491 10.5228 8.19491 10.6071V19.808C8.19351 20.0378 8.25334 20.2638 8.36823 20.4629C8.48312 20.6619 8.64893 20.8267 8.84863 20.9404L18.5723 26.5542L15.206 28.4979C15.1894 28.5089 15.1703 28.5155 15.1505 28.5173C15.1307 28.5191 15.1107 28.516 15.0924 28.5082L7.04046 23.8557C5.32135 22.8601 4.06716 21.2235 3.55289 19.3046C3.03862 17.3858 3.30624 15.3413 4.29707 13.6194ZM31.955 20.0556L22.2312 14.4411L25.5976 12.4981C25.6142 12.4872 25.6333 12.4805 25.6531 12.4787C25.6729 12.4769 25.6928 12.4801 25.7111 12.4879L33.7631 17.1364C34.9967 17.849 36.0017 18.8982 36.6606 20.1613C37.3194 21.4244 37.6047 22.849 37.4832 24.2684C37.3617 25.6878 36.8382 27.0432 35.9743 28.1759C35.1103 29.3086 33.9415 30.1717 32.6047 30.6641C32.6047 30.5947 32.6047 30.4733 32.6047 30.3889V21.188C32.6066 20.9586 32.5474 20.7328 32.4332 20.5338C32.319 20.3348 32.154 20.1698 31.955 20.0556ZM35.3055 15.0128C35.2464 14.9765 35.1431 14.9142 35.069 14.8717L27.1045 10.2712C26.906 10.1554 26.6803 10.0943 26.4504 10.0943C26.2206 10.0943 25.9948 10.1554 25.7963 10.2712L16.0726 15.8858V11.9982C16.0715 11.9783 16.0753 11.9585 16.0837 11.9405C16.0921 11.9225 16.1048 11.9068 16.1207 11.8949L24.1719 7.25025C25.4053 6.53903 26.8158 6.19376 28.2383 6.25482C29.6608 6.31589 31.0364 6.78077 32.2044 7.59508C33.3723 8.40939 34.2842 9.53945 34.8334 10.8531C35.3826 12.1667 35.5464 13.6095 35.3055 15.0128ZM14.2424 21.9419L10.8752 19.9981C10.8576 19.9893 10.8423 19.9763 10.8309 19.9602C10.8195 19.9441 10.8122 19.9254 10.8098 19.9058V10.6071C10.8107 9.18295 11.2173 7.78848 11.9819 6.58696C12.7466 5.38544 13.8377 4.42659 15.1275 3.82264C16.4173 3.21869 17.8524 2.99464 19.2649 3.1767C20.6775 3.35876 22.0089 3.93941 23.1034 4.85067C23.0427 4.88379 22.937 4.94215 22.8668 4.98473L14.9024 9.58517C14.7025 9.69878 14.5366 9.86356 14.4215 10.0626C14.3065 10.2616 14.2466 10.4877 14.2479 10.7175L14.2424 21.9419ZM16.071 17.9991L20.4018 15.4978L24.7325 17.9975V22.9985L20.4018 25.4983L16.071 22.9985V17.9991Z\"\n            fill=\"currentColor\"\n          />\n        </svg>\n      </div>\n      <div class=\"data\"><div class=\"main-wrapper\" role=\"main\"><div class=\"main-content\"><noscript><div class=\"h2\"><span id=\"challenge-error-text\">Enable JavaScript and cookies to continue</span></div></noscript></div></div><script>(function(){window._cf_chl_opt = {cFPWv: 'g',cH: 'AYx.MevFs71gepVSpvy224xSFTw8Y0Tw1OMQeXGPKFM-1776522809-1.2.1.1-U2k51fQV.R4ylvfSCukMvAhrspcfIlB9f3ewNIj.0MB_4BKIgqp2pyTGsJeW3Vb7',cITimeS: '1776522809',cRay: '9ee46288fc99bcc9',cTplB: '0',cTplC:1,cTplO:0,cTplV:5,cType: 'managed',cUPMDTk:\"/backend-api/plugins/featured?platform=codex&__cf_chl_tk=ytU2gDYDG2AZjx8tMXMwdVbpq.ryalfSCh0RAaBG.Hk-1776522809-1.0.1.1-5KKWwW0L8gSsbQJeINo9n0Q0BfZ_eBguLS4AtfVwMpE\",cvId: '3',cZone: 'chatgpt.com',fa:\"/backend-api/plugins/featured?platform=codex&__cf_chl_f_tk=ytU2gDYDG2AZjx8tMXMwdVbpq.ryalfSCh0RAaBG.Hk-1776522809-1.0.1.1-5KKWwW0L8gSsbQJeINo9n0Q0BfZ_eBguLS4AtfVwMpE\",md: 'rLbfzciCjb.EHwDMxHr_e7Zj33PKeMZjUjNRshK9MWo-1776522809-1.2.1.1-PQD5k3ptTpBFRolfNmJHTzsJGAgknxu5mWB5aYkN1L5guIFpKwV4YMaKpg1MQnRxWWnpCMFgArqPnnZ_fzosXO5s0jDPpFVI05z.W0mA2ZGjDmKJ_RXStobC1RJlCu7hXbW.ejpHng.9N54skuEroKj9K.1kjKhbPF5e0.6C_rgldUgro0AxpjhsafUs8s9K5t7n_qAdMOYcH.4QqlM3DgX28YveFOmfNdZXQ1EF1rx7KHYpyimywakAuKoESck2Eq3xyML6G2os.KeOGfeypcWo5fd7W2aL..rk6RhjOrh73T83A8EAKzrDfLz7pW_aYzNo40UDUJnPHpIWfZMo98B2ibJdt92Hv._ZQgk2VmIwjSi4x98ao0BOECgw1jmv.KU6UnzBFS2PbQRP6SjRLqnXSKs.TkSE8xM9qEtZsYf_bgOCVyPcWA3dOrJOm7gGznU.3SrAROaAbEvUrGzMpRCVfuiIF8lhBIhsPu2HAI9V7ffmFIZTd1iMeeG9_O6rI3l_80plJe4rcxvNMnEJwMVEb5Qe1Mj_n08yxN2qzxWXJWeYLWsFnr0TY8G.3P.hsEdXj3SzOt2mGLmh8rEzqJlaQ4J0MHk73DmtP8CHymz3DlIksV0iOb5aI4Ma_hW6lZW6fCXPculJ.TJpdZmkP2jVhUoHhP2srcS0xZXTT4TzraR8dQqPZrowH7xr_mzZJYcBMmcHcx0QUmsohuql18ilLmo_1WWHisB4OfNxo7dYGwm51vfLhSg5hla_4K2IwBfC3aqkrlUFUdxBJgRdke1.bL7PslOZJhDF.8u_tuyqdInmNKsj53xdcLbhPfY2ipuMlgAKqj8Qv5wKhybAcuacJ0LwgeXh_Ma.NR3B7uaR6Gpm0cvzaTE5BWqxCy.n.SMtUfkjOJsixtiw0KpR8zlh9iXNs5Gtbg9Q9koKIp9uhHMuoabvDmhR53zNEFS58EHkJg11pqRzoWW5QdMD8OS7BbsGMmDRVj7iBrkBqU6Qq252HPzgXbGoHJcIev3zySylxIuEJyeJLcxf5KZXvOlQX8VZNFrO2Wk5RdBs6umWHtK5Pbqqf8hSOG5r_zi0',mdrd: 'rXEOaV1SxlO7ePHsemdeRCY7D85nqlkSTT5GweK3PkQ-1776522809-1.2.1.1-oKUofYWgNjp4bWx1BZkR6ziVTnglJnrBDEUtcILaUc6tckiC2WlIKdE0O4e6vooii.Rvfu4IDnhyVolrm.ABzzpeHnWvM8SCupoNaNBv6cTP0qZ4Crk425.YLzO4dIccW8QhFI3CYqUvnyHFElw2QvmvZkW06VDlYrvpuiL._JBhOjIVnCYstOAAKQPpNQsnOXpziez.kjR6vlfe9wPsCWhO7llUQGCQs3hoedIequzBii4b3Y58.wEpF.LyKCkWgmmsCdzT_0u51ibHFZHHpCn2ETCWM5Jq9f4mhlNYgmLKKTYL7cN06TDekj4.7NGYYmbASky2XffHnOPSleRS2FbBHBY6TUpKmKwlxqYkPNihkJRNZFzUkRF98_X2k3__2LvHk9RuzzBG9Rah0tQ70ljJYRDxSaPwIQDdGQpVGTHVyuTCQA4bAOGBmEX.iJv89Ardt5tial.WuGwwn7cY7sJgPTv02KS_dfl56l20TydG.Nn12_xhHmsqt_wDKuRuvW_DmYNUJWR3ZQLBDgLlz2sQE8coB6Tygk_G9dtnzAdPlF2meF09WKBy82nnmvSCT6g_u9h0CiNa8Hvp.dmUaVhLOsNloFIe.eFtorxema3EicaPCAeoiiwDhzDK1l_gOm890yRGoyCpskv5Sda3xLQV5_9RkcyeJ1lf2BeOLpTHMjl84wAwWmpEPXvCNpf9Jxr70nbC4VyqhQrot6L1WzWbuGEZUdudf6Jb5U_doDnoqTwVcQGjhqVXHNp0K1MmpAYf0mch2zxc.rdfzsrSNLMXCxpHqaF0aJWg2MGbBSlD3qoTnVBcuXHJiWmnZL0RmIGNMVDeWI5TWD0xJv4H.ed11lo28ZzM.Pm4zHwdSQ1HZ9F8ufdlWcl9vqFlM0La4b9723dY64qBXYXlTcOKsuC2OHeUMqXxYGRCh8znCe63pW3KP7QF79a_XEDzmfG_OW_iMef5EXiUN_9Zvomm.RabvjEKDaD8BfvVvJUU4SyXfmM8.1y4ApQPgauTE4U0Tx.7cJZyB1FcW.zZbhP213qiTLaF51fQ62P63Zz08706PsUPNWjIu.2aADqFGEZ.JCuxZqDurWnrcvWRFsQw7qakOBuv7JhBiQ_cnTp5lYaWdAjdfLW6aXzdlvSc4V93rrz.PP8POEIKzP0HlJCEC5CfmA5631_xbHqRRZ0JIQCnsTgaK46WwBa7IDu9BDtHGvwLUTqwNrvMjRwMl.xtsrEludRMAcXNT.p3yzpa.Lv70IZVlss1Q8wlouipLimgzWhj6_Gqd.TItFNwalzmVYkvA.23bn7A6ElfdexbP3CiqGWgW3jJT0Oi_dwmJntixXWPDtULYw56A.DjyV_viC0SSUbPyYLkBxB1pdSPnsRTztyQm_IX9wydstzxAJn123dzcaTI4nF8fFcTCxiI5RKgqyxuogKaqtlXwIIZF0WZhyZoSz29TtIpGnhCbKgHP8VBiwCq.2TUlI5WsoeGerbgesdHriyXiYzWKzifOaSZyWb8iarnajXl9XaWlZR0UgyXJWsC6bLiOowz_iTIkgvHSn5cNoqHoqZSeGntZ0agk1qqQaTR1ewGq7GkJmxJpoF06Ut8mGRF8ek25Yx62rELXOOjPODgKN.Wu_ar5Ovfgbjma03Bvx09AgySDz.K1QHAcquLIXR69fU1Axy75tFirpuvMe.QRmCloQoMwX_Xo3wHVZKYlG4vX2NOp.usGVdDb9LltRe4.T8VdBR3Y7TeggaD.KET_.xgwGduUjveQPTVK5p.LvbTcQWNP0whAZpUKf4nqwGFvr_hrsz3Nz6a7vuRdjbt7rUU9NjQdwL4XDBwxRk5on0vq__O7yRKsZdzY4f9Wgyd.CyB8uZx6PZuSLLw1XWbHK4Iu7qPSxrrhUmvmVqMyDHIEcfztG0NDAenOWdnTwk9i54Zd2DEitFNbEl5fgnfLFDr2R1gVJwTXfBl6H9xd7m26727tbAiRIQkDtGpGskk7eIu6bzO6ZzO620BejYbi7CkKv7RrM0ixNcfGre.DX4.7vaWCq1.s2Xn_uKOzVClw5yOwlZUCpl_KmfXwD5IBGYa9P4EtSbU0NFbXFrXuPvh1EtmrKbaq_7.Cv13x6GcTJXmMmwW.p5ptn01v0cOqZZK3a9Xs4nsQb4Qcb3A4mTtA6zoO_2rr2gqo4rveQeQJ_J96QiXXrHxP2RzpkaPpLWdwc59WtBgPSNQZM8X2bjwqCqp81xlYCvpv3oeeWs9s0bgz21NghYzKeN7CEXjTIyn2D8dbNXL_yRI9ZOGnnJGI.B.7KvE86VR5BzxEGP83mfecOTn.A',};var a = document.createElement('script');a.src = '/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1?ray=9ee46288fc99bcc9';window._cf_chl_opt.cOgUHash = location.hash === '' && location.href.indexOf('#') !== -1 ? '#' : location.hash;window._cf_chl_opt.cOgUQuery = location.search === '' && location.href.slice(0, location.href.length - window._cf_chl_opt.cOgUHash.length).indexOf('?') !== -1 ? '?' : location.search;if (window.history && window.history.replaceState) {var ogU = location.pathname + window._cf_chl_opt.cOgUQuery + window._cf_chl_opt.cOgUHash;history.replaceState(null, null,\"/backend-api/plugins/featured?platform=codex&__cf_chl_rt_tk=ytU2gDYDG2AZjx8tMXMwdVbpq.ryalfSCh0RAaBG.Hk-1776522809-1.0.1.1-5KKWwW0L8gSsbQJeINo9n0Q0BfZ_eBguLS4AtfVwMpE\"+ window._cf_chl_opt.cOgUHash);a.onload = function() {history.replaceState(null, null, ogU);}}document.getElementsByTagName('head')[0].appendChild(a);}());</script></div>\n    </div>\n  </body>\n</html>\n\n2026-04-18T14:33:30.046265Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:30.047660Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:30.098840Z  WARN codex_core::plugins::manager: failed to refresh curated plugin cache after sync: failed to refresh curated plugin cache for github@openai-curated: failed to back up plugin cache entry: Отказано в доступе. (os error 5)\n2026-04-18T14:33:31.762197Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:33.962160Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:33.966652Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:33.967896Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:33.983930Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:33.985379Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.008170Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.009692Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.032124Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.033199Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.053515Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.054564Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.077327Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.078593Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.230253Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:34.233502Z  WARN codex_core::session_startup_prewarm: startup websocket prewarm setup failed: unexpected status 403 Forbidden: 154c\r\n<!DOCTYPE html>\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US, url: wss://chatgpt.com/backend-api/codex/responses, cf-ray: 9ee462a4ab53962c-HEL\n2026-04-18T14:33:34.471127Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:34.482515Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.484731Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.508281Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.509981Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.538660Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.540231Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.563854Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.564892Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.586032Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.587465Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.615420Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.616726Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:34.758174Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:34.759463Z  WARN codex_core::codex: stream disconnected - retrying sampling request (1/5 in 216ms)...\n2026-04-18T14:33:35.102926Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:35.103973Z  WARN codex_core::codex: stream disconnected - retrying sampling request (2/5 in 361ms)...\n2026-04-18T14:33:35.577085Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:35.578517Z  WARN codex_core::codex: stream disconnected - retrying sampling request (3/5 in 757ms)...\n2026-04-18T14:33:36.428960Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:36.430214Z  WARN codex_core::codex: stream disconnected - retrying sampling request (4/5 in 1.696s)...\n2026-04-18T14:33:38.247545Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:38.248733Z  WARN codex_core::codex: stream disconnected - retrying sampling request (5/5 in 3.42s)...\n2026-04-18T14:33:41.788930Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses\n2026-04-18T14:33:41.790611Z  WARN codex_core::client: falling back to HTTP\n2026-04-18T14:33:56.193402Z  WARN codex_core::plugins::manager: failed to load plugin: plugin is not installed plugin=\"material-3-md3-workflows@local\" path=C:\\Users\\tikta\\.codex\\plugins/cache\\local\\material-3-md3-workflows\n2026-04-18T14:33:56.197382Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.198725Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.210405Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.211422Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.226887Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.227825Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.243582Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.244499Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.261715Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.262786Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.282624Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: prompt must be at most 128 characters path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.codex-plugin/plugin.json\n2026-04-18T14:33:56.283586Z  WARN codex_core::plugins::manifest: ignoring interface.defaultPrompt: maximum of 3 prompts is supported path=C:\\Users\\tikta\\.codex\\.tmp\\plugins\\plugins\\plugin-eval\\.codex-plugin/plugin.json\n2026-04-18T14:34:00.109563Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.109756Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-shm: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.109823Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-wal: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.111466Z  WARN codex_state::runtime: failed to open state db at C:\\Users\\tikta\\.codex\\state_5.sqlite: migration 23 was previously applied but is missing in the resolved migrations\n2026-04-18T14:34:00.112213Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.112384Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-shm: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.112458Z  WARN codex_state::runtime: failed to remove legacy logs db file C:\\Users\\tikta\\.codex\\logs_2.sqlite-wal: Процесс не может получить доступ к файлу, так как этот файл занят другим процессом. (os error 32)\n2026-04-18T14:34:00.113956Z  WARN codex_state::runtime: failed to open state db at C:\\Users\\tikta\\.codex\\state_5.sqlite: migration 23 was previously applied but is missing in the resolved migrations\n2026-04-18T14:34:00.145154Z  WARN codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back"
+    },
+    "codexInstallCheck": null,
+    "codexPathResolution": {
+      "pathPending": false,
+      "wrapperPath": null
+    },
+    "telegram": {
+      "status": "configured",
+      "configured": true,
+      "message": "Telegram bot token is configured."
+    },
+    "redis": {
+      "state": "running",
+      "url": "redis://localhost:6379",
+      "host": "localhost",
+      "port": 6379,
+      "local": true,
+      "installed": false,
+      "detail": "Redis responded to PING on localhost:6379.",
+      "executablePaths": {
+        "redisCli": null,
+        "redisServer": null
+      }
+    },
+    "ports": [
+      {
+        "id": "miniapp",
+        "label": "Mini App",
+        "port": 3001,
+        "probe": "http",
+        "state": "occupied_external",
+        "detail": "Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there.",
+        "overrideEnv": "HAPPYTG_MINIAPP_PORT",
+        "command": "pnpm dev:miniapp",
+        "listener": {
+          "source": "docker",
+          "kind": "http",
+          "description": "HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend)",
+          "title": "Contacts",
+          "containerName": "contacts-frontend",
+          "image": "contacts-frontend"
+        },
+        "suggestedPort": 3005,
+        "suggestedPorts": [
+          3005,
+          3006,
+          3007
+        ],
+        "planned": true
+      },
+      {
+        "id": "api",
+        "label": "API",
+        "port": 4000,
+        "probe": "http",
+        "state": "occupied_expected",
+        "detail": "API plans to use port 4000, and HappyTG api is already running there via Docker container `infra-api-1`.",
+        "overrideEnv": "HAPPYTG_API_PORT",
+        "command": "pnpm dev:api",
+        "service": "api",
+        "listener": {
+          "source": "docker",
+          "kind": "happytg",
+          "service": "api",
+          "description": "HappyTG api via Docker container `infra-api-1` (infra-api)",
+          "containerName": "infra-api-1",
+          "image": "infra-api"
+        },
+        "suggestedPort": 4001,
+        "suggestedPorts": [
+          4001,
+          4002,
+          4003
+        ],
+        "planned": true
+      },
+      {
+        "id": "bot",
+        "label": "Bot",
+        "port": 4100,
+        "probe": "http",
+        "state": "free",
+        "detail": "Bot plans to use port 4100; it is free.",
+        "overrideEnv": "HAPPYTG_BOT_PORT",
+        "command": "pnpm dev:bot",
+        "suggestedPort": 4101,
+        "suggestedPorts": [
+          4101,
+          4102,
+          4103
+        ],
+        "planned": true
+      },
+      {
+        "id": "worker",
+        "label": "Worker probe",
+        "port": 4200,
+        "probe": "http",
+        "state": "free",
+        "detail": "Worker probe plans to use port 4200; it is free.",
+        "overrideEnv": "HAPPYTG_WORKER_PORT",
+        "command": "pnpm dev:worker",
+        "suggestedPort": 4201,
+        "suggestedPorts": [
+          4201,
+          4202,
+          4203
+        ],
+        "planned": true
+      },
+      {
+        "id": "redis",
+        "label": "Redis host port",
+        "port": 6379,
+        "probe": "redis",
+        "state": "occupied_supported",
+        "detail": "Redis host port plans to use port 6379, and Redis listener via Docker container `shared-redis` (redis:7-alpine) is already available there.",
+        "overrideEnv": "HAPPYTG_REDIS_HOST_PORT",
+        "command": "docker compose -f infra/docker-compose.example.yml up redis",
+        "service": "redis",
+        "listener": {
+          "source": "docker",
+          "kind": "redis",
+          "description": "Redis listener via Docker container `shared-redis` (redis:7-alpine)",
+          "service": "redis",
+          "containerName": "shared-redis",
+          "image": "redis:7-alpine"
+        },
+        "suggestedPort": 6380,
+        "suggestedPorts": [
+          6380,
+          6381,
+          6382
+        ],
+        "planned": true
+      },
+      {
+        "id": "postgres",
+        "label": "Postgres host port",
+        "port": 5432,
+        "probe": "tcp",
+        "state": "occupied_supported",
+        "detail": "Postgres host port plans to use port 5432, and PostgreSQL listener via Docker container `contacts-postgres` (postgres:16) is already available there.",
+        "overrideEnv": "HAPPYTG_POSTGRES_HOST_PORT",
+        "command": "docker compose -f infra/docker-compose.example.yml up postgres",
+        "service": "postgres",
+        "listener": {
+          "source": "docker",
+          "kind": "postgres",
+          "description": "PostgreSQL listener via Docker container `contacts-postgres` (postgres:16)",
+          "service": "postgres",
+          "containerName": "contacts-postgres",
+          "image": "postgres:16"
+        },
+        "suggestedPort": 5433,
+        "suggestedPorts": [
+          5433,
+          5434,
+          5435
+        ],
+        "planned": true
+      },
+      {
+        "id": "minio-api",
+        "label": "MinIO API host port",
+        "port": 9000,
+        "probe": "tcp",
+        "state": "occupied_supported",
+        "detail": "MinIO API host port plans to use port 9000, and MinIO listener via Docker container `nportal-minio-1` (minio/minio:RELEASE.2025-09-07T16-13-09Z) is already available there.",
+        "overrideEnv": "HAPPYTG_MINIO_PORT",
+        "command": "docker compose -f infra/docker-compose.example.yml up minio",
+        "service": "minio",
+        "listener": {
+          "source": "docker",
+          "kind": "minio",
+          "description": "MinIO listener via Docker container `nportal-minio-1` (minio/minio:RELEASE.2025-09-07T16-13-09Z)",
+          "serverHeader": "MinIO",
+          "containerName": "nportal-minio-1",
+          "image": "minio/minio:RELEASE.2025-09-07T16-13-09Z"
+        },
+        "suggestedPort": 9002,
+        "suggestedPorts": [
+          9002,
+          9003,
+          9004
+        ],
+        "planned": true
+      },
+      {
+        "id": "minio-console",
+        "label": "MinIO console host port",
+        "port": 9001,
+        "probe": "tcp",
+        "state": "occupied_supported",
+        "detail": "MinIO console host port plans to use port 9001, and MinIO listener (MinIO Console) via Docker container `nportal-minio-1` (minio/minio:RELEASE.2025-09-07T16-13-09Z) is already available there.",
+        "overrideEnv": "HAPPYTG_MINIO_CONSOLE_PORT",
+        "command": "docker compose -f infra/docker-compose.example.yml up minio",
+        "service": "minio",
+        "listener": {
+          "source": "docker",
+          "kind": "minio",
+          "description": "MinIO listener (MinIO Console) via Docker container `nportal-minio-1` (minio/minio:RELEASE.2025-09-07T16-13-09Z)",
+          "title": "MinIO Console",
+          "serverHeader": "MinIO Console",
+          "containerName": "nportal-minio-1",
+          "image": "minio/minio:RELEASE.2025-09-07T16-13-09Z"
+        },
+        "suggestedPort": 9005,
+        "suggestedPorts": [
+          9005,
+          9006,
+          9007
+        ],
+        "planned": true
+      }
+    ],
+    "plannedPorts": [
+      {
+        "id": "miniapp",
+        "label": "Mini App",
+        "port": 3001,
+        "probe": "http",
+        "state": "occupied_external",
+        "detail": "Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there.",
+        "overrideEnv": "HAPPYTG_MINIAPP_PORT",
+        "command": "pnpm dev:miniapp",
+        "listener": {
+          "source": "docker",
+          "kind": "http",
+          "description": "HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend)",
+          "title": "Contacts",
+          "containerName": "contacts-frontend",
+          "image": "contacts-frontend"
+        },
+        "suggestedPort": 3005,
+        "suggestedPorts": [
+          3005,
+          3006,
+          3007
+        ],
+        "planned": true
+      },
+      {
+        "id": "api",
+        "label": "API",
+        "port": 4000,
+        "probe": "http",
+        "state": "occupied_expected",
+        "detail": "API plans to use port 4000, and HappyTG api is already running there via Docker container `infra-api-1`.",
+        "overrideEnv": "HAPPYTG_API_PORT",
+        "command": "pnpm dev:api",
+        "service": "api",
+        "listener": {
+          "source": "docker",
+          "kind": "happytg",
+          "service": "api",
+          "description": "HappyTG api via Docker container `infra-api-1` (infra-api)",
+          "containerName": "infra-api-1",
+          "image": "infra-api"
+        },
+        "suggestedPort": 4001,
+        "suggestedPorts": [
+          4001,
+          4002,
+          4003
+        ],
+        "planned": true
+      },
+      {
+        "id": "bot",
+        "label": "Bot",
+        "port": 4100,
+        "probe": "http",
+        "state": "free",
+        "detail": "Bot plans to use port 4100; it is free.",
+        "overrideEnv": "HAPPYTG_BOT_PORT",
+        "command": "pnpm dev:bot",
+        "suggestedPort": 4101,
+        "suggestedPorts": [
+          4101,
+          4102,
+          4103
+        ],
+        "planned": true
+      },
+      {
+        "id": "worker",
+        "label": "Worker probe",
+        "port": 4200,
+        "probe": "http",
+        "state": "free",
+        "detail": "Worker probe plans to use port 4200; it is free.",
+        "overrideEnv": "HAPPYTG_WORKER_PORT",
+        "command": "pnpm dev:worker",
+        "suggestedPort": 4201,
+        "suggestedPorts": [
+          4201,
+          4202,
+          4203
+        ],
+        "planned": true
+      },
+      {
+        "id": "redis",
+        "label": "Redis host port",
+        "port": 6379,
+        "probe": "redis",
+        "state": "occupied_supported",
+        "detail": "Redis host port plans to use port 6379, and Redis listener via Docker container `shared-redis` (redis:7-alpine) is already available there.",
+        "overrideEnv": "HAPPYTG_REDIS_HOST_PORT",
+        "command": "docker compose -f infra/docker-compose.example.yml up redis",
+        "service": "redis",
+        "listener": {
+          "source": "docker",
+          "kind": "redis",
+          "description": "Redis listener via Docker container `shared-redis` (redis:7-alpine)",
+          "service": "redis",
+          "containerName": "shared-redis",
+          "image": "redis:7-alpine"
+        },
+        "suggestedPort": 6380,
+        "suggestedPorts": [
+          6380,
+          6381,
+          6382
+        ],
+        "planned": true
+      },
+      {
+        "id": "postgres",
+        "label": "Postgres host port",
+        "port": 5432,
+        "probe": "tcp",
+        "state": "occupied_supported",
+        "detail": "Postgres host port plans to use port 5432, and PostgreSQL listener via Docker container `contacts-postgres` (postgres:16) is already available there.",
+        "overrideEnv": "HAPPYTG_POSTGRES_HOST_PORT",
+        "command": "docker compose -f infra/docker-compose.example.yml up postgres",
+        "service": "postgres",
+        "listener": {
+          "source": "docker",
+          "kind": "postgres",
+          "description": "PostgreSQL listener via Docker container `contacts-postgres` (postgres:16)",
+          "service": "postgres",
+          "containerName": "contacts-postgres",
+          "image": "postgres:16"
+        },
+        "suggestedPort": 5433,
+        "suggestedPorts": [
+          5433,
+          5434,
+          5435
+        ],
+        "planned": true
+      },
+      {
+        "id": "minio-api",
+        "label": "MinIO API host port",
+        "port": 9000,
+        "probe": "tcp",
+        "state": "occupied_supported",
+        "detail": "MinIO API host port plans to use port 9000, and MinIO listener via Docker container `nportal-minio-1` (minio/minio:RELEASE.2025-09-07T16-13-09Z) is already available there.",
+        "overrideEnv": "HAPPYTG_MINIO_PORT",
+        "command": "docker compose -f infra/docker-compose.example.yml up minio",
+        "service": "minio",
+        "listener": {
+          "source": "docker",
+          "kind": "minio",
+          "description": "MinIO listener via Docker container `nportal-minio-1` (minio/minio:RELEASE.2025-09-07T16-13-09Z)",
+          "serverHeader": "MinIO",
+          "containerName": "nportal-minio-1",
+          "image": "minio/minio:RELEASE.2025-09-07T16-13-09Z"
+        },
+        "suggestedPort": 9002,
+        "suggestedPorts": [
+          9002,
+          9003,
+          9004
+        ],
+        "planned": true
+      },
+      {
+        "id": "minio-console",
+        "label": "MinIO console host port",
+        "port": 9001,
+        "probe": "tcp",
+        "state": "occupied_supported",
+        "detail": "MinIO console host port plans to use port 9001, and MinIO listener (MinIO Console) via Docker container `nportal-minio-1` (minio/minio:RELEASE.2025-09-07T16-13-09Z) is already available there.",
+        "overrideEnv": "HAPPYTG_MINIO_CONSOLE_PORT",
+        "command": "docker compose -f infra/docker-compose.example.yml up minio",
+        "service": "minio",
+        "listener": {
+          "source": "docker",
+          "kind": "minio",
+          "description": "MinIO listener (MinIO Console) via Docker container `nportal-minio-1` (minio/minio:RELEASE.2025-09-07T16-13-09Z)",
+          "title": "MinIO Console",
+          "serverHeader": "MinIO Console",
+          "containerName": "nportal-minio-1",
+          "image": "minio/minio:RELEASE.2025-09-07T16-13-09Z"
+        },
+        "suggestedPort": 9005,
+        "suggestedPorts": [
+          9005,
+          9006,
+          9007
+        ],
+        "planned": true
+      }
+    ],
+    "onboarding": {
+      "copyEnvCommand": "Copy-Item .env.example .env",
+      "defaultInfraCommand": "docker compose -f infra/docker-compose.example.yml up postgres minio",
+      "pairCommand": "pnpm daemon:pair",
+      "daemonCommand": "pnpm dev:daemon",
+      "items": [
+        {
+          "id": "shared-infra-ready",
+          "kind": "reuse",
+          "message": "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely."
+        },
+        {
+          "id": "running-stack-reuse",
+          "kind": "reuse",
+          "message": "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy."
+        },
+        {
+          "id": "miniapp-port-conflict",
+          "kind": "conflict",
+          "message": "Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there.",
+          "solutions": [
+            "This is a conflict, not a supported HappyTG reuse path.",
+            "Nearest free ports: 3005, 3006, 3007.",
+            "Choose one with `HAPPYTG_MINIAPP_PORT/PORT` or enter your own port manually. For example: `$env:HAPPYTG_MINIAPP_PORT=\"3005\"; pnpm dev:miniapp`."
+          ]
+        },
+        {
+          "id": "request-pair-code",
+          "kind": "manual",
+          "message": "Request a pairing code on the execution host: `pnpm daemon:pair`."
+        },
+        {
+          "id": "complete-pairing",
+          "kind": "manual",
+          "message": "Send `/pair <CODE>` to @gerta_workbot."
+        },
+        {
+          "id": "start-daemon",
+          "kind": "manual",
+          "message": "After pairing, start the daemon with `pnpm dev:daemon`."
+        }
+      ],
+      "steps": [
+        "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.",
+        "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.",
+        "Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there.",
+        "This is a conflict, not a supported HappyTG reuse path.",
+        "Nearest free ports: 3005, 3006, 3007.",
+        "Choose one with `HAPPYTG_MINIAPP_PORT/PORT` or enter your own port manually. For example: `$env:HAPPYTG_MINIAPP_PORT=\"3005\"; pnpm dev:miniapp`.",
+        "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+        "Send `/pair <CODE>` to @gerta_workbot.",
+        "After pairing, start the daemon with `pnpm dev:daemon`."
+      ],
+      "overrideExamples": [
+        {
+          "service": "Mini App",
+          "defaultPort": 3001,
+          "overrideEnv": "HAPPYTG_MINIAPP_PORT",
+          "command": "pnpm dev:miniapp",
+          "shellExample": "$env:HAPPYTG_MINIAPP_PORT=\"3005\"; pnpm dev:miniapp"
+        },
+        {
+          "service": "API",
+          "defaultPort": 4000,
+          "overrideEnv": "HAPPYTG_API_PORT",
+          "command": "pnpm dev:api",
+          "shellExample": "$env:HAPPYTG_API_PORT=\"4001\"; pnpm dev:api"
+        },
+        {
+          "service": "Bot",
+          "defaultPort": 4100,
+          "overrideEnv": "HAPPYTG_BOT_PORT",
+          "command": "pnpm dev:bot",
+          "shellExample": "$env:HAPPYTG_BOT_PORT=\"4101\"; pnpm dev:bot"
+        },
+        {
+          "service": "Worker probe",
+          "defaultPort": 4200,
+          "overrideEnv": "HAPPYTG_WORKER_PORT",
+          "command": "pnpm dev:worker",
+          "shellExample": "$env:HAPPYTG_WORKER_PORT=\"4201\"; pnpm dev:worker"
+        },
+        {
+          "service": "Redis host port",
+          "defaultPort": 6379,
+          "overrideEnv": "HAPPYTG_REDIS_HOST_PORT",
+          "command": "docker compose -f infra/docker-compose.example.yml up redis",
+          "shellExample": "$env:HAPPYTG_REDIS_HOST_PORT=\"6380\"; docker compose -f infra/docker-compose.example.yml up redis"
+        },
+        {
+          "service": "Postgres host port",
+          "defaultPort": 5432,
+          "overrideEnv": "HAPPYTG_POSTGRES_HOST_PORT",
+          "command": "docker compose -f infra/docker-compose.example.yml up postgres",
+          "shellExample": "$env:HAPPYTG_POSTGRES_HOST_PORT=\"5433\"; docker compose -f infra/docker-compose.example.yml up postgres"
+        },
+        {
+          "service": "MinIO API host port",
+          "defaultPort": 9000,
+          "overrideEnv": "HAPPYTG_MINIO_PORT",
+          "command": "docker compose -f infra/docker-compose.example.yml up minio",
+          "shellExample": "$env:HAPPYTG_MINIO_PORT=\"9002\"; docker compose -f infra/docker-compose.example.yml up minio"
+        },
+        {
+          "service": "MinIO console host port",
+          "defaultPort": 9001,
+          "overrideEnv": "HAPPYTG_MINIO_CONSOLE_PORT",
+          "command": "docker compose -f infra/docker-compose.example.yml up minio",
+          "shellExample": "$env:HAPPYTG_MINIO_CONSOLE_PORT=\"9005\"; docker compose -f infra/docker-compose.example.yml up minio"
+        }
+      ]
+    }
+  }
+}

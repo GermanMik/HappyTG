@@ -1,0 +1,21 @@
+{
+  "id": "HTG-2026-04-18-dev-miniapp-port-conflict-followup",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-18-dev-miniapp-port-conflict-followup",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Truthful Mini App/API port conflict follow-up",
+  "acceptanceCriteria": [
+    "Mini App occupied-port handling on 3001 is either proven correct with evidence or fixed to distinguish legitimate HappyTG reuse from foreign conflict.",
+    "Port 3001 is attributed truthfully, including BaseDeploy/Caddy-backed or Docker-backed listeners when determinable.",
+    "Installer/bootstrap performs product-level preflight port checks before launch and reports occupied ports without raw stack traces.",
+    "Occupied-port diagnostics identify the listener, classify reuse vs conflict, and point to explicit env overrides without hidden auto-reassignment.",
+    "API occupied-port reuse behavior on 4000 remains intact.",
+    "Regression coverage exists for touched Mini App, API, and bootstrap/install conflict paths.",
+    "Proof bundle is complete and backed by real artifacts plus a fresh independent verifier pass."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-18T15:36:09+03:00",
+  "updatedAt": "2026-04-18T16:48:10.0492159+03:00"
+}

@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-18-dev-miniapp-port-conflict-followup",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-2-2026-04-18"
+  },
+  "checks": [
+    {
+      "name": "miniapp-3001-classification",
+      "ok": true,
+      "detail": "Mini App now distinguishes supported HappyTG reuse from foreign listeners and names the foreign HTTP listener on port 3001."
+    },
+    {
+      "name": "api-4000-reuse",
+      "ok": true,
+      "detail": "API again treats an already-running HappyTG API on port 4000 as supported reuse instead of a raw EADDRINUSE failure."
+    },
+    {
+      "name": "bootstrap-preflight-truthfulness",
+      "ok": true,
+      "detail": "Bootstrap setup classifies Mini App 3001 as conflict and API 4000 as legitimate reuse, with explicit override guidance and no hidden port reassignment."
+    },
+    {
+      "name": "port-fallback-guidance",
+      "ok": true,
+      "detail": "Bootstrap planned-port resolution now honors PORT as fallback after service-specific app port env keys."
+    },
+    {
+      "name": "proof-bundle-synchronized",
+      "ok": true,
+      "detail": "Evidence, problems, verdict, and task metadata are synchronized with the fresh verifier result, and task validate reports the bundle as complete/passed."
+    }
+  ],
+  "generatedAt": "2026-04-18T16:48:10.0492159+03:00"
+}

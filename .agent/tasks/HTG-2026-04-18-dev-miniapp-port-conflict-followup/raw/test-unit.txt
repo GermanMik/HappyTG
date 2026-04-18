@@ -1,0 +1,127 @@
+== pnpm --filter @happytg/api test ==
+
+> @happytg/api@0.3.14 test C:\Develop\Projects\HappyTG\apps\api
+> tsx --test src/*.test.ts
+
+✔ api ready endpoint returns store metadata (28.8371ms)
+✔ startApiServer reuses an already-running HappyTG API on the same port (66.5414ms)
+✔ startApiServer rejects with an actionable message when another process occupies the port (6.4075ms)
+✔ startApiServer rejects when a different HappyTG service occupies the API port (4.7982ms)
+✔ startApiServer retries a transient HappyTG API handoff before classifying reuse (22.2901ms)
+✔ proof session creates task bundle and approval, then approval dispatches session (26.0442ms)
+✔ quick session dispatches immediately without approval (8.2163ms)
+✔ session timeline and task artifact reads are available for mini app inspection (17.0605ms)
+✔ bootstrap sessions dispatch deterministic doctor runs and support resume state transitions (11.4243ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 408.4399
+
+== pnpm --filter @happytg/miniapp test ==
+
+> @happytg/miniapp@0.3.14 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+✔ mini app ready endpoint returns 503 when api health fails (26.9188ms)
+✔ overview page renders hosts, sessions, approvals, and tasks (7.4236ms)
+✔ task page renders canonical artifacts and escapes file content (4.8363ms)
+✔ session page renders timeline, summary, and task link (4.7104ms)
+✔ startMiniAppServer returns an actionable message when the port is already in use (5530.0352ms)
+✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (48.3808ms)
+✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (5.0126ms)
+✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (4.072ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5878.9514
+
+== pnpm --filter @happytg/bootstrap test ==
+
+> @happytg/bootstrap@0.3.14 test C:\Develop\Projects\HappyTG\packages\bootstrap
+> tsx --test src/*.test.ts
+
+✔ parseHappyTGArgs maps config and env nested commands (2.6375ms)
+✔ parseHappyTGArgs maps install flags into the installer request (0.6337ms)
+✔ parseHappyTGArgs uses CliUsageError for invalid CLI surfaces (0.7881ms)
+✔ executeHappyTG initializes and inspects repo-local task bundles (31.9218ms)
+✔ executeHappyTG returns a structured install failure when installer throws before its internal runtime boundary (366.6884ms)
+✔ renderText returns a compact bootstrap summary with preflight and diagnostics hints (1.3413ms)
+✔ renderText returns a compact install summary with structured finalization sections (0.5009ms)
+✔ renderText keeps warning-only follow-up separate from manual actions in install summaries (0.2971ms)
+✔ renderText explains recoverable installer failures without claiming completion (0.2573ms)
+✔ doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim (521.6216ms)
+✔ verify surfaces Codex smoke warnings as warn when config exists (196.6055ms)
+✔ doctor distinguishes unavailable Codex from a missing Codex binary (132.1458ms)
+✔ doctor recovers through the npm wrapper when Codex is off PATH and leaves a PATH follow-up warning (506.2848ms)
+✔ doctor recovers through a standard Windows APPDATA npm wrapper path when npm prefix probing is unavailable (335.8347ms)
+✔ doctor keeps Codex smoke green through a Windows wrapper when the prompt contains spaces (448.7327ms)
+✔ doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix (149.6005ms)
+✔ setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis (171.2425ms)
+✔ setup names existing PostgreSQL, Redis, and S3 endpoints when Redis is absent locally (161.2861ms)
+✔ doctor reports Redis installed but stopped (167.2651ms)
+✔ doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service (325.2505ms)
+✔ setup treats compatible Redis, PostgreSQL, and MinIO listeners as supported reuse while flagging unrelated conflicts (167.2767ms)
+✔ setup respects PORT fallback when app-specific port overrides are absent (185.0352ms)
+✔ config-init and env-snapshot remain deterministic plan-only commands (7.9274ms)
+✔ syncRepository retries transient primary failures and reports attempt progress (21.0933ms)
+✔ syncRepository returns repo_retry_exhausted after 5 primary attempts (12.9884ms)
+✔ syncRepository falls back to the configured alternative source after exhausting primary retries (9.3438ms)
+✔ syncRepository reports repo_fallback_failure when both configured sources fail (10.5909ms)
+✔ runCommand normalizes Windows shim companions like pnpm.cmd (203.4184ms)
+✔ runHappyTGInstall returns a structured runtime error for Windows shim spawn failures instead of throwing usage-style failures (18.9882ms)
+✔ runHappyTGInstall returns a structured runtime error when non-interactive mode is missing a Telegram token (30.3506ms)
+✔ runHappyTGInstall rejects bot usernames like @name in the token field before runtime work starts (14.4415ms)
+✔ runHappyTGInstall resumes saved installer values on rerun (21.2789ms)
+✔ Telegram setup reducer treats pasted token chunks as text and preserves editing/navigation behavior (1.6141ms)
+✔ Telegram setup reducer commits pasted token and allowed user ID chunks that include trailing CRLF (0.6597ms)
+✔ Telegram setup reducer supports clearing a prefilled token and pasting a replacement (0.4638ms)
+✔ renderMaskedSecretPreview safely degrades for short values (0.1516ms)
+✔ Telegram setup reducer blocks invalid @bot usernames and keeps the user in the form (0.2539ms)
+✔ runHappyTGInstall reports warning-only Telegram getMe failures as success-with-warnings without dropping configured Telegram state (34.5789ms)
+✔ runHappyTGInstall treats a transport-probe-validated Telegram identity as a normal success path (58.9923ms)
+✔ runHappyTGInstall keeps invalid Telegram tokens as configuration failures after a transport fallback probe (16.3159ms)
+✔ runHappyTGInstall interactive Telegram form starts blank even when draft and .env already contain a token (120.3428ms)
+✔ runHappyTGInstall keeps an already-known Telegram username when getMe lookup fails (18.561ms)
+✔ runHappyTGInstall normalizes completed post-check failures into recoverable installer failures (13.9966ms)
+✔ runHappyTGInstall keeps the final result at warning level when post-checks only report Codex PATH follow-up (15.5587ms)
+✔ runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible in the final summary (23.8834ms)
+✔ runHappyTGInstall semantically dedupes repeated setup next steps and compresses repeated post-check warning sets (24.9837ms)
+✔ runHappyTGInstall removes contradictory start commands when setup already says to reuse the running stack (12.5597ms)
+✔ runHappyTGInstall auto-requests a pairing code and suppresses the manual request step once the code is available (19.8205ms)
+✔ runHappyTGInstall reports requested background automation as a warning when configuration falls back to manual (17.1295ms)
+✔ runHappyTGInstall suppresses warning duplicates when the same guidance is already classified as a conflict (15.2854ms)
+✔ runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning level with real bootstrap checks (1067.3216ms)
+✔ install.ps1 clears only broken external NODE_OPTIONS preload and does not misdiagnose Node as missing (1208.7222ms)
+✔ install.ps1 keeps missing preload failures inside HAPPYTG_BOOTSTRAP_DIR as a hard error (797.4395ms)
+✔ install.sh mirrors the external NODE_OPTIONS preload sanitization without a false Node-missing diagnosis (731.4029ms)
+✔ detectLinuxFamily classifies Debian and Fedora os-release content (19.9481ms)
+✔ detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path (1599.1158ms)
+✔ inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe (685.2275ms)
+✔ mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun (11.9379ms)
+✔ retro installer renderers include active cursor and keyboard hints (0.6355ms)
+✔ progress screen uses a readable ASCII running indicator instead of a unicode ellipsis (0.2984ms)
+✔ Telegram screen renders a masked preview instead of the raw bot token (0.376ms)
+✔ final screen groups structured finalization items and dedupes warning text (0.5319ms)
+✔ waitForEnter resolves when ENTER close is pressed on the final screen (1.0074ms)
+✔ waitForEnter does not render the same final screen twice when ENTER closes it (0.336ms)
+✔ promptTelegramForm accepts pasted token and allowed user IDs with trailing CRLF in the interactive keypress path (1.936ms)
+✔ fetchTelegramBotIdentity separates invalid-token API rejections from recoverable network lookups (2.0746ms)
+✔ fetchTelegramBotIdentity classifies DNS-style fetch failures and non-JSON responses (2.2316ms)
+✔ fetchTelegramBotIdentity accepts Windows PowerShell validation as a success fallback after a Node timeout (0.3177ms)
+✔ fetchTelegramBotIdentity promotes invalid tokens when a Windows follow-up probe reaches Telegram (0.3202ms)
+ℹ tests 69
+ℹ suites 0
+ℹ pass 69
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3914.0047

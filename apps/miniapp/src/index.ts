@@ -102,7 +102,85 @@ function renderProofProgress(task: { phase: string; verificationState: string },
 }
 
 export function formatMiniAppPortConflictMessage(listenPort: number): string {
-  return `Port ${listenPort} is already in use. Reuse the running mini app if it is yours, or start a new one with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
+  return formatMiniAppPortConflictMessageDetailed(listenPort);
+}
+
+export function formatMiniAppPortReuseMessage(listenPort: number): string {
+  return `Port ${listenPort} already has a HappyTG Mini App. Reuse the running mini app if it is yours, or start a new one with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
+}
+
+export function formatMiniAppPortConflictMessageDetailed(
+  listenPort: number,
+  options?: {
+    service?: string;
+    description?: string;
+  }
+): string {
+  if (options?.service) {
+    return `Port ${listenPort} is already in use by HappyTG ${options.service}, not HappyTG Mini App. Free it, or start the Mini App with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
+  }
+
+  if (options?.description) {
+    return `Port ${listenPort} is already in use by ${options.description}. Free it, or start the Mini App with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
+  }
+
+  return `Port ${listenPort} is already in use by another process. Free it, or start the Mini App with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
+}
+
+export interface MiniAppStartupResult {
+  status: "listening" | "reused";
+  port: number;
+}
+
+interface PortOccupantInfo {
+  service?: string;
+  description?: string;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function detectPortOccupant(listenPort: number, fetchImpl: typeof fetch = fetch): Promise<PortOccupantInfo> {
+  for (const pathname of ["/ready", "/health", "/"]) {
+    try {
+      const response = await fetchImpl(`http://127.0.0.1:${listenPort}${pathname}`, {
+        signal: AbortSignal.timeout(750)
+      });
+      const contentType = response.headers.get("content-type") ?? "";
+      const bodyText = contentType.includes("application/json") || contentType.startsWith("text/")
+        ? await response.text()
+        : "";
+      if (contentType.includes("application/json")) {
+        try {
+          const payload = JSON.parse(bodyText) as { service?: string };
+          if (payload.service) {
+            return {
+              service: payload.service
+            };
+          }
+        } catch {
+          // Ignore malformed JSON and keep probing for another fingerprint.
+        }
+      }
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const titleMatch = bodyText.match(/<title>([^<]+)<\/title>/iu);
+      const title = titleMatch?.[1]?.trim();
+      return {
+        description: title ? `HTTP listener (${title})` : `HTTP listener (${response.status})`
+      };
+    } catch {
+      continue;
+    }
+  }
+
+  return {};
 }
 
 export function renderPage(title: string, body: string): string {
@@ -285,34 +363,77 @@ export async function startMiniAppServer(
   options?: {
     port?: number;
     logger?: Pick<Logger, "info">;
+    fetchImpl?: typeof fetch;
+    reuseProbeWindowMs?: number;
+    reuseProbeIntervalMs?: number;
   }
-): Promise<void> {
+): Promise<MiniAppStartupResult> {
   const listenPort = options?.port ?? port;
   const activeLogger = options?.logger ?? logger;
+  const fetchImpl = options?.fetchImpl ?? fetch;
+  const reuseProbeWindowMs = options?.reuseProbeWindowMs ?? 2_000;
+  const reuseProbeIntervalMs = options?.reuseProbeIntervalMs ?? Math.min(100, reuseProbeWindowMs);
 
-  await new Promise<void>((resolve, reject) => {
-    const onListening = () => {
-      cleanup();
-      activeLogger.info("Mini App listening", { port: listenPort, apiBaseUrl });
-      resolve();
-    };
-    const onError = (error: NodeJS.ErrnoException) => {
-      cleanup();
-      if (error.code === "EADDRINUSE") {
-        reject(new Error(formatMiniAppPortConflictMessage(listenPort)));
-        return;
+  async function listenOnce(): Promise<"listening" | "in_use"> {
+    return await new Promise<"listening" | "in_use">((resolve, reject) => {
+      const onListening = () => {
+        cleanup();
+        resolve("listening");
+      };
+      const onError = (error: NodeJS.ErrnoException) => {
+        cleanup();
+        if (error.code === "EADDRINUSE") {
+          resolve("in_use");
+          return;
+        }
+        reject(error);
+      };
+      const cleanup = () => {
+        server.off("listening", onListening);
+        server.off("error", onError);
+      };
+
+      server.once("listening", onListening);
+      server.once("error", onError);
+      server.listen(listenPort);
+    });
+  }
+
+  if (await listenOnce() === "listening") {
+    activeLogger.info("Mini App listening", { port: listenPort, apiBaseUrl });
+    return { status: "listening", port: listenPort };
+  }
+
+  const occupant = await detectPortOccupant(listenPort, fetchImpl);
+  if (occupant.service !== "miniapp") {
+    throw new Error(formatMiniAppPortConflictMessageDetailed(listenPort, occupant));
+  }
+
+  if (reuseProbeWindowMs > 0) {
+    for (let waitedMs = 0; waitedMs < reuseProbeWindowMs; waitedMs += reuseProbeIntervalMs) {
+      await delay(reuseProbeIntervalMs);
+      const occupantAfterDelay = await detectPortOccupant(listenPort, fetchImpl);
+      if (!occupantAfterDelay.service && !occupantAfterDelay.description) {
+        if (await listenOnce() === "listening") {
+          activeLogger.info("Mini App listening", { port: listenPort, apiBaseUrl });
+          return { status: "listening", port: listenPort };
+        }
+
+        const retryOccupant = await detectPortOccupant(listenPort, fetchImpl);
+        if (retryOccupant.service !== "miniapp") {
+          throw new Error(formatMiniAppPortConflictMessageDetailed(listenPort, retryOccupant));
+        }
+        continue;
       }
-      reject(error);
-    };
-    const cleanup = () => {
-      server.off("listening", onListening);
-      server.off("error", onError);
-    };
 
-    server.once("listening", onListening);
-    server.once("error", onError);
-    server.listen(listenPort);
-  });
+      if (occupantAfterDelay.service !== "miniapp") {
+        throw new Error(formatMiniAppPortConflictMessageDetailed(listenPort, occupantAfterDelay));
+      }
+    }
+  }
+
+  activeLogger.info(formatMiniAppPortReuseMessage(listenPort), { port: listenPort });
+  return { status: "reused", port: listenPort };
 }
 
 export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJson: defaultFetchJson }) {

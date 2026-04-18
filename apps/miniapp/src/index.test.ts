@@ -1,8 +1,18 @@
 import assert from "node:assert/strict";
-import { createServer } from "node:http";
+import { createServer, createServer as createHttpServer } from "node:http";
 import test from "node:test";
 
-import { createMiniAppServer, formatMiniAppPortConflictMessage, startMiniAppServer } from "./index.js";
+import {
+  createMiniAppServer,
+  formatMiniAppPortConflictMessage,
+  formatMiniAppPortConflictMessageDetailed,
+  formatMiniAppPortReuseMessage,
+  startMiniAppServer
+} from "./index.js";
+
+async function closeServer(server: ReturnType<typeof createHttpServer>): Promise<void> {
+  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+}
 
 test("mini app ready endpoint returns 503 when api health fails", async () => {
   const server = createMiniAppServer({
@@ -201,15 +211,139 @@ test("startMiniAppServer returns an actionable message when the port is already 
   });
 
   try {
-    assert.match(formatMiniAppPortConflictMessage(address.port), /HAPPYTG_MINIAPP_PORT/);
+    assert.match(formatMiniAppPortConflictMessage(address.port), /another process/);
     await assert.rejects(
       () => startMiniAppServer(server, { port: address.port, logger: { info() {} } }),
       new RegExp(formatMiniAppPortConflictMessage(address.port).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
     );
   } finally {
-    await new Promise<void>((resolve, reject) => occupied.close((error) => error ? reject(error) : resolve()));
-    await new Promise<void>((resolve) => {
-      server.close(() => resolve());
+    await closeServer(occupied);
+    if (server.listening) {
+      await closeServer(server);
+    }
+  }
+});
+
+test("startMiniAppServer reuses an already-running HappyTG mini app on the same port", async () => {
+  const occupied = createHttpServer((req, res) => {
+    if (req.url === "/ready") {
+      res.writeHead(503, {
+        "content-type": "application/json"
+      });
+      res.end(JSON.stringify({ ok: false, service: "miniapp", detail: "api unavailable" }));
+      return;
+    }
+
+    res.writeHead(200, {
+      "content-type": "text/plain"
     });
+    res.end("ok");
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Occupied Mini App test server did not bind to a TCP port");
+  }
+
+  const infoLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  try {
+    const result = await startMiniAppServer(server, {
+      port: address.port,
+      logger: {
+        info(message, metadata) {
+          infoLogs.push({ message, metadata });
+        }
+      },
+      reuseProbeWindowMs: 25,
+      reuseProbeIntervalMs: 10
+    });
+
+    assert.deepEqual(result, { status: "reused", port: address.port });
+    assert.equal(infoLogs[0]?.message, formatMiniAppPortReuseMessage(address.port));
+  } finally {
+    if (server.listening) {
+      await closeServer(server);
+    }
+    await closeServer(occupied);
+  }
+});
+
+test("startMiniAppServer rejects when a different HappyTG service occupies the mini app port", async () => {
+  const occupied = createHttpServer((_req, res) => {
+    res.writeHead(200, {
+      "content-type": "application/json"
+    });
+    res.end(JSON.stringify({ ok: true, service: "api" }));
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("HappyTG service test server did not bind to a TCP port");
+  }
+
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  try {
+    await assert.rejects(
+      () => startMiniAppServer(server, {
+        port: address.port,
+        logger: { info() {} },
+        reuseProbeWindowMs: 25,
+        reuseProbeIntervalMs: 10
+      }),
+      new RegExp(formatMiniAppPortConflictMessageDetailed(address.port, { service: "api" }).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    );
+  } finally {
+    if (server.listening) {
+      await closeServer(server);
+    }
+    await closeServer(occupied);
+  }
+});
+
+test("startMiniAppServer names a foreign HTTP listener when the port is occupied", async () => {
+  const occupied = createHttpServer((_req, res) => {
+    res.writeHead(200, {
+      "content-type": "text/html"
+    });
+    res.end("<!doctype html><title>Contacts</title>");
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Foreign HTTP listener test server did not bind to a TCP port");
+  }
+
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  try {
+    await assert.rejects(
+      () => startMiniAppServer(server, {
+        port: address.port,
+        logger: { info() {} },
+        reuseProbeWindowMs: 25,
+        reuseProbeIntervalMs: 10
+      }),
+      new RegExp(formatMiniAppPortConflictMessageDetailed(address.port, { description: "HTTP listener (Contacts)" }).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    );
+  } finally {
+    if (server.listening) {
+      await closeServer(server);
+    }
+    await closeServer(occupied);
   }
 });

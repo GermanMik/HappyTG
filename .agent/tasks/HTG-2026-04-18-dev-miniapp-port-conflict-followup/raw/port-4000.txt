@@ -1,0 +1,16 @@
+== curl http://127.0.0.1:4000/ready ==
+HTTP/1.1 200 OK
+content-type: application/json; charset=utf-8
+Date: Sat, 18 Apr 2026 12:38:06 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 106
+
+{
+  "ok": true,
+  "service": "api",
+  "stateStorePath": "/app/apps/api/.happytg-dev/control-plane.json"
+}
+
+== docker inspect infra-api-1 ==
+/infra-api-1|infra-api|{"4000/tcp":[{"HostIp":"0.0.0.0","HostPort":"4000"},{"HostIp":"::","HostPort":"4000"}]}

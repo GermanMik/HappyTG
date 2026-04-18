@@ -1,0 +1,66 @@
+{
+  "taskId": "HTG-2026-04-18-installer-port-preflight-ux",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "manual-verifier-2026-04-18-installer-port-preflight-ux"
+  },
+  "checks": [
+    {
+      "name": "pnpm lint",
+      "ok": true,
+      "detail": "Passed; see raw/lint.txt."
+    },
+    {
+      "name": "pnpm typecheck",
+      "ok": true,
+      "detail": "Passed; see raw/typecheck.txt."
+    },
+    {
+      "name": "pnpm build",
+      "ok": true,
+      "detail": "Passed; see raw/build.txt."
+    },
+    {
+      "name": "pnpm --filter @happytg/bootstrap test",
+      "ok": true,
+      "detail": "Passed with the new installer/setup port-preflight coverage; see raw/test-unit.txt."
+    },
+    {
+      "name": "pnpm test",
+      "ok": true,
+      "detail": "Passed; see raw/test-integration.txt."
+    },
+    {
+      "name": "pnpm release:check --version 0.3.15",
+      "ok": true,
+      "detail": "Passed; see raw/release-check.txt."
+    },
+    {
+      "name": "pnpm happytg setup --json",
+      "ok": true,
+      "detail": "Completed with truthful local-environment warnings; see raw/setup-json.txt."
+    },
+    {
+      "name": "pnpm happytg doctor --json",
+      "ok": true,
+      "detail": "Completed with truthful local-environment warnings; see raw/doctor-json.txt."
+    },
+    {
+      "name": "pnpm happytg verify --json",
+      "ok": true,
+      "detail": "Completed with truthful local-environment warnings; see raw/verify-json.txt."
+    },
+    {
+      "name": "pnpm happytg task validate --repo . --task HTG-2026-04-18-installer-port-preflight-ux",
+      "ok": true,
+      "detail": "Structure validated before verdict write; see raw/task-validate.txt."
+    },
+    {
+      "name": "pnpm happytg task validate --repo . --task HTG-2026-04-18-dev-miniapp-port-conflict-followup",
+      "ok": true,
+      "detail": "Source follow-up bundle remains valid; see raw/source-task-validate.txt."
+    }
+  ],
+  "generatedAt": "2026-04-18T14:35:15.199Z"
+}

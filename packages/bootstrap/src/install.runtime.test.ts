@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -16,6 +16,7 @@ import { writeInstallDraft as persistInstallDraft } from "./install/state.js";
 import { createTelegramFormController, reduceTelegramFormKeypress, renderMaskedSecretPreview } from "./install/tui.js";
 import { runBootstrapCommand } from "./index.js";
 import { legacyPlanPreviewFromAutomation, type AutomationItem } from "./finalization.js";
+import type { BootstrapReport } from "../../protocol/src/index.js";
 import type { InstallDraftState, InstallerEnvironment, InstallerRepoSource, RepoInspection } from "./install/types.js";
 
 async function writeExecutable(filePath: string, source: string): Promise<void> {
@@ -150,6 +151,96 @@ function reportJsonWithOnboarding(items: AutomationItem[]): { onboarding: { item
       steps: legacyPlanPreviewFromAutomation(items)
     }
   };
+}
+
+function setupReportWithPorts(input: {
+  ports: Array<Record<string, unknown>>;
+  findings?: BootstrapReport["findings"];
+  onboardingItems?: AutomationItem[];
+  status?: BootstrapReport["status"];
+}): BootstrapReport {
+  const onboardingItems = input.onboardingItems ?? [];
+  return {
+    id: "btr_setup",
+    hostFingerprint: "fp",
+    command: "setup",
+    status: input.status ?? (input.findings && input.findings.length > 0 ? "warn" : "pass"),
+    profileRecommendation: "recommended",
+    findings: input.findings ?? [],
+    planPreview: legacyPlanPreviewFromAutomation(onboardingItems),
+    reportJson: {
+      ports: input.ports,
+      plannedPorts: input.ports,
+      preflight: [],
+      onboarding: {
+        items: onboardingItems,
+        steps: legacyPlanPreviewFromAutomation(onboardingItems),
+        overrideExamples: []
+      }
+    },
+    createdAt: "2026-04-18T00:00:00.000Z"
+  };
+}
+
+function createInteractiveHarness(): {
+  stdin: PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
+  stdout: PassThrough & NodeJS.WriteStream & { isTTY: boolean };
+  emitKeypress: (chunk: string, key?: { name?: string; ctrl?: boolean; meta?: boolean }) => Promise<void>;
+  waitForOutput: (pattern: string | RegExp) => Promise<string>;
+  transcriptText: () => string;
+} {
+  const transcript: string[] = [];
+  const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
+  const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
+  stdin.isTTY = true;
+  stdout.isTTY = true;
+  stdin.setRawMode = ((_: boolean) => stdin) as typeof stdin.setRawMode;
+  stdout.on("data", (chunk) => {
+    transcript.push(String(chunk));
+  });
+
+  return {
+    stdin,
+    stdout,
+    emitKeypress: async (chunk, key = {}) => {
+      await new Promise((resolve) => setImmediate(resolve));
+      stdin.emit("keypress", chunk, key);
+    },
+    waitForOutput: async (pattern) => {
+      const startedAt = Date.now();
+      while (Date.now() - startedAt < 5000) {
+        const rendered = transcript.join("");
+        const matched = typeof pattern === "string"
+          ? rendered.includes(pattern)
+          : pattern.test(rendered);
+        if (matched) {
+          return rendered;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      throw new Error(`Timed out waiting for ${pattern.toString()}`);
+    },
+    transcriptText: () => transcript.join("")
+  };
+}
+
+async function advanceInteractiveInstallToPortPreflight(input: {
+  waitForOutput: (pattern: string | RegExp) => Promise<string>;
+  emitKeypress: (chunk: string, key?: { name?: string; ctrl?: boolean; meta?: boolean }) => Promise<void>;
+}): Promise<void> {
+  await input.waitForOutput("Welcome / Preflight");
+  await input.emitKeypress("\r", { name: "return" });
+  await input.waitForOutput("Repo Mode");
+  await input.emitKeypress("\r", { name: "return" });
+  await input.waitForOutput("Telegram Setup");
+  await input.emitKeypress("", { name: "down" });
+  await input.emitKeypress("", { name: "down" });
+  await input.emitKeypress("", { name: "down" });
+  await input.emitKeypress("\r", { name: "return" });
+  await input.waitForOutput("Background Run Mode");
+  await input.emitKeypress("\r", { name: "return" });
+  await input.waitForOutput("Post-Install Checks");
+  await input.emitKeypress("\r", { name: "return" });
 }
 
 test("syncRepository retries transient primary failures and reports attempt progress", async () => {
@@ -1256,6 +1347,596 @@ test("runHappyTGInstall interactive Telegram form starts blank even when draft a
     assert.equal(result.status, "warn");
     assert.equal(result.telegram.configured, true);
     assert.equal(envUpdates?.TELEGRAM_BOT_TOKEN, newToken);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall interactive port preflight offers three suggested ports and saves the selected override", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-port-suggested-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const harness = createInteractiveHarness();
+  let setupCall = 0;
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(
+      path.join(repoPath, ".env.example"),
+      [
+        "TELEGRAM_BOT_TOKEN=",
+        "TELEGRAM_ALLOWED_USER_IDS=",
+        "TELEGRAM_HOME_CHANNEL=",
+        "TELEGRAM_BOT_USERNAME=",
+        "HAPPYTG_MINIAPP_PORT=3001"
+      ].join("\n"),
+      "utf8"
+    );
+
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: [],
+      backgroundMode: "skip",
+      postChecks: []
+    }, {
+      stdin: harness.stdin,
+      stdout: harness.stdout,
+      runBootstrapCheck: async () => {
+        setupCall += 1;
+        if (setupCall === 1) {
+          return setupReportWithPorts({
+            status: "warn",
+            findings: [
+              {
+                code: "MINIAPP_PORT_BUSY",
+                severity: "warn",
+                message: "Mini App plans to use port 3001, but HTTP listener (Contacts) is already there."
+              }
+            ],
+            ports: [
+              {
+                id: "miniapp",
+                label: "Mini App",
+                port: 3001,
+                state: "occupied_external",
+                detail: "Mini App plans to use port 3001, but HTTP listener (Contacts) is already there.",
+                overrideEnv: "HAPPYTG_MINIAPP_PORT",
+                suggestedPort: 3002,
+                suggestedPorts: [3002, 3003, 3004],
+                listener: {
+                  description: "HTTP listener (Contacts)"
+                }
+              }
+            ]
+          });
+        }
+
+        return setupReportWithPorts({
+          status: "pass",
+          ports: [
+            {
+              id: "miniapp",
+              label: "Mini App",
+              port: 3002,
+              state: "free",
+              detail: "Mini App plans to use port 3002; it is free.",
+              overrideEnv: "HAPPYTG_MINIAPP_PORT",
+              suggestedPort: 3003,
+              suggestedPorts: [3003, 3004, 3005]
+            }
+          ]
+        });
+      },
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: {
+            ...baseEnvironment().platform,
+            isInteractiveTerminal: true
+          }
+        }),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, {
+            exists: true,
+            isRepo: true,
+            emptyDirectory: false,
+            rootPath: repoPath
+          }),
+          choices: [
+            {
+              mode: "update" as const,
+              label: "Update existing checkout",
+              path: repoPath,
+              available: true,
+              detail: "Existing checkout is ready to update."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "updated",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background daemon setup was skipped."
+        })
+      }
+    });
+
+    await advanceInteractiveInstallToPortPreflight(harness);
+    const conflictScreen = await harness.waitForOutput("Port Conflict");
+    assert.match(conflictScreen, /3002, 3003, 3004/);
+    assert.match(conflictScreen, /HTTP listener \(Contacts\)/);
+    assert.match(conflictScreen, /HAPPYTG_MINIAPP_PORT/);
+    await harness.emitKeypress("\r", { name: "return" });
+    await harness.waitForOutput("Final Summary");
+    await harness.emitKeypress("\r", { name: "return" });
+
+    const result = await install;
+    const envText = await readFile(path.join(repoPath, ".env"), "utf8");
+
+    assert.equal(setupCall, 2);
+    assert.equal(result.status, "pass");
+    assert.match(envText, /HAPPYTG_MINIAPP_PORT=3002/);
+    assert.equal(result.finalization?.items.some((item) => item.id === "port-preflight-miniapp" && item.kind === "auto"), true);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall interactive port preflight accepts a manual port override", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-port-manual-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const harness = createInteractiveHarness();
+  let setupCall = 0;
+  const customPort = 3555;
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(
+      path.join(repoPath, ".env.example"),
+      [
+        "TELEGRAM_BOT_TOKEN=",
+        "TELEGRAM_ALLOWED_USER_IDS=",
+        "TELEGRAM_HOME_CHANNEL=",
+        "TELEGRAM_BOT_USERNAME=",
+        "HAPPYTG_MINIAPP_PORT=3001"
+      ].join("\n"),
+      "utf8"
+    );
+
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: [],
+      backgroundMode: "skip",
+      postChecks: []
+    }, {
+      stdin: harness.stdin,
+      stdout: harness.stdout,
+      runBootstrapCheck: async () => {
+        setupCall += 1;
+        if (setupCall === 1) {
+          return setupReportWithPorts({
+            status: "warn",
+            findings: [
+              {
+                code: "MINIAPP_PORT_BUSY",
+                severity: "warn",
+                message: "Mini App plans to use port 3001, but another process is already there."
+              }
+            ],
+            ports: [
+              {
+                id: "miniapp",
+                label: "Mini App",
+                port: 3001,
+                state: "occupied_external",
+                detail: "Mini App plans to use port 3001, but another process is already there.",
+                overrideEnv: "HAPPYTG_MINIAPP_PORT",
+                suggestedPort: 3002,
+                suggestedPorts: [3002, 3003, 3004],
+                listener: {
+                  description: "HTTP listener (Contacts)"
+                }
+              }
+            ]
+          });
+        }
+
+        return setupReportWithPorts({
+          status: "pass",
+          ports: [
+            {
+              id: "miniapp",
+              label: "Mini App",
+              port: customPort,
+              state: "free",
+              detail: `Mini App plans to use port ${customPort}; it is free.`,
+              overrideEnv: "HAPPYTG_MINIAPP_PORT"
+            }
+          ]
+        });
+      },
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: {
+            ...baseEnvironment().platform,
+            isInteractiveTerminal: true
+          }
+        }),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, {
+            exists: true,
+            isRepo: true,
+            emptyDirectory: false,
+            rootPath: repoPath
+          }),
+          choices: [
+            {
+              mode: "update" as const,
+              label: "Update existing checkout",
+              path: repoPath,
+              available: true,
+              detail: "Existing checkout is ready to update."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "updated",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background daemon setup was skipped."
+        })
+      }
+    });
+
+    await advanceInteractiveInstallToPortPreflight(harness);
+    await harness.waitForOutput("Port Conflict");
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("\r", { name: "return" });
+    await harness.waitForOutput("Custom Port");
+    await harness.emitKeypress(`${customPort}\r`);
+    await harness.waitForOutput("Final Summary");
+    await harness.emitKeypress("\r", { name: "return" });
+
+    const result = await install;
+    const envText = await readFile(path.join(repoPath, ".env"), "utf8");
+
+    assert.equal(setupCall, 2);
+    assert.equal(result.status, "pass");
+    assert.match(envText, new RegExp(`HAPPYTG_MINIAPP_PORT=${customPort}`));
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall interactive port preflight skips port changes for supported reuse", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-port-reuse-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const harness = createInteractiveHarness();
+  let setupCall = 0;
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(
+      path.join(repoPath, ".env.example"),
+      [
+        "TELEGRAM_BOT_TOKEN=",
+        "TELEGRAM_ALLOWED_USER_IDS=",
+        "TELEGRAM_HOME_CHANNEL=",
+        "TELEGRAM_BOT_USERNAME=",
+        "HAPPYTG_API_PORT=4000"
+      ].join("\n"),
+      "utf8"
+    );
+
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: [],
+      backgroundMode: "skip",
+      postChecks: []
+    }, {
+      stdin: harness.stdin,
+      stdout: harness.stdout,
+      runBootstrapCheck: async () => {
+        setupCall += 1;
+        return setupReportWithPorts({
+          status: "pass",
+          ports: [
+            {
+              id: "api",
+              label: "API",
+              port: 4000,
+              state: "occupied_expected",
+              detail: "API plans to use port 4000, and HappyTG api is already running there.",
+              overrideEnv: "HAPPYTG_API_PORT",
+              service: "api",
+              listener: {
+                description: "HappyTG api",
+                service: "api"
+              }
+            }
+          ]
+        });
+      },
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: {
+            ...baseEnvironment().platform,
+            isInteractiveTerminal: true
+          }
+        }),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, {
+            exists: true,
+            isRepo: true,
+            emptyDirectory: false,
+            rootPath: repoPath
+          }),
+          choices: [
+            {
+              mode: "update" as const,
+              label: "Update existing checkout",
+              path: repoPath,
+              available: true,
+              detail: "Existing checkout is ready to update."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "updated",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background daemon setup was skipped."
+        })
+      }
+    });
+
+    await advanceInteractiveInstallToPortPreflight(harness);
+    await harness.waitForOutput("Final Summary");
+    await harness.emitKeypress("\r", { name: "return" });
+
+    const result = await install;
+    const envText = await readFile(path.join(repoPath, ".env"), "utf8");
+
+    assert.equal(setupCall, 1);
+    assert.doesNotMatch(harness.transcriptText(), /Port Conflict/);
+    assert.equal(result.status, "pass");
+    assert.match(envText, /HAPPYTG_API_PORT=4000/);
+    assert.equal(result.finalization?.items.some((item) => item.id === "port-preflight-api"), false);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall interactive port preflight can abort instead of silently rebinding", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-port-abort-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const harness = createInteractiveHarness();
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(
+      path.join(repoPath, ".env.example"),
+      [
+        "TELEGRAM_BOT_TOKEN=",
+        "TELEGRAM_ALLOWED_USER_IDS=",
+        "TELEGRAM_HOME_CHANNEL=",
+        "TELEGRAM_BOT_USERNAME=",
+        "HAPPYTG_MINIAPP_PORT=3001"
+      ].join("\n"),
+      "utf8"
+    );
+
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: [],
+      backgroundMode: "skip",
+      postChecks: []
+    }, {
+      stdin: harness.stdin,
+      stdout: harness.stdout,
+      runBootstrapCheck: async () => setupReportWithPorts({
+        status: "warn",
+        findings: [
+          {
+            code: "MINIAPP_PORT_BUSY",
+            severity: "warn",
+            message: "Mini App plans to use port 3001, but another process is already there."
+          }
+        ],
+        ports: [
+          {
+            id: "miniapp",
+            label: "Mini App",
+            port: 3001,
+            state: "occupied_external",
+            detail: "Mini App plans to use port 3001, but another process is already there.",
+            overrideEnv: "HAPPYTG_MINIAPP_PORT",
+            suggestedPort: 3002,
+            suggestedPorts: [3002, 3003, 3004],
+            listener: {
+              description: "HTTP listener (Contacts)"
+            }
+          }
+        ]
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: {
+            ...baseEnvironment().platform,
+            isInteractiveTerminal: true
+          }
+        }),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, {
+            exists: true,
+            isRepo: true,
+            emptyDirectory: false,
+            rootPath: repoPath
+          }),
+          choices: [
+            {
+              mode: "update" as const,
+              label: "Update existing checkout",
+              path: repoPath,
+              available: true,
+              detail: "Existing checkout is ready to update."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "updated",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background daemon setup was skipped."
+        })
+      }
+    });
+
+    await advanceInteractiveInstallToPortPreflight(harness);
+    await harness.waitForOutput("Port Conflict");
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("\r", { name: "return" });
+    await harness.waitForOutput("Needs Attention");
+    await harness.emitKeypress("\r", { name: "return" });
+
+    const result = await install;
+    const envText = await readFile(path.join(repoPath, ".env"), "utf8");
+
+    assert.equal(result.status, "fail");
+    assert.equal(result.outcome, "recoverable-failure");
+    assert.match(result.error?.message ?? "", /port conflict was left unresolved/i);
+    assert.doesNotMatch(envText, /HAPPYTG_MINIAPP_PORT=3002/);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

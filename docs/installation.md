@@ -160,9 +160,19 @@ If `6379` is already occupied:
 
 If `3001` is already occupied:
 
-- reuse the already-running HappyTG Mini App if it is yours;
-- or pick a new `HAPPYTG_MINIAPP_PORT`;
-- or free the existing process and restart the Mini App.
+- if `pnpm happytg setup` says HappyTG Mini App is already running there, reuse it;
+- if setup names another listener, treat that as a conflict rather than Mini App reuse;
+- use `HAPPYTG_MINIAPP_PORT` or `PORT` to choose a different port manually;
+- or free the existing listener and restart the Mini App.
+
+If `4000` is already occupied:
+
+- if `pnpm happytg setup` says HappyTG API is already running there, reuse it;
+- if setup names another listener, treat that as a conflict rather than API reuse;
+- use `HAPPYTG_API_PORT` or `PORT` to choose a different port manually;
+- or free the existing listener and restart the API.
+
+During interactive `pnpm happytg install`, HappyTG now runs the same planned-port preflight before later startup guidance. For each real conflict it shows the occupied port, the detected listener when available, the nearest 3 free ports, and an explicit choice to save one `HAPPYTG_*_PORT` override into `.env`, enter a custom port, or abort.
 
 PowerShell examples:
 

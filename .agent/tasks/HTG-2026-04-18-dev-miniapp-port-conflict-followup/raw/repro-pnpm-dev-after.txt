@@ -1,0 +1,45 @@
+== STDOUT ==
+
+> happytg@0.3.14 dev C:\Develop\Projects\HappyTG
+> turbo dev
+
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running dev in 13 packages
+   • Remote caching disabled
+
+@happytg/worker:dev: cache bypass, force executing 9bd48a14c4e86d98
+@happytg/host-daemon:dev: cache bypass, force executing b40c63cc6912dabd
+@happytg/bot:dev: cache bypass, force executing 5c4a1b768fe01be1
+@happytg/miniapp:dev: cache bypass, force executing 9b750d589657def5
+@happytg/api:dev: cache bypass, force executing 24c8bfee6a683d99
+@happytg/host-daemon:dev: 
+@happytg/host-daemon:dev: > @happytg/host-daemon@0.3.14 dev C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:dev: > tsx watch src/index.ts
+@happytg/host-daemon:dev: 
+@happytg/worker:dev: 
+@happytg/worker:dev: > @happytg/worker@0.3.14 dev C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:dev: > tsx watch src/index.ts
+@happytg/worker:dev: 
+@happytg/miniapp:dev: 
+@happytg/miniapp:dev: > @happytg/miniapp@0.3.14 dev C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:dev: > tsx watch src/index.ts
+@happytg/miniapp:dev: 
+@happytg/bot:dev: 
+@happytg/bot:dev: > @happytg/bot@0.3.14 dev C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:dev: > tsx watch src/index.ts
+@happytg/bot:dev: 
+@happytg/api:dev: 
+@happytg/api:dev: > @happytg/api@0.3.14 dev C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:dev: > tsx watch src/index.ts
+@happytg/api:dev: 
+@happytg/worker:dev: {"at":"2026-04-18T12:57:56.075Z","level":"INFO","scope":"worker","message":"Worker started","metadata":{"tickMs":5000,"staleAfterMs":20000,"orphanAfterMs":300000,"readyMaxLagMs":15000}}
+@happytg/worker:dev: {"at":"2026-04-18T12:57:56.079Z","level":"INFO","scope":"worker","message":"Worker probe server listening","metadata":{"port":4200}}
+@happytg/bot:dev: {"at":"2026-04-18T12:57:56.095Z","level":"INFO","scope":"bot","message":"Bot listening","metadata":{"port":4100,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true}}
+@happytg/miniapp:dev: Port 3001 is already in use by HTTP listener (Contacts). Free it, or start the Mini App with HAPPYTG_MINIAPP_PORT/PORT, then try again.
+@happytg/api:dev: {"at":"2026-04-18T12:57:58.327Z","level":"INFO","scope":"api","message":"Port 4000 already has a HappyTG API. Reuse the running API if it is yours, or start a new one with HAPPYTG_API_PORT/PORT, then try again.","metadata":{"port":4000}}
+
+== STDERR ==
+• turbo 2.9.3
+
+[process closed code=1 signal=null]

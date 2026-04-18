@@ -36,6 +36,7 @@ import { createPartialFailureDetail, deriveInstallOutcome, installStatusFromOutc
 import { readInstallDraft, writeInstallDraft } from "./state.js";
 import {
   promptMultiSelect,
+  promptPortConflictResolution,
   promptSelect,
   promptTelegramForm,
   renderBackgroundModeScreen,
@@ -246,6 +247,251 @@ async function buildRepoEnv(repoPath: string, baseEnv: NodeJS.ProcessEnv): Promi
   }
 
   return env;
+}
+
+interface PlannedPortListenerReport {
+  description?: string;
+  kind?: string;
+  service?: string;
+  containerName?: string;
+  image?: string;
+}
+
+interface PlannedPortReport {
+  id: string;
+  label: string;
+  port: number;
+  state: string;
+  detail: string;
+  overrideEnv?: string;
+  service?: string;
+  listener?: PlannedPortListenerReport;
+  suggestedPort?: number;
+  suggestedPorts?: number[];
+}
+
+interface AppliedPortOverride {
+  id: string;
+  label: string;
+  fromPort: number;
+  toPort: number;
+  overrideEnv: string;
+  envFilePath: string;
+}
+
+function isPlannedPortReport(value: unknown): value is PlannedPortReport {
+  return Boolean(value)
+    && typeof value === "object"
+    && typeof (value as PlannedPortReport).id === "string"
+    && typeof (value as PlannedPortReport).label === "string"
+    && typeof (value as PlannedPortReport).port === "number"
+    && typeof (value as PlannedPortReport).state === "string"
+    && typeof (value as PlannedPortReport).detail === "string";
+}
+
+function bootstrapPortReports(report: BootstrapReport): PlannedPortReport[] {
+  const ports = (report.reportJson as { ports?: unknown }).ports;
+  return Array.isArray(ports)
+    ? ports.filter(isPlannedPortReport)
+    : [];
+}
+
+function suggestedPortsForReport(port: PlannedPortReport): number[] {
+  const rawSuggestions: Array<number | undefined> = [
+    ...(Array.isArray(port.suggestedPorts) ? port.suggestedPorts : []),
+    port.suggestedPort
+  ];
+
+  return [...new Set(
+    rawSuggestions.filter((value): value is number =>
+      value !== undefined
+      && Number.isInteger(value)
+      && value > 0
+      && value <= 65_535
+    )
+  )].slice(0, 3);
+}
+
+function portOwnerDescription(port: PlannedPortReport): string {
+  return port.listener?.description
+    ?? (port.service ? `HappyTG ${port.service}` : "another process or listener");
+}
+
+function portConflictClassification(port: PlannedPortReport): string {
+  if (port.state === "occupied_expected") {
+    return `Supported reuse: HappyTG ${port.service ?? port.label} is already running on this port.`;
+  }
+  if (port.state === "occupied_supported") {
+    return `Supported reuse: ${portOwnerDescription(port)} is already available on this port.`;
+  }
+  if (port.service) {
+    return `Conflict: HappyTG ${port.service} is already using this port, not ${port.label}.`;
+  }
+  if (["redis", "postgres", "minio"].includes(port.listener?.kind ?? "")) {
+    return `Conflict: ${portOwnerDescription(port)} is using this port, but it is not the expected ${port.label} listener.`;
+  }
+
+  return `Conflict: ${portOwnerDescription(port)} is using this port.`;
+}
+
+function validateManualPortSelection(value: string, current: PlannedPortReport, ports: PlannedPortReport[]): string | undefined {
+  const trimmed = value.trim();
+  if (!/^\d+$/u.test(trimmed)) {
+    return "Enter a whole-number port between 1 and 65535.";
+  }
+
+  const port = Number(trimmed);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    return "Enter a whole-number port between 1 and 65535.";
+  }
+  if (port === current.port) {
+    return `Port ${port} is already occupied for ${current.label}. Choose a different port.`;
+  }
+
+  const conflictingPlannedPort = ports.find((item) => item.id !== current.id && item.port === port);
+  if (conflictingPlannedPort) {
+    return `Port ${port} is already planned for ${conflictingPlannedPort.label}. Choose a different port.`;
+  }
+
+  return undefined;
+}
+
+function unresolvedPortConflicts(ports: PlannedPortReport[]): PlannedPortReport[] {
+  return ports.filter((port) => port.state === "occupied_external" && Boolean(port.overrideEnv));
+}
+
+function summarizePortPreflight(ports: PlannedPortReport[], appliedOverrides: AppliedPortOverride[]): string {
+  const free = ports.filter((item) => item.state === "free").map((item) => `${item.label} ${item.port}`);
+  const reuse = ports
+    .filter((item) => item.state === "occupied_expected" || item.state === "occupied_supported")
+    .map((item) => `${item.label} ${item.port}`);
+  const conflicts = unresolvedPortConflicts(ports).map((item) => `${item.label} ${item.port}`);
+  const lines = [
+    conflicts.length > 0
+      ? `Planned port conflicts remain: ${conflicts.join(", ")}.`
+      : "Planned port preflight is clear."
+  ];
+
+  if (reuse.length > 0) {
+    lines.push(`Supported reuse: ${reuse.join(", ")}.`);
+  }
+  if (free.length > 0) {
+    lines.push(`Free: ${free.join(", ")}.`);
+  }
+  if (appliedOverrides.length > 0) {
+    lines.push(`Saved overrides in ${appliedOverrides[0]!.envFilePath}: ${appliedOverrides.map((item) => `${item.overrideEnv}=${item.toPort}`).join(", ")}.`);
+  }
+
+  return lines.join("\n");
+}
+
+function portPreflightAutomationItems(appliedOverrides: AppliedPortOverride[]): AutomationItem[] {
+  return appliedOverrides.map((item) => ({
+    id: `port-preflight-${item.id}`,
+    kind: "auto",
+    message: `Saved \`${item.overrideEnv}=${item.toPort}\` in \`${item.envFilePath}\` so ${item.label} avoids occupied port ${item.fromPort}.`
+  }));
+}
+
+async function resolvePortConflictsBeforePostChecks(input: {
+  interactive: boolean;
+  stdin: NodeJS.ReadStream;
+  stdout: NodeJS.WriteStream;
+  repoPath: string;
+  repoEnv: NodeJS.ProcessEnv;
+  installEnv: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+  runBootstrapCheck: (command: PostInstallCheck, context?: {
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    platform?: NodeJS.Platform;
+  }) => Promise<BootstrapReport>;
+  writeMergedEnvFileImpl: typeof writeMergedEnvFile;
+}): Promise<{
+  report: BootstrapReport;
+  repoEnv: NodeJS.ProcessEnv;
+  appliedOverrides: AppliedPortOverride[];
+  unresolvedConflicts: PlannedPortReport[];
+  detail: string;
+}> {
+  const repoEnv: NodeJS.ProcessEnv = {
+    ...input.repoEnv
+  };
+  const appliedOverrides: AppliedPortOverride[] = [];
+  let report = await input.runBootstrapCheck("setup", {
+    cwd: input.repoPath,
+    env: repoEnv,
+    platform: input.platform
+  });
+
+  while (input.interactive) {
+    const ports = bootstrapPortReports(report);
+    const conflict = unresolvedPortConflicts(ports)[0];
+    if (!conflict?.overrideEnv) {
+      return {
+        report,
+        repoEnv,
+        appliedOverrides,
+        unresolvedConflicts: [],
+        detail: summarizePortPreflight(ports, appliedOverrides)
+      };
+    }
+
+    const selectedPort = await promptPortConflictResolution({
+      stdin: input.stdin,
+      stdout: input.stdout,
+      serviceLabel: conflict.label,
+      occupiedPort: conflict.port,
+      detectedOwner: portOwnerDescription(conflict),
+      classification: portConflictClassification(conflict),
+      detail: conflict.detail,
+      suggestedPorts: suggestedPortsForReport(conflict),
+      overrideEnv: conflict.overrideEnv,
+      envFilePath: path.join(input.repoPath, ".env"),
+      validateManualPort: (value) => validateManualPortSelection(value, conflict, ports)
+    });
+    if (selectedPort === undefined) {
+      throw createInstallRuntimeError({
+        code: "installer_validation_failure",
+        message: `${conflict.label} port conflict was left unresolved.`,
+        lastError: `Install stopped because ${conflict.label} could not reuse occupied port ${conflict.port}.`,
+        retryable: true,
+        suggestedAction: `Free port ${conflict.port}, rerun the installer, or start again and pick a different ${conflict.overrideEnv} value when prompted.`
+      });
+    }
+
+    const envWrite = await input.writeMergedEnvFileImpl({
+      repoRoot: input.repoPath,
+      env: input.installEnv,
+      platform: input.platform,
+      updates: {
+        [conflict.overrideEnv]: String(selectedPort)
+      }
+    });
+    appliedOverrides.push({
+      id: conflict.id,
+      label: conflict.label,
+      fromPort: conflict.port,
+      toPort: selectedPort,
+      overrideEnv: conflict.overrideEnv,
+      envFilePath: envWrite.envFilePath
+    });
+    repoEnv[conflict.overrideEnv] = String(selectedPort);
+    report = await input.runBootstrapCheck("setup", {
+      cwd: input.repoPath,
+      env: repoEnv,
+      platform: input.platform
+    });
+  }
+
+  const ports = bootstrapPortReports(report);
+  return {
+    report,
+    repoEnv,
+    appliedOverrides,
+    unresolvedConflicts: unresolvedPortConflicts(ports),
+    detail: summarizePortPreflight(ports, appliedOverrides)
+  };
 }
 
 function removeAutomationItems(items: AutomationItem[], ...ids: string[]): void {
@@ -916,6 +1162,11 @@ export async function runHappyTGInstall(
   let botIdentity: InstallResult["telegram"]["bot"] | undefined;
   let telegramLookup: InstallResult["telegram"]["lookup"] | undefined;
   let background = createFallbackBackground(backgroundMode);
+  let repoEnv: NodeJS.ProcessEnv | undefined;
+  let preflightSetupReport: BootstrapReport | undefined;
+  let portPreflightDetail = "Planned port preflight did not run.";
+  let appliedPortOverrides: AppliedPortOverride[] = [];
+  let preflightConflictItems: AutomationItem[] = [];
 
   const updateStep = (next: InstallStepRecord) => {
     steps = replaceStep(steps, next);
@@ -1100,6 +1351,7 @@ export async function runHappyTGInstall(
       ...platform.dependencies.map((dependency) => createStep(`dep-${dependency.id}`, dependency.label, dependency.available ? "Already available." : dependency.installCommand ?? dependency.manualInstruction ?? "Manual follow-up required.")),
       createStep("pnpm-install", "Install workspace dependencies", "Run `pnpm install` in the selected checkout."),
       createStep("env-merge", "Merge environment", "Create or merge `.env` without overwriting existing values."),
+      createStep("port-preflight", "Resolve planned ports", "Check planned HappyTG ports before later startup guidance."),
       createStep("telegram-bot", "Connect Telegram bot", "Validate the token and capture bot identity for later /pair guidance."),
       createStep("background", "Configure background run mode", backgroundModes.find((item) => item.mode === backgroundMode)?.detail ?? backgroundMode),
       ...postChecks.map((check) => createStep(`check-${check}`, `Run ${check}`, `Execute HappyTG ${check} in the selected checkout.`))
@@ -1312,6 +1564,46 @@ export async function runHappyTGInstall(
           : "Environment was already up to date."
     });
 
+    repoEnv = await buildRepoEnv(repoSyncResult.path, installEnv);
+    updateStep({
+      ...steps.find((step) => step.id === "port-preflight")!,
+      status: "running",
+      detail: "Checking planned HappyTG ports before post-install startup guidance."
+    });
+    if (!input?.runBootstrapCheck) {
+      portPreflightDetail = "Bootstrap preflight runner is not available in this execution path.";
+      updateStep({
+        ...steps.find((step) => step.id === "port-preflight")!,
+        status: "skipped",
+        detail: portPreflightDetail
+      });
+    } else {
+      const portPreflight = await resolvePortConflictsBeforePostChecks({
+        interactive,
+        stdin,
+        stdout,
+        repoPath: repoSyncResult.path,
+        repoEnv,
+        installEnv,
+        platform: platform.platform.platform,
+        runBootstrapCheck: input.runBootstrapCheck,
+        writeMergedEnvFileImpl: deps.writeMergedEnvFile
+      });
+      repoEnv = portPreflight.repoEnv;
+      preflightSetupReport = portPreflight.report;
+      appliedPortOverrides = portPreflight.appliedOverrides;
+      portPreflightDetail = portPreflight.detail;
+      preflightConflictItems = portPreflight.unresolvedConflicts.length > 0
+        ? automationItemsFromBootstrapReport(portPreflight.report)
+          .filter((item) => item.kind === "conflict" && item.id.endsWith("-port-conflict"))
+        : [];
+      updateStep({
+        ...steps.find((step) => step.id === "port-preflight")!,
+        status: portPreflight.unresolvedConflicts.length > 0 ? "warn" : "passed",
+        detail: portPreflight.detail
+      });
+    }
+
     updateStep({
       ...steps.find((step) => step.id === "telegram-bot")!,
       status: "running",
@@ -1357,10 +1649,14 @@ export async function runHappyTGInstall(
       detail: background.detail
     });
 
-    const repoEnv = await buildRepoEnv(repoSyncResult.path, installEnv);
+    repoEnv ??= await buildRepoEnv(repoSyncResult.path, installEnv);
     const postCheckReports: InstallResult["postChecks"] = [];
     const postCheckWarnings: string[] = [];
     const postCheckAutomationItems: AutomationItem[] = [];
+    const cachedPostCheckReports = new Map<PostInstallCheck, BootstrapReport>();
+    if (preflightSetupReport) {
+      cachedPostCheckReports.set("setup", preflightSetupReport);
+    }
     const repeatedPostCheckSignatures = new Map<string, PostInstallCheck>();
     for (const check of postChecks) {
       const stepId = `check-${check}`;
@@ -1378,7 +1674,7 @@ export async function runHappyTGInstall(
         continue;
       }
 
-      const report = await input.runBootstrapCheck(check, {
+      const report = cachedPostCheckReports.get(check) ?? await input.runBootstrapCheck(check, {
         cwd: repoSyncResult.path,
         env: repoEnv,
         platform: platform.platform.platform
@@ -1430,7 +1726,10 @@ export async function runHappyTGInstall(
           username: knownBotUsername
         }
         : undefined);
-    const finalizationItems = await buildInstallFinalizationItems({
+    const finalizationItems: AutomationItem[] = [];
+    pushAutomationItems(finalizationItems, portPreflightAutomationItems(appliedPortOverrides));
+    pushAutomationItems(finalizationItems, preflightConflictItems);
+    pushAutomationItems(finalizationItems, await buildInstallFinalizationItems({
       background,
       pairTarget,
       platform: platform.platform.platform,
@@ -1440,7 +1739,7 @@ export async function runHappyTGInstall(
       resolveExecutableImpl: deps.resolveExecutable,
       runCommandImpl: deps.runCommand,
       telegramLookup
-    });
+    }));
     const finalWarnings = dedupeWarningsAgainstAutomationItems(warnings, finalizationItems);
     const finalNextSteps = legacyNextStepsFromAutomation(finalizationItems);
     const result: InstallResult = {
@@ -1485,6 +1784,10 @@ export async function runHappyTGInstall(
         fallbackUsed: repoSyncResult.fallbackUsed,
         outcome,
         finalizationItems,
+        portPreflight: {
+          detail: portPreflightDetail,
+          appliedOverrides: appliedPortOverrides
+        },
         pairTarget,
         packageManager: platform.platform.systemPackageManager,
         platform: platform.platform,

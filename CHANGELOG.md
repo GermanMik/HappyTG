@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.3.15
+
+### Fixed
+
+- Interactive installer port preflight now resolves real planned-port conflicts before later startup guidance instead of leaving them as passive warnings only. When a port is occupied by a foreign listener or the wrong HappyTG service, the installer shows the current owner, distinguishes supported reuse from conflict, offers 3 nearby free ports, accepts manual entry, and lets the user abort without a hidden rebind.
+- Bootstrap planned-port diagnostics now keep the explicit env precedence intact while exposing three non-colliding nearby free ports for conflicts, preserving `HAPPYTG_*_PORT` first and `PORT` fallback for app services without regressing existing reuse detection.
+- Bootstrap/install regression coverage now locks the new port-remediation UX for foreign listeners, supported reuse, suggested-port selection, manual overrides, and explicit refusal to continue.
+
+### Changed
+
+- Installation, quickstart, and troubleshooting docs now describe the installer’s explicit port-choice flow and how the selected `HAPPYTG_*_PORT` override is written back to `.env`.
+- Release metadata is aligned at `0.3.15` across the workspace for the installer port preflight UX follow-up release.
+
 ## v0.3.14
 
 ### Fixed

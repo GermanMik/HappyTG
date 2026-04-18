@@ -1,0 +1,80 @@
+
+> happytg@0.3.15 build C:\Develop\Projects\HappyTG
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running build in 13 packages
+   • Remote caching disabled
+
+@happytg/policy-engine:build: cache miss, executing a6be7018faac87b5
+@happytg/bot:build: cache miss, executing 028dd4f0dcdb27bc
+@happytg/miniapp:build: cache miss, executing ed7c6cbcab52dec6
+@happytg/api:build: cache miss, executing 065bc7087e31b4a5
+@happytg/runtime-adapters:build: cache miss, executing ea26e1b4c31675e2
+@happytg/shared:build: cache miss, executing 6a233f22b417b6a2
+@happytg/approval-engine:build: cache miss, executing 7c908e4c43c09a1d
+@happytg/host-daemon:build: cache miss, executing 5682bd01c1c8ccfb
+@happytg/hooks:build: cache miss, executing e415ecef7cf2a035
+@happytg/worker:build: cache miss, executing e2070a7773ad6167
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.3.15 build C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.3.15 build C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.3.15 build C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.3.15 build C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/runtime-adapters:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.3.15 build C:\Develop\Projects\HappyTG\apps\api
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.15 build C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/miniapp:build: 
+@happytg/miniapp:build: > @happytg/miniapp@0.3.15 build C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.3.15 build C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.3.15 build C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.3.15 build C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/repo-proof:build: cache miss, executing b0767c0000c30be9
+@happytg/bootstrap:build: cache miss, executing 085b88a248e5af58
+@happytg/protocol:build: cache miss, executing bae52628cab9e6ef
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.3.15 build C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build: 
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.3.15 build C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.3.15 build C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    5.673s 
+

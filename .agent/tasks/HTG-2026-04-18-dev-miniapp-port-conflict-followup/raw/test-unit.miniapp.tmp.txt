@@ -1,0 +1,20 @@
+
+> @happytg/miniapp@0.3.14 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+✔ mini app ready endpoint returns 503 when api health fails (29.9634ms)
+✔ overview page renders hosts, sessions, approvals, and tasks (8.5793ms)
+✔ task page renders canonical artifacts and escapes file content (5.7633ms)
+✔ session page renders timeline, summary, and task link (6.1674ms)
+✔ startMiniAppServer returns an actionable message when the port is already in use (5530.2949ms)
+✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (62.8421ms)
+✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (4.7911ms)
+✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (4.5257ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5968.1904

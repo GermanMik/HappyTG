@@ -1,0 +1,44 @@
+== curl http://127.0.0.1:3001/ ==
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Accept-Ranges: bytes
+Cache-Control: public, max-age=0
+Last-Modified: Sun, 29 Mar 2026 09:41:57 GMT
+ETag: W/"646-19d38f8b688"
+Content-Type: text/html; charset=utf-8
+Content-Length: 1606
+Date: Sat, 18 Apr 2026 12:37:59 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png?v=2" />
+    <link rel="shortcut icon" type="image/png" href="/favicon.png?v=2" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png?v=2" />
+    <meta name="msapplication-TileImage" content="/favicon.png?v=2" />
+    <title>Contacts</title>
+    <script src="https://telegram.org/js/telegram-web-app.js" onerror="console.error('Failed to load Telegram WebApp SDK')"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/assets/index-DDRCwwPt.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-Bp38C16B.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-query-C2TVaYUM.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-router-DWJjdLGy.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ant-icons-CrMbKd7k.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-icons-XowUND_M.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BYF_Wmkx.css">
+  </head>
+  <body>
+    <div id="root"></div>
+
+  </body>
+</html>
+
+== docker inspect contacts-frontend ==
+/contacts-frontend|contacts-frontend|{"4173/tcp":[{"HostIp":"0.0.0.0","HostPort":"3001"},{"HostIp":"::","HostPort":"3001"}]}

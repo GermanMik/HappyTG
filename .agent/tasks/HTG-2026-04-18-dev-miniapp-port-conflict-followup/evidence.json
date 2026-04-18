@@ -1,0 +1,154 @@
+{
+  "taskId": "HTG-2026-04-18-dev-miniapp-port-conflict-followup",
+  "phase": "fresh verify passed",
+  "artifacts": [
+    "raw/repro-pnpm-dev.txt",
+    "raw/repro-pnpm-dev-after.txt",
+    "raw/port-3001.txt",
+    "raw/port-4000.txt",
+    "raw/base-deploy-port-attribution.txt",
+    "raw/installer-port-check-before.txt",
+    "raw/installer-port-check-after.txt",
+    "raw/installer-port-check-port-fallback.txt",
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt"
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "miniapp-3001-path",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "apps/miniapp/src/index.ts",
+        "apps/miniapp/src/index.test.ts",
+        "raw/repro-pnpm-dev-after.txt",
+        "raw/port-3001.txt"
+      ]
+    },
+    {
+      "id": "base-deploy-attribution",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "raw/port-3001.txt",
+        "raw/base-deploy-port-attribution.txt",
+        "raw/installer-port-check-after.txt"
+      ]
+    },
+    {
+      "id": "api-4000-reuse-preserved",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "apps/api/src/index.ts",
+        "apps/api/src/index.test.ts",
+        "raw/port-4000.txt",
+        "raw/repro-pnpm-dev-after.txt",
+        "raw/installer-port-check-after.txt"
+      ]
+    },
+    {
+      "id": "bootstrap-preflight",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "raw/installer-port-check-before.txt",
+        "raw/installer-port-check-after.txt"
+      ]
+    },
+    {
+      "id": "override-guidance-without-autoremap",
+      "status": "satisfied",
+      "evidence": [
+        "apps/api/src/index.ts",
+        "apps/miniapp/src/index.ts",
+        "packages/bootstrap/src/index.ts",
+        "docs/installation.md",
+        "docs/quickstart.md",
+        "docs/troubleshooting.md"
+      ]
+    },
+    {
+      "id": "port-fallback-truthfulness",
+      "status": "satisfied",
+      "evidence": [
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "raw/installer-port-check-port-fallback.txt"
+      ]
+    },
+    {
+      "id": "regression-coverage",
+      "status": "satisfied",
+      "evidence": [
+        "apps/api/src/index.test.ts",
+        "apps/miniapp/src/index.test.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt"
+      ]
+    },
+    {
+      "id": "repo-verification",
+      "status": "satisfied",
+      "evidence": [
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-integration.txt"
+      ]
+    }
+  ],
+  "classifications": [
+    {
+      "area": "port-3001",
+      "kind": "product_bug_triggered_by_real_environment_conflict",
+      "summary": "A real foreign listener owned 3001, but Mini App runtime still suggested reuse instead of a conflict."
+    },
+    {
+      "area": "port-4000",
+      "kind": "legitimate_reuse_path",
+      "summary": "HappyTG API was already running on 4000 and should be reused rather than treated as a generic conflict."
+    },
+    {
+      "area": "bootstrap-planned-port-resolution",
+      "kind": "product_bug",
+      "summary": "Bootstrap conflict guidance referenced `PORT` fallback before planned-port resolution actually honored it for app services."
+    },
+    {
+      "area": "basedeploy-caddy",
+      "kind": "supporting_environment_evidence",
+      "summary": "BaseDeploy Caddy proxies `contacts.gerta.crazedns.ru` to `localhost:3001`, confirming that the 3001 listener is not HappyTG Mini App reuse on this machine."
+    }
+  ],
+  "portMatrix": [
+    {
+      "component": "Mini App",
+      "port": 3001,
+      "listener": "HTTP listener (Contacts) via Docker container `contacts-frontend`",
+      "classification": "occupied_external",
+      "reuse": false,
+      "overrideExample": "$env:HAPPYTG_MINIAPP_PORT=\"3005\"; pnpm dev:miniapp"
+    },
+    {
+      "component": "API",
+      "port": 4000,
+      "listener": "HappyTG api via Docker container `infra-api-1`",
+      "classification": "occupied_expected",
+      "reuse": true,
+      "overrideExample": "$env:HAPPYTG_API_PORT=\"4001\"; pnpm dev:api"
+    }
+  ],
+  "freshVerifier": {
+    "role": "task-verifier",
+    "agentId": "019da0ac-d0e9-79a1-95ee-333f55253d86",
+    "runId": "verify-2-2026-04-18",
+    "status": "passed_after_bundle_closure",
+    "residualRisks": [
+      "The single-line Mini App runtime error names the foreign HTTP listener but not the Docker container/BaseDeploy hop; richer attribution is strongest in setup preflight output.",
+      "Codex smoke websocket 403 warnings remain visible in setup output on this machine and are intentionally not masked by this task."
+    ]
+  },
+  "generatedAt": "2026-04-18T16:48:10.0492159+03:00"
+}

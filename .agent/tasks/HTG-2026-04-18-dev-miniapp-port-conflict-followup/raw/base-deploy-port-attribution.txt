@@ -1,0 +1,19 @@
+== BaseDeploy docker ps (relevant containers) ==
+shared-redis|redis:7-alpine|0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
+infra-miniapp-1|infra-miniapp|3001/tcp
+infra-api-1|infra-api|0.0.0.0:4000->4000/tcp, [::]:4000->4000/tcp
+contacts-frontend|contacts-frontend|0.0.0.0:3001->4173/tcp, [::]:3001->4173/tcp
+contacts-nginx|nginx:alpine|0.0.0.0:80->80/tcp, [::]:80->80/tcp
+
+== Docker inspect published ports ==
+/contacts-frontend|contacts-frontend|{"4173/tcp":[{"HostIp":"0.0.0.0","HostPort":"3001"},{"HostIp":"::","HostPort":"3001"}]}
+/infra-api-1|infra-api|{"4000/tcp":[{"HostIp":"0.0.0.0","HostPort":"4000"},{"HostIp":"::","HostPort":"4000"}]}
+
+== BaseDeploy Caddyfile relevant lines ==
+    email admin@healthos.gerta.crazedns.ru
+        reverse_proxy http://localhost:81 {
+        reverse_proxy http://localhost:81 {
+healthos.gerta.crazedns.ru {
+:3002 {
+contacts.gerta.crazedns.ru {
+    reverse_proxy http://localhost:3001 {

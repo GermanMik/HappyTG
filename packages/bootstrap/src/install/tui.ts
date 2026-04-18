@@ -342,6 +342,89 @@ export function renderPostCheckScreen(input: {
   ]);
 }
 
+export function renderPortConflictScreen(input: {
+  serviceLabel: string;
+  occupiedPort: number;
+  detectedOwner: string;
+  classification: string;
+  detail: string;
+  suggestedPorts: number[];
+  overrideEnv: string;
+  envFilePath: string;
+  activeChoice: string;
+}): string {
+  const options = [
+    ...input.suggestedPorts.map((port) => ({
+      id: `use:${port}`,
+      label: `Use ${port}`,
+      detail: `Save \`${input.overrideEnv}=${port}\` in \`${input.envFilePath}\` and continue.`
+    })),
+    {
+      id: "manual",
+      label: "Enter custom port",
+      detail: `Type your own port and save it as \`${input.overrideEnv}\` in \`${input.envFilePath}\`.`
+    },
+    {
+      id: "abort",
+      label: "Abort install",
+      detail: "Stop here without changing the planned HappyTG ports."
+    }
+  ];
+
+  const lines = [
+    ...header("Port Conflict", `${input.serviceLabel} cannot use occupied port ${input.occupiedPort}. Choose an explicit next step.`),
+    `${statusIcon("warn")} ${bright("Detected owner")}`,
+    `   ${input.detectedOwner}`,
+    `${statusIcon("warn")} ${bright("Classification")}`,
+    `   ${input.classification}`,
+    `${statusIcon("info")} ${bright("Detail")}`,
+    `   ${input.detail}`,
+    `${statusIcon("info")} ${bright("Nearest free ports")}`,
+    `   ${input.suggestedPorts.length > 0 ? input.suggestedPorts.join(", ") : "No nearby free ports detected automatically."}`,
+    `${statusIcon("info")} ${bright("Config write")}`,
+    `   Installer will save the selected override as \`${input.overrideEnv}\` in \`${input.envFilePath}\`.`,
+    "",
+    ...renderOptions(options.map((option) => ({
+      label: option.label,
+      detail: option.detail,
+      active: option.id === input.activeChoice
+    }))),
+    "",
+    keyboardHints()
+  ];
+
+  return renderFrame(lines);
+}
+
+export function renderPortValueScreen(input: {
+  serviceLabel: string;
+  occupiedPort: number;
+  overrideEnv: string;
+  envFilePath: string;
+  suggestedPorts: number[];
+  draft: string;
+  validationMessage?: string;
+}): string {
+  return renderFrame([
+    ...header("Custom Port", `${input.serviceLabel} needs an explicit replacement for occupied port ${input.occupiedPort}.`),
+    `${statusIcon("info")} ${bright("Save target")}`,
+    `   \`${input.overrideEnv}\` in \`${input.envFilePath}\``,
+    `${statusIcon("info")} ${bright("Nearest free ports")}`,
+    `   ${input.suggestedPorts.length > 0 ? input.suggestedPorts.join(", ") : "No nearby free ports detected automatically."}`,
+    `${statusIcon("info")} ${bright("Port value")}`,
+    `   ${input.draft || "<enter port>"}`,
+    ...(input.validationMessage
+      ? [
+        "",
+        `${statusIcon("warn")} ${bright("Validation")}`,
+        `   ${input.validationMessage}`
+      ]
+      : []),
+    "",
+    keyboardHints("typing...   ESC back")
+  ]);
+}
+
 export function renderProgressScreen(input: {
   title: string;
   steps: InstallStepRecord[];
@@ -815,6 +898,132 @@ export async function promptTelegramForm(input: {
   );
 
   return controller.form;
+}
+
+export async function promptPortValue(input: {
+  stdin: NodeJS.ReadStream;
+  stdout: NodeJS.WriteStream;
+  serviceLabel: string;
+  occupiedPort: number;
+  overrideEnv: string;
+  envFilePath: string;
+  suggestedPorts: number[];
+  validate: (value: string) => string | undefined;
+}): Promise<number | undefined> {
+  let draft = "";
+  let validationMessage: string | undefined;
+  let confirmed: number | undefined;
+  let wentBack = false;
+
+  await readKeypress(
+    input.stdin,
+    input.stdout,
+    () => renderPortValueScreen({
+      serviceLabel: input.serviceLabel,
+      occupiedPort: input.occupiedPort,
+      overrideEnv: input.overrideEnv,
+      envFilePath: input.envFilePath,
+      suggestedPorts: input.suggestedPorts,
+      draft,
+      validationMessage
+    }),
+    (chunk, key) => {
+      const parsedChunk = chunk && !key.ctrl && !key.meta && key.name !== "tab"
+        ? parseInputChunk(chunk)
+        : {
+          text: "",
+          submit: false
+        };
+
+      if (key.name === "backspace") {
+        draft = draft.slice(0, -1);
+        validationMessage = undefined;
+        return false;
+      }
+      if (key.name === "escape") {
+        wentBack = true;
+        return true;
+      }
+      if (parsedChunk.text) {
+        draft = `${draft}${parsedChunk.text.replace(/[^\d]/gu, "")}`;
+        validationMessage = undefined;
+      }
+      if (key.name === "return" || parsedChunk.submit) {
+        validationMessage = input.validate(draft);
+        if (validationMessage) {
+          return false;
+        }
+        confirmed = Number(draft.trim());
+        return true;
+      }
+
+      return false;
+    }
+  );
+
+  return wentBack ? undefined : confirmed;
+}
+
+export async function promptPortConflictResolution(input: {
+  stdin: NodeJS.ReadStream;
+  stdout: NodeJS.WriteStream;
+  serviceLabel: string;
+  occupiedPort: number;
+  detectedOwner: string;
+  classification: string;
+  detail: string;
+  suggestedPorts: number[];
+  overrideEnv: string;
+  envFilePath: string;
+  validateManualPort: (value: string) => string | undefined;
+}): Promise<number | undefined> {
+  const choices = [
+    ...input.suggestedPorts.map((port) => `use:${port}`),
+    "manual",
+    "abort"
+  ] as const;
+
+  while (true) {
+    const selected = await promptSelect({
+      stdin: input.stdin,
+      stdout: input.stdout,
+      items: [...choices],
+      initial: choices[0] ?? "manual",
+      render: (activeChoice) => renderPortConflictScreen({
+        serviceLabel: input.serviceLabel,
+        occupiedPort: input.occupiedPort,
+        detectedOwner: input.detectedOwner,
+        classification: input.classification,
+        detail: input.detail,
+        suggestedPorts: input.suggestedPorts,
+        overrideEnv: input.overrideEnv,
+        envFilePath: input.envFilePath,
+        activeChoice
+      })
+    });
+
+    if (selected === "abort") {
+      return undefined;
+    }
+    if (selected === "manual") {
+      const manualPort = await promptPortValue({
+        stdin: input.stdin,
+        stdout: input.stdout,
+        serviceLabel: input.serviceLabel,
+        occupiedPort: input.occupiedPort,
+        overrideEnv: input.overrideEnv,
+        envFilePath: input.envFilePath,
+        suggestedPorts: input.suggestedPorts,
+        validate: input.validateManualPort
+      });
+      if (manualPort !== undefined) {
+        return manualPort;
+      }
+      continue;
+    }
+
+    return Number(selected.slice("use:".length));
+  }
 }
 
 export function renderProgress(stdout: NodeJS.WriteStream, title: string, steps: InstallStepRecord[]): void {

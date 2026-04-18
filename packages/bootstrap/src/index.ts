@@ -73,6 +73,7 @@ interface PortCheckResult {
   service?: string;
   listener?: PortListenerInfo;
   suggestedPort?: number;
+  suggestedPorts?: number[];
   planned: boolean;
 }
 
@@ -120,7 +121,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
   {
     id: "miniapp",
     label: "Mini App",
-    envKeys: ["HAPPYTG_MINIAPP_PORT"],
+    envKeys: ["HAPPYTG_MINIAPP_PORT", "PORT"],
     defaultPort: 3001,
     probe: "http",
     expectedService: "miniapp",
@@ -130,7 +131,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
   {
     id: "api",
     label: "API",
-    envKeys: ["HAPPYTG_API_PORT"],
+    envKeys: ["HAPPYTG_API_PORT", "PORT"],
     defaultPort: 4000,
     probe: "http",
     expectedService: "api",
@@ -140,7 +141,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
   {
     id: "bot",
     label: "Bot",
-    envKeys: ["HAPPYTG_BOT_PORT"],
+    envKeys: ["HAPPYTG_BOT_PORT", "PORT"],
     defaultPort: 4100,
     probe: "http",
     expectedService: "bot",
@@ -150,7 +151,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
   {
     id: "worker",
     label: "Worker probe",
-    envKeys: ["HAPPYTG_WORKER_PORT"],
+    envKeys: ["HAPPYTG_WORKER_PORT", "PORT"],
     defaultPort: 4200,
     probe: "http",
     expectedService: "worker",
@@ -756,7 +757,7 @@ async function probeGenericHttpListener(port: number): Promise<PortListenerInfo 
       });
       const contentType = response.headers.get("content-type") ?? "";
       const serverHeader = response.headers.get("server") ?? undefined;
-      const bodyText = response.ok && (contentType.includes("json") || contentType.startsWith("text/"))
+      const bodyText = (contentType.includes("json") || contentType.startsWith("text/"))
         ? await response.text()
         : "";
       if (contentType.includes("application/json")) {
@@ -773,6 +774,10 @@ async function probeGenericHttpListener(port: number): Promise<PortListenerInfo 
         } catch {
           // Ignore malformed JSON and keep probing for another fingerprint.
         }
+      }
+
+      if (!response.ok) {
+        continue;
       }
 
       const titleMatch = bodyText.match(/<title>([^<]+)<\/title>/iu);
@@ -895,10 +900,11 @@ function withDockerAttribution(listener: PortListenerInfo | undefined, dockerPor
 async function detectPortCheck(
   definition: PortCheckDefinition,
   port: number,
-  suggestedPort: number,
+  suggestedPorts: number[],
   env: NodeJS.ProcessEnv,
   dockerPorts: Map<number, DockerPublishedPort>
 ): Promise<PortCheckResult> {
+  const suggestedPort = suggestedPorts[0] ?? (port + 1);
   const dockerListener = dockerPorts.get(port);
   const connected = await canConnect("127.0.0.1", port);
   if (!connected) {
@@ -912,6 +918,7 @@ async function detectPortCheck(
       overrideEnv: definition.overrideEnv,
       command: definition.command,
       suggestedPort,
+      suggestedPorts,
       planned: true
     };
   }
@@ -932,6 +939,7 @@ async function detectPortCheck(
         service,
         listener,
         suggestedPort,
+        suggestedPorts,
         planned: true
       };
     }
@@ -950,6 +958,7 @@ async function detectPortCheck(
       service,
       listener,
       suggestedPort,
+      suggestedPorts,
       planned: true
     };
   }
@@ -981,6 +990,7 @@ async function detectPortCheck(
       service: redisRunning ? "redis" : undefined,
       listener,
       suggestedPort,
+      suggestedPorts,
       planned: true
     };
   }
@@ -1012,6 +1022,7 @@ async function detectPortCheck(
       service: postgresRunning ? "postgres" : undefined,
       listener,
       suggestedPort,
+      suggestedPorts,
       planned: true
     };
   }
@@ -1033,6 +1044,7 @@ async function detectPortCheck(
       service: minioRunning ? "minio" : undefined,
       listener,
       suggestedPort,
+      suggestedPorts,
       planned: true
     };
   }
@@ -1048,25 +1060,36 @@ async function detectPortCheck(
     command: definition.command,
     listener: withDockerAttribution(undefined, dockerListener),
     suggestedPort,
+    suggestedPorts,
     planned: true
   };
 }
 
-async function findSuggestedPort(
+async function findSuggestedPorts(
   port: number,
-  blockedPorts: Set<number>
-): Promise<number> {
+  blockedPorts: Set<number>,
+  count = 3
+): Promise<number[]> {
+  const suggestedPorts: number[] = [];
   for (let candidate = port + 1; candidate < 65_535; candidate += 1) {
+    if (suggestedPorts.length >= count) {
+      break;
+    }
     if (blockedPorts.has(candidate)) {
       continue;
     }
     if (await canConnect("127.0.0.1", candidate)) {
       continue;
     }
-    return candidate;
+    suggestedPorts.push(candidate);
+    blockedPorts.add(candidate);
   }
 
-  return port + 1;
+  if (suggestedPorts.length === 0) {
+    suggestedPorts.push(port + 1);
+  }
+
+  return suggestedPorts;
 }
 
 async function detectCriticalPorts(context: {
@@ -1083,18 +1106,19 @@ async function detectCriticalPorts(context: {
       : definition.defaultPort
   }));
   const blockedPorts = new Set(plannedPorts.map((item) => item.port));
-  const suggestedPorts = new Map<string, number>();
+  const suggestedPorts = new Map<string, number[]>();
 
   for (const plannedPort of plannedPorts) {
-    const suggestedPort = await findSuggestedPort(plannedPort.port, blockedPorts);
-    suggestedPorts.set(plannedPort.definition.id, suggestedPort);
-    blockedPorts.add(suggestedPort);
+    suggestedPorts.set(
+      plannedPort.definition.id,
+      await findSuggestedPorts(plannedPort.port, blockedPorts)
+    );
   }
 
   return Promise.all(plannedPorts.map((plannedPort) => detectPortCheck(
     plannedPort.definition,
     plannedPort.port,
-    suggestedPorts.get(plannedPort.definition.id) ?? (plannedPort.port + 1),
+    suggestedPorts.get(plannedPort.definition.id) ?? [plannedPort.port + 1],
     context.env,
     dockerPorts
   )));
@@ -1239,14 +1263,22 @@ function buildPortConflictItem(result: PortCheckResult, platform: NodeJS.Platfor
     };
   }
 
-  const suggestedPort = result.suggestedPort ?? (result.port + 1);
+  const suggestedPorts = [...new Set([
+    ...(result.suggestedPorts ?? []),
+    result.suggestedPort ?? (result.port + 1)
+  ])].slice(0, 3);
+  const suggestedPort = suggestedPorts[0] ?? (result.port + 1);
+  const overrideEnvReference = ["miniapp", "api", "bot", "worker"].includes(result.id)
+    ? `${result.overrideEnv}/PORT`
+    : result.overrideEnv;
   return {
     id: `${result.id}-port-conflict`,
     kind: "conflict",
     message: result.detail,
     solutions: [
-      "Reuse the running service if it is yours.",
-      `Pick a new port with \`${commands.inlineEnvExample(result.overrideEnv, suggestedPort, result.command)}\`.`
+      "This is a conflict, not a supported HappyTG reuse path.",
+      `Nearest free ports: ${suggestedPorts.join(", ")}.`,
+      `Choose one with \`${overrideEnvReference}\` or enter your own port manually. For example: \`${commands.inlineEnvExample(result.overrideEnv, suggestedPort, result.command)}\`.`
     ]
   };
 }

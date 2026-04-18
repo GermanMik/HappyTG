@@ -21,13 +21,15 @@ import {
   loadHappyTGEnv,
   readJsonBody,
   readPort,
-  route
+  route,
+  type Logger
 } from "../../../packages/shared/src/index.js";
 
 import { HappyTGControlPlaneService } from "./service.js";
 
 const logger = createLogger("api");
 loadHappyTGEnv();
+const port = readPort(process.env, ["HAPPYTG_API_PORT", "PORT"], 4000);
 
 export function createApiServer(service = new HappyTGControlPlaneService()) {
   return createJsonServer(
@@ -164,10 +166,135 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
   );
 }
 
-const port = readPort(process.env, ["HAPPYTG_API_PORT", "PORT"], 4000);
+export function formatApiPortReuseMessage(listenPort: number): string {
+  return `Port ${listenPort} already has a HappyTG API. Reuse the running API if it is yours, or start a new one with HAPPYTG_API_PORT/PORT, then try again.`;
+}
+
+export function formatApiPortConflictMessage(listenPort: number, service?: string): string {
+  if (service) {
+    return `Port ${listenPort} is already in use by HappyTG ${service}, not HappyTG API. Free it, or start the API with HAPPYTG_API_PORT/PORT, then try again.`;
+  }
+
+  return `Port ${listenPort} is already in use by another process. Free it, or start the API with HAPPYTG_API_PORT/PORT, then try again.`;
+}
+
+export interface ApiStartupResult {
+  status: "listening" | "reused";
+  port: number;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function detectHappyTGServiceOnPort(listenPort: number, fetchImpl: typeof fetch = fetch): Promise<string | undefined> {
+  for (const pathname of ["/ready", "/health"]) {
+    try {
+      const response = await fetchImpl(`http://127.0.0.1:${listenPort}${pathname}`, {
+        signal: AbortSignal.timeout(750)
+      });
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        continue;
+      }
+
+      const payload = await response.json() as { service?: string };
+      if (payload.service) {
+        return payload.service;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return undefined;
+}
+
+export async function startApiServer(
+  server = createApiServer(),
+  options?: {
+    port?: number;
+    logger?: Pick<Logger, "info">;
+    fetchImpl?: typeof fetch;
+    reuseProbeWindowMs?: number;
+    reuseProbeIntervalMs?: number;
+  }
+): Promise<ApiStartupResult> {
+  const listenPort = options?.port ?? port;
+  const activeLogger = options?.logger ?? logger;
+  const fetchImpl = options?.fetchImpl ?? fetch;
+  const reuseProbeWindowMs = options?.reuseProbeWindowMs ?? 2_000;
+  const reuseProbeIntervalMs = options?.reuseProbeIntervalMs ?? Math.min(100, reuseProbeWindowMs);
+
+  async function listenOnce(): Promise<"listening" | "in_use"> {
+    return await new Promise<"listening" | "in_use">((resolve, reject) => {
+      const onListening = () => {
+        cleanup();
+        resolve("listening");
+      };
+      const onError = (error: NodeJS.ErrnoException) => {
+        cleanup();
+        if (error.code === "EADDRINUSE") {
+          resolve("in_use");
+          return;
+        }
+
+        reject(error);
+      };
+      const cleanup = () => {
+        server.off("listening", onListening);
+        server.off("error", onError);
+      };
+
+      server.once("listening", onListening);
+      server.once("error", onError);
+      server.listen(listenPort);
+    });
+  }
+
+  if (await listenOnce() === "listening") {
+    activeLogger.info("API listening", { port: listenPort });
+    return { status: "listening", port: listenPort };
+  }
+
+  const service = await detectHappyTGServiceOnPort(listenPort, fetchImpl);
+  if (service !== "api") {
+    throw new Error(formatApiPortConflictMessage(listenPort, service));
+  }
+
+  if (reuseProbeWindowMs > 0) {
+    for (let waitedMs = 0; waitedMs < reuseProbeWindowMs; waitedMs += reuseProbeIntervalMs) {
+      await delay(reuseProbeIntervalMs);
+      const serviceAfterDelay = await detectHappyTGServiceOnPort(listenPort, fetchImpl);
+      if (!serviceAfterDelay) {
+        if (await listenOnce() === "listening") {
+          activeLogger.info("API listening", { port: listenPort });
+          return { status: "listening", port: listenPort };
+        }
+
+        const retryService = await detectHappyTGServiceOnPort(listenPort, fetchImpl);
+        if (retryService !== "api") {
+          throw new Error(formatApiPortConflictMessage(listenPort, retryService));
+        }
+        continue;
+      }
+
+      if (serviceAfterDelay !== "api") {
+        throw new Error(formatApiPortConflictMessage(listenPort, serviceAfterDelay));
+      }
+    }
+  }
+
+  activeLogger.info(formatApiPortReuseMessage(listenPort), { port: listenPort });
+  return { status: "reused", port: listenPort };
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const server = createApiServer();
-  server.listen(port, () => {
-    logger.info("API listening", { port });
+  void startApiServer(server).catch((error) => {
+    console.error(error instanceof Error ? error.message : "API failed to start.");
+    process.exitCode = 1;
   });
 }

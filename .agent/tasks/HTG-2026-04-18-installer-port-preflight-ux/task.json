@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-04-18-installer-port-preflight-ux",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-18-installer-port-preflight-ux",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Installer port preflight UX",
+  "acceptanceCriteria": [
+    "Installer preflights all planned HappyTG ports before service start and distinguishes supported reuse from real conflicts.",
+    "Interactive install offers three nearby free ports, manual entry, and abort, then saves the explicit override into .env without silent rebinds.",
+    "Bootstrap/setup diagnostics preserve env override precedence, expose listener attribution, and stay covered by deterministic regression tests and proof artifacts."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-18T14:15:54.506Z",
+  "updatedAt": "2026-04-18T14:35:15.199Z"
+}
