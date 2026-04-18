@@ -72,6 +72,19 @@ pnpm happytg verify
 
 Task-local verification should be recorded in `.agent/tasks/<TASK_ID>/raw/`.
 
+## External Discipline Sources
+
+For substantial tasks, agents must use these sources as discipline and engineering guides:
+
+- [repo-task-proof-loop](https://github.com/DenisSergeevitch/repo-task-proof-loop)
+- [Quick Start / verify docs](https://mintlify.wiki/DenisSergeevitch/repo-task-proof-loop/quickstart)
+- [verify command reference](https://mintlify.wiki/DenisSergeevitch/repo-task-proof-loop/reference/commands/verify)
+- [Вскрываем исходники Claude Code](https://teletype.in/@ndmscw/claude_code_sources)
+
+Use them to reinforce proof-loop rigor, fresh verification, bounded parallel read-only exploration, serialized writes, fast-path startup thinking, and separation of startup orchestration from core logic.
+
+These are discipline sources, not substitutes for repository evidence. Final decisions and fixes must stay grounded in the real code, runtime behavior, and documentation of the current repository.
+
 ## Architecture Invariants
 
 - Telegram is not the internal transport for agent events.
