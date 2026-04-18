@@ -1,0 +1,23 @@
+command=pnpm --filter @happytg/api test exitCode=0 ----- stdout -----
+
+> @happytg/api@0.3.14 test C:\Develop\Projects\HappyTG\apps\api
+> tsx --test src/*.test.ts
+
+✔ api ready endpoint returns store metadata (29.5198ms)
+✔ startApiServer reuses an already-running HappyTG API on the same port (61.6805ms)
+✔ startApiServer rejects with an actionable message when another process occupies the port (6.6772ms)
+✔ startApiServer rejects when a different HappyTG service occupies the API port (4.613ms)
+✔ startApiServer retries a transient HappyTG API handoff before classifying reuse (21.0635ms)
+✔ proof session creates task bundle and approval, then approval dispatches session (26.7152ms)
+✔ quick session dispatches immediately without approval (7.7019ms)
+✔ session timeline and task artifact reads are available for mini app inspection (16.7023ms)
+✔ bootstrap sessions dispatch deterministic doctor runs and support resume state transitions (11.827ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 437.0762
+----- stderr -----

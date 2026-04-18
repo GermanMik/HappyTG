@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-18-dev-port-conflict-triage",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "fresh-verify-2026-04-18-dev-port-conflict-triage"
+  },
+  "checks": [
+    {
+      "name": "API occupied-port startup",
+      "ok": true,
+      "detail": "The post-fix `pnpm dev` repro no longer emits the raw unhandled Node `EADDRINUSE` stack trace from `apps/api/src/index.ts`."
+    },
+    {
+      "name": "API reuse vs conflict UX",
+      "ok": true,
+      "detail": "Controlled startup proof shows a foreign listener gets an actionable conflict message and an already-running HappyTG API gets an actionable reuse message with `HAPPYTG_API_PORT/PORT` guidance."
+    },
+    {
+      "name": "Targeted regression coverage",
+      "ok": true,
+      "detail": "Refreshed API tests cover HappyTG reuse, foreign conflict, different-HappyTG-service conflict, and transient handoff retry."
+    },
+    {
+      "name": "Workspace verification",
+      "ok": true,
+      "detail": "Refreshed `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` artifacts all exited 0."
+    },
+    {
+      "name": "Bot warning classification",
+      "ok": true,
+      "detail": "Standalone bot polling before/after artifacts still show `Telegram polling cycle failed` with `detail:\"fetch failed\"`, supporting its classification as an independent symptom."
+    },
+    {
+      "name": "Fresh verifier pass",
+      "ok": true,
+      "detail": "The independent verifier reported no findings in the reviewed change scope after the minimal fixer patch."
+    }
+  ],
+  "generatedAt": "2026-04-18T12:05:00.000Z"
+}

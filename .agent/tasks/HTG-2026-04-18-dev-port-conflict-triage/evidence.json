@@ -1,0 +1,69 @@
+{
+  "taskId": "HTG-2026-04-18-dev-port-conflict-triage",
+  "criteria": [
+    {
+      "criterion": "`pnpm dev` no longer fails with a raw unhandled Node `EADDRINUSE` stack trace from `apps/api/src/index.ts` when the API port is occupied.",
+      "artifacts": [
+        "raw/api-conflict-before.txt",
+        "raw/repro-pnpm-dev-after.txt",
+        "apps/api/src/index.ts"
+      ]
+    },
+    {
+      "criterion": "API occupied-port behavior becomes productized and actionable for both legitimate reuse and foreign conflict.",
+      "artifacts": [
+        "raw/api-conflict-after.txt",
+        "apps/api/src/index.ts",
+        "apps/api/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "The chosen API UX is documented and justified relative to the existing Mini App behavior.",
+      "artifacts": [
+        "docs/troubleshooting.md",
+        "docs/quickstart.md",
+        "docs/installation.md"
+      ]
+    },
+    {
+      "criterion": "Bot polling warnings remain truthful and separate unless evidence proves direct causality.",
+      "artifacts": [
+        "raw/bot-polling-before.txt",
+        "raw/bot-polling-after.txt",
+        "raw/repro-pnpm-dev.txt",
+        "raw/repro-pnpm-dev-after.txt"
+      ]
+    },
+    {
+      "criterion": "Regression coverage exists for the API startup conflict path.",
+      "artifacts": [
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/task-validate.txt",
+        "apps/api/src/index.test.ts"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/port-3001.txt",
+    "raw/port-4000.txt",
+    "raw/repro-pnpm-dev.txt",
+    "raw/repro-pnpm-dev-after.txt",
+    "raw/api-conflict-before.txt",
+    "raw/api-conflict-after.txt",
+    "raw/bot-polling-before.txt",
+    "raw/bot-polling-after.txt",
+    "raw/test-unit.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt",
+    "raw/task-validate.txt",
+    "apps/api/src/index.ts",
+    "apps/api/src/index.test.ts",
+    "docs/troubleshooting.md",
+    "docs/quickstart.md",
+    "docs/installation.md"
+  ],
+  "generatedAt": "2026-04-18T12:00:00.000Z"
+}

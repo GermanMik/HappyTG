@@ -1,0 +1,14 @@
+command=pnpm happytg task validate --repo . --task HTG-2026-04-18-dev-port-conflict-triage
+exitCode=
+0
+----- stdout -----
+
+> happytg@0.3.14 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-18-dev-port-conflict-triage"
+
+Task: HTG-2026-04-18-dev-port-conflict-triage
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-18-dev-port-conflict-triage
+Validation: ok
+Phase: unknown
+Verification: unknown
+----- stderr -----

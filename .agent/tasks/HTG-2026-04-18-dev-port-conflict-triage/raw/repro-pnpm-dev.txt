@@ -1,0 +1,80 @@
+name=pnpm-dev-repro
+command=pnpm dev
+finished=False
+pid=50092
+exitCode=-1
+----- stdout -----
+
+> happytg@0.3.14 dev C:\Develop\Projects\HappyTG
+> turbo dev
+
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running dev in 13 packages
+   • Remote caching disabled
+
+@happytg/miniapp:dev: cache bypass, force executing ae858230c2280924
+@happytg/bot:dev: cache bypass, force executing 94e4aeb952e414f3
+@happytg/host-daemon:dev: cache bypass, force executing b40c63cc6912dabd
+@happytg/api:dev: cache bypass, force executing d55a750a859183c7
+@happytg/worker:dev: cache bypass, force executing 9bd48a14c4e86d98
+@happytg/miniapp:dev: 
+@happytg/miniapp:dev: > @happytg/miniapp@0.3.14 dev C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:dev: > tsx watch src/index.ts
+@happytg/miniapp:dev: 
+@happytg/api:dev: 
+@happytg/api:dev: > @happytg/api@0.3.14 dev C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:dev: > tsx watch src/index.ts
+@happytg/api:dev: 
+@happytg/host-daemon:dev: 
+@happytg/host-daemon:dev: > @happytg/host-daemon@0.3.14 dev C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:dev: > tsx watch src/index.ts
+@happytg/host-daemon:dev: 
+@happytg/worker:dev: 
+@happytg/worker:dev: > @happytg/worker@0.3.14 dev C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:dev: > tsx watch src/index.ts
+@happytg/worker:dev: 
+@happytg/bot:dev: 
+@happytg/bot:dev: > @happytg/bot@0.3.14 dev C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:dev: > tsx watch src/index.ts
+@happytg/bot:dev: 
+@happytg/miniapp:dev: Port 3001 is already in use. Reuse the running mini app if it is yours, or start a new one with HAPPYTG_MINIAPP_PORT/PORT, then try again.
+@happytg/worker:dev: {"at":"2026-04-18T11:31:41.529Z","level":"INFO","scope":"worker","message":"Worker started","metadata":{"tickMs":5000,"staleAfterMs":20000,"orphanAfterMs":300000,"readyMaxLagMs":15000}}
+@happytg/worker:dev: {"at":"2026-04-18T11:31:41.532Z","level":"INFO","scope":"worker","message":"Worker probe server listening","metadata":{"port":4200}}
+@happytg/api:dev: node:events:487
+@happytg/api:dev:       throw er; // Unhandled 'error' event
+@happytg/api:dev:       ^
+@happytg/api:dev: 
+@happytg/api:dev: Error: listen EADDRINUSE: address already in use :::4000
+@happytg/api:dev:     at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+@happytg/api:dev:     at listenInCluster (node:net:2065:12)
+@happytg/api:dev:     at Server.listen (node:net:2170:7)
+@happytg/api:dev:     at <anonymous> (C:\Develop\Projects\HappyTG\apps\api\src\index.ts:170:10)
+@happytg/api:dev:     at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+@happytg/api:dev:     at async node:internal/modules/esm/loader:639:26
+@happytg/api:dev:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+@happytg/api:dev: Emitted 'error' event on Server instance at:
+@happytg/api:dev:     at emitErrorNT (node:net:2044:8)
+@happytg/api:dev:     at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+@happytg/api:dev:   code: 'EADDRINUSE',
+@happytg/api:dev:   errno: -4091,
+@happytg/api:dev:   syscall: 'listen',
+@happytg/api:dev:   address: '::',
+@happytg/api:dev:   port: 4000
+@happytg/api:dev: }
+@happytg/bot:dev: {"at":"2026-04-18T11:31:41.537Z","level":"INFO","scope":"bot","message":"Bot listening","metadata":{"port":4100,"apiBaseUrl":"http://localhost:4000","publicUrl":"http://localhost:4000","telegramConfigured":true,"updateMode":"polling"}}
+@happytg/api:dev: 
+@happytg/api:dev: Node.js v24.15.0
+@happytg/bot:dev: {"at":"2026-04-18T11:31:41.538Z","level":"INFO","scope":"bot","message":"Telegram update delivery using polling","metadata":{"publicUrl":"http://localhost:4000"}}
+@happytg/bot:dev: {"at":"2026-04-18T11:31:52.232Z","level":"WARN","scope":"bot","message":"Telegram polling cycle failed","metadata":{"detail":"fetch failed"}}
+
+ Tasks:    0 successful, 5 total
+Cached:    0 cached, 5 total
+  Time:    23.316s 
+Failed:    @happytg/miniapp#dev
+
+ ELIFECYCLE  Command failed with exit code 4294967295.
+----- stderr -----
+• turbo 2.9.3
+ ERROR  @happytg/miniapp#dev: command (C:\Develop\Projects\HappyTG\apps\miniapp) C:\Users\tikta\AppData\Local\pnpm\.tools\pnpm\10.0.0\bin\pnpm.CMD run dev exited (-1)
+ ERROR  run failed: command  exited (-1)

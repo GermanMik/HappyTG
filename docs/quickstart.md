@@ -106,6 +106,12 @@ The host daemon is separate from `pnpm dev`; start it with `pnpm dev:daemon` aft
 
 If `3001` is already in use, pick a different `HAPPYTG_MINIAPP_PORT`.
 
+If `4000` is already in use:
+
+- reuse the already-running HappyTG API if it is yours;
+- or free the conflicting process;
+- or start the API on a different port with `HAPPYTG_API_PORT`.
+
 If `6379` is already in use:
 
 - reuse the existing system Redis and skip compose `redis`;

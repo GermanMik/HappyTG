@@ -1,0 +1,7 @@
+port=49418
+===== foreign conflict =====
+Port 49418 is already in use by another process. Free it, or start the API with HAPPYTG_API_PORT/PORT, then try again.
+
+===== happytg reuse =====
+info:Port 49418 already has a HappyTG API. Reuse the running API if it is yours, or start a new one with HAPPYTG_API_PORT/PORT, then try again. {"port":49418}
+{"status":"reused","port":49418}

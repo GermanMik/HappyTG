@@ -1,0 +1,54 @@
+name=api-conflict-before
+command=pnpm --filter @happytg/api run dev
+finished=False
+pid=49624
+exitCode=1
+----- stdout -----
+
+> @happytg/api@0.3.14 dev C:\Develop\Projects\HappyTG\apps\api
+> tsx watch src/index.ts
+
+C:\Develop\Projects\HappyTG\apps\api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @happytg/api@0.3.14 dev: `tsx watch src/index.ts`
+Exit status 1
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?
+----- stderr -----
+node:events:487
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at Server.listen (node:net:2170:7)
+    at <anonymous> (C:\Develop\Projects\HappyTG\apps\api\src\index.ts:170:10)
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:2044:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.15.0
+node:events:487
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: read EPIPE
+    at TTY.onStreamRead (node:internal/stream_base_commons:216:20)
+Emitted 'error' event on ReadStream instance at:
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errno: -4047,
+  code: 'EPIPE',
+  syscall: 'read'
+}
+
+Node.js v24.15.0

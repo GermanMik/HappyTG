@@ -1,0 +1,34 @@
+name=bot-polling-after
+command=pnpm --filter @happytg/bot run dev
+finished=False
+pid=62324
+exitCode=1
+----- stdout -----
+
+> @happytg/bot@0.3.14 dev C:\Develop\Projects\HappyTG\apps\bot
+> tsx watch src/index.ts
+
+{"at":"2026-04-18T11:49:26.011Z","level":"INFO","scope":"bot","message":"Bot listening","metadata":{"port":4100,"apiBaseUrl":"http://localhost:4000","publicUrl":"http://localhost:4000","telegramConfigured":true,"updateMode":"polling"}}
+{"at":"2026-04-18T11:49:26.013Z","level":"INFO","scope":"bot","message":"Telegram update delivery using polling","metadata":{"publicUrl":"http://localhost:4000"}}
+{"at":"2026-04-18T11:49:36.740Z","level":"WARN","scope":"bot","message":"Telegram polling cycle failed","metadata":{"detail":"fetch failed"}}
+C:\Develop\Projects\HappyTG\apps\bot:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @happytg/bot@0.3.14 dev: `tsx watch src/index.ts`
+Exit status 1
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?
+----- stderr -----
+node:events:487
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: read EPIPE
+    at TTY.onStreamRead (node:internal/stream_base_commons:216:20)
+Emitted 'error' event on ReadStream instance at:
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errno: -4047,
+  code: 'EPIPE',
+  syscall: 'read'
+}
+
+Node.js v24.15.0

@@ -164,6 +164,12 @@ If `3001` is already occupied:
 - or pick a new `HAPPYTG_MINIAPP_PORT`;
 - or free the existing process and restart the Mini App.
 
+If `4000` is already occupied:
+
+- reuse the already-running HappyTG API if it is yours;
+- or pick a new `HAPPYTG_API_PORT`;
+- or free the existing process and restart the API.
+
 PowerShell examples:
 
 ```powershell
