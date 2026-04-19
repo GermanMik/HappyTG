@@ -19,4 +19,6 @@
 ## Notes
 
 - This release publishes the already-validated installer final-summary/exit follow-up plus explicit CLI-wrapper regression coverage.
-- Publish artifacts will be added after push, merge, and guarded Release workflow completion.
+- PR `#19` merged the release branch into `main` at commit `1f14282daf37208fb674a63c13577cabb80d6212`.
+- GitHub Actions `Release` workflow `24627018666` completed successfully against `main` commit `1f14282daf37208fb674a63c13577cabb80d6212`.
+- GitHub published `HappyTG 0.3.17` at `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.17`.

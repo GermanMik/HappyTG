@@ -1,9 +1,9 @@
 {
   "taskId": "HTG-2026-04-19-release-0317-installer-final-summary-exit",
-  "status": "local_verification_passed",
+  "status": "released",
   "baseVersion": "0.3.16",
   "targetVersion": "0.3.17",
-  "branch": "codex/release-0.3.17-installer-final-summary-exit",
+  "branch": "main",
   "sourceTasks": [
     "HTG-2026-04-19-installer-final-summary-exit"
   ],
@@ -15,10 +15,20 @@
     "typecheck": "pass",
     "test": "pass",
     "build": "pass",
-    "releaseWorkflow": "pending"
+    "releaseWorkflow": "pass"
   },
   "notes": [
-    "Local release verification is complete and ready for commit/push/merge.",
-    "Publish artifacts will be recorded after the guarded Release workflow completes."
-  ]
+    "PR #19 merged the release branch into main at commit 1f14282daf37208fb674a63c13577cabb80d6212.",
+    "GitHub Release workflow 24627018666 succeeded on main commit 1f14282daf37208fb674a63c13577cabb80d6212.",
+    "GitHub published HappyTG 0.3.17 at https://github.com/GermanMik/HappyTG/releases/tag/v0.3.17."
+  ],
+  "release": {
+    "tag": "v0.3.17",
+    "name": "HappyTG 0.3.17",
+    "url": "https://github.com/GermanMik/HappyTG/releases/tag/v0.3.17",
+    "publishedAt": "2026-04-19T10:32:51Z",
+    "workflowRunId": 24627018666,
+    "workflowUrl": "https://github.com/GermanMik/HappyTG/actions/runs/24627018666",
+    "targetCommit": "1f14282daf37208fb674a63c13577cabb80d6212"
+  }
 }

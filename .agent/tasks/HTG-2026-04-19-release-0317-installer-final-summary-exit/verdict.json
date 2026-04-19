@@ -1,5 +1,5 @@
 {
   "taskId": "HTG-2026-04-19-release-0317-installer-final-summary-exit",
-  "status": "local_verification_passed",
-  "summary": "Release metadata, source proof references, and local release gates for HappyTG 0.3.17 are green; branch publication and guarded GitHub Release dispatch remain pending."
+  "status": "complete",
+  "summary": "HappyTG 0.3.17 was published successfully from main commit 1f14282daf37208fb674a63c13577cabb80d6212 after the guarded GitHub Release workflow re-ran release metadata validation, typecheck, test, and build."
 }

@@ -3,7 +3,7 @@
   "sessionId": "manual-session",
   "workspaceId": "HappyTG",
   "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-release-0317-installer-final-summary-exit",
-  "phase": "local_verification_passed",
+  "phase": "complete",
   "mode": "proof",
   "title": "Publish installer final summary exit follow-up as 0.3.17",
   "acceptanceCriteria": [
@@ -13,7 +13,7 @@
     "The release proof bundle is complete and validates successfully.",
     "The release branch commit is pushed, merged to main, and the guarded Release workflow is dispatched for 0.3.17."
   ],
-  "verificationState": "pending_workflow",
+  "verificationState": "passed",
   "createdAt": "2026-04-19T00:00:00.000Z",
-  "updatedAt": "2026-04-19T15:15:00+03:00"
+  "updatedAt": "2026-04-19T13:33:47+03:00"
 }
