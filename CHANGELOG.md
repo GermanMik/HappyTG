@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.22
+
+### Fixed
+
+- Interactive installer progress now renders one aggregate ASCII-safe progress bar for the full install flow, so long-running steps expose overall completion instead of looking frozen.
+- Step completion accounting now stays truthful at the TUI layer: only `passed`, `warn`, `failed`, and `skipped` advance the aggregate bar, while `running` remains incomplete.
+- Installer progress regression coverage now proves the shared bar appears both in the renderer and during the interactive planned-port rerun path.
+
+### Changed
+
+- Release metadata is aligned at `0.3.22` across the workspace for the installer progress-bar release.
+
 ## v0.3.21
 
 ### Fixed

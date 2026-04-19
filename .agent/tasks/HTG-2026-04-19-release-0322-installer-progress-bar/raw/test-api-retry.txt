@@ -1,0 +1,13 @@
+✔ api ready endpoint returns store metadata (41.7568ms)
+✔ startApiServer reuses an already-running HappyTG API on the same port (66.9872ms)
+✔ startApiServer rejects with an actionable message when another process occupies the port (6.3934ms)
+✔ startApiServer rejects when a different HappyTG service occupies the API port (6.0636ms)
+✔ startApiServer retries a transient HappyTG API handoff before classifying reuse (33.82ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 466.1718

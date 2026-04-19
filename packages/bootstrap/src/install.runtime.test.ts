@@ -2152,10 +2152,13 @@ test("runHappyTGInstall interactive port preflight shows progress while saving t
     await harness.waitForOutput("Port Conflict");
     await harness.emitKeypress("\r", { name: "enter" });
     const progressScreen = await harness.waitForOutput(/Saving `HAPPYTG_MINIAPP_PORT=3002`/);
+    const latestProgressScreen = (progressScreen.split("\u001B[2J\u001B[H").at(-1) ?? progressScreen)
+      .replace(/\u001b\[[0-9;]*m/gu, "");
 
     assert.match(progressScreen, /Resolve planned ports/);
     assert.match(progressScreen, /Re-running planned port preflight so the installer can continue/);
     assert.doesNotMatch(progressScreen, /Final Summary/);
+    assert.match(latestProgressScreen, /\[#####-----\] 3\/6 steps complete/);
 
     releaseSecondSetup?.();
     await harness.waitForOutput("Final Summary");

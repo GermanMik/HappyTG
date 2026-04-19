@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-04-19-release-0322-installer-progress-bar",
+  "status": "pending",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": ""
+  },
+  "checks": [],
+  "generatedAt": "2026-04-19T22:12:18.1951586+03:00"
+}

@@ -1,0 +1,20 @@
+{
+  "taskId": "HTG-2026-04-19-release-0322-installer-progress-bar",
+  "status": "local_verified_publish_pending",
+  "version": "0.3.22",
+  "sourceTaskId": "HTG-2026-04-19-installer-progress-bar",
+  "artifacts": [
+    "raw/install.txt",
+    "raw/release-check.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-integration.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration-first-fail.txt",
+    "raw/build.txt",
+    "raw/doctor.txt",
+    "raw/verify.txt",
+    "raw/source-task-validate.txt"
+  ],
+  "generatedAt": "2026-04-19T22:12:18.1951586+03:00"
+}

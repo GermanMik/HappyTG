@@ -218,6 +218,47 @@ test("progress screen uses a readable ASCII running indicator instead of a unico
   assert.doesNotMatch(visible, /… Sync repository/);
 });
 
+test("progress screen renders an aggregate ASCII progress bar from terminal step states", () => {
+  const screen = renderProgressScreen({
+    title: "Preparing install.",
+    steps: [
+      {
+        id: "repo-sync",
+        label: "Sync repository",
+        status: "passed",
+        detail: "Done."
+      },
+      {
+        id: "pnpm-install",
+        label: "Install workspace dependencies",
+        status: "warn",
+        detail: "Completed with warnings."
+      },
+      {
+        id: "env-merge",
+        label: "Merge environment",
+        status: "running",
+        detail: "Running now."
+      },
+      {
+        id: "background",
+        label: "Configure background run mode",
+        status: "skipped",
+        detail: "Skipped."
+      },
+      {
+        id: "doctor",
+        label: "Run doctor",
+        status: "pending",
+        detail: "Waiting."
+      }
+    ]
+  });
+  const visible = screen.replace(/\u001b\[[0-9;]*m/gu, "");
+
+  assert.match(visible, /\[######----\] 3\/5 steps complete/);
+});
+
 test("Telegram screen renders a masked preview instead of the raw bot token", () => {
   const screen = renderTelegramScreen({
     form: {

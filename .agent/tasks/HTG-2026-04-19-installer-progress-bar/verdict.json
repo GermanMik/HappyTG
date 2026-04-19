@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-19-installer-progress-bar",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "agent": "Codex",
+    "runId": "manual-verifier-2026-04-19-installer-progress-bar"
+  },
+  "summary": "The installer progress screen now shows a shared ASCII-safe step-count bar derived from the existing step statuses, and fresh renderer/runtime/bootstrap verification passed on the current tree.",
+  "checks": [
+    {
+      "name": "shared-progress-surface",
+      "ok": true,
+      "detail": "`renderProgressScreen()` now renders one aggregate progress bar for the entire installer flow instead of leaving long-running steps with only a local status label."
+    },
+    {
+      "name": "terminal-step-accounting",
+      "ok": true,
+      "detail": "Progress completion counts only `passed`, `warn`, `failed`, and `skipped`; `running` remains incomplete so the bar does not overstate progress."
+    },
+    {
+      "name": "port-preflight-regression",
+      "ok": true,
+      "detail": "The interactive port-preflight runtime harness now asserts that the rerun screen includes the aggregate bar while saving the chosen `HAPPYTG_MINIAPP_PORT` override."
+    },
+    {
+      "name": "fresh-verification",
+      "ok": true,
+      "detail": "`pnpm --filter @happytg/bootstrap build`, `pnpm --filter @happytg/bootstrap lint`, the targeted renderer test command, and the targeted runtime test command all exited 0 and are recorded in the task bundle."
+    },
+    {
+      "name": "proof-bundle-completeness",
+      "ok": true,
+      "detail": "The task bundle now includes the frozen spec, evidence, findings summary, verifier verdict, and raw command artifacts, and `task validate` reports the task as complete/passed."
+    }
+  ],
+  "residualRisks": [
+    "The progress bar is step-count based rather than duration-based, so a single legitimately slow step can still hold the same completion ratio until it finishes."
+  ],
+  "generatedAt": "2026-04-19T21:47:17.6529473+03:00"
+}

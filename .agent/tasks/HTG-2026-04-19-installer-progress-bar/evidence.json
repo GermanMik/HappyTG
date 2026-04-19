@@ -1,0 +1,88 @@
+{
+  "taskId": "HTG-2026-04-19-installer-progress-bar",
+  "status": "passed",
+  "phase": "fresh verify passed",
+  "criteria": [
+    {
+      "criterion": "Interactive installer progress screen shows an aggregated step-count progress bar for the full install flow.",
+      "artifacts": [
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Completed progress counts only terminal steps (passed, warn, failed, skipped); running steps remain incomplete.",
+      "artifacts": [
+        "packages/bootstrap/src/install/tui.ts",
+        ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Long-running steps such as planned-port resolution visibly benefit from the shared progress bar without changing installer semantics.",
+      "artifacts": [
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Renderer and runtime regression coverage prove the bar appears during interactive install progress.",
+      "artifacts": [
+        "packages/bootstrap/src/install.test.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/test-integration.txt"
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "name": "build",
+      "command": "pnpm --filter @happytg/bootstrap build",
+      "result": "passed",
+      "raw": "raw/build.txt"
+    },
+    {
+      "name": "lint",
+      "command": "pnpm --filter @happytg/bootstrap lint",
+      "result": "passed",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "name": "unit-progress-tests",
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.test.ts --test-name-pattern progress",
+      "result": "passed",
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "name": "runtime-progress-tests",
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.runtime.test.ts --test-name-pattern progress",
+      "result": "passed",
+      "raw": "raw/test-integration.txt"
+    },
+    {
+      "name": "task-validate",
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-04-19-installer-progress-bar",
+      "result": "passed",
+      "raw": "raw/task-validate.txt"
+    }
+  ],
+  "artifacts": [
+    "packages/bootstrap/src/install/tui.ts",
+    "packages/bootstrap/src/install.test.ts",
+    "packages/bootstrap/src/install.runtime.test.ts",
+    ".agent/tasks/HTG-2026-04-19-installer-progress-bar/spec.md",
+    ".agent/tasks/HTG-2026-04-19-installer-progress-bar/evidence.md",
+    ".agent/tasks/HTG-2026-04-19-installer-progress-bar/verdict.json",
+    ".agent/tasks/HTG-2026-04-19-installer-progress-bar/problems.md",
+    ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/build.txt",
+    ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/lint.txt",
+    ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-04-19-installer-progress-bar/raw/task-validate.txt"
+  ],
+  "generatedAt": "2026-04-19T21:47:17.6529473+03:00"
+}

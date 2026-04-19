@@ -1,0 +1,18 @@
+{
+  "id": "HTG-2026-04-19-installer-progress-bar",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-installer-progress-bar",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Add installer-wide progress bar",
+  "acceptanceCriteria": [
+    "Interactive installer progress screen shows an aggregated step-count progress bar for the full install flow.",
+    "Completed progress counts only terminal steps (passed, warn, failed, skipped); running steps remain incomplete.",
+    "Long-running steps such as planned-port resolution visibly benefit from the shared progress bar without changing installer semantics.",
+    "Renderer and runtime regression coverage prove the bar appears during interactive install progress."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T18:43:50.532Z",
+  "updatedAt": "2026-04-19T21:47:17.6529473+03:00"
+}

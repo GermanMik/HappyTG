@@ -86,6 +86,29 @@ function renderIndentedDetail(detail: string): string[] {
     .map((line) => `   ${line}`);
 }
 
+function summarizeStepProgress(steps: readonly InstallStepRecord[]): { completed: number; total: number } {
+  const terminalStatuses = new Set<InstallStepRecord["status"]>(["passed", "warn", "failed", "skipped"]);
+  const completed = steps.reduce((count, step) => count + (terminalStatuses.has(step.status) ? 1 : 0), 0);
+
+  return {
+    completed,
+    total: steps.length
+  };
+}
+
+function renderStepProgressBar(completed: number, total: number): string {
+  const width = 10;
+  const normalizedCompleted = Math.max(0, Math.min(completed, total));
+  const filled = total <= 0
+    ? 0
+    : normalizedCompleted === total
+      ? width
+      : Math.floor((normalizedCompleted / total) * width);
+  const empty = width - filled;
+
+  return `[${filled > 0 ? tint("#".repeat(filled), `${COLORS.bold}${COLORS.cyan}`) : ""}${empty > 0 ? dim("-".repeat(empty)) : ""}]`;
+}
+
 function pushUniqueLine(lines: string[], line: string): void {
   const normalized = line.trim();
   if (!normalized || lines.includes(normalized)) {
@@ -429,8 +452,11 @@ export function renderProgressScreen(input: {
   title: string;
   steps: InstallStepRecord[];
 }): string {
+  const progress = summarizeStepProgress(input.steps);
   const lines = [
-    ...header("Installation Progress", input.title)
+    ...header("Installation Progress", input.title),
+    `${renderStepProgressBar(progress.completed, progress.total)} ${bright(`${progress.completed}/${progress.total} steps complete`)}`,
+    ""
   ];
 
   for (const step of input.steps) {
