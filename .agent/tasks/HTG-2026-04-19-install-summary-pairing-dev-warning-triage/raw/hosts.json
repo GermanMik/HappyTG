@@ -1,0 +1,19 @@
+{
+  "hosts": [
+    {
+      "id": "host_d5e6312571ae48259df2aced",
+      "label": "ALFRED",
+      "fingerprint": "ALFRED-win32-x64",
+      "status": "registering",
+      "capabilities": [
+        "codex-cli",
+        "proof-loop",
+        "resume"
+      ],
+      "runtimePreference": "codex-cli",
+      "createdAt": "2026-04-17T14:12:20.012Z",
+      "updatedAt": "2026-04-19T12:22:16.687Z",
+      "lastSeenAt": "2026-04-19T12:22:16.687Z"
+    }
+  ]
+}

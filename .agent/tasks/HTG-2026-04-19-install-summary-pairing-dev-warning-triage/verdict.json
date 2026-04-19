@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-19-install-summary-pairing-dev-warning-triage",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verifier-2026-04-19T15:35:41.5808587+03:00"
+  },
+  "checks": [
+    {
+      "name": "codex_websocket_warning",
+      "ok": true,
+      "detail": "Fresh `pnpm happytg verify --json` still reports `CODEX_SMOKE_WARNINGS` at warning severity with message `Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP.`, and `packages/runtime-adapters/src/index.ts` still maps that path to warn-only fallback wording. The bundle correctly proves a legitimate environment warning; no current product fix is needed."
+    },
+    {
+      "name": "install_summary_pairing_handoff",
+      "ok": true,
+      "detail": "The builder artifacts `raw/install-json.txt`, `raw/daemon-pair.txt`, and `raw/hosts.json`, together with current `packages/bootstrap/src/install/pairing.ts`, `packages/bootstrap/src/install/index.ts`, `apps/bot/src/handlers.ts`, and fresh `pnpm --filter @happytg/bootstrap test -- --runInBand --testNamePattern \"runHappyTGInstall|evaluateInstallPairingDecision|Codex\"`, still prove that install summary renders a concrete `/pair CODE` only after a real code is requested or refreshed and otherwise falls back honestly to manual `pnpm daemon:pair` guidance. No current product fix is needed for the reported install-summary symptom."
+    },
+    {
+      "name": "api_reuse_path",
+      "ok": true,
+      "detail": "Fresh `pnpm happytg verify --json` still classifies API port `4000` as `occupied_expected` by HappyTG API, and fresh `pnpm --filter @happytg/api test -- --runInBand --testNamePattern \"startApiServer\"` still passes reuse, foreign-conflict, different-service, and transient-handoff coverage. The existing raw `dev-api*.txt` artifacts remain consistent with current code, so no current product fix is needed."
+    },
+    {
+      "name": "turbo_notice_relatedness",
+      "ok": true,
+      "detail": "Existing `raw/build.txt`, `raw/lint.txt`, `raw/typecheck.txt`, and `raw/test-unit.txt` still show only the normal `turbo 2.9.3` banner and no reproduced update notice, so the bundle supports `unrelated` / `not reproduced` rather than a product root cause."
+    },
+    {
+      "name": "proof_bundle_validation",
+      "ok": true,
+      "detail": "After final bundle synchronization, `pnpm happytg task validate --repo . --task HTG-2026-04-19-install-summary-pairing-dev-warning-triage` and `pnpm happytg task status --repo . --task HTG-2026-04-19-install-summary-pairing-dev-warning-triage` both report `Validation: ok`, `Phase: complete`, and `Verification: passed`."
+    }
+  ],
+  "generatedAt": "2026-04-19T15:47:00.0000000+03:00"
+}

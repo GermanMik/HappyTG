@@ -1,0 +1,9 @@
+
+> happytg@0.3.17 dev:api C:\Develop\Projects\HappyTG
+> pnpm --filter @happytg/api run dev
+
+
+> @happytg/api@0.3.17 dev C:\Develop\Projects\HappyTG\apps\api
+> tsx watch src/index.ts
+
+{"at":"2026-04-19T12:21:07.982Z","level":"INFO","scope":"api","message":"Port 4000 already has a HappyTG API. Reuse the running API if it is yours, or start a new one with HAPPYTG_API_PORT/PORT, then try again.","metadata":{"port":4000}}

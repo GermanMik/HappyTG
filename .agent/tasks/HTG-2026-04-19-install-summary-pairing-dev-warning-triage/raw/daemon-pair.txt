@@ -1,0 +1,13 @@
+
+> happytg@0.3.17 daemon:pair C:\Develop\Projects\HappyTG
+> pnpm --filter @happytg/host-daemon run pair
+
+
+> @happytg/host-daemon@0.3.17 pair C:\Develop\Projects\HappyTG\apps\host-daemon
+> tsx src/index.ts pair
+
+{"at":"2026-04-19T12:22:10.703Z","level":"INFO","scope":"host-daemon","message":"Pairing code issued","metadata":{"hostId":"host_d5e6312571ae48259df2aced","registrationId":"reg_13dc420bd2fd41aaab42b198","pairingCode":"S2HVBC","expiresAt":"2026-04-19T12:32:10.671Z"}}
+Pair with @gerta_workbot using: /pair S2HVBC
+Next: keep `pnpm dev` running, send the command to @gerta_workbot, then start the daemon with `pnpm dev:daemon`.
+Host ID: host_d5e6312571ae48259df2aced
+Expires at: 2026-04-19T12:32:10.671Z

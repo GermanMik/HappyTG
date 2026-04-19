@@ -1,0 +1,122 @@
+{
+  "taskId": "HTG-2026-04-19-install-summary-pairing-dev-warning-triage",
+  "phase": "complete",
+  "artifacts": [
+    "raw/task-status.txt",
+    "raw/task-status-final.txt",
+    "raw/task-validate.txt",
+    "raw/setup-json.txt",
+    "raw/doctor-json.txt",
+    "raw/verify-json.txt",
+    "raw/install-json.txt",
+    "raw/daemon-pair.txt",
+    "raw/hosts.json",
+    "raw/dev-api.txt",
+    "raw/dev-api-start.txt",
+    "raw/env-summary.json",
+    "raw/daemon-state-summary.json",
+    "raw/codex-smoke.txt",
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt"
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "codex-403-classification",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "raw/setup-json.txt",
+        "raw/doctor-json.txt",
+        "raw/verify-json.txt",
+        "raw/codex-smoke.txt",
+        "packages/runtime-adapters/src/index.ts"
+      ]
+    },
+    {
+      "id": "pair-code-root-cause",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "raw/install-json.txt",
+        "raw/daemon-pair.txt",
+        "raw/hosts.json",
+        "packages/bootstrap/src/install/pairing.ts",
+        "packages/bootstrap/src/install/index.ts",
+        "apps/bot/src/handlers.ts"
+      ]
+    },
+    {
+      "id": "api-reuse-root-cause",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "raw/setup-json.txt",
+        "raw/doctor-json.txt",
+        "raw/verify-json.txt",
+        "raw/dev-api.txt",
+        "raw/dev-api-start.txt",
+        "apps/api/src/index.ts",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "turbo-notice-relatedness",
+      "status": "satisfied_on_builder_machine",
+      "evidence": [
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "repo-verification",
+      "status": "satisfied",
+      "evidence": [
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt"
+      ]
+    }
+  ],
+  "classifications": [
+    {
+      "area": "codex-websocket-403",
+      "kind": "legitimate_environment_warning",
+      "summary": "Current machine still receives websocket 403 responses from chatgpt.com, but Codex falls back to HTTP and the smoke check remains green."
+    },
+    {
+      "area": "codex-websocket-403",
+      "kind": "external_dependency_issue",
+      "summary": "The failing endpoint is external to the repository, and the current product correctly reports it as a warn-only degraded path."
+    },
+    {
+      "area": "install-summary-pairing-handoff",
+      "kind": "false_positive_current_tree",
+      "summary": "Current install output refreshes and renders a concrete `/pair CODE` command; the previously reported broken handoff is not reproducible in the current worktree."
+    },
+    {
+      "area": "api-reuse-path",
+      "kind": "legitimate_reuse_path",
+      "summary": "API port 4000 is occupied by a HappyTG API instance and the current runtime entrypoint emits the supported reuse message."
+    },
+    {
+      "area": "turbo-update-notice",
+      "kind": "unrelated_or_not_reproduced",
+      "summary": "Fresh build/lint/typecheck/test runs show the Turbo version banner only; no update notice was reproduced in this task."
+    }
+  ],
+  "currentFixDecision": {
+    "productionCodeChanged": false,
+    "summary": "No additional production edit was required because the current worktree already satisfies the investigated behaviors and only legitimate environment warnings remained."
+  },
+  "freshVerifier": {
+    "role": "task-verifier",
+    "agentId": "019da5b7-122a-7db0-bbea-734101652d97",
+    "runId": "verifier-2026-04-19T15:35:41.5808587+03:00",
+    "status": "passed"
+  },
+  "generatedAt": "2026-04-19T12:39:00.000Z"
+}

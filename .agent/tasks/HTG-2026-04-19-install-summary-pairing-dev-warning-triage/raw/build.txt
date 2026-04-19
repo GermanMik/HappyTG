@@ -1,0 +1,80 @@
+
+> happytg@0.3.17 build C:\Develop\Projects\HappyTG
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running build in 13 packages
+   • Remote caching disabled
+
+@happytg/bootstrap:build: cache miss, executing 945b1b78bc56e240
+@happytg/approval-engine:build: cache hit, replaying logs e5dc0638dfa374c4
+@happytg/runtime-adapters:build: cache hit, replaying logs c45fdf729844d75f
+@happytg/shared:build: cache hit, replaying logs 02bea541f93eb411
+@happytg/api:build: cache hit, replaying logs 75a125503fc3e583
+@happytg/repo-proof:build: cache hit, replaying logs 4756b35589d3a473
+@happytg/miniapp:build: cache hit, replaying logs 0d8f02899cc1ae17
+@happytg/policy-engine:build: cache hit, replaying logs fa8c42c19a84c455
+@happytg/bot:build: cache hit, replaying logs ffa05593bd2e5f38
+@happytg/host-daemon:build: cache hit, replaying logs 3edacd764c2c478b
+@happytg/policy-engine:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.3.17 build C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.3.17 build C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.3.17 build C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.3.17 build C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.17 build C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/repo-proof:build: 
+@happytg/miniapp:build: 
+@happytg/miniapp:build: > @happytg/miniapp@0.3.17 build C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.3.17 build C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.3.17 build C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.3.17 build C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/protocol:build: cache hit, replaying logs a1af219ed6461e01
+@happytg/hooks:build: cache hit, replaying logs 75558ac6aed54341
+@happytg/worker:build: cache hit, replaying logs b6a24ce24c9b6872
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.3.17 build C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.3.17 build C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.3.17 build C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.3.17 build C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+
+ Tasks:    13 successful, 13 total
+Cached:    12 cached, 13 total
+  Time:    2.888s 
+

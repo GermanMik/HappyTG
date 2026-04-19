@@ -1,0 +1,360 @@
+
+> happytg@0.3.17 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "install" "--json" "--repo-mode" "current" "--repo-dir" "." "--background" "manual" "--post-check" "setup" "--post-check" "doctor" "--post-check" "verify"
+
+{
+  "kind": "install",
+  "status": "warn",
+  "outcome": "success-with-warnings",
+  "interactive": false,
+  "tuiHandled": false,
+  "repo": {
+    "mode": "current",
+    "path": "C:/Develop/Projects/HappyTG",
+    "sync": "reused",
+    "dirtyStrategy": "keep",
+    "source": "local",
+    "repoUrl": "https://github.com/GermanMik/HappyTG.git",
+    "attempts": 1,
+    "fallbackUsed": false
+  },
+  "environment": {
+    "platform": {
+      "platform": "win32",
+      "arch": "x64",
+      "shell": "C:\\WINDOWS\\system32\\cmd.exe",
+      "linuxFamily": "unknown",
+      "systemPackageManager": "choco",
+      "repoPackageManager": "pnpm",
+      "isInteractiveTerminal": false
+    },
+    "dependencies": [
+      {
+        "id": "git",
+        "label": "Git",
+        "available": true,
+        "required": true,
+        "version": "git version 2.52.0.windows.1",
+        "binaryPath": "C:\\Program Files\\Git\\cmd\\git.exe",
+        "command": "choco install git -y"
+      },
+      {
+        "id": "nodejs",
+        "label": "Node.js 22+",
+        "available": true,
+        "required": true,
+        "version": "v24.15.0",
+        "binaryPath": "C:\\Program Files\\nodejs\\node.exe",
+        "command": "choco install nodejs-lts -y"
+      },
+      {
+        "id": "pnpm",
+        "label": "pnpm",
+        "available": true,
+        "required": true,
+        "version": "10.0.0",
+        "binaryPath": "C:\\Users\\tikta\\AppData\\Local\\pnpm\\.tools\\pnpm\\10.0.0\\bin\\pnpm.cmd",
+        "manualInstruction": "Install pnpm with npm or enable it through corepack, then rerun the installer."
+      },
+      {
+        "id": "codex-cli",
+        "label": "Codex CLI",
+        "available": true,
+        "required": true,
+        "version": "codex-cli 0.118.0",
+        "binaryPath": "C:\\Users\\tikta\\AppData\\Roaming\\npm\\codex.cmd",
+        "manualInstruction": "Install the Codex CLI globally with npm after Node.js is ready, then rerun the installer."
+      },
+      {
+        "id": "docker",
+        "label": "Docker Desktop",
+        "available": true,
+        "required": false,
+        "version": "Docker version 29.3.1, build c2be9cc",
+        "binaryPath": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+        "reason": "Optional for the packaged/local infra path.",
+        "command": "choco install docker-desktop -y"
+      }
+    ]
+  },
+  "telegram": {
+    "configured": true,
+    "allowedUserIds": [
+      "133424747"
+    ],
+    "bot": {
+      "ok": true,
+      "username": "gerta_workbot",
+      "firstName": "Workbot",
+      "step": "getMe",
+      "transportProbeValidated": true
+    },
+    "lookup": {
+      "attempted": true,
+      "step": "getMe",
+      "status": "validated",
+      "message": "Telegram API getMe validated @gerta_workbot.",
+      "recoverable": false,
+      "affectsConfiguration": false
+    }
+  },
+  "background": {
+    "mode": "manual",
+    "status": "manual",
+    "detail": "Start the daemon manually with `pnpm dev:daemon` after pairing."
+  },
+  "finalization": {
+    "items": [
+      {
+        "id": "shared-infra-ready",
+        "kind": "reuse",
+        "message": "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely."
+      },
+      {
+        "id": "running-stack-reuse",
+        "kind": "reuse",
+        "message": "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy."
+      },
+      {
+        "id": "request-pair-code",
+        "kind": "auto",
+        "message": "Refreshed the existing host pairing code on the execution host. It expires at 2026-04-19T12:30:15.405Z."
+      },
+      {
+        "id": "complete-pairing",
+        "kind": "manual",
+        "message": "Send `/pair 3U1DKL` to @gerta_workbot."
+      },
+      {
+        "id": "start-daemon",
+        "kind": "manual",
+        "message": "After pairing, start the daemon with `pnpm dev:daemon`."
+      }
+    ]
+  },
+  "postChecks": [
+    {
+      "command": "setup",
+      "status": "warn",
+      "summary": "Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details. HappyTG services already appear to be running on 3007, 4000, 4100, 4200. Reuse the running stack or stop it before starting another copy."
+    },
+    {
+      "command": "doctor",
+      "status": "warn",
+      "summary": "Same warning set as setup: Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details. HappyTG services already appear to be running on 3007, 4000, 4100, 4200. Reuse the running stack or stop it before starting another copy."
+    },
+    {
+      "command": "verify",
+      "status": "warn",
+      "summary": "Same warning set as setup: Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details. HappyTG services already appear to be running on 3007, 4000, 4100, 4200. Reuse the running stack or stop it before starting another copy."
+    }
+  ],
+  "steps": [
+    {
+      "id": "repo-sync",
+      "label": "Sync repository",
+      "status": "passed",
+      "detail": "reused C:/Develop/Projects/HappyTG via local checkout."
+    },
+    {
+      "id": "dep-git",
+      "label": "Git",
+      "status": "passed",
+      "detail": "Available (git version 2.52.0.windows.1)."
+    },
+    {
+      "id": "dep-nodejs",
+      "label": "Node.js 22+",
+      "status": "passed",
+      "detail": "Available (v24.15.0)."
+    },
+    {
+      "id": "dep-pnpm",
+      "label": "pnpm",
+      "status": "passed",
+      "detail": "Available (10.0.0)."
+    },
+    {
+      "id": "dep-codex-cli",
+      "label": "Codex CLI",
+      "status": "passed",
+      "detail": "Available (codex-cli 0.118.0)."
+    },
+    {
+      "id": "dep-docker",
+      "label": "Docker Desktop",
+      "status": "passed",
+      "detail": "Available (Docker version 29.3.1, build c2be9cc)."
+    },
+    {
+      "id": "pnpm-install",
+      "label": "Install workspace dependencies",
+      "status": "passed",
+      "detail": "Workspace dependencies installed."
+    },
+    {
+      "id": "env-merge",
+      "label": "Merge environment",
+      "status": "skipped",
+      "detail": "Environment was already up to date."
+    },
+    {
+      "id": "port-preflight",
+      "label": "Resolve planned ports",
+      "status": "passed",
+      "detail": "Planned port preflight is clear.\nSupported reuse: Mini App 3007, API 4000, Bot 4100, Worker probe 4200, Redis host port 6379, Postgres host port 5432, MinIO API host port 9000, MinIO console host port 9001."
+    },
+    {
+      "id": "telegram-bot",
+      "label": "Connect Telegram bot",
+      "status": "passed",
+      "detail": "Connected to @gerta_workbot."
+    },
+    {
+      "id": "background",
+      "label": "Configure background run mode",
+      "status": "warn",
+      "detail": "Start the daemon manually with `pnpm dev:daemon` after pairing."
+    },
+    {
+      "id": "check-setup",
+      "label": "Run setup",
+      "status": "warn",
+      "detail": "Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details."
+    },
+    {
+      "id": "check-doctor",
+      "label": "Run doctor",
+      "status": "warn",
+      "detail": "No new warnings beyond `setup`; the same warning set was confirmed."
+    },
+    {
+      "id": "check-verify",
+      "label": "Run verify",
+      "status": "warn",
+      "detail": "No new warnings beyond `setup`; the same warning set was confirmed."
+    }
+  ],
+  "nextSteps": [
+    "Send `/pair 3U1DKL` to @gerta_workbot.",
+    "After pairing, start the daemon with `pnpm dev:daemon`."
+  ],
+  "warnings": [
+    "Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details."
+  ],
+  "reportJson": {
+    "branch": "main",
+    "envWrite": {
+      "envFilePath": "C:\\Develop\\Projects\\HappyTG\\.env",
+      "created": false,
+      "changed": false,
+      "addedKeys": [],
+      "preservedKeys": [
+        "NODE_ENV",
+        "LOG_LEVEL",
+        "HAPPYTG_API_PORT",
+        "HAPPYTG_MINIAPP_PORT",
+        "HAPPYTG_BOT_PORT",
+        "HAPPYTG_WORKER_PORT",
+        "HAPPYTG_POSTGRES_HOST_PORT",
+        "HAPPYTG_REDIS_HOST_PORT",
+        "HAPPYTG_MINIO_PORT",
+        "HAPPYTG_MINIO_CONSOLE_PORT",
+        "HAPPYTG_APP_URL",
+        "HAPPYTG_API_URL",
+        "HAPPYTG_PUBLIC_URL",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "S3_ENDPOINT",
+        "S3_REGION",
+        "S3_ACCESS_KEY",
+        "S3_SECRET_KEY",
+        "S3_BUCKET",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_BOT_USERNAME",
+        "TELEGRAM_ALLOWED_USER_IDS",
+        "TELEGRAM_HOME_CHANNEL",
+        "TELEGRAM_WEBHOOK_SECRET",
+        "JWT_ISSUER",
+        "JWT_AUDIENCE",
+        "JWT_SIGNING_KEY",
+        "PAIRING_TOKEN_TTL_SECONDS",
+        "HOST_ACCESS_TOKEN_TTL_SECONDS",
+        "HOST_REFRESH_TOKEN_TTL_SECONDS",
+        "CODEX_CLI_BIN",
+        "CODEX_CONFIG_PATH",
+        "CODEX_SMOKE_PROMPT",
+        "DEFAULT_RUNTIME",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "NEXT_PUBLIC_APP_NAME",
+        "HOST_DAEMON_DEFAULT_POLL_MS",
+        "HOST_DAEMON_MAX_PARALLEL_READS",
+        "HOST_DAEMON_MUTATION_QUEUE_CONCURRENCY",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "SENTRY_DSN"
+      ]
+    },
+    "botIdentity": {
+      "ok": true,
+      "username": "gerta_workbot",
+      "firstName": "Workbot",
+      "step": "getMe",
+      "transportProbeValidated": true
+    },
+    "telegramLookup": {
+      "attempted": true,
+      "step": "getMe",
+      "status": "validated",
+      "message": "Telegram API getMe validated @gerta_workbot.",
+      "recoverable": false,
+      "affectsConfiguration": false
+    },
+    "fallbackSource": "https://gitclone.com/github.com/GermanMik/HappyTG.git",
+    "fallbackUsed": false,
+    "outcome": "success-with-warnings",
+    "finalizationItems": [
+      {
+        "id": "shared-infra-ready",
+        "kind": "reuse",
+        "message": "Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely."
+      },
+      {
+        "id": "running-stack-reuse",
+        "kind": "reuse",
+        "message": "Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy."
+      },
+      {
+        "id": "request-pair-code",
+        "kind": "auto",
+        "message": "Refreshed the existing host pairing code on the execution host. It expires at 2026-04-19T12:30:15.405Z."
+      },
+      {
+        "id": "complete-pairing",
+        "kind": "manual",
+        "message": "Send `/pair 3U1DKL` to @gerta_workbot."
+      },
+      {
+        "id": "start-daemon",
+        "kind": "manual",
+        "message": "After pairing, start the daemon with `pnpm dev:daemon`."
+      }
+    ],
+    "portPreflight": {
+      "detail": "Planned port preflight is clear.\nSupported reuse: Mini App 3007, API 4000, Bot 4100, Worker probe 4200, Redis host port 6379, Postgres host port 5432, MinIO API host port 9000, MinIO console host port 9001.",
+      "appliedOverrides": []
+    },
+    "pairTarget": "@gerta_workbot",
+    "packageManager": "choco",
+    "platform": {
+      "platform": "win32",
+      "arch": "x64",
+      "shell": "C:\\WINDOWS\\system32\\cmd.exe",
+      "linuxFamily": "unknown",
+      "systemPackageManager": "choco",
+      "repoPackageManager": "pnpm",
+      "isInteractiveTerminal": false
+    },
+    "repoSource": "local",
+    "repoUrl": "https://github.com/GermanMik/HappyTG.git"
+  }
+}

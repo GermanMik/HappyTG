@@ -1,0 +1,9 @@
+
+> happytg@0.3.17 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "status" "--repo" "." "--task" "HTG-2026-04-19-install-summary-pairing-dev-warning-triage"
+
+Task: HTG-2026-04-19-install-summary-pairing-dev-warning-triage
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-19-install-summary-pairing-dev-warning-triage
+Validation: ok
+Phase: freeze/spec
+Verification: not_started

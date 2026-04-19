@@ -1,0 +1,32 @@
+[
+    {
+        "key":  "HAPPYTG_API_URL",
+        "present":  false,
+        "value":  null
+    },
+    {
+        "key":  "HAPPYTG_API_PORT",
+        "present":  false,
+        "value":  null
+    },
+    {
+        "key":  "PORT",
+        "present":  false,
+        "value":  null
+    },
+    {
+        "key":  "HAPPYTG_STATE_DIR",
+        "present":  false,
+        "value":  null
+    },
+    {
+        "key":  "TELEGRAM_BOT_TOKEN",
+        "present":  false,
+        "value":  null
+    },
+    {
+        "key":  "TELEGRAM_BOT_USERNAME",
+        "present":  false,
+        "value":  null
+    }
+]
