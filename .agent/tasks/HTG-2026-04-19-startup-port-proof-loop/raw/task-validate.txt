@@ -1,0 +1,23 @@
+## pnpm happytg task validate --repo . --task HTG-2026-04-19-startup-port-proof-loop
+
+
+> happytg@0.3.22 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-19-startup-port-proof-loop"
+
+Task: HTG-2026-04-19-startup-port-proof-loop
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-19-startup-port-proof-loop
+Validation: ok
+Phase: complete
+Verification: passed
+
+## rerun after bundle sync
+
+
+> happytg@0.3.22 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-19-startup-port-proof-loop"
+
+Task: HTG-2026-04-19-startup-port-proof-loop
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-19-startup-port-proof-loop
+Validation: ok
+Phase: complete
+Verification: passed

@@ -1,0 +1,13 @@
+# Post-fix bot dev repro with same-service occupant
+command: pnpm --filter @happytg/bot run dev
+env overrides: {"HAPPYTG_BOT_PORT":"50664"}
+
+
+> @happytg/bot@0.3.22 dev C:\Develop\Projects\HappyTG\apps\bot
+> tsx watch src/index.ts
+
+{"at":"2026-04-19T19:42:12.943Z","level":"INFO","scope":"bot","message":"Port 50664 already has a HappyTG Bot. Reuse the running bot if it is yours, or start a new one with HAPPYTG_BOT_PORT/PORT, then try again.","metadata":{"port":50664,"apiBaseUrl":"http://localhost:4000"}}
+
+[Harness] timeout reached, terminating process tree.
+
+[Harness] exit code=1 signal=null

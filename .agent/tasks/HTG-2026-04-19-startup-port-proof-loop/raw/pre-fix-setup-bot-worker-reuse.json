@@ -1,0 +1,12 @@
+# Pre-fix bootstrap setup classification for bot/worker same-service occupants
+command: pnpm happytg setup --json
+env overrides: {"HAPPYTG_BOT_PORT":"64715","HAPPYTG_WORKER_PORT":"64716"}
+
+
+> happytg@0.3.22 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "setup" "--json"
+
+
+[Harness] timeout reached, terminating process tree.
+
+[Harness] exit code=1 signal=null

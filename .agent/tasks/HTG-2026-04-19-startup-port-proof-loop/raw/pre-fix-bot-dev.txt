@@ -1,0 +1,13 @@
+# Pre-fix bot dev repro with same-service occupant
+command: pnpm --filter @happytg/bot run dev
+env overrides: {"HAPPYTG_BOT_PORT":"64648"}
+
+
+> @happytg/bot@0.3.22 dev C:\Develop\Projects\HappyTG\apps\bot
+> tsx watch src/index.ts
+
+{"at":"2026-04-19T19:32:50.586Z","level":"ERROR","scope":"bot","message":"Bot failed to start","metadata":{"port":64648,"apiBaseUrl":"http://localhost:4000","detail":"listen EADDRINUSE: address already in use :::64648"}}
+
+[Harness] timeout reached, terminating process tree.
+
+[Harness] exit code=1 signal=null

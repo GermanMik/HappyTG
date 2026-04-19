@@ -1,0 +1,21 @@
+{
+  "id": "HTG-2026-04-19-startup-port-proof-loop",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-startup-port-proof-loop",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Truthful worker and bot startup port reuse/conflict",
+  "acceptanceCriteria": [
+    "Repro evidence exists for the pre-fix worker raw EADDRINUSE path and the pre-fix bot occupied-port startup behavior.",
+    "Worker no longer emits a raw Node EADDRINUSE stack trace on the expected occupied-port path.",
+    "Worker distinguishes free port, same-service reuse, different HappyTG service conflict, and foreign-process conflict with actionable logs.",
+    "Worker does not silently change ports and preserves HAPPYTG_WORKER_PORT / PORT semantics.",
+    "Bot expected behavior is proven from code/docs/tests before any startup fix is applied.",
+    "Bot now follows the same truthful reuse-vs-conflict model without starting duplicate delivery work on reuse.",
+    "Regression coverage exists for the changed startup paths and the proof bundle is complete."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T22:45:38.5387728+03:00",
+  "updatedAt": "2026-04-19T22:45:38.5387728+03:00"
+}

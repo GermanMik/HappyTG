@@ -111,6 +111,10 @@ If `3001` is already in use, run `pnpm happytg setup --json` first: if it report
 
 If `4000` is already in use, reuse the running HappyTG API only when `pnpm happytg setup --json` identifies it as HappyTG API; otherwise treat the existing listener as a conflict and use `HAPPYTG_API_PORT` or `PORT`.
 
+If `4100` is already in use, reuse the running HappyTG Bot only when `pnpm happytg setup --json` identifies it as HappyTG Bot; otherwise treat the existing listener as a conflict and use `HAPPYTG_BOT_PORT` or `PORT`.
+
+If `4200` is already in use, reuse the running HappyTG Worker only when `pnpm happytg setup --json` identifies it as HappyTG Worker; otherwise treat the existing listener as a conflict and use `HAPPYTG_WORKER_PORT` or `PORT`.
+
 Interactive `pnpm happytg install` follows the same rule set: it preflights the planned ports, shows the detected listener, offers 3 nearby free ports for real conflicts, and writes the explicit `HAPPYTG_*_PORT` choice back to `.env` before later startup guidance.
 
 If `6379` is already in use:

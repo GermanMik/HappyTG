@@ -1,0 +1,2 @@
+No separate integration test command was added for this scoped startup fix.
+Covered instead by runtime repro artifacts and targeted startup/reuse/conflict unit tests in apps/bot and apps/worker.

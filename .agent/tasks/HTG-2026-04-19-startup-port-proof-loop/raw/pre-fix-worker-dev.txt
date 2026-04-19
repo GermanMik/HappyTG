@@ -1,0 +1,36 @@
+# Pre-fix worker dev repro with same-service occupant
+command: pnpm --filter @happytg/worker run dev
+env overrides: {"HAPPYTG_WORKER_PORT":"64516"}
+
+
+> @happytg/worker@0.3.22 dev C:\Develop\Projects\HappyTG\apps\worker
+> tsx watch src/index.ts
+
+{"at":"2026-04-19T19:32:37.982Z","level":"INFO","scope":"worker","message":"Worker started","metadata":{"tickMs":5000,"staleAfterMs":20000,"orphanAfterMs":300000,"readyMaxLagMs":15000}}
+node:events:487
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::64516
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at Server.listen (node:net:2170:7)
+    at <anonymous> (C:\Develop\Projects\HappyTG\apps\worker\src\index.ts:205:10)
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:2044:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 64516
+}
+
+Node.js v24.15.0
+
+[Harness] timeout reached, terminating process tree.
+
+[Harness] exit code=1 signal=null

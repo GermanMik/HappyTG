@@ -1,0 +1,13 @@
+# Post-fix worker dev repro with same-service occupant
+command: pnpm --filter @happytg/worker run dev
+env overrides: {"HAPPYTG_WORKER_PORT":"50609"}
+
+
+> @happytg/worker@0.3.22 dev C:\Develop\Projects\HappyTG\apps\worker
+> tsx watch src/index.ts
+
+{"at":"2026-04-19T19:42:02.715Z","level":"INFO","scope":"worker","message":"Port 50609 already has a HappyTG Worker. Reuse the running worker if it is yours, or start a new one with HAPPYTG_WORKER_PORT/PORT, then try again.","metadata":{"port":50609}}
+
+[Harness] timeout reached, terminating process tree.
+
+[Harness] exit code=1 signal=null

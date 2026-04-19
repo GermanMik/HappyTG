@@ -1,0 +1,15 @@
+## pnpm --filter @happytg/worker lint
+
+
+> @happytg/worker@0.3.22 lint C:\Develop\Projects\HappyTG\apps\worker
+> echo "TODO: lint worker"
+
+"TODO: lint worker"
+
+## pnpm --filter @happytg/bot lint
+
+
+> @happytg/bot@0.3.22 lint C:\Develop\Projects\HappyTG\apps\bot
+> echo "TODO: lint bot"
+
+"TODO: lint bot"
