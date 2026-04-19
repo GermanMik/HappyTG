@@ -8,48 +8,32 @@
    • Running build in 13 packages
    • Remote caching disabled
 
-@happytg/bot:build: cache miss, executing e4def0d0fdde3c13
-@happytg/shared:build: cache miss, executing 9cd1a9237d451e91
-@happytg/protocol:build: cache miss, executing 2f3682c86ebd3f86
-@happytg/worker:build: cache miss, executing 61457e16cfe2889c
-@happytg/api:build: cache miss, executing 722ba79399c002c8
-@happytg/hooks:build: cache miss, executing 98c440301a4df15b
-@happytg/runtime-adapters:build: cache miss, executing b2db2e8005a3ebf9
-@happytg/policy-engine:build: cache miss, executing da3e038fb56e3c1b
-@happytg/repo-proof:build: cache miss, executing f9076809a91fb260
-@happytg/host-daemon:build: cache miss, executing 84768c8e3664bc52
-@happytg/runtime-adapters:build: 
-@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.18 build C:\Develop\Projects\HappyTG\packages\runtime-adapters
-@happytg/runtime-adapters:build: > tsc -p tsconfig.json
-@happytg/runtime-adapters:build: 
-@happytg/api:build: 
-@happytg/api:build: > @happytg/api@0.3.18 build C:\Develop\Projects\HappyTG\apps\api
-@happytg/api:build: > tsc -p tsconfig.json
-@happytg/api:build: 
-@happytg/policy-engine:build: 
-@happytg/policy-engine:build: > @happytg/policy-engine@0.3.18 build C:\Develop\Projects\HappyTG\packages\policy-engine
-@happytg/policy-engine:build: > tsc -p tsconfig.json
-@happytg/policy-engine:build: 
-@happytg/host-daemon:build: 
-@happytg/host-daemon:build: > @happytg/host-daemon@0.3.18 build C:\Develop\Projects\HappyTG\apps\host-daemon
-@happytg/host-daemon:build: > tsc -p tsconfig.json
-@happytg/host-daemon:build: 
-@happytg/bot:build: 
-@happytg/bot:build: > @happytg/bot@0.3.18 build C:\Develop\Projects\HappyTG\apps\bot
-@happytg/bot:build: > tsc -p tsconfig.json
-@happytg/bot:build: 
-@happytg/shared:build: 
-@happytg/shared:build: > @happytg/shared@0.3.18 build C:\Develop\Projects\HappyTG\packages\shared
-@happytg/shared:build: > tsc -p tsconfig.json
-@happytg/shared:build: 
-@happytg/protocol:build: 
-@happytg/protocol:build: > @happytg/protocol@0.3.18 build C:\Develop\Projects\HappyTG\packages\protocol
-@happytg/protocol:build: > tsc -p tsconfig.json
-@happytg/protocol:build: 
+@happytg/approval-engine:build: cache miss, executing 81b8c3fb1a8ac6b1
+@happytg/protocol:build: cache miss, executing 82e6df12591dedbb
+@happytg/miniapp:build: cache miss, executing 209faddf8f8fde94
+@happytg/api:build: cache miss, executing 676b541f3187cc0d
+@happytg/shared:build: cache miss, executing 9538519347220615
+@happytg/bot:build: cache miss, executing 2439ab753ff72b82
+@happytg/repo-proof:build: cache miss, executing c76346491fbee959
+@happytg/host-daemon:build: cache miss, executing 746b92d796c8a660
+@happytg/worker:build: cache miss, executing fd8f454b3fe88be2
+@happytg/hooks:build: cache miss, executing fc3d226e213d45fd
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.3.18 build C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
 @happytg/worker:build: 
 @happytg/worker:build: > @happytg/worker@0.3.18 build C:\Develop\Projects\HappyTG\apps\worker
 @happytg/worker:build: > tsc -p tsconfig.json
 @happytg/worker:build: 
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.3.18 build C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.3.18 build C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
 @happytg/repo-proof:build: 
 @happytg/repo-proof:build: > @happytg/repo-proof@0.3.18 build C:\Develop\Projects\HappyTG\packages\repo-proof
 @happytg/repo-proof:build: > tsc -p tsconfig.json
@@ -58,23 +42,39 @@
 @happytg/hooks:build: > @happytg/hooks@0.3.18 build C:\Develop\Projects\HappyTG\packages\hooks
 @happytg/hooks:build: > tsc -p tsconfig.json
 @happytg/hooks:build: 
-@happytg/approval-engine:build: cache miss, executing 4588135ccdb0c060
-@happytg/approval-engine:build: 
-@happytg/approval-engine:build: > @happytg/approval-engine@0.3.18 build C:\Develop\Projects\HappyTG\packages\approval-engine
-@happytg/approval-engine:build: > tsc -p tsconfig.json
-@happytg/approval-engine:build: 
-@happytg/bootstrap:build: cache miss, executing 24a19a5d179bd444
-@happytg/miniapp:build: cache miss, executing b1b78a1930e6c5d9
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.3.18 build C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.3.18 build C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.3.18 build C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
 @happytg/miniapp:build: 
 @happytg/miniapp:build: > @happytg/miniapp@0.3.18 build C:\Develop\Projects\HappyTG\apps\miniapp
 @happytg/miniapp:build: > tsc -p tsconfig.json
 @happytg/miniapp:build: 
+@happytg/runtime-adapters:build: cache miss, executing 326535101685a785
+@happytg/bootstrap:build: cache miss, executing 0bb5a8eb4022d580
+@happytg/policy-engine:build: cache miss, executing b717a0f2458217f8
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.18 build C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
 @happytg/bootstrap:build: 
 @happytg/bootstrap:build: > @happytg/bootstrap@0.3.18 build C:\Develop\Projects\HappyTG\packages\bootstrap
 @happytg/bootstrap:build: > tsc -p tsconfig.json
 @happytg/bootstrap:build: 
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.3.18 build C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
 
  Tasks:    13 successful, 13 total
 Cached:    0 cached, 13 total
-  Time:    14.602s 
+  Time:    6.392s 
 
