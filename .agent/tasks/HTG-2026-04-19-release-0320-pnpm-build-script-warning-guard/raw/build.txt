@@ -1,0 +1,80 @@
+
+> happytg@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running build in 13 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/runtime-adapters:build: cache miss, executing 51f348b106fc2aa8
+@happytg/hooks:build: cache miss, executing eb30ff82ed491e8c
+@happytg/shared:build: cache miss, executing 2d942d4ad2cda257
+@happytg/approval-engine:build: cache miss, executing c591c21aaa971a8b
+@happytg/repo-proof:build: cache miss, executing 5ac3f95348a176d1
+@happytg/protocol:build: cache miss, executing 128026c4452040a4
+@happytg/worker:build: cache miss, executing bb9af19697007f44
+@happytg/bootstrap:build: cache miss, executing a881efde605cf257
+@happytg/api:build: cache miss, executing 1e008d53c66d7ad0
+@happytg/host-daemon:build: cache miss, executing 3f9b2c653691a155
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build: 
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/policy-engine:build: cache miss, executing d52cb2e49526ae79
+@happytg/miniapp:build: cache miss, executing 6c7d863153de5f54
+@happytg/bot:build: cache miss, executing 1ccd72ce31607e84
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+@happytg/miniapp:build: 
+@happytg/miniapp:build: > @happytg/miniapp@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.3.20 build C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    9.824s 
+

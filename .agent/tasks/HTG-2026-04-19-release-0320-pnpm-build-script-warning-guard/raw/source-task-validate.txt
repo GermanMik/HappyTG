@@ -1,0 +1,9 @@
+
+> happytg@0.3.20 happytg C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-19-pnpm-build-script-warning-guard"
+
+Task: HTG-2026-04-19-pnpm-build-script-warning-guard
+Bundle: C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\.agent\tasks\HTG-2026-04-19-pnpm-build-script-warning-guard
+Validation: ok
+Phase: complete
+Verification: passed
