@@ -1,0 +1,85 @@
+{
+  "taskId": "HTG-2026-04-19-release-0321-installer-remote-ref-sync",
+  "criteria": [
+    {
+      "criterion": "All workspace package versions, CHANGELOG.md, and docs/releases/0.3.21.md are aligned at 0.3.21.",
+      "artifacts": [
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/shared/package.json",
+        "CHANGELOG.md",
+        "docs/releases/0.3.21.md",
+        "raw/release-check.txt"
+      ]
+    },
+    {
+      "criterion": "The installer remote-ref sync fix from HTG-2026-04-19-installer-remote-ref-sync remains the canonical product evidence for this release.",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-19-installer-remote-ref-sync/evidence.md",
+        "raw/source-task-validate.txt"
+      ]
+    },
+    {
+      "criterion": "Fresh release validation passes after the metadata bump.",
+      "artifacts": [
+        "raw/install.txt",
+        "raw/test-unit.txt",
+        "raw/typecheck-bootstrap.txt",
+        "raw/build-bootstrap.txt",
+        "raw/release-check.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-integration.txt",
+        "raw/build.txt"
+      ]
+    },
+    {
+      "criterion": "The release branch is committed, pushed, reviewed through PR, and merged to main.",
+      "artifacts": []
+    },
+    {
+      "criterion": "The guarded GitHub Release workflow publishes v0.3.21 from the latest main HEAD and the release proof bundle is finalized.",
+      "artifacts": []
+    }
+  ],
+  "artifacts": [
+    "package.json",
+    "apps/api/package.json",
+    "apps/bot/package.json",
+    "apps/host-daemon/package.json",
+    "apps/miniapp/package.json",
+    "apps/worker/package.json",
+    "packages/approval-engine/package.json",
+    "packages/bootstrap/package.json",
+    "packages/hooks/package.json",
+    "packages/policy-engine/package.json",
+    "packages/protocol/package.json",
+    "packages/repo-proof/package.json",
+    "packages/runtime-adapters/package.json",
+    "packages/shared/package.json",
+    "CHANGELOG.md",
+    "docs/releases/0.3.21.md",
+    "raw/install.txt",
+    "raw/test-unit.txt",
+    "raw/typecheck-bootstrap.txt",
+    "raw/build-bootstrap.txt",
+    "raw/source-task-validate.txt",
+    "raw/release-check.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt"
+  ],
+  "generatedAt": "2026-04-19T21:30:06.8098597+03:00"
+}

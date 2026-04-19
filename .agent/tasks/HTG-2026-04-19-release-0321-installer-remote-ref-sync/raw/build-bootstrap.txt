@@ -1,0 +1,4 @@
+
+> @happytg/bootstrap@0.3.21 build C:\Develop\Projects\HappyTG-release-0321-installer-remote-ref-sync\packages\bootstrap
+> tsc -p tsconfig.json
+

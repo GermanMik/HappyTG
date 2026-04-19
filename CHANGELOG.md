@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.3.21
+
+### Fixed
+
+- Installer repo sync no longer depends on checking out the requested local branch during `update/current` install flows. After fetch, HappyTG now resolves the fetched commit and detaches to that revision, so linked worktrees no longer block install with `'<branch>' is already used by worktree`.
+- The installer still keeps the requested `--branch` semantics while preserving the existing dirty-worktree safety choices for `stash`, `keep`, and `cancel`.
+
+### Changed
+
+- Release metadata is aligned at `0.3.21` across the workspace for the installer remote-ref sync release.
+
 ## v0.3.20
 
 ### Fixed
