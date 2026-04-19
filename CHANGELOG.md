@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.3.18
+
+### Fixed
+
+- Local HappyTG bot development no longer requires a public domain or manually configured Telegram webhook for baseline interaction. `apps/bot` now supports deterministic Telegram delivery mode selection and uses polling automatically when `HAPPYTG_PUBLIC_URL` is local, private, missing, or otherwise not webhook-capable.
+- Telegram `/start` and `/pair <CODE>` now reach the local bot runtime during `pnpm dev` / `pnpm dev:bot`, preserving the existing `/api/v1/pairing/claim` boundary instead of silently bypassing current security checks.
+- Webhook-first deployments no longer look falsely healthy when Telegram delivery is not actually configured. Bot startup logs and `/ready` now surface explicit degraded webhook state instead of a misleading generic `Bot listening` signal.
+
+### Changed
+
+- Bot runtime now shares one dispatcher between webhook and polling update intake, keeps explicit `webhook` mode from silently falling back to polling, and documents `TELEGRAM_UPDATES_MODE=auto|polling|webhook` in config and first-run docs.
+- Release metadata is aligned at `0.3.18` across the workspace for the local Telegram polling follow-up release.
+
 ## v0.3.17
 
 ### Fixed

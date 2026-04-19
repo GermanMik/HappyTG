@@ -275,6 +275,10 @@ export async function startApiServer(
         }
 
         const retryService = await detectHappyTGServiceOnPort(listenPort, fetchImpl);
+        if (!retryService) {
+          continue;
+        }
+
         if (retryService !== "api") {
           throw new Error(formatApiPortConflictMessage(listenPort, retryService));
         }
@@ -285,6 +289,11 @@ export async function startApiServer(
         throw new Error(formatApiPortConflictMessage(listenPort, serviceAfterDelay));
       }
     }
+  }
+
+  const finalService = await detectHappyTGServiceOnPort(listenPort, fetchImpl);
+  if (finalService !== "api") {
+    throw new Error(formatApiPortConflictMessage(listenPort, finalService));
   }
 
   activeLogger.info(formatApiPortReuseMessage(listenPort), { port: listenPort });
