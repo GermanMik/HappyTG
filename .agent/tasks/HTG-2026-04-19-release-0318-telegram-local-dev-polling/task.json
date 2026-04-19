@@ -3,7 +3,7 @@
   "sessionId": "manual-session",
   "workspaceId": "HappyTG",
   "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-release-0318-telegram-local-dev-polling",
-  "phase": "frozen",
+  "phase": "complete",
   "mode": "proof",
   "title": "Publish local Telegram polling fix as 0.3.18",
   "acceptanceCriteria": [
@@ -13,7 +13,7 @@
     "The release proof bundle is complete and validates successfully.",
     "The release branch commit is pushed, merged to main, and the guarded Release workflow is dispatched for 0.3.18."
   ],
-  "verificationState": "pending",
+  "verificationState": "passed",
   "createdAt": "2026-04-19T00:00:00.000Z",
-  "updatedAt": "2026-04-19T00:00:00.000Z"
+  "updatedAt": "2026-04-19T18:59:01+03:00"
 }

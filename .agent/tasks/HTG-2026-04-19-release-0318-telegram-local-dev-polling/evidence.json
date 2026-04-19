@@ -1,6 +1,49 @@
 {
   "taskId": "HTG-2026-04-19-release-0318-telegram-local-dev-polling",
-  "criteria": [],
-  "artifacts": [],
-  "generatedAt": "2026-04-19T00:00:00.000Z"
+  "status": "released",
+  "baseVersion": "0.3.17",
+  "targetVersion": "0.3.18",
+  "branch": "main",
+  "sourceTasks": [
+    "HTG-2026-04-19-telegram-local-dev-polling"
+  ],
+  "verification": {
+    "releaseCheck": "pass",
+    "sourceTaskValidate": "pass",
+    "releaseTaskValidate": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "test": "pass",
+    "build": "pass",
+    "releaseWorkflow": "pass"
+  },
+  "notes": [
+    "PR #21 merged the release branch into main at commit 2c3de440ace6de2fe7ca4536042f2b0ce499baad.",
+    "GitHub Release workflow 24633114578 succeeded on main commit 2c3de440ace6de2fe7ca4536042f2b0ce499baad.",
+    "GitHub published HappyTG 0.3.18 at https://github.com/GermanMik/HappyTG/releases/tag/v0.3.18."
+  ],
+  "release": {
+    "tag": "v0.3.18",
+    "name": "HappyTG 0.3.18",
+    "url": "https://github.com/GermanMik/HappyTG/releases/tag/v0.3.18",
+    "publishedAt": "2026-04-19T15:57:09Z",
+    "workflowRunId": 24633114578,
+    "workflowUrl": "https://github.com/GermanMik/HappyTG/actions/runs/24633114578",
+    "targetCommit": "2c3de440ace6de2fe7ca4536042f2b0ce499baad"
+  },
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/spec.md",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/evidence.md",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/verdict.json",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/raw/release-check.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/raw/source-task-validate.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/raw/task-validate.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/raw/lint.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/raw/test.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/raw/build.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/raw/release-workflow.json",
+    ".agent/tasks/HTG-2026-04-19-release-0318-telegram-local-dev-polling/raw/release-view.json"
+  ],
+  "generatedAt": "2026-04-19T15:59:01Z"
 }
