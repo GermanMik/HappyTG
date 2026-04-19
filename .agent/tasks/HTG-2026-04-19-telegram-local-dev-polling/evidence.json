@@ -1,0 +1,90 @@
+{
+  "taskId": "HTG-2026-04-19-telegram-local-dev-polling",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "passed",
+      "summary": "Pre-fix evidence proves webhook-only runtime behavior and misleading local-dev UX.",
+      "artifacts": [
+        "raw/init-analysis.txt"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "passed",
+      "summary": "Runtime now selects a deterministic Telegram delivery mode from auto, polling, and webhook.",
+      "artifacts": [
+        "apps/bot/src/index.ts",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "passed",
+      "summary": "Local polling receives /start and /pair through the same bot handlers and preserves pairing claim boundaries.",
+      "artifacts": [
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "passed",
+      "summary": "Webhook mode stays separate from polling and reports degraded readiness when expected webhook state is missing.",
+      "artifacts": [
+        "raw/test-unit.txt",
+        "apps/bot/src/index.ts"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "passed",
+      "summary": "Production/self-hosted webhook route remains available.",
+      "artifacts": [
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "AC6",
+      "status": "passed",
+      "summary": "Docs and config references now match runtime delivery behavior.",
+      "artifacts": [
+        ".env.example",
+        "docs/configuration.md",
+        "docs/quickstart.md",
+        "docs/installation.md",
+        "docs/self-hosting.md"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "raw/init-analysis.txt",
+      "kind": "analysis"
+    },
+    {
+      "path": "raw/test-unit.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/typecheck.txt",
+      "kind": "typecheck"
+    },
+    {
+      "path": "raw/build.txt",
+      "kind": "build"
+    },
+    {
+      "path": "raw/lint.txt",
+      "kind": "lint"
+    },
+    {
+      "path": "raw/repo-test.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/test-integration.txt",
+      "kind": "validation"
+    }
+  ],
+  "generatedAt": "2026-04-19T16:31:12.2260946+03:00"
+}

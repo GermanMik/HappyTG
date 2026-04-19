@@ -12,9 +12,11 @@
 - `DATABASE_URL`
 - `REDIS_URL`
 - `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_UPDATES_MODE`
 - `TELEGRAM_BOT_USERNAME`
 - `TELEGRAM_ALLOWED_USER_IDS`
 - `TELEGRAM_HOME_CHANNEL`
+- `HAPPYTG_PUBLIC_URL`
 - `JWT_SIGNING_KEY`
 - `CODEX_CLI_BIN`
 - `CODEX_CONFIG_PATH`
@@ -36,3 +38,11 @@ Policies are layered:
 5. command
 
 Lower layers may tighten but must not weaken higher layers.
+
+## Telegram Delivery Configuration
+
+- `TELEGRAM_UPDATES_MODE=auto` is the default.
+- `auto` selects polling when `HAPPYTG_PUBLIC_URL` is local, private, missing, or not HTTPS.
+- `auto` selects webhook when `HAPPYTG_PUBLIC_URL` is a public HTTPS URL.
+- `polling` is the intended local-dev mode when you do not want to expose a public webhook.
+- `webhook` keeps the bot in webhook-first mode and reports degraded readiness if the expected public webhook is not actually configured at Telegram.

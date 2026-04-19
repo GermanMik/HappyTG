@@ -1,0 +1,54 @@
+Pre-fix bot runtime evidence
+Timestamp: 2026-04-19T16:02:56.9208218+03:00
+
+1. apps/bot/src/index.ts matches
+62:  telegramConfigured: boolean;
+71:    telegramConfigured: telegramTokenStatus(env).configured,
+345:export function createBotServer(dependencies: Partial<BotDependencies> = {}) {
+372:      route("POST", "/telegram/webhook", async ({ req, res }) => {
+389:  const server = createBotServer();
+393:      logger.warn(configurationMessage, { port, apiBaseUrl, telegramConfigured: false });
+395:      logger.info("Bot listening", { port, apiBaseUrl, telegramConfigured: true });
+
+2. apps/bot tests and handlers matches
+apps/bot/src/handlers.test.ts:34:  await handlers.handleMessage({
+apps/bot/src/handlers.test.ts:72:  await handlers.handleMessage({
+apps/bot/src/handlers.test.ts:115:  await handlers.handleMessage({
+apps/bot/src/handlers.test.ts:156:  await handlers.handleCallbackQuery({
+apps/bot/src/handlers.ts:326:  async function handleMessage(message: TelegramMessage): Promise<void> {
+apps/bot/src/handlers.ts:395:  async function handleCallbackQuery(callback: TelegramCallbackQuery): Promise<void> {
+apps/bot/src/handlers.ts:424:    handleMessage,
+apps/bot/src/handlers.ts:425:    handleCallbackQuery
+
+3. package scripts
+package.json:7:    "dev": "turbo dev",
+package.json:8:    "dev:api": "pnpm --filter @happytg/api run dev",
+package.json:9:    "dev:bot": "pnpm --filter @happytg/bot run dev",
+package.json:10:    "dev:miniapp": "pnpm --filter @happytg/miniapp run dev",
+package.json:11:    "dev:worker": "pnpm --filter @happytg/worker run dev",
+package.json:12:    "dev:daemon": "pnpm --filter @happytg/host-daemon run dev",
+package.json:13:    "daemon:pair": "pnpm --filter @happytg/host-daemon run pair",
+apps/bot/package.json:2:  "name": "@happytg/bot",
+apps/bot/package.json:8:    "dev": "tsx watch src/index.ts",
+
+4. docs mismatch
+docs/self-hosting.md:20:2. Fill production values for database, Redis, object storage, Telegram webhook, and signing keys.
+docs/self-hosting.md:28:5. Configure Telegram webhook delivery against the public API endpoint.
+docs/self-hosting.md:40:- Prefer webhook in stable deployments.
+docs/self-hosting.md:41:- Allow polling for local development or degraded setups.
+docs/installation.md:125:# send /pair <CODE> to the configured Telegram bot
+docs/installation.md:132:- If the bot logs `telegramConfigured: false`, rerun `pnpm happytg install` or set `TELEGRAM_BOT_TOKEN` in `.env`, then restart `pnpm dev:bot`.
+docs/installation.md:133:- If pairing is not complete yet, the normal next step is always `pnpm daemon:pair` -> `/pair <CODE>` in Telegram -> `pnpm dev:daemon`.
+docs/installation.md:141:| Bot startup | `Bot listening` with `telegramConfigured: true` | Set or fix `TELEGRAM_BOT_TOKEN` in `.env`, then restart the bot. |
+docs/installation.md:143:| Pairing | `/pair <CODE>` succeeds in Telegram | Reissue `pnpm daemon:pair` if the code expired. |
+docs/installation.md:204:   # send /pair <CODE> to the Telegram bot
+docs/installation.md:243:7. Pair execution hosts through Telegram with `/pair <CODE>`.
+docs/installation.md:254:- Telegram token and webhook secret
+docs/engineering-blueprint.md:126:| Notification routing | concise summaries, heartbeat updates, final reports | awareness without active polling | Medium | worker, bot, projections | noisy UX | 5 |
+docs/engineering-blueprint.md:1770:3. Configure webhook or use polling in development.
+docs/engineering-blueprint.md:1791:- use polling for Telegram if webhooks are inconvenient,
+docs/engineering-blueprint.md:2189:- webhook routing,
+docs/quickstart.md:62:6. Send `/pair <CODE>` to the configured Telegram bot, then start the daemon.
+docs/quickstart.md:83:| Bot | `4100` | `Bot listening` or a short Telegram token warning |
+docs/quickstart.md:92:| `telegramConfigured: false` | The bot did not get a valid Telegram token. | Rerun `pnpm happytg install` or set `TELEGRAM_BOT_TOKEN` in `.env`, then restart `pnpm dev:bot` or `pnpm dev`. |
+docs/quickstart.md:95:| `Host is not paired yet` | Pairing has not been completed yet. | Run `pnpm daemon:pair`, send `/pair <CODE>` in Telegram, then start `pnpm dev:daemon`. |

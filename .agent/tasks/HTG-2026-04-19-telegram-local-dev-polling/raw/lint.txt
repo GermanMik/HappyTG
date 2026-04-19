@@ -1,0 +1,5 @@
+
+> @happytg/bot@0.3.17 lint C:\Develop\Projects\HappyTG\apps\bot
+> echo "TODO: lint bot"
+
+"TODO: lint bot"
