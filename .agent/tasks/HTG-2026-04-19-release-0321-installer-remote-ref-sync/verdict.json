@@ -1,10 +1,31 @@
 {
   "taskId": "HTG-2026-04-19-release-0321-installer-remote-ref-sync",
-  "status": "pending",
+  "status": "passed",
   "verifier": {
     "role": "task-verifier",
-    "runId": ""
+    "runId": "verifier-2026-04-19T21:35:18.3009585+03:00"
   },
-  "checks": [],
-  "generatedAt": "2026-04-19T21:30:00+03:00"
+  "checks": [
+    {
+      "name": "release_metadata_alignment",
+      "ok": true,
+      "detail": "All workspace package versions, CHANGELOG.md, and docs/releases/0.3.21.md were aligned at 0.3.21 and passed `pnpm release:check --version 0.3.21`."
+    },
+    {
+      "name": "release_branch_and_merge",
+      "ok": true,
+      "detail": "Release prep commit `72013b1` was pushed on `codex/release-0.3.21-installer-remote-ref-sync` and merged to `main` as `3e93fee8bcff9cdd64febd1b010af886dff80eae` via PR #24."
+    },
+    {
+      "name": "workflow_and_github_release",
+      "ok": true,
+      "detail": "GitHub Actions `Release` workflow run `24636159603` succeeded on `main`, created tag `v0.3.21` at `3e93fee8bcff9cdd64febd1b010af886dff80eae`, and published `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.21`."
+    },
+    {
+      "name": "fresh_verification_commands",
+      "ok": true,
+      "detail": "Local release verification plus final `pnpm happytg task validate --repo . --task HTG-2026-04-19-release-0321-installer-remote-ref-sync` completed successfully."
+    }
+  ],
+  "generatedAt": "2026-04-19T21:35:18.3009585+03:00"
 }

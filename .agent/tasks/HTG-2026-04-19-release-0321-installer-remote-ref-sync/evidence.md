@@ -41,8 +41,16 @@
 
 ## Publish Status
 
-- Release branch commit: pending
-- Merge to `main`: pending
-- GitHub Actions workflow: pending
-- GitHub Release URL: pending
-- Published tag: pending
+- Release branch commit: `72013b1` on `codex/release-0.3.21-installer-remote-ref-sync`
+- Merged to `main` as commit `3e93fee8bcff9cdd64febd1b010af886dff80eae`
+- GitHub Actions workflow: `Release` run `24636159603`
+- Workflow URL: `https://github.com/GermanMik/HappyTG/actions/runs/24636159603`
+- GitHub Release URL: `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.21`
+- Published tag: `v0.3.21`
+
+### Final Raw Artifacts
+
+- `raw/workflow-run.json`
+- `raw/github-release.json`
+- `raw/git-tag.txt`
+- `raw/task-validate.txt`

@@ -46,11 +46,18 @@
     },
     {
       "criterion": "The release branch is committed, pushed, reviewed through PR, and merged to main.",
-      "artifacts": []
+      "artifacts": [
+        "raw/workflow-run.json"
+      ]
     },
     {
       "criterion": "The guarded GitHub Release workflow publishes v0.3.21 from the latest main HEAD and the release proof bundle is finalized.",
-      "artifacts": []
+      "artifacts": [
+        "raw/workflow-run.json",
+        "raw/github-release.json",
+        "raw/git-tag.txt",
+        "raw/task-validate.txt"
+      ]
     }
   ],
   "artifacts": [
@@ -79,7 +86,11 @@
     "raw/lint.txt",
     "raw/typecheck.txt",
     "raw/test-integration.txt",
-    "raw/build.txt"
+    "raw/build.txt",
+    "raw/workflow-run.json",
+    "raw/github-release.json",
+    "raw/git-tag.txt",
+    "raw/task-validate.txt"
   ],
-  "generatedAt": "2026-04-19T21:30:06.8098597+03:00"
+  "generatedAt": "2026-04-19T21:35:18.3009585+03:00"
 }
