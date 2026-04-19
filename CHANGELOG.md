@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.3.23
+
+### Fixed
+
+- `pnpm dev` no longer reports raw or misleading startup failures when the HappyTG Worker or HappyTG Bot port is already occupied by the same service. Both services now classify same-service reuse versus real conflicts instead of surfacing raw `listen EADDRINUSE` details.
+- Worker startup no longer starts local maintenance work before bind success, so a reused worker port does not risk a second local runtime loop.
+- Bot startup no longer starts a second Telegram delivery lifecycle on the same-service reuse path, while still reporting different-HappyTG-service and foreign-listener conflicts truthfully.
+
+### Changed
+
+- Quickstart and troubleshooting docs now include truthful occupied-port guidance for Bot `4100` and Worker `4200`.
+- Release metadata is aligned at `0.3.23` across the workspace for the worker/bot startup port handling release.
+
 ## v0.3.22
 
 ### Fixed

@@ -1,0 +1,22 @@
+{
+  "taskId": "HTG-2026-04-19-release-0323-startup-port-fix",
+  "status": "pending_publish",
+  "checks": [
+    {
+      "name": "release-metadata",
+      "ok": true,
+      "detail": "All workspace versions, CHANGELOG.md, and docs/releases/0.3.23.md are aligned on the release branch."
+    },
+    {
+      "name": "local-release-gate",
+      "ok": true,
+      "detail": "pnpm release:check, lint, typecheck, test, build, happytg verify, and source task validation passed before publish."
+    },
+    {
+      "name": "publish-flow",
+      "ok": false,
+      "detail": "Pending branch publication, merge to main, and guarded GitHub Release workflow execution."
+    }
+  ],
+  "generatedAt": "2026-04-19T23:13:26.0727657+03:00"
+}

@@ -1,0 +1,71 @@
+{
+  "taskId": "HTG-2026-04-19-release-0323-startup-port-fix",
+  "phase": "builder validation passed",
+  "artifacts": [
+    "raw/release-check.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt",
+    "raw/verify.txt",
+    "raw/source-task-validate.txt"
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "version-metadata-aligned",
+      "status": "satisfied_on_branch",
+      "evidence": [
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/shared/package.json",
+        "CHANGELOG.md",
+        "docs/releases/0.3.23.md"
+      ]
+    },
+    {
+      "id": "source-proof-referenced",
+      "status": "satisfied_on_branch",
+      "evidence": [
+        "spec.md",
+        "docs/releases/0.3.23.md",
+        ".agent/tasks/HTG-2026-04-19-startup-port-proof-loop/task.json",
+        "raw/source-task-validate.txt"
+      ]
+    },
+    {
+      "id": "local-release-validation",
+      "status": "satisfied_on_branch",
+      "evidence": [
+        "raw/release-check.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt",
+        "raw/build.txt",
+        "raw/verify.txt"
+      ]
+    },
+    {
+      "id": "publish-flow",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "github-release-workflow",
+      "status": "pending",
+      "evidence": []
+    }
+  ],
+  "generatedAt": "2026-04-19T23:13:26.0727657+03:00"
+}
