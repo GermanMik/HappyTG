@@ -1,0 +1,4 @@
+
+> @happytg/bootstrap@0.3.20 typecheck C:\Develop\Projects\HappyTG-release-0320-pnpm-build-script-warning-guard\packages\bootstrap
+> tsc -p tsconfig.json --noEmit
+

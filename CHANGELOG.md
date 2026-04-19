@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.3.20
+
+### Fixed
+
+- Installer/package-manager first-run no longer treats pnpm ignored build-script warnings as raw external noise or unconditional success. HappyTG now classifies the warning, validates the critical repo-local `tsx` plus `esbuild` path, and fails honestly only when that toolchain is actually broken.
+- Bootstrap launcher wrappers no longer leak misleading `pnpm approve-builds` guidance on runtimes that do not support it. The shared installer bootstrap now normalizes ignored-build-scripts warnings into HappyTG-owned messaging while preserving the existing pnpm security posture.
+
+### Changed
+
+- Release metadata is aligned at `0.3.20` across the workspace for the installer pnpm warning guard release.
+
 ## v0.3.19
 
 ### Fixed

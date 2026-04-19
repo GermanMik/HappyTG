@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-19-release-0320-pnpm-build-script-warning-guard",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG-release-0320-pnpm-build-script-warning-guard\\.agent\\tasks\\HTG-2026-04-19-release-0320-pnpm-build-script-warning-guard",
+  "phase": "fresh verify",
+  "mode": "proof",
+  "title": "Publish installer pnpm warning guard as 0.3.20",
+  "acceptanceCriteria": [
+    "Workspace versions, changelog, and docs/releases/0.3.20.md are aligned at 0.3.20.",
+    "The validated source proof bundle HTG-2026-04-19-pnpm-build-script-warning-guard remains the canonical product evidence for the release.",
+    "Fresh release verification passes after the version bump.",
+    "The release proof bundle is complete and validates successfully.",
+    "The release branch commit is pushed, merged to main, and the guarded Release workflow is dispatched for 0.3.20."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T00:00:00.000Z",
+  "updatedAt": "2026-04-19T21:14:00.000+03:00"
+}
