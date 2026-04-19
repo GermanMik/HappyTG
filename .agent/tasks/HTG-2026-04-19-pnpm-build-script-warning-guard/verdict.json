@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-19-pnpm-build-script-warning-guard",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verifier-2026-04-19T19:47:36.4185519+03:00"
+  },
+  "checks": [
+    {
+      "name": "ignored_build_scripts_classification",
+      "ok": true,
+      "detail": "Fresh bootstrap tests and current `packages/bootstrap/src/install/index.ts` still prove that successful `pnpm install` runs with ignored build scripts are reclassified only after an explicit repo-local `pnpm exec tsx --eval ...` health check. Healthy toolchains remain warning-only; broken toolchains become `pnpm_install_failed` instead of false success."
+    },
+    {
+      "name": "runtime_approve_builds_guidance",
+      "ok": true,
+      "detail": "Fresh verifier commands returned `pnpm --version` -> `10.0.0`, `pnpm help approve-builds` -> `No results for \"approve-builds\"`, and the bootstrap runtime tests still prove that unsupported runtimes do not surface `pnpm approve-builds` guidance while supported runtimes do."
+    },
+    {
+      "name": "bootstrap_shim_warning_normalization",
+      "ok": true,
+      "detail": "Fresh bootstrap tests still cover PowerShell warning normalization, and an additional manual bash harness run against `scripts/install/install.sh` reproduced the ignored-build-scripts preflight warning, showed the normalized HappyTG explanation, suppressed the raw pnpm warning text, and confirmed the handoff through `pnpm --silent dlx tsx ...`."
+    },
+    {
+      "name": "fresh_verification_commands",
+      "ok": true,
+      "detail": "Fresh `pnpm --filter @happytg/bootstrap run test`, `pnpm --filter @happytg/bootstrap run typecheck`, `pnpm --filter @happytg/bootstrap run build`, workspace `pnpm test`, workspace `pnpm build`, and `pnpm happytg task validate --repo . --task HTG-2026-04-19-pnpm-build-script-warning-guard` all exited `0` on the current tree."
+    }
+  ],
+  "generatedAt": "2026-04-19T19:47:36.4185519+03:00"
+}

@@ -243,6 +243,146 @@ async function advanceInteractiveInstallToPortPreflight(input: {
   await input.emitKeypress("\r", { name: "enter" });
 }
 
+async function runInstallWithPnpmBehavior(input: {
+  tempDir: string;
+  repoPath: string;
+  installStdout?: string;
+  installStderr?: string;
+  helpOutput?: string;
+  helpExitCode?: number;
+  pnpmVersion?: string;
+  toolchainStdout?: string;
+  toolchainStderr?: string;
+  toolchainExitCode?: number;
+}): Promise<{
+  commandCalls: string[][];
+  result: Awaited<ReturnType<typeof runHappyTGInstall>>;
+}> {
+  const commandCalls: string[][] = [];
+  const pnpmBinaryPath = path.join(input.tempDir, "pnpm");
+
+  const result = await runHappyTGInstall({
+    json: true,
+    nonInteractive: true,
+    cwd: input.tempDir,
+    launchCwd: input.tempDir,
+    bootstrapRepoRoot: REPO_ROOT,
+    repoDir: input.repoPath,
+    repoUrl: primarySource.url,
+    branch: "main",
+    telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+    telegramAllowedUserIds: ["1001"],
+    backgroundMode: "skip",
+    postChecks: []
+  }, {
+    deps: {
+      detectInstallerEnvironment: async () => baseEnvironment(),
+      readInstallDraft: async () => undefined,
+      detectRepoModeChoices: async () => ({
+        clonePath: input.repoPath,
+        currentInspection: repoInspection(input.tempDir),
+        updateInspection: repoInspection(input.repoPath),
+        choices: [
+          {
+            mode: "clone" as const,
+            label: "Clone fresh checkout",
+            path: input.repoPath,
+            available: true,
+            detail: "Clone HappyTG into the target."
+          }
+        ]
+      }),
+      syncRepository: async () => ({
+        path: input.repoPath,
+        sync: "cloned",
+        repoSource: "primary",
+        repoUrl: primarySource.url,
+        attempts: 1,
+        fallbackUsed: false
+      }),
+      resolveExecutable: async (command) => command === "pnpm" ? pnpmBinaryPath : undefined,
+      runCommand: async ({ args }) => {
+        const normalizedArgs = [...(args ?? [])];
+        commandCalls.push(normalizedArgs);
+
+        if (normalizedArgs[0] === "install") {
+          return {
+            stdout: input.installStdout ?? "",
+            stderr: input.installStderr ?? "",
+            exitCode: 0,
+            binaryPath: pnpmBinaryPath,
+            shell: false,
+            fallbackUsed: false
+          };
+        }
+
+        if (normalizedArgs[0] === "--version") {
+          return {
+            stdout: `${input.pnpmVersion ?? "10.0.0"}\n`,
+            stderr: "",
+            exitCode: 0,
+            binaryPath: pnpmBinaryPath,
+            shell: false,
+            fallbackUsed: false
+          };
+        }
+
+        if (normalizedArgs[0] === "help" && normalizedArgs[1] === "approve-builds") {
+          return {
+            stdout: input.helpOutput ?? "Version 10.0.0\nNo results for \"approve-builds\"\n",
+            stderr: "",
+            exitCode: input.helpExitCode ?? 0,
+            binaryPath: pnpmBinaryPath,
+            shell: false,
+            fallbackUsed: false
+          };
+        }
+
+        if (normalizedArgs[0] === "exec" && normalizedArgs[1] === "tsx" && normalizedArgs[2] === "--eval") {
+          return {
+            stdout: input.toolchainStdout ?? "HTG_PNPM_TOOLCHAIN_OK:1\n",
+            stderr: input.toolchainStderr ?? "",
+            exitCode: input.toolchainExitCode ?? 0,
+            binaryPath: pnpmBinaryPath,
+            shell: false,
+            fallbackUsed: false
+          };
+        }
+
+        return {
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: pnpmBinaryPath,
+          shell: false,
+          fallbackUsed: false
+        };
+      },
+      writeMergedEnvFile: async () => ({
+        envFilePath: path.join(input.repoPath, ".env"),
+        created: true,
+        changed: true,
+        addedKeys: ["TELEGRAM_BOT_TOKEN"],
+        preservedKeys: []
+      }),
+      fetchTelegramBotIdentity: async () => ({
+        ok: true,
+        username: "happytg_bot"
+      }),
+      configureBackgroundMode: async ({ mode }) => ({
+        mode,
+        status: "skipped",
+        detail: "Background daemon setup was skipped."
+      })
+    }
+  });
+
+  return {
+    commandCalls,
+    result
+  };
+}
+
 test("syncRepository retries transient primary failures and reports attempt progress", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-sync-retry-"));
   const clonePath = path.join(tempDir, "HappyTG");
@@ -444,6 +584,124 @@ test("runCommand normalizes Windows shim companions like pnpm.cmd", async () => 
     assert.match(result.stdout, /pnpm test 9\.0\.0/);
     assert.equal(result.binaryPath, shimPath);
     assert.equal(result.fallbackUsed, true);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall classifies ignored build scripts as warning-only when the critical tsx/esbuild path stays healthy", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-ignored-build-warning-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const { commandCalls, result } = await runInstallWithPnpmBehavior({
+      tempDir,
+      repoPath,
+      installStdout: [
+        "Progress: resolved 31, reused 5, downloaded 0, added 5, done",
+        "",
+        "The following dependencies have build scripts that were ignored: esbuild",
+        "To allow the execution of build scripts for these packages, add their names to \"pnpm.onlyBuiltDependencies\" in your \"package.json\", then run \"pnpm rebuild\""
+      ].join("\n")
+    });
+
+    assert.equal(result.status, "warn", JSON.stringify(result, null, 2));
+    assert.equal(result.outcome, "success-with-warnings");
+    assert.equal(result.error, undefined);
+    assert.equal(result.steps.find((step) => step.id === "pnpm-install")?.status, "warn");
+    assert.match(result.steps.find((step) => step.id === "pnpm-install")?.detail ?? "", /ignored build scripts/i);
+    assert.match(result.warnings.join("\n"), /critical `tsx` \+ `esbuild` path is usable/i);
+    assert.equal(result.finalization?.items.some((item) => item.id === "pnpm-ignored-build-scripts" && item.kind === "warning") ?? false, true);
+    assert.equal((result.reportJson as { pnpmInstall?: { ignoredBuildScripts?: { approveBuildsSupported?: boolean } } }).pnpmInstall?.ignoredBuildScripts?.approveBuildsSupported, false);
+    assert.equal(commandCalls.some((args) => args[0] === "--version"), true);
+    assert.equal(commandCalls.some((args) => args[0] === "help" && args[1] === "approve-builds"), true);
+    assert.equal(commandCalls.some((args) => args[0] === "exec" && args[1] === "tsx"), true);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall fails honestly when ignored build scripts leave the critical tsx/esbuild path broken", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-ignored-build-broken-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const { result } = await runInstallWithPnpmBehavior({
+      tempDir,
+      repoPath,
+      installStderr: [
+        "Warning:",
+        "Ignored build scripts: esbuild@0.27.7.",
+        "Run \"pnpm approve-builds\" to pick which dependencies should be allowed to run scripts."
+      ].join("\n"),
+      toolchainExitCode: 1,
+      toolchainStderr: "tsx failed because esbuild could not load its binary"
+    });
+
+    assert.equal(result.status, "fail", JSON.stringify(result, null, 2));
+    assert.equal(result.outcome, "recoverable-failure");
+    assert.equal(result.error?.code, "pnpm_install_failed");
+    assert.match(result.error?.message ?? "", /critical tsx\/esbuild toolchain unusable/i);
+    assert.match(result.error?.lastError ?? "", /ignored build scripts/i);
+    assert.match(result.error?.lastError ?? "", /tsx failed because esbuild could not load its binary/i);
+    assert.match(result.error?.suggestedAction ?? "", /does not support `pnpm approve-builds`/i);
+    assert.equal(result.steps.find((step) => step.id === "pnpm-install")?.status, "failed");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall keeps the no-warning pnpm install path unchanged", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-no-warning-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const { commandCalls, result } = await runInstallWithPnpmBehavior({
+      tempDir,
+      repoPath,
+      installStdout: "Lockfile is up to date, resolution step is skipped."
+    });
+
+    assert.equal(result.status, "pass", JSON.stringify(result, null, 2));
+    assert.equal(result.outcome, "success");
+    assert.equal(result.steps.find((step) => step.id === "pnpm-install")?.status, "passed");
+    assert.equal(result.finalization?.items.some((item) => item.id === "pnpm-ignored-build-scripts") ?? false, false);
+    assert.equal(result.warnings.length, 0);
+    assert.equal(commandCalls.some((args) => args[0] === "--version"), false);
+    assert.equal(commandCalls.some((args) => args[0] === "help" && args[1] === "approve-builds"), false);
+    assert.equal(commandCalls.some((args) => args[0] === "exec" && args[1] === "tsx"), false);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall uses approve-builds guidance only when the runtime pnpm exposes that command", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-approve-builds-guidance-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    const { result } = await runInstallWithPnpmBehavior({
+      tempDir,
+      repoPath,
+      installStderr: [
+        "Warning:",
+        "Ignored build scripts: esbuild@0.27.7.",
+        "Run \"pnpm approve-builds\" to pick which dependencies should be allowed to run scripts."
+      ].join("\n"),
+      pnpmVersion: "10.1.0",
+      helpOutput: "Version 10.1.0\nUsage: pnpm approve-builds\n"
+    });
+
+    const warningItem = result.finalization?.items.find((item) => item.id === "pnpm-ignored-build-scripts");
+    assert.equal(result.status, "warn", JSON.stringify(result, null, 2));
+    assert.equal((result.reportJson as { pnpmInstall?: { ignoredBuildScripts?: { approveBuildsSupported?: boolean; pnpmVersion?: string } } }).pnpmInstall?.ignoredBuildScripts?.approveBuildsSupported, true);
+    assert.equal((result.reportJson as { pnpmInstall?: { ignoredBuildScripts?: { approveBuildsSupported?: boolean; pnpmVersion?: string } } }).pnpmInstall?.ignoredBuildScripts?.pnpmVersion, "10.1.0");
+    assert.match((warningItem?.solutions ?? []).join("\n"), /pnpm approve-builds/);
+    assert.match(result.steps.find((step) => step.id === "pnpm-install")?.detail ?? "", /approve-builds` is available/i);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

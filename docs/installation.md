@@ -61,6 +61,7 @@ flowchart TD
 3. Handles dirty worktrees without overwriting local changes silently.
 4. Installs or explains Git, Node.js 22+, `pnpm`, Codex CLI, and optional Docker/Desktop.
 5. Runs `pnpm install`.
+   If `pnpm install` reports ignored build scripts, the installer now validates the critical repo-local `tsx` + `esbuild` bootstrap path before it decides between warning-only continuation and install failure.
 6. Merges `.env.example` into `.env` without losing existing values and creates a backup before edits.
 7. Prompts for Telegram-first settings:
    - bot token
@@ -72,6 +73,12 @@ flowchart TD
    - Windows: `Scheduled Task`, `Startup`, `manual`, `skip`
    - Linux: current service flow remains supported, plus installer-safe user-service/manual options
 10. Can run `setup`, `doctor`, and `verify` in one unified flow.
+
+When pnpm reports ignored build scripts, HappyTG does not silently suppress that state:
+
+- if the repo-local `tsx` + `esbuild` health check passes, install continues with an explicit warning that the critical bootstrap path is still usable;
+- if that health check fails, install stops with actionable, runtime-aware pnpm guidance instead of reporting a false success;
+- the guidance is based on the pnpm capabilities that are actually available in the current shell, so HappyTG does not tell you to run `pnpm approve-builds` when that command is not exposed by the runtime pnpm.
 
 ## Local CLI Path
 
