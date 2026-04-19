@@ -565,6 +565,82 @@ test("syncRepository reports repo_fallback_failure when both configured sources 
   }
 });
 
+test("syncRepository updates an existing checkout via the fetched commit without checking out the target branch", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-sync-detached-update-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const commands: string[][] = [];
+
+  try {
+    const result = await syncRepository({
+      selection: {
+        mode: "update",
+        path: repoPath,
+        dirtyStrategy: "keep"
+      },
+      sources: [primarySource],
+      branch: "main",
+      currentInspection: repoInspection(tempDir),
+      updateInspection: repoInspection(repoPath, {
+        exists: true,
+        isRepo: true,
+        rootPath: repoPath
+      }),
+      maxAttempts: 1,
+      retryDelayMs: 0,
+      runCommandImpl: async ({ args }) => {
+        const normalizedArgs = [...(args ?? [])];
+        commands.push(normalizedArgs);
+
+        if (normalizedArgs[2] === "fetch") {
+          return {
+            stdout: "",
+            stderr: "",
+            exitCode: 0,
+            binaryPath: "git",
+            shell: false,
+            fallbackUsed: false
+          };
+        }
+
+        if (normalizedArgs[2] === "rev-parse") {
+          return {
+            stdout: "1234567890abcdef1234567890abcdef12345678\n",
+            stderr: "",
+            exitCode: 0,
+            binaryPath: "git",
+            shell: false,
+            fallbackUsed: false
+          };
+        }
+
+        if (normalizedArgs[2] === "checkout") {
+          assert.deepEqual(normalizedArgs, ["-C", repoPath, "checkout", "--detach", "1234567890abcdef1234567890abcdef12345678"]);
+          return {
+            stdout: "",
+            stderr: "",
+            exitCode: 0,
+            binaryPath: "git",
+            shell: false,
+            fallbackUsed: false
+          };
+        }
+
+        assert.fail(`Unexpected git invocation: ${normalizedArgs.join(" ")}`);
+      }
+    });
+
+    assert.equal(result.sync, "updated");
+    assert.equal(result.path, repoPath);
+    assert.deepEqual(commands, [
+      ["-C", repoPath, "fetch", "--prune", primarySource.url, "main"],
+      ["-C", repoPath, "rev-parse", "--verify", "FETCH_HEAD^{commit}"],
+      ["-C", repoPath, "checkout", "--detach", "1234567890abcdef1234567890abcdef12345678"]
+    ]);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("runCommand normalizes Windows shim companions like pnpm.cmd", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-win-shim-"));
   try {

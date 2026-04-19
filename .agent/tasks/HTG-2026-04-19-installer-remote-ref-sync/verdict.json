@@ -1,0 +1,26 @@
+{
+  "taskId": "HTG-2026-04-19-installer-remote-ref-sync",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verifier-2026-04-19T21:18:25.3534123+03:00"
+  },
+  "checks": [
+    {
+      "name": "branch_independent_repo_sync",
+      "ok": true,
+      "detail": "Fresh verification confirmed `packages/bootstrap/src/install/repo.ts` no longer checks out the requested local branch for update/current sync. The flow now fetches the requested branch, resolves `FETCH_HEAD^{commit}`, and detaches to the fetched commit."
+    },
+    {
+      "name": "linked_worktree_regression_coverage",
+      "ok": true,
+      "detail": "Fresh bootstrap and workspace tests include `syncRepository updates an existing checkout via the fetched commit without checking out the target branch`, proving the old `git checkout main` dependency is gone from the shared sync path."
+    },
+    {
+      "name": "fresh_verification_commands",
+      "ok": true,
+      "detail": "Fresh `pnpm --filter @happytg/bootstrap run test`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm happytg task validate --repo . --task HTG-2026-04-19-installer-remote-ref-sync` all exited 0 on this branch."
+    }
+  ],
+  "generatedAt": "2026-04-19T21:18:25.3534123+03:00"
+}
