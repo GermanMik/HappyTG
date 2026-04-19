@@ -64,8 +64,41 @@ import type {
   RepoSyncResult,
   TelegramSetup
 } from "./types.js";
+import type { CommandRunResult } from "./commands.js";
 
 const DEFAULT_POST_CHECKS: PostInstallCheck[] = ["setup", "doctor", "verify"];
+const PNPM_TOOLCHAIN_CHECK_MARKER = "HTG_PNPM_TOOLCHAIN_OK:";
+const PNPM_TOOLCHAIN_CHECK_EVAL = `const value: number = 1; console.log('${PNPM_TOOLCHAIN_CHECK_MARKER}' + value)`;
+const PNPM_TOOLCHAIN_CHECK_COMMAND = `pnpm exec tsx --eval "${PNPM_TOOLCHAIN_CHECK_EVAL}"`;
+
+interface IgnoredBuildScriptsWarning {
+  packages: string[];
+  rawLine: string;
+}
+
+interface PnpmBuildScriptGuidance {
+  approveBuildsSupported: boolean;
+  pnpmVersion?: string;
+  suggestedAction: string;
+  solutions: string[];
+}
+
+interface PnpmToolchainCheckResult {
+  ok: boolean;
+  command: string;
+  summary: string;
+  lastError?: string;
+}
+
+interface PnpmIgnoredBuildScriptsAssessment extends IgnoredBuildScriptsWarning {
+  guidance: PnpmBuildScriptGuidance;
+  toolchain: PnpmToolchainCheckResult;
+  warningMessage: string;
+}
+
+interface PnpmInstallResult extends CommandRunResult {
+  ignoredBuildScripts?: PnpmIgnoredBuildScriptsAssessment;
+}
 
 interface InstallRuntimeDependencies {
   configureBackgroundMode: typeof configureBackgroundMode;
@@ -816,6 +849,181 @@ function commandFailureDetail(error: CommandExecutionError, fallback?: Partial<I
   });
 }
 
+function stripAnsi(value: string): string {
+  return value.replace(/\u001B\[[0-9;]*m/gu, "");
+}
+
+function normalizedCommandOutput(result: Pick<CommandRunResult, "stdout" | "stderr">): string {
+  return stripAnsi(`${result.stdout}\n${result.stderr}`)
+    .replace(/\r\n/gu, "\n")
+    .trim();
+}
+
+function normalizeIgnoredBuildScriptPackages(rawValue: string): string[] {
+  return rawValue
+    .split(",")
+    .map((item) => item.trim().replace(/[.]+$/u, ""))
+    .filter(Boolean);
+}
+
+function stripPackageVersion(specifier: string): string {
+  const trimmed = specifier.trim().replace(/[.]+$/u, "");
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("@")) {
+    const separatorIndex = trimmed.lastIndexOf("@");
+    return separatorIndex > 0 ? trimmed.slice(0, separatorIndex) : trimmed;
+  }
+
+  const separatorIndex = trimmed.indexOf("@");
+  return separatorIndex > 0 ? trimmed.slice(0, separatorIndex) : trimmed;
+}
+
+function formatPackageList(packages: readonly string[]): string {
+  if (packages.length === 0) {
+    return "the reported packages";
+  }
+
+  return packages.map((item) => `\`${item}\``).join(", ");
+}
+
+function parseIgnoredBuildScriptsWarning(output: string): IgnoredBuildScriptsWarning | undefined {
+  const lines = stripAnsi(output)
+    .replace(/\r\n/gu, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  for (const line of lines) {
+    const match = /ignored build scripts:\s*(.+)$/iu.exec(line)
+      ?? /dependencies have build scripts that were ignored:\s*(.+)$/iu.exec(line);
+    if (!match) {
+      continue;
+    }
+
+    const packages = normalizeIgnoredBuildScriptPackages(match[1] ?? "");
+    return {
+      packages,
+      rawLine: line
+    };
+  }
+
+  return undefined;
+}
+
+async function detectPnpmBuildScriptGuidance(input: {
+  pnpmPath: string;
+  repoPath: string;
+  env: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+  packages: readonly string[];
+  runCommandImpl: typeof runCommand;
+}): Promise<PnpmBuildScriptGuidance> {
+  let pnpmVersion: string | undefined;
+  try {
+    const versionRun = await input.runCommandImpl({
+      command: input.pnpmPath,
+      args: ["--version"],
+      cwd: input.repoPath,
+      env: input.env,
+      platform: input.platform
+    });
+    if (versionRun.exitCode === 0) {
+      pnpmVersion = stripAnsi(versionRun.stdout).split(/\r?\n/u).map((line) => line.trim()).find(Boolean);
+    }
+  } catch {
+    pnpmVersion = undefined;
+  }
+
+  let approveBuildsSupported = false;
+  try {
+    const helpRun = await input.runCommandImpl({
+      command: input.pnpmPath,
+      args: ["help", "approve-builds"],
+      cwd: input.repoPath,
+      env: input.env,
+      platform: input.platform
+    });
+    const helpOutput = normalizedCommandOutput(helpRun);
+    approveBuildsSupported = helpRun.exitCode === 0 && !/no results for "approve-builds"/iu.test(helpOutput);
+  } catch {
+    approveBuildsSupported = false;
+  }
+
+  const packageList = formatPackageList(input.packages);
+  const rebuildTargets = [...new Set(input.packages.map(stripPackageVersion).filter(Boolean))];
+  const rebuildCommand = rebuildTargets.length > 0
+    ? `pnpm rebuild ${rebuildTargets.join(" ")}`
+    : "pnpm rebuild";
+  if (approveBuildsSupported) {
+    return {
+      approveBuildsSupported,
+      pnpmVersion,
+      suggestedAction: `Run \`pnpm approve-builds\` in the checkout, allow ${packageList}, run \`${rebuildCommand}\`, then rerun the installer.`,
+      solutions: [
+        `Review blocked build scripts with \`pnpm approve-builds\` in the checkout.`,
+        `After allowing the required packages, run \`${rebuildCommand}\`.`,
+        "Rerun `pnpm happytg install` or `pnpm happytg doctor --json` once the toolchain is healthy."
+      ]
+    };
+  }
+
+  const versionLabel = pnpmVersion ? ` (${pnpmVersion})` : "";
+  return {
+    approveBuildsSupported,
+    pnpmVersion,
+    suggestedAction: `This pnpm runtime${versionLabel} does not support \`pnpm approve-builds\`. Allow ${packageList} in the pnpm build-script policy for this checkout, run \`${rebuildCommand}\`, then rerun the installer.`,
+    solutions: [
+      `This pnpm runtime${versionLabel} does not support \`pnpm approve-builds\`.`,
+      `Allow ${packageList} in the pnpm build-script policy for this checkout.`,
+      `After allowing the required packages, run \`${rebuildCommand}\`.`
+    ]
+  };
+}
+
+async function runCriticalPnpmToolchainCheck(input: {
+  pnpmPath: string;
+  repoPath: string;
+  env: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+  runCommandImpl: typeof runCommand;
+}): Promise<PnpmToolchainCheckResult> {
+  try {
+    const result = await input.runCommandImpl({
+      command: input.pnpmPath,
+      args: ["exec", "tsx", "--eval", PNPM_TOOLCHAIN_CHECK_EVAL],
+      cwd: input.repoPath,
+      env: input.env,
+      platform: input.platform
+    });
+    if (result.exitCode === 0 && stripAnsi(result.stdout).includes(`${PNPM_TOOLCHAIN_CHECK_MARKER}1`)) {
+      return {
+        ok: true,
+        command: PNPM_TOOLCHAIN_CHECK_COMMAND,
+        summary: `Critical \`tsx\` + \`esbuild\` path is usable (\`${PNPM_TOOLCHAIN_CHECK_COMMAND}\`).`
+      };
+    }
+
+    const lastError = normalizedCommandOutput(result) || "The `tsx` + `esbuild` toolchain check did not complete successfully.";
+    return {
+      ok: false,
+      command: PNPM_TOOLCHAIN_CHECK_COMMAND,
+      summary: `Critical \`tsx\` + \`esbuild\` path failed after install (\`${PNPM_TOOLCHAIN_CHECK_COMMAND}\`).`,
+      lastError
+    };
+  } catch (error) {
+    const lastError = error instanceof Error ? error.message : "The `tsx` + `esbuild` toolchain check could not start.";
+    return {
+      ok: false,
+      command: PNPM_TOOLCHAIN_CHECK_COMMAND,
+      summary: `Critical \`tsx\` + \`esbuild\` path failed after install (\`${PNPM_TOOLCHAIN_CHECK_COMMAND}\`).`,
+      lastError
+    };
+  }
+}
+
 async function runPnpmInstall(input: {
   repoPath: string;
   pnpmPath: string;
@@ -824,7 +1032,7 @@ async function runPnpmInstall(input: {
   updateStep: (next: InstallStepRecord) => void;
   step: InstallStepRecord;
   runCommandImpl: typeof runCommand;
-}): Promise<Awaited<ReturnType<typeof runCommand>>> {
+}): Promise<PnpmInstallResult> {
   const maxAttempts = 2;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -858,7 +1066,51 @@ async function runPnpmInstall(input: {
     }
 
     if (result.exitCode === 0) {
-      return result;
+      const ignoredBuildScripts = parseIgnoredBuildScriptsWarning(normalizedCommandOutput(result));
+      if (!ignoredBuildScripts) {
+        return result;
+      }
+
+      const guidance = await detectPnpmBuildScriptGuidance({
+        pnpmPath: input.pnpmPath,
+        repoPath: input.repoPath,
+        env: input.env,
+        platform: input.platform,
+        packages: ignoredBuildScripts.packages,
+        runCommandImpl: input.runCommandImpl
+      });
+      const toolchain = await runCriticalPnpmToolchainCheck({
+        pnpmPath: input.pnpmPath,
+        repoPath: input.repoPath,
+        env: input.env,
+        platform: input.platform,
+        runCommandImpl: input.runCommandImpl
+      });
+      const warningMessage = toolchain.ok
+        ? `pnpm ignored build scripts for ${formatPackageList(ignoredBuildScripts.packages)}, but HappyTG verified that the critical \`tsx\` + \`esbuild\` path is usable in this checkout.`
+        : `pnpm ignored build scripts for ${formatPackageList(ignoredBuildScripts.packages)}, and the critical \`tsx\` + \`esbuild\` path is not usable in this checkout.`;
+      if (!toolchain.ok) {
+        throw createInstallRuntimeError({
+          code: "pnpm_install_failed",
+          message: "pnpm install left the critical tsx/esbuild toolchain unusable.",
+          lastError: `${warningMessage}\n${toolchain.lastError ?? toolchain.summary}`,
+          retryable: false,
+          suggestedAction: guidance.suggestedAction,
+          failedCommand: "pnpm install",
+          failedBinary: "pnpm",
+          binaryPath: result.binaryPath
+        });
+      }
+
+      return {
+        ...result,
+        ignoredBuildScripts: {
+          ...ignoredBuildScripts,
+          guidance,
+          toolchain,
+          warningMessage
+        }
+      };
     }
 
     const lastError = result.stderr.trim() || result.stdout.trim() || "pnpm install failed.";
@@ -1167,6 +1419,8 @@ export async function runHappyTGInstall(
   let portPreflightDetail = "Planned port preflight did not run.";
   let appliedPortOverrides: AppliedPortOverride[] = [];
   let preflightConflictItems: AutomationItem[] = [];
+  let pnpmInstallAssessment: PnpmIgnoredBuildScriptsAssessment | undefined;
+  const pnpmInstallAutomationItems: AutomationItem[] = [];
 
   const updateStep = (next: InstallStepRecord) => {
     steps = replaceStep(steps, next);
@@ -1508,13 +1762,38 @@ export async function runHappyTGInstall(
       step: pnpmInstallStep,
       runCommandImpl: deps.runCommand
     });
-    updateStep({
-      ...pnpmInstallStep,
-      status: "passed",
-      detail: pnpmInstallRun.fallbackUsed
-        ? "Workspace dependencies installed after recovering from a Windows shim launch issue."
-        : "Workspace dependencies installed."
-    });
+    pnpmInstallAssessment = pnpmInstallRun.ignoredBuildScripts;
+    if (pnpmInstallAssessment) {
+      warnings.push(pnpmInstallAssessment.warningMessage);
+      pnpmInstallAutomationItems.push({
+        id: "pnpm-ignored-build-scripts",
+        kind: "warning",
+        message: pnpmInstallAssessment.warningMessage,
+        solutions: pnpmInstallAssessment.guidance.solutions
+      });
+      updateStep({
+        ...pnpmInstallStep,
+        status: "warn",
+        detail: [
+          pnpmInstallRun.fallbackUsed
+            ? "Workspace dependencies installed after recovering from a Windows shim launch issue, but pnpm reported ignored build scripts."
+            : "Workspace dependencies installed, but pnpm reported ignored build scripts.",
+          `Packages: ${pnpmInstallAssessment.packages.join(", ") || "reported packages"}.`,
+          pnpmInstallAssessment.toolchain.summary,
+          pnpmInstallAssessment.guidance.approveBuildsSupported
+            ? "Runtime guidance: `pnpm approve-builds` is available for this pnpm runtime."
+            : `Runtime guidance: \`pnpm approve-builds\` is not available${pnpmInstallAssessment.guidance.pnpmVersion ? ` in pnpm ${pnpmInstallAssessment.guidance.pnpmVersion}` : " in this pnpm runtime"}.`
+        ].join("\n")
+      });
+    } else {
+      updateStep({
+        ...pnpmInstallStep,
+        status: "passed",
+        detail: pnpmInstallRun.fallbackUsed
+          ? "Workspace dependencies installed after recovering from a Windows shim launch issue."
+          : "Workspace dependencies installed."
+      });
+    }
 
     updateStep({
       ...steps.find((step) => step.id === "env-merge")!,
@@ -1732,6 +2011,7 @@ export async function runHappyTGInstall(
         }
         : undefined);
     const finalizationItems: AutomationItem[] = [];
+    pushAutomationItems(finalizationItems, pnpmInstallAutomationItems);
     pushAutomationItems(finalizationItems, portPreflightAutomationItems(appliedPortOverrides));
     pushAutomationItems(finalizationItems, preflightConflictItems);
     pushAutomationItems(finalizationItems, await buildInstallFinalizationItems({
@@ -1791,6 +2071,24 @@ export async function runHappyTGInstall(
         fallbackUsed: repoSyncResult.fallbackUsed,
         outcome,
         finalizationItems,
+        pnpmInstall: pnpmInstallAssessment
+          ? {
+            ignoredBuildScripts: {
+              packages: pnpmInstallAssessment.packages,
+              rawLine: pnpmInstallAssessment.rawLine,
+              pnpmVersion: pnpmInstallAssessment.guidance.pnpmVersion ?? null,
+              approveBuildsSupported: pnpmInstallAssessment.guidance.approveBuildsSupported,
+              toolchain: {
+                ok: pnpmInstallAssessment.toolchain.ok,
+                command: pnpmInstallAssessment.toolchain.command,
+                summary: pnpmInstallAssessment.toolchain.summary,
+                lastError: pnpmInstallAssessment.toolchain.lastError ?? null
+              }
+            }
+          }
+          : {
+            ignoredBuildScripts: null
+          },
         portPreflight: {
           detail: portPreflightDetail,
           appliedOverrides: appliedPortOverrides

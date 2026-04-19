@@ -4,6 +4,7 @@ $RepoUrl = if ($env:HAPPYTG_REPO_URL) { $env:HAPPYTG_REPO_URL } else { "https://
 $Branch = if ($env:HAPPYTG_INSTALL_BRANCH) { $env:HAPPYTG_INSTALL_BRANCH } else { "main" }
 $OriginalCwd = (Get-Location).Path
 $BootstrapDir = if ($env:HAPPYTG_BOOTSTRAP_DIR) { $env:HAPPYTG_BOOTSTRAP_DIR } else { Join-Path $HOME ".happytg\bootstrap-repo" }
+$BootstrapToolchainMarker = "HTG_INSTALLER_BOOTSTRAP_OK:1"
 
 function Fail([string]$Message) {
   Write-Error "HappyTG installer bootstrap failed: $Message"
@@ -246,11 +247,51 @@ function Sync-BootstrapRepo {
   git clone --branch $Branch $RepoUrl $BootstrapDir
 }
 
+function Test-IgnoredBuildScriptsWarning([string]$Output) {
+  if (-not $Output) {
+    return $false
+  }
+
+  return $Output -match "(?im)ignored build scripts:|build scripts that were ignored:"
+}
+
+function Test-PnpmApproveBuildsSupport {
+  $helpOutput = @(& pnpm help approve-builds 2>&1) | Out-String
+  return $helpOutput -notmatch 'No results for "approve-builds"'
+}
+
+function Invoke-SharedInstallerBootstrapPreflight {
+  $preflightOutput = @(& pnpm dlx tsx --eval "const value: number = 1; console.log('$BootstrapToolchainMarker')" 2>&1) | Out-String
+  $exitCode = if ($null -ne $LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
+  if ($exitCode -ne 0) {
+    if ($preflightOutput.Trim()) {
+      Write-Host $preflightOutput.TrimEnd()
+    }
+    Fail "HappyTG installer bootstrap could not start through pnpm dlx tsx. Fix pnpm/tsx in this shell, then rerun the installer."
+  }
+
+  if ($preflightOutput -notmatch [regex]::Escape($BootstrapToolchainMarker)) {
+    if ($preflightOutput.Trim()) {
+      Write-Host $preflightOutput.TrimEnd()
+    }
+    Fail "HappyTG installer bootstrap did not confirm the repo-local tsx/esbuild preflight."
+  }
+
+  if (Test-IgnoredBuildScriptsWarning $preflightOutput) {
+    if (Test-PnpmApproveBuildsSupport) {
+      Write-Warning "pnpm ignored build scripts while preparing the shared installer bootstrap, but the repo-local tsx/esbuild preflight passed. Continuing with the installer. If a later bootstrap dlx run fails, review the blocked scripts with `pnpm approve-builds` and rerun."
+    } else {
+      Write-Warning "pnpm ignored build scripts while preparing the shared installer bootstrap, but the repo-local tsx/esbuild preflight passed. Continuing with the installer. This pnpm runtime does not support `pnpm approve-builds`; if a later bootstrap dlx run fails, allow the blocked packages in your pnpm build-script policy and rerun."
+    }
+  }
+}
+
 function Run-SharedInstaller {
   Write-Host "Handing off to the shared HappyTG installer..."
   Push-Location $BootstrapDir
   try {
-    & pnpm dlx tsx packages/bootstrap/src/cli.ts install `
+    Invoke-SharedInstallerBootstrapPreflight
+    & pnpm --silent dlx tsx packages/bootstrap/src/cli.ts install `
       --launch-cwd $OriginalCwd `
       --bootstrap-repo-root $BootstrapDir `
       --repo-url $RepoUrl `

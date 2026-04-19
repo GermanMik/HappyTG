@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-19-pnpm-build-script-warning-guard",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-pnpm-build-script-warning-guard",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Guard installer against pnpm ignored build script warnings",
+  "acceptanceCriteria": [
+    "Installer classifies ignored build script warnings deterministically instead of treating exit 0 as unconditional success.",
+    "Installer distinguishes warning-only healthy tsx/esbuild state from broken toolchain state with a repo-local post-install health check.",
+    "Installer guidance is based on the runtime pnpm capabilities used in the flow and never suggests unsupported commands.",
+    "Launcher/install flow no longer leaves raw ignored-build-script warning noise unsynchronized with installer UX when the warning is reproducible in the current code path.",
+    "Task bundle contains frozen spec, evidence, fresh verification, and task validate passes."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T16:21:51.317Z",
+  "updatedAt": "2026-04-19T19:47:36.4185519+03:00"
+}

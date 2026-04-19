@@ -1,0 +1,60 @@
+{
+  "taskId": "HTG-2026-04-19-pnpm-build-script-warning-guard",
+  "status": "collected",
+  "criteria": [
+    {
+      "criterion": "Installer classifies ignored build script warnings deterministically instead of treating exit 0 as unconditional success.",
+      "artifacts": [
+        "packages/bootstrap/src/install/index.ts",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Installer distinguishes warning-only healthy tsx/esbuild state from broken toolchain state with a repo-local post-install health check.",
+      "artifacts": [
+        "packages/bootstrap/src/install/index.ts",
+        "raw/ignored-build-scripts-healthy-repro.txt",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Installer guidance is based on the runtime pnpm capabilities used in the flow and never suggests unsupported commands.",
+      "artifacts": [
+        "packages/bootstrap/src/install/index.ts",
+        "raw/pnpm-runtime-capability.txt",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Launcher/install flow no longer leaves raw ignored-build-script warning noise unsynchronized with installer UX when the warning is reproducible in the current code path.",
+      "artifacts": [
+        "scripts/install/install.ps1",
+        "scripts/install/install.sh",
+        "packages/bootstrap/src/install.scripts.test.ts",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Task bundle contains frozen spec, evidence, fresh verification, and task validate passes.",
+      "artifacts": [
+        "spec.md",
+        "evidence.md",
+        "problems.md",
+        "raw/task-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/pnpm-runtime-capability.txt",
+    "raw/ignored-build-scripts-healthy-repro.txt",
+    "raw/bootstrap-dlx-pinned-runtime.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/build-bootstrap.txt",
+    "raw/lint.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt",
+    "raw/task-validate.txt"
+  ],
+  "generatedAt": "2026-04-19T16:34:00.000Z"
+}

@@ -1,0 +1,23 @@
+TMP=C:\Users\tikta\AppData\Local\Temp\htg-pnpm-warning-repro-107c51d5-6877-4f6a-ab6b-e9720ab81b63
+## pnpm install
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +5
++++++
+Progress: resolved 31, reused 5, downloaded 0, added 5, done
+
+devDependencies:
++ tsx 4.21.0
+
+The following dependencies have build scripts that were ignored: esbuild
+To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
+
+Done in 1.2s
+
+
+## pnpm exec tsx health check
+HTG_PNPM_TOOLCHAIN_OK:1
+
+
+## nested esbuild API check
+HTG_ESBUILD_OK
+

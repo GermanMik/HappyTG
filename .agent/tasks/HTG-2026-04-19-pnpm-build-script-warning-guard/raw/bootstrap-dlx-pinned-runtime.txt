@@ -1,0 +1,10 @@
+TMP=C:\Users\tikta\AppData\Local\Temp\htg-pnpm-dlx-repro-06659713-5ea4-4f39-a0e6-7d4d9edfb0d4
+## pnpm dlx tsx --version
+tsx v4.21.0
+node v24.15.0
+
+
+## pnpm --silent dlx tsx --version
+tsx v4.21.0
+node v24.15.0
+
