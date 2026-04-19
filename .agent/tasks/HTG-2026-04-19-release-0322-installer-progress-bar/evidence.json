@@ -1,6 +1,6 @@
 {
   "taskId": "HTG-2026-04-19-release-0322-installer-progress-bar",
-  "status": "local_verified_publish_pending",
+  "status": "passed",
   "version": "0.3.22",
   "sourceTaskId": "HTG-2026-04-19-installer-progress-bar",
   "artifacts": [
@@ -14,7 +14,14 @@
     "raw/build.txt",
     "raw/doctor.txt",
     "raw/verify.txt",
-    "raw/source-task-validate.txt"
+    "raw/source-task-validate.txt",
+    "raw/workflow-run.json",
+    "raw/github-release.json",
+    "raw/git-tag.txt",
+    "raw/task-validate.txt"
   ],
-  "generatedAt": "2026-04-19T22:12:18.1951586+03:00"
+  "workflowRunId": 24636978193,
+  "releaseUrl": "https://github.com/GermanMik/HappyTG/releases/tag/v0.3.22",
+  "tag": "v0.3.22",
+  "generatedAt": "2026-04-19T22:17:21.4056445+03:00"
 }

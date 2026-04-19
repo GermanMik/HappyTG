@@ -24,6 +24,7 @@
 - `pnpm happytg doctor`
 - `pnpm happytg verify`
 - `pnpm happytg task validate --repo . --task HTG-2026-04-19-installer-progress-bar`
+- `pnpm happytg task validate --repo . --task HTG-2026-04-19-release-0322-installer-progress-bar`
 
 ### Raw Artifacts
 
@@ -41,7 +42,19 @@
 
 ## Publish Status
 
-- Pending commit/push, fast-forward of `main`, workflow dispatch, and GitHub Release publication.
+- Release-prep commit: `c7a7dda` on `codex/htg-2026-04-19-installer-progress-bar`
+- Fast-forwarded `main` to `c7a7dda353807ad4adb895aff9bc61abe8b806ed`
+- GitHub Actions workflow: `Release` run `24636978193`
+- Workflow URL: `https://github.com/GermanMik/HappyTG/actions/runs/24636978193`
+- GitHub Release URL: `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.22`
+- Published tag: `v0.3.22`
+
+### Final Raw Artifacts
+
+- `raw/workflow-run.json`
+- `raw/github-release.json`
+- `raw/git-tag.txt`
+- `raw/task-validate.txt`
 
 ## Notes
 

@@ -3,7 +3,7 @@
   "sessionId": "manual-session",
   "workspaceId": "HappyTG",
   "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-release-0322-installer-progress-bar",
-  "phase": "evidence",
+  "phase": "complete",
   "mode": "proof",
   "title": "Publish HappyTG 0.3.22 installer progress-bar release",
   "acceptanceCriteria": [
@@ -13,7 +13,7 @@
     "The release-ready commit is pushed on codex/htg-2026-04-19-installer-progress-bar, and main is fast-forwarded to that exact commit.",
     "The guarded GitHub Release workflow creates v0.3.22 from the latest main HEAD and the release proof bundle is finalized truthfully."
   ],
-  "verificationState": "running",
+  "verificationState": "passed",
   "createdAt": "2026-04-19T22:04:47.5579306+03:00",
-  "updatedAt": "2026-04-19T22:12:18.1951586+03:00"
+  "updatedAt": "2026-04-19T22:17:21.4056445+03:00"
 }

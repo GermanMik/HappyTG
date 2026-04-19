@@ -7,4 +7,4 @@
 
 ## Summary
 
-Local release verification for `0.3.22` is complete and green after the transient API test rerun. Publish/merge workflow steps are still pending.
+Release `0.3.22` is published. Metadata alignment, release-prep commit push, fast-forward of `main`, workflow execution, tag creation, GitHub Release publication, and final task-bundle validation all completed successfully.

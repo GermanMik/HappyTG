@@ -1,10 +1,31 @@
 {
   "taskId": "HTG-2026-04-19-release-0322-installer-progress-bar",
-  "status": "pending",
+  "status": "passed",
   "verifier": {
     "role": "task-verifier",
-    "runId": ""
+    "runId": "verifier-2026-04-19T22:17:21.4056445+03:00"
   },
-  "checks": [],
-  "generatedAt": "2026-04-19T22:12:18.1951586+03:00"
+  "checks": [
+    {
+      "name": "release_metadata_alignment",
+      "ok": true,
+      "detail": "All workspace package versions, CHANGELOG.md, and docs/releases/0.3.22.md were aligned at 0.3.22 and passed `pnpm release:check --version 0.3.22`."
+    },
+    {
+      "name": "source_proof_reference",
+      "ok": true,
+      "detail": "The canonical product evidence remains `HTG-2026-04-19-installer-progress-bar`, and local verification kept that source bundle in a passed state."
+    },
+    {
+      "name": "release_branch_merge_and_publish",
+      "ok": true,
+      "detail": "Release prep commit `c7a7dda` was pushed on `codex/htg-2026-04-19-installer-progress-bar`, fast-forwarded to `main`, and published through GitHub Actions `Release` run `24636978193` as `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.22`."
+    },
+    {
+      "name": "fresh_verification_commands",
+      "ok": true,
+      "detail": "Fresh local release verification passed, including `pnpm lint`, `pnpm typecheck`, `pnpm test` (green rerun after a transient API port race), `pnpm build`, `pnpm happytg doctor`, `pnpm happytg verify`, and source-task validation."
+    }
+  ],
+  "generatedAt": "2026-04-19T22:17:21.4056445+03:00"
 }
