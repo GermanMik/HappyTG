@@ -1,6 +1,6 @@
 {
   "taskId": "HTG-2026-04-19-release-0323-startup-port-fix",
-  "status": "pending_publish",
+  "status": "passed",
   "checks": [
     {
       "name": "release-metadata",
@@ -14,9 +14,14 @@
     },
     {
       "name": "publish-flow",
-      "ok": false,
-      "detail": "Pending branch publication, merge to main, and guarded GitHub Release workflow execution."
+      "ok": true,
+      "detail": "Release PR #26 merged to main and the guarded GitHub Release workflow ran successfully from latest default-branch HEAD."
+    },
+    {
+      "name": "github-release",
+      "ok": true,
+      "detail": "GitHub Release v0.3.23 was published successfully for commit a70e2268c096dee8ddd0aae7c68449769f062ea6."
     }
   ],
-  "generatedAt": "2026-04-19T23:13:26.0727657+03:00"
+  "generatedAt": "2026-04-19T23:18:30+03:00"
 }

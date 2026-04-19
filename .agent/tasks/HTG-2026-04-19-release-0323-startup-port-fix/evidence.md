@@ -5,9 +5,9 @@
 - `init`: completed
 - `freeze/spec`: completed before metadata edits
 - `build`: completed
-- `evidence`: completed for local release gate
-- `fresh verify`: pending publish and release workflow evidence
-- `complete`: pending GitHub release publication
+- `evidence`: completed
+- `fresh verify`: completed via guarded GitHub `Release` workflow on latest `main`
+- `complete`: completed
 
 ## Commands Run
 
@@ -28,6 +28,14 @@
 - `pnpm happytg task validate --repo . --task HTG-2026-04-19-startup-port-proof-loop` -> `raw/source-task-validate.txt`
 - `raw/test-integration.txt` records that this release metadata layer does not add a separate integration-only command beyond repo-wide `pnpm test`
 
+### Publish evidence
+
+- `gh pr view 26 --json url,number,state,mergeCommit,headRefName,baseRefName,mergedAt` -> `raw/github-release-pr.json`
+- `gh workflow run Release --ref main -f version=0.3.23 -f draft=false -f prerelease=false`
+- `gh run view 24638178716 --json url,displayTitle,headBranch,headSha,status,conclusion,createdAt,updatedAt,jobs` -> `raw/github-release-run.json`
+- `gh release view v0.3.23 --json url,tagName,name,isDraft,isPrerelease,publishedAt,targetCommitish` -> `raw/github-release.json`
+- `pnpm happytg task validate --repo . --task HTG-2026-04-19-release-0323-startup-port-fix` -> `raw/task-validate.txt`
+
 ## Scope Decision
 
 - This release is publish-only metadata on top of already-landed product code.
@@ -44,6 +52,24 @@
   - running-stack reuse on ports `3007`, `4000`, `4100`, and `4200`
 - Source task validation stayed green:
   - `HTG-2026-04-19-startup-port-proof-loop`
+  - `Validation: ok`
+  - `Phase: complete`
+  - `Verification: passed`
+
+## Publish Outcome
+
+- Release PR `#26` merged to `main`.
+- Guarded GitHub Actions workflow `Release` completed successfully:
+  - run: `24638178716`
+  - head branch: `main`
+  - head sha: `a70e2268c096dee8ddd0aae7c68449769f062ea6`
+  - conclusion: `success`
+- GitHub Release was created successfully:
+  - tag: `v0.3.23`
+  - name: `HappyTG 0.3.23`
+  - published at: `2026-04-19T20:17:22Z`
+  - url: `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.23`
+- Release proof bundle validation passed after publish finalization:
   - `Validation: ok`
   - `Phase: complete`
   - `Verification: passed`
@@ -69,5 +95,4 @@
 
 ## Residual Risk
 
-- Publish evidence is not complete until the release PR is merged to `main` and the guarded GitHub `Release` workflow completes successfully from the latest default-branch HEAD.
 - `pnpm happytg verify` still reports the unrelated Codex transport warning on this machine; it is expected and not a release blocker for this version.
