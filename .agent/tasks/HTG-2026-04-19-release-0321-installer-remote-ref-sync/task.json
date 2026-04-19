@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-19-release-0321-installer-remote-ref-sync",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG-release-0321-installer-remote-ref-sync\\.agent\\tasks\\HTG-2026-04-19-release-0321-installer-remote-ref-sync",
+  "phase": "evidence",
+  "mode": "proof",
+  "title": "Publish HappyTG 0.3.21 installer remote-ref sync release",
+  "acceptanceCriteria": [
+    "All workspace package versions, CHANGELOG.md, and docs/releases/0.3.21.md are aligned at 0.3.21.",
+    "The installer remote-ref sync fix from HTG-2026-04-19-installer-remote-ref-sync remains the canonical product evidence for this release.",
+    "Fresh release validation passes after the metadata bump.",
+    "The release branch is committed, pushed, reviewed through PR, and merged to main.",
+    "The guarded GitHub Release workflow publishes v0.3.21 from the latest main HEAD and the release proof bundle is finalized."
+  ],
+  "verificationState": "not_started",
+  "createdAt": "2026-04-19T21:30:00+03:00",
+  "updatedAt": "2026-04-19T21:30:06.8098597+03:00"
+}

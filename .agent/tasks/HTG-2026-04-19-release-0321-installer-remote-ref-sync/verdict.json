@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-04-19-release-0321-installer-remote-ref-sync",
+  "status": "pending",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": ""
+  },
+  "checks": [],
+  "generatedAt": "2026-04-19T21:30:00+03:00"
+}

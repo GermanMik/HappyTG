@@ -1,0 +1,6 @@
+
+> happytg@0.3.21 release:check C:\Develop\Projects\HappyTG-release-0321-installer-remote-ref-sync
+> node scripts/release/validate-release.mjs "--version" "0.3.21"
+
+Release validation passed for 0.3.21.
+Checked 14 package versions, CHANGELOG.md, and docs/releases/0.3.21.md.

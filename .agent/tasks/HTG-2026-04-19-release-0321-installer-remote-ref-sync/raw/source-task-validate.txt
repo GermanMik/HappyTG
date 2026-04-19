@@ -1,0 +1,9 @@
+
+> happytg@0.3.21 happytg C:\Develop\Projects\HappyTG-release-0321-installer-remote-ref-sync
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-19-installer-remote-ref-sync"
+
+Task: HTG-2026-04-19-installer-remote-ref-sync
+Bundle: C:\Develop\Projects\HappyTG-release-0321-installer-remote-ref-sync\.agent\tasks\HTG-2026-04-19-installer-remote-ref-sync
+Validation: ok
+Phase: complete
+Verification: passed
