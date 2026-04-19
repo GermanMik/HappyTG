@@ -1,0 +1,21 @@
+{
+  "id": "HTG-2026-04-19-telegram-local-dev-polling",
+  "sessionId": "ses_manual",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-telegram-local-dev-polling",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Honest local Telegram delivery mode without public webhook",
+  "acceptanceCriteria": [
+    "Repo-local evidence proves the current root cause, current startup path, absence of polling, and the docs/runtime mismatch before the fix.",
+    "apps/bot supports an explicit and deterministic Telegram delivery-mode strategy with bounded modes: polling, webhook, and auto.",
+    "Local development without a public webhook can receive /start, /pair <CODE>, /hosts, /doctor, /verify, and /session ... through polling, using the same bot handlers and preserving the existing /api/v1/pairing/claim boundary.",
+    "Explicit webhook mode does not silently degrade into polling. If webhook mode is expected but not configured or not actually active, the state is diagnosable in logs and bot readiness output instead of looking healthy.",
+    "Production/self-hosted webhook handling remains available and the existing webhook endpoint path stays working.",
+    "Regression tests cover local polling /start, local polling /pair CODE, webhook handling, deterministic mode selection, and prevention of accidental mixed-mode duplicate delivery.",
+    "Minimal necessary docs and config references are synchronized with runtime behavior and local pnpm dev messaging is honest about active Telegram delivery mode."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T13:02:38.000Z",
+  "updatedAt": "2026-04-19T13:24:28.865Z"
+}

@@ -5,7 +5,38 @@ import path from "node:path";
 import test from "node:test";
 
 import type { BotDependencies } from "./handlers.js";
-import { botConfigurationMessage, createBotServer, createDefaultSendTelegramMessage, initializeBotEnvironment } from "./index.js";
+import {
+  botConfigurationMessage,
+  createBotRuntime,
+  createBotServer,
+  createDefaultSendTelegramMessage,
+  initializeBotEnvironment,
+  resolveTelegramDeliveryMode
+} from "./index.js";
+
+const VALID_BOT_TOKEN = "123456:abcdefghijklmnopqrstuvwx";
+
+function telegramOk(result: unknown): Response {
+  return new Response(JSON.stringify({
+    ok: true,
+    result
+  }), {
+    status: 200,
+    headers: {
+      "content-type": "application/json"
+    }
+  });
+}
+
+async function waitForCondition(predicate: () => boolean, timeoutMs = 1_000): Promise<void> {
+  const startedAt = Date.now();
+  while (!predicate()) {
+    if (Date.now() - startedAt > timeoutMs) {
+      throw new Error("Timed out waiting for condition");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}
 
 test("bot ready endpoint returns healthy when api is reachable", async () => {
   const dependencies: Partial<BotDependencies> = {
@@ -182,4 +213,274 @@ test("createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful wit
   assert.match(errorLogs[0]?.message ?? "", /sendMessage failed/i);
   assert.match(JSON.stringify(errorLogs[0]?.metadata ?? {}), /401/);
   assert.match(JSON.stringify(errorLogs[0]?.metadata ?? {}), /Unauthorized/);
+});
+
+test("resolveTelegramDeliveryMode selects polling for local auto mode", () => {
+  const resolved = resolveTelegramDeliveryMode({
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+    }
+  });
+
+  assert.equal(resolved.configuredMode, "auto");
+  assert.equal(resolved.activeMode, "polling");
+  assert.equal(resolved.status, "ready");
+  assert.match(resolved.detail, /selected polling/i);
+});
+
+test("resolveTelegramDeliveryMode selects webhook for public https auto mode", () => {
+  const resolved = resolveTelegramDeliveryMode({
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+    }
+  });
+
+  assert.equal(resolved.configuredMode, "auto");
+  assert.equal(resolved.activeMode, "webhook");
+  assert.equal(resolved.status, "ready");
+  assert.equal(resolved.expectedWebhookUrl, "https://happy.example.com/telegram/webhook");
+});
+
+test("resolveTelegramDeliveryMode keeps explicit webhook mode degraded when the public URL is not webhook-capable", () => {
+  const resolved = resolveTelegramDeliveryMode({
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      TELEGRAM_UPDATES_MODE: "webhook",
+      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+    }
+  });
+
+  assert.equal(resolved.configuredMode, "webhook");
+  assert.equal(resolved.activeMode, "webhook");
+  assert.equal(resolved.status, "degraded");
+  assert.match(resolved.detail, /requested/i);
+  assert.match(resolved.detail, /HAPPYTG_PUBLIC_URL/i);
+});
+
+test("webhook endpoint dispatches updates through the shared bot handlers", async () => {
+  const messages: Array<{ chatId: number; text: string }> = [];
+  const server = createBotServer({
+    async sendTelegramMessage(chatId, text) {
+      messages.push({ chatId, text });
+    }
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Bot server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/telegram/webhook`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        update_id: 1,
+        message: {
+          message_id: 1,
+          text: "/start",
+          chat: { id: 42 },
+          from: { id: 42, username: "dev" }
+        }
+      })
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(messages.length, 1);
+    assert.match(messages[0]?.text ?? "", /HappyTG bot is ready/i);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("local polling mode receives /start without a public webhook", async () => {
+  const messages: Array<{ chatId: number; text: string }> = [];
+  const telegramCalls: string[] = [];
+  let getUpdatesCalls = 0;
+  const runtime = createBotRuntime({
+    async sendTelegramMessage(chatId, text) {
+      messages.push({ chatId, text });
+    }
+  }, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+    },
+    port: 0,
+    fetchImpl: async (input) => {
+      const match = String(input).match(/\/bot[^/]+\/([^/?]+)/u);
+      const method = match?.[1] ?? "unknown";
+      telegramCalls.push(method);
+      if (method === "deleteWebhook") {
+        return telegramOk(true);
+      }
+      if (method === "getUpdates") {
+        getUpdatesCalls += 1;
+        if (getUpdatesCalls === 1) {
+          return telegramOk([
+            {
+              update_id: 101,
+              message: {
+                message_id: 1,
+                text: "/start",
+                chat: { id: 7 },
+                from: { id: 7, username: "localdev" }
+              }
+            }
+          ]);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        return telegramOk([]);
+      }
+      throw new Error(`Unexpected Telegram method ${method}`);
+    }
+  });
+
+  try {
+    const snapshot = await runtime.start();
+    await waitForCondition(() => messages.length === 1);
+
+    assert.equal(snapshot.activeMode, "polling");
+    assert.equal(runtime.deliveryState.read().status, "ready");
+    assert.deepEqual(telegramCalls.slice(0, 2), ["deleteWebhook", "getUpdates"]);
+    assert.match(messages[0]?.text ?? "", /\/pair <PAIRING_CODE>/);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("local polling mode receives /pair and preserves the pairing claim API boundary", async () => {
+  const messages: Array<{ chatId: number; text: string }> = [];
+  const apiCalls: Array<{ pathname: string; init?: RequestInit }> = [];
+  let getUpdatesCalls = 0;
+  const runtime = createBotRuntime({
+    async apiFetch(pathname, init) {
+      apiCalls.push({ pathname, init });
+      if (pathname === "/api/v1/pairing/claim") {
+        return {
+          user: { id: "usr_1", displayName: "Local Dev" },
+          host: { id: "host_1", label: "devbox" }
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    },
+    async sendTelegramMessage(chatId, text) {
+      messages.push({ chatId, text });
+    }
+  }, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+    },
+    port: 0,
+    fetchImpl: async (input) => {
+      const method = String(input).match(/\/bot[^/]+\/([^/?]+)/u)?.[1] ?? "unknown";
+      if (method === "deleteWebhook") {
+        return telegramOk(true);
+      }
+      if (method === "getUpdates") {
+        getUpdatesCalls += 1;
+        if (getUpdatesCalls === 1) {
+          return telegramOk([
+            {
+              update_id: 202,
+              message: {
+                message_id: 2,
+                text: "/pair CODE-123",
+                chat: { id: 9 },
+                from: {
+                  id: 99,
+                  username: "pairer",
+                  first_name: "Local",
+                  last_name: "Dev"
+                }
+              }
+            }
+          ]);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        return telegramOk([]);
+      }
+      throw new Error(`Unexpected Telegram method ${method}`);
+    }
+  });
+
+  try {
+    await runtime.start();
+    await waitForCondition(() => messages.length === 1);
+
+    assert.equal(apiCalls[0]?.pathname, "/api/v1/pairing/claim");
+    assert.equal(apiCalls[0]?.init?.method, "POST");
+    assert.deepEqual(JSON.parse(String(apiCalls[0]?.init?.body ?? "{}")), {
+      pairingCode: "CODE-123",
+      telegramUserId: "99",
+      chatId: "9",
+      username: "pairer",
+      displayName: "Local Dev"
+    });
+    assert.match(messages[0]?.text ?? "", /Host paired: devbox/);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("webhook mode stays separate from polling and reports degraded readiness when Telegram webhook is not configured", async () => {
+  const telegramCalls: string[] = [];
+  const runtime = createBotRuntime({
+    async apiFetch(pathname) {
+      assert.equal(pathname, "/health");
+      return { ok: true } as never;
+    }
+  }, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      TELEGRAM_UPDATES_MODE: "webhook",
+      HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+    },
+    port: 0,
+    fetchImpl: async (input) => {
+      const method = String(input).match(/\/bot[^/]+\/([^/?]+)/u)?.[1] ?? "unknown";
+      telegramCalls.push(method);
+      if (method === "getWebhookInfo") {
+        return telegramOk({
+          url: "",
+          pending_update_count: 3
+        });
+      }
+      throw new Error(`Unexpected Telegram method ${method}`);
+    }
+  });
+
+  try {
+    const snapshot = await runtime.start();
+    const address = runtime.server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Bot runtime did not bind to a TCP port");
+    }
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+    const payload = await response.json() as {
+      ok: boolean;
+      detail: string;
+      telegram: {
+        activeMode: string;
+        pendingUpdateCount?: number;
+      };
+    };
+
+    assert.equal(snapshot.activeMode, "webhook");
+    assert.equal(snapshot.status, "degraded");
+    assert.deepEqual(telegramCalls, ["getWebhookInfo"]);
+    assert.equal(response.status, 503);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.telegram.activeMode, "webhook");
+    assert.equal(payload.telegram.pendingUpdateCount, 3);
+    assert.match(payload.detail, /expects https:\/\/happy\.example\.com\/telegram\/webhook/i);
+  } finally {
+    await runtime.stop();
+  }
 });

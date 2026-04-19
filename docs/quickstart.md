@@ -53,6 +53,8 @@ Use [Installation](./installation.md) if you need the fuller local/self-hosted s
    pnpm dev
    ```
 
+   Local `pnpm dev` does not require a public Telegram webhook. With the default local `HAPPYTG_PUBLIC_URL`, the bot auto-selects polling and should accept `/start` and `/pair <CODE>` directly from Telegram.
+
 5. Request pairing on the execution host.
 
    ```bash
@@ -80,7 +82,7 @@ Use [Installation](./installation.md) if you need the fuller local/self-hosted s
 | --- | --- | --- |
 | Mini App | `3001` | `Mini App listening` |
 | API | `4000` | `API listening` |
-| Bot | `4100` | `Bot listening` or a short Telegram token warning |
+| Bot | `4100` | `Bot listening with Telegram polling active`, `Bot listening with Telegram webhook active`, or an explicit degraded/token warning |
 | Worker probe | `4200` | `Worker probe server listening` |
 
 The host daemon is separate from `pnpm dev`; start it with `pnpm dev:daemon` after pairing.
@@ -90,6 +92,7 @@ The host daemon is separate from `pnpm dev`; start it with `pnpm dev:daemon` aft
 | Signal | What it means | What to do next |
 | --- | --- | --- |
 | `telegramConfigured: false` | The bot did not get a valid Telegram token. | Rerun `pnpm happytg install` or set `TELEGRAM_BOT_TOKEN` in `.env`, then restart `pnpm dev:bot` or `pnpm dev`. |
+| `Bot listening with degraded Telegram delivery` | The bot process is up, but Telegram update delivery is not usable in the selected mode. | Check `http://127.0.0.1:4100/ready`. For local dev, keep `TELEGRAM_UPDATES_MODE=auto` or set `TELEGRAM_UPDATES_MODE=polling`. For webhook mode, set a public HTTPS `HAPPYTG_PUBLIC_URL` and configure that webhook in Telegram. |
 | `Codex CLI not found` | This shell cannot resolve Codex at all. | Verify `codex --version`, then rerun `pnpm happytg doctor`. |
 | `Codex: detected but unavailable` | Codex was found, but startup failed in this shell. | Run `codex --version`, fix the local install/runtime, then rerun `pnpm happytg doctor --json`. |
 | `Host is not paired yet` | Pairing has not been completed yet. | Run `pnpm daemon:pair`, send `/pair <CODE>` in Telegram, then start `pnpm dev:daemon`. |

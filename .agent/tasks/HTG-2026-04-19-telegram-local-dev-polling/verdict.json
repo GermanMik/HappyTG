@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-19-telegram-local-dev-polling",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "019da5e4-9149-7223-a677-8c94127fa68f"
+  },
+  "checks": [
+    {
+      "name": "Independent verifier review",
+      "status": "passed",
+      "detail": "Verifier found the product fix green and flagged only placeholder proof artifacts; that minimal bundle issue was fixed."
+    },
+    {
+      "name": "Bot test suite",
+      "status": "passed",
+      "artifact": "raw/test-unit.txt"
+    },
+    {
+      "name": "Bot typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck.txt"
+    },
+    {
+      "name": "Bot build",
+      "status": "passed",
+      "artifact": "raw/build.txt"
+    },
+    {
+      "name": "Repo-wide tests",
+      "status": "passed",
+      "artifact": "raw/repo-test.txt"
+    },
+    {
+      "name": "Task bundle validate",
+      "status": "passed",
+      "artifact": "raw/test-integration.txt"
+    }
+  ],
+  "generatedAt": "2026-04-19T16:31:12.2260946+03:00"
+}
