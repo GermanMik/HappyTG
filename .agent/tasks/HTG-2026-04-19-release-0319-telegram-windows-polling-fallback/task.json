@@ -3,7 +3,7 @@
   "sessionId": "manual-session",
   "workspaceId": "HappyTG",
   "rootPath": "C:\\Develop\\Projects\\HappyTG-release-0319-telegram-win-fallback\\.agent\\tasks\\HTG-2026-04-19-release-0319-telegram-windows-polling-fallback",
-  "phase": "evidence",
+  "phase": "complete",
   "mode": "proof",
   "title": "Publish Windows Telegram polling fallback as 0.3.19",
   "acceptanceCriteria": [
@@ -15,5 +15,5 @@
   ],
   "verificationState": "passed",
   "createdAt": "2026-04-19T00:00:00.000Z",
-  "updatedAt": "2026-04-19T19:56:33.4696357+03:00"
+  "updatedAt": "2026-04-19T20:02:11.5316484+03:00"
 }

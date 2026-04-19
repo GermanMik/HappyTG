@@ -1,9 +1,9 @@
 {
   "taskId": "HTG-2026-04-19-release-0319-telegram-windows-polling-fallback",
-  "status": "pending_release",
+  "status": "released",
   "baseVersion": "0.3.18",
   "targetVersion": "0.3.19",
-  "branch": "codex/release-0.3.19-telegram-windows-polling-fallback",
+  "branch": "main",
   "sourceTasks": [
     "HTG-2026-04-19-telegram-start-still-silent"
   ],
@@ -18,11 +18,14 @@
     "test": "pass",
     "build": "pass",
     "doctor": "env_blocked",
-    "verify": "env_blocked"
+    "verify": "env_blocked",
+    "releaseWorkflow": "pass"
   },
   "notes": [
     "The clean release worktree has no .env or TELEGRAM_BOT_TOKEN, so doctor/verify report expected local-environment blockers rather than release-code regressions.",
-    "PR merge metadata, Release workflow metadata, and GitHub release metadata will be added after publication."
+    "PR #22 merged the release branch into main at commit 4e28c1e28cffd129ec41d3397497976943ac086b.",
+    "GitHub Release workflow 24634374778 succeeded on main commit 4e28c1e28cffd129ec41d3397497976943ac086b.",
+    "GitHub published HappyTG 0.3.19 at https://github.com/GermanMik/HappyTG/releases/tag/v0.3.19."
   ],
   "artifacts": [
     ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/spec.md",
@@ -36,7 +39,18 @@
     ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/test.txt",
     ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/build.txt",
     ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/doctor.txt",
-    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/verify.txt"
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/verify.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/release-workflow.json",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/release-view.json"
   ],
-  "generatedAt": "2026-04-19T19:56:33Z"
+  "release": {
+    "tag": "v0.3.19",
+    "name": "HappyTG 0.3.19",
+    "url": "https://github.com/GermanMik/HappyTG/releases/tag/v0.3.19",
+    "publishedAt": "2026-04-19T17:01:51Z",
+    "workflowRunId": 24634374778,
+    "workflowUrl": "https://github.com/GermanMik/HappyTG/actions/runs/24634374778",
+    "targetCommit": "4e28c1e28cffd129ec41d3397497976943ac086b"
+  },
+  "generatedAt": "2026-04-19T20:02:11Z"
 }

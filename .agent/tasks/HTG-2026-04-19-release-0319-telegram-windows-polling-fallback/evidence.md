@@ -24,4 +24,6 @@
 
 - This release publishes the validated Windows-only Telegram transport fallback for hosts where `0.3.18` already selected polling correctly but Node/undici still could not reach Telegram Bot API.
 - `doctor` and `verify` were rerun intentionally in the sterile release worktree. They reported only environment prerequisites missing in that worktree, not a code regression in the release candidate.
-- PR merge metadata, Release workflow metadata, and GitHub release metadata will be appended after publication completes.
+- PR `#22` merged the release branch into `main` at commit `4e28c1e28cffd129ec41d3397497976943ac086b`.
+- GitHub Actions `Release` workflow `24634374778` completed successfully against `main` commit `4e28c1e28cffd129ec41d3397497976943ac086b`.
+- GitHub published `HappyTG 0.3.19` at `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.19`.

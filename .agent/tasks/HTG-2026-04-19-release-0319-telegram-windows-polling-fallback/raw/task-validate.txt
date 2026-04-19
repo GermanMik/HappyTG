@@ -5,5 +5,5 @@
 Task: HTG-2026-04-19-release-0319-telegram-windows-polling-fallback
 Bundle: C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\.agent\tasks\HTG-2026-04-19-release-0319-telegram-windows-polling-fallback
 Validation: ok
-Phase: evidence
+Phase: complete
 Verification: passed

@@ -1,5 +1,5 @@
 {
   "taskId": "HTG-2026-04-19-release-0319-telegram-windows-polling-fallback",
-  "status": "pending_release",
-  "summary": "Local release verification for HappyTG 0.3.19 passed in the clean release worktree, and publication is now waiting only on the release branch PR merge plus the guarded GitHub Release workflow."
+  "status": "complete",
+  "summary": "HappyTG 0.3.19 was published successfully from main commit 4e28c1e28cffd129ec41d3397497976943ac086b after PR #22 merged the Windows Telegram polling fallback release branch and the guarded GitHub Release workflow completed."
 }
