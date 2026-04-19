@@ -1095,25 +1095,82 @@ export function startTelegramPolling(options: StartTelegramPollingOptions): Tele
   };
 }
 
-function listen(server: Server, listenPort: number): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const onError = (error: Error) => {
-      cleanup();
-      reject(error);
-    };
-    const onListening = () => {
-      cleanup();
-      resolve();
-    };
-    const cleanup = () => {
-      server.off("error", onError);
-      server.off("listening", onListening);
-    };
+export function formatBotPortReuseMessage(listenPort: number): string {
+  return `Port ${listenPort} already has a HappyTG Bot. Reuse the running bot if it is yours, or start a new one with HAPPYTG_BOT_PORT/PORT, then try again.`;
+}
 
-    server.once("error", onError);
-    server.once("listening", onListening);
-    server.listen(listenPort);
+export function formatBotPortConflictMessageDetailed(
+  listenPort: number,
+  options?: {
+    service?: string;
+    description?: string;
+  }
+): string {
+  if (options?.service) {
+    return `Port ${listenPort} is already in use by HappyTG ${options.service}, not HappyTG Bot. Free it, or start the bot with HAPPYTG_BOT_PORT/PORT, then try again.`;
+  }
+
+  if (options?.description) {
+    return `Port ${listenPort} is already in use by ${options.description}. Free it, or start the bot with HAPPYTG_BOT_PORT/PORT, then try again.`;
+  }
+
+  return `Port ${listenPort} is already in use by another process. Free it, or start the bot with HAPPYTG_BOT_PORT/PORT, then try again.`;
+}
+
+export interface BotStartupResult {
+  status: "listening" | "reused";
+  port: number;
+}
+
+interface PortOccupantInfo {
+  service?: string;
+  description?: string;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
   });
+}
+
+async function detectPortOccupant(listenPort: number, fetchImpl: typeof fetch = fetch): Promise<PortOccupantInfo> {
+  for (const pathname of ["/ready", "/health", "/"]) {
+    try {
+      const response = await fetchImpl(`http://127.0.0.1:${listenPort}${pathname}`, {
+        signal: AbortSignal.timeout(750)
+      });
+      const contentType = response.headers.get("content-type") ?? "";
+      const bodyText = contentType.includes("application/json") || contentType.startsWith("text/")
+        ? await response.text()
+        : "";
+      if (contentType.includes("application/json")) {
+        try {
+          const payload = JSON.parse(bodyText) as { service?: string };
+          if (payload.service) {
+            return {
+              service: payload.service
+            };
+          }
+        } catch {
+          // Ignore malformed JSON and keep probing for another fingerprint.
+        }
+      }
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const titleMatch = bodyText.match(/<title>([^<]+)<\/title>/iu);
+      const title = titleMatch?.[1]?.trim();
+      return {
+        description: title ? `HTTP listener (${title})` : `HTTP listener (${response.status})`
+      };
+    } catch {
+      continue;
+    }
+  }
+
+  return {};
 }
 
 function close(server: Server): Promise<void> {
@@ -1161,6 +1218,85 @@ function logBotStartup(botLogger: Logger, snapshot: TelegramDeliverySnapshot, li
   botLogger.info("Bot listening with Telegram webhook active", startupMetadata(snapshot, listenPort));
 }
 
+export async function startBotServer(
+  server = createBotServer(),
+  options?: {
+    port?: number;
+    logger?: Pick<Logger, "info">;
+    fetchImpl?: typeof fetch;
+    reuseProbeWindowMs?: number;
+    reuseProbeIntervalMs?: number;
+  }
+): Promise<BotStartupResult> {
+  const listenPort = options?.port ?? port;
+  const activeLogger = options?.logger ?? logger;
+  const fetchImpl = options?.fetchImpl ?? fetch;
+  const reuseProbeWindowMs = options?.reuseProbeWindowMs ?? 2_000;
+  const reuseProbeIntervalMs = options?.reuseProbeIntervalMs ?? Math.min(100, reuseProbeWindowMs);
+
+  async function listenOnce(): Promise<"listening" | "in_use"> {
+    return await new Promise<"listening" | "in_use">((resolve, reject) => {
+      const onError = (error: NodeJS.ErrnoException) => {
+        cleanup();
+        if (error.code === "EADDRINUSE") {
+          resolve("in_use");
+          return;
+        }
+        reject(error);
+      };
+      const onListening = () => {
+        cleanup();
+        resolve("listening");
+      };
+      const cleanup = () => {
+        server.off("error", onError);
+        server.off("listening", onListening);
+      };
+
+      server.once("error", onError);
+      server.once("listening", onListening);
+      server.listen(listenPort);
+    });
+  }
+
+  if (await listenOnce() === "listening") {
+    return { status: "listening", port: listenPort };
+  }
+
+  const occupant = await detectPortOccupant(listenPort, fetchImpl);
+  if (occupant.service !== "bot") {
+    throw new Error(formatBotPortConflictMessageDetailed(listenPort, occupant));
+  }
+
+  if (reuseProbeWindowMs > 0) {
+    for (let waitedMs = 0; waitedMs < reuseProbeWindowMs; waitedMs += reuseProbeIntervalMs) {
+      await delay(reuseProbeIntervalMs);
+      const occupantAfterDelay = await detectPortOccupant(listenPort, fetchImpl);
+      if (!occupantAfterDelay.service && !occupantAfterDelay.description) {
+        if (await listenOnce() === "listening") {
+          return { status: "listening", port: listenPort };
+        }
+
+        const retryOccupant = await detectPortOccupant(listenPort, fetchImpl);
+        if (retryOccupant.service !== "bot") {
+          throw new Error(formatBotPortConflictMessageDetailed(listenPort, retryOccupant));
+        }
+        continue;
+      }
+
+      if (occupantAfterDelay.service !== "bot") {
+        throw new Error(formatBotPortConflictMessageDetailed(listenPort, occupantAfterDelay));
+      }
+    }
+  }
+
+  activeLogger.info(formatBotPortReuseMessage(listenPort), {
+    port: listenPort,
+    apiBaseUrl
+  });
+  return { status: "reused", port: listenPort };
+}
+
 export function createBotRuntime(
   dependencies: Partial<BotDependencies> = {},
   options?: {
@@ -1171,6 +1307,8 @@ export function createBotRuntime(
     platform?: NodeJS.Platform;
     invokeTelegramApiViaWindowsPowerShell?: InvokeTelegramBotApiViaWindowsPowerShell;
     configurationMessage?: string;
+    reuseProbeWindowMs?: number;
+    reuseProbeIntervalMs?: number;
   }
 ) {
   const env = options?.env ?? process.env;
@@ -1188,6 +1326,7 @@ export function createBotRuntime(
   });
   let polling: TelegramPollingController | undefined;
   let started = false;
+  let ownsServer = false;
 
   return {
     server,
@@ -1198,7 +1337,17 @@ export function createBotRuntime(
       }
       started = true;
       try {
-        await listen(server, listenPort);
+        const startup = await startBotServer(server, {
+          port: listenPort,
+          logger: botLogger,
+          reuseProbeWindowMs: options?.reuseProbeWindowMs,
+          reuseProbeIntervalMs: options?.reuseProbeIntervalMs
+        });
+        ownsServer = startup.status === "listening";
+
+        if (startup.status === "reused") {
+          return deliveryState.read();
+        }
 
         if (configuredBotToken && deliveryState.read().activeMode === "polling") {
           polling = startTelegramPolling({
@@ -1237,16 +1386,19 @@ export function createBotRuntime(
         return snapshot;
       } catch (error) {
         started = false;
+        ownsServer = false;
         throw error;
       }
     },
     async stop(): Promise<void> {
       if (polling) {
         await polling.stop();
+        polling = undefined;
       }
-      if (started) {
+      if (ownsServer) {
         await close(server);
       }
+      ownsServer = false;
       started = false;
     }
   };

@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-19-startup-port-proof-loop",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "fresh-verify-2026-04-19"
+  },
+  "checks": [
+    {
+      "name": "worker-startup-classification",
+      "ok": true,
+      "detail": "Worker startup now classifies free ports, same-service reuse, different-HappyTG-service conflicts, and foreign HTTP listener conflicts without a raw Node EADDRINUSE stack trace."
+    },
+    {
+      "name": "worker-runtime-side-effects",
+      "ok": true,
+      "detail": "Worker runtime start moved behind successful bind, so same-service reuse does not start a second local maintenance loop."
+    },
+    {
+      "name": "bot-startup-classification",
+      "ok": true,
+      "detail": "Bot startup now follows the same reuse-vs-conflict model already implied by bootstrap and docs, replacing raw listen EADDRINUSE details with truthful action-oriented messaging."
+    },
+    {
+      "name": "bot-no-duplicate-delivery-loop",
+      "ok": true,
+      "detail": "Bot reuse short-circuits before Telegram polling or webhook inspection, so an already-running HappyTG Bot is reused rather than doubled."
+    },
+    {
+      "name": "docs-truthfulness",
+      "ok": true,
+      "detail": "Quickstart and troubleshooting now document occupied-port guidance for bot and worker alongside the existing API and Mini App guidance."
+    },
+    {
+      "name": "repo-verification",
+      "ok": true,
+      "detail": "Fresh repo-level lint, typecheck, test, and happytg verify completed after the fix; happytg verify only reported an unrelated existing Codex transport warning plus running-stack reuse info."
+    }
+  ],
+  "generatedAt": "2026-04-19T22:45:38.5387728+03:00"
+}

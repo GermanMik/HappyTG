@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createServer as createHttpServer } from "node:http";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -10,8 +11,11 @@ import {
   createBotRuntime,
   createBotServer,
   createDefaultSendTelegramMessage,
+  formatBotPortConflictMessageDetailed,
+  formatBotPortReuseMessage,
   initializeBotEnvironment,
-  resolveTelegramDeliveryMode
+  resolveTelegramDeliveryMode,
+  startBotServer
 } from "./index.js";
 
 const VALID_BOT_TOKEN = "123456:abcdefghijklmnopqrstuvwx";
@@ -36,6 +40,10 @@ async function waitForCondition(predicate: () => boolean, timeoutMs = 1_000): Pr
     }
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
+}
+
+async function closeServer(server: ReturnType<typeof createHttpServer>): Promise<void> {
+  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
 }
 
 test("bot ready endpoint returns healthy when api is reachable", async () => {
@@ -90,6 +98,158 @@ test("bot ready endpoint returns 503 when api is unreachable", async () => {
     assert.match(payload.detail, /upstream down/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("startBotServer reuses an already-running HappyTG bot on the same port", async () => {
+  const occupied = createHttpServer((req, res) => {
+    res.writeHead(req.url === "/ready" ? 503 : 200, {
+      "content-type": "application/json"
+    });
+    res.end(JSON.stringify({ ok: req.url !== "/ready", service: "bot" }));
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Occupied bot test server did not bind to a TCP port");
+  }
+
+  const server = createBotServer();
+  const infoLogs: Array<{ message: string; metadata?: unknown }> = [];
+
+  try {
+    const result = await startBotServer(server, {
+      port: address.port,
+      logger: {
+        info(message, metadata) {
+          infoLogs.push({ message, metadata });
+        }
+      },
+      reuseProbeWindowMs: 25,
+      reuseProbeIntervalMs: 10
+    });
+
+    assert.deepEqual(result, { status: "reused", port: address.port });
+    assert.equal(infoLogs[0]?.message, formatBotPortReuseMessage(address.port));
+  } finally {
+    if (server.listening) {
+      await closeServer(server);
+    }
+    await closeServer(occupied);
+  }
+});
+
+test("startBotServer rejects when a different HappyTG service occupies the bot port", async () => {
+  const occupied = createHttpServer((_req, res) => {
+    res.writeHead(200, {
+      "content-type": "application/json"
+    });
+    res.end(JSON.stringify({ ok: true, service: "worker" }));
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("HappyTG service test server did not bind to a TCP port");
+  }
+
+  const server = createBotServer();
+
+  try {
+    await assert.rejects(
+      () => startBotServer(server, {
+        port: address.port,
+        logger: { info() {} },
+        reuseProbeWindowMs: 25,
+        reuseProbeIntervalMs: 10
+      }),
+      new RegExp(formatBotPortConflictMessageDetailed(address.port, { service: "worker" }).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    );
+  } finally {
+    if (server.listening) {
+      await closeServer(server);
+    }
+    await closeServer(occupied);
+  }
+});
+
+test("startBotServer names a foreign HTTP listener when the port is occupied", async () => {
+  const occupied = createHttpServer((_req, res) => {
+    res.writeHead(200, {
+      "content-type": "text/html"
+    });
+    res.end("<!doctype html><title>Contacts</title>");
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Foreign HTTP listener test server did not bind to a TCP port");
+  }
+
+  const server = createBotServer();
+
+  try {
+    await assert.rejects(
+      () => startBotServer(server, {
+        port: address.port,
+        logger: { info() {} },
+        reuseProbeWindowMs: 25,
+        reuseProbeIntervalMs: 10
+      }),
+      new RegExp(formatBotPortConflictMessageDetailed(address.port, { description: "HTTP listener (Contacts)" }).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    );
+  } finally {
+    if (server.listening) {
+      await closeServer(server);
+    }
+    await closeServer(occupied);
+  }
+});
+
+test("createBotRuntime reuses an existing HappyTG bot without starting a second Telegram delivery loop", async () => {
+  const occupied = createHttpServer((req, res) => {
+    res.writeHead(req.url === "/ready" ? 503 : 200, {
+      "content-type": "application/json"
+    });
+    res.end(JSON.stringify({ ok: req.url !== "/ready", service: "bot" }));
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Occupied bot runtime test server did not bind to a TCP port");
+  }
+
+  const telegramCalls: string[] = [];
+  const infoLogs: string[] = [];
+  const runtime = createBotRuntime({}, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+    },
+    port: address.port,
+    reuseProbeWindowMs: 25,
+    reuseProbeIntervalMs: 10,
+    fetchImpl: async (input) => {
+      telegramCalls.push(String(input));
+      return telegramOk(true);
+    },
+    logger: {
+      info(message) {
+        infoLogs.push(message);
+      },
+      warn() {},
+      error() {}
+    }
+  });
+
+  try {
+    const snapshot = await runtime.start();
+
+    assert.equal(snapshot.activeMode, "polling");
+    assert.deepEqual(telegramCalls, []);
+    assert.equal(infoLogs[0], formatBotPortReuseMessage(address.port));
+  } finally {
+    await runtime.stop();
+    await closeServer(occupied);
   }
 });
 

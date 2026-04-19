@@ -1,0 +1,126 @@
+{
+  "taskId": "HTG-2026-04-19-startup-port-proof-loop",
+  "phase": "fresh verify passed",
+  "artifacts": [
+    "raw/pre-fix-worker-dev.txt",
+    "raw/pre-fix-bot-dev.txt",
+    "raw/post-fix-worker-dev.txt",
+    "raw/post-fix-bot-dev.txt",
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/fresh-verify-lint.txt",
+    "raw/fresh-verify-typecheck.txt",
+    "raw/fresh-verify-test.txt",
+    "raw/fresh-verify-happytg-verify.txt",
+    "raw/task-validate.txt"
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "worker-pre-fix-repro",
+      "status": "satisfied",
+      "evidence": [
+        "raw/pre-fix-worker-dev.txt"
+      ]
+    },
+    {
+      "id": "bot-pre-fix-repro",
+      "status": "satisfied",
+      "evidence": [
+        "raw/pre-fix-bot-dev.txt"
+      ]
+    },
+    {
+      "id": "worker-no-raw-eaddrinuse",
+      "status": "satisfied",
+      "evidence": [
+        "apps/worker/src/index.ts",
+        "apps/worker/src/index.test.ts",
+        "raw/post-fix-worker-dev.txt"
+      ]
+    },
+    {
+      "id": "worker-classification-matrix",
+      "status": "satisfied",
+      "evidence": [
+        "apps/worker/src/index.ts",
+        "apps/worker/src/index.test.ts"
+      ]
+    },
+    {
+      "id": "bot-model-proven-before-fix",
+      "status": "satisfied",
+      "evidence": [
+        "spec.md",
+        "packages/bootstrap/src/index.ts",
+        "packages/bootstrap/src/index.test.ts",
+        "docs/bootstrap-doctor.md"
+      ]
+    },
+    {
+      "id": "bot-reuse-vs-conflict-runtime",
+      "status": "satisfied",
+      "evidence": [
+        "apps/bot/src/index.ts",
+        "apps/bot/src/index.test.ts",
+        "raw/post-fix-bot-dev.txt"
+      ]
+    },
+    {
+      "id": "docs-truthful",
+      "status": "satisfied",
+      "evidence": [
+        "docs/quickstart.md",
+        "docs/troubleshooting.md"
+      ]
+    },
+    {
+      "id": "targeted-builder-checks",
+      "status": "satisfied",
+      "evidence": [
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt"
+      ]
+    },
+    {
+      "id": "fresh-repo-verify",
+      "status": "satisfied_with_unrelated_environment_warning",
+      "evidence": [
+        "raw/fresh-verify-lint.txt",
+        "raw/fresh-verify-typecheck.txt",
+        "raw/fresh-verify-test.txt",
+        "raw/fresh-verify-happytg-verify.txt"
+      ]
+    }
+  ],
+  "classifications": [
+    {
+      "area": "worker-startup",
+      "kind": "product_bug",
+      "summary": "The CLI path used bare server.listen with no occupied-port classification and started runtime work before bind success."
+    },
+    {
+      "area": "bot-startup",
+      "kind": "product-bug-against-existing-contract",
+      "summary": "The bot surfaced occupied ports as a generic startup failure even though repo-level bootstrap semantics already model bot as same-service reuse versus conflict."
+    },
+    {
+      "area": "docs",
+      "kind": "truthfulness-gap",
+      "summary": "Quickstart and troubleshooting documented occupied-port guidance for Mini App/API but not yet for Bot/Worker."
+    }
+  ],
+  "freshVerifier": {
+    "role": "manual-fresh-verify",
+    "status": "passed_with_unrelated_environment_warning",
+    "residualRisks": [
+      "Codex websocket 403 fallback-to-HTTP warning remains on this machine and is unrelated to the startup-port fix."
+    ]
+  },
+  "generatedAt": "2026-04-19T22:45:38.5387728+03:00"
+}

@@ -1,0 +1,13 @@
+## pnpm --filter @happytg/worker typecheck
+
+
+> @happytg/worker@0.3.22 typecheck C:\Develop\Projects\HappyTG\apps\worker
+> tsc -p tsconfig.json --noEmit
+
+
+## pnpm --filter @happytg/bot typecheck
+
+
+> @happytg/bot@0.3.22 typecheck C:\Develop\Projects\HappyTG\apps\bot
+> tsc -p tsconfig.json --noEmit
+

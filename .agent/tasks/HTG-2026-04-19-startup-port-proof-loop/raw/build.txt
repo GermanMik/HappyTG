@@ -1,0 +1,13 @@
+## pnpm --filter @happytg/worker build
+
+
+> @happytg/worker@0.3.22 build C:\Develop\Projects\HappyTG\apps\worker
+> tsc -p tsconfig.json
+
+
+## pnpm --filter @happytg/bot build
+
+
+> @happytg/bot@0.3.22 build C:\Develop\Projects\HappyTG\apps\bot
+> tsc -p tsconfig.json
+
