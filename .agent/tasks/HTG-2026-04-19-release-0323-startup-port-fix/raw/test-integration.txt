@@ -1,0 +1,2 @@
+No separate integration-only command exists for this release metadata layer.
+Repo-wide `pnpm test` and the source task validation cover the release gate for this publish step.

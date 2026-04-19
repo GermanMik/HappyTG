@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-19-release-0323-startup-port-fix",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-release-0323-startup-port-fix",
+  "phase": "build",
+  "mode": "proof",
+  "title": "Publish HappyTG 0.3.23 startup port fix release",
+  "acceptanceCriteria": [
+    "All workspace package versions, CHANGELOG.md, and docs/releases/0.3.23.md are aligned at 0.3.23.",
+    "The startup-port fix from HTG-2026-04-19-startup-port-proof-loop remains the canonical product evidence for this release.",
+    "Fresh release validation passes after the metadata bump.",
+    "The release-ready commit is pushed on codex/release-0.3.23-startup-port-fix and merged to main.",
+    "The guarded GitHub Release workflow creates v0.3.23 from the latest main HEAD and the release proof bundle is finalized truthfully."
+  ],
+  "verificationState": "running",
+  "createdAt": "2026-04-19T23:13:26.0727657+03:00",
+  "updatedAt": "2026-04-19T23:13:26.0727657+03:00"
+}
