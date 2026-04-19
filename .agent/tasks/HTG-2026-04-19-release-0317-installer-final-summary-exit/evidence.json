@@ -1,0 +1,24 @@
+{
+  "taskId": "HTG-2026-04-19-release-0317-installer-final-summary-exit",
+  "status": "local_verification_passed",
+  "baseVersion": "0.3.16",
+  "targetVersion": "0.3.17",
+  "branch": "codex/release-0.3.17-installer-final-summary-exit",
+  "sourceTasks": [
+    "HTG-2026-04-19-installer-final-summary-exit"
+  ],
+  "verification": {
+    "releaseCheck": "pass",
+    "sourceTaskValidate": "pass",
+    "releaseTaskValidate": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "test": "pass",
+    "build": "pass",
+    "releaseWorkflow": "pending"
+  },
+  "notes": [
+    "Local release verification is complete and ready for commit/push/merge.",
+    "Publish artifacts will be recorded after the guarded Release workflow completes."
+  ]
+}

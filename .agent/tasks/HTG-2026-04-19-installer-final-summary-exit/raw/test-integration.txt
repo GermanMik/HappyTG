@@ -1,0 +1,25 @@
+✔ executeHappyTG delegates install requests through the CLI wrapper without changing the installer result contract (6.4886ms)
+✔ runHappyTGInstall releases stdin after ENTER closes the final summary (111.0593ms)
+✔ waitForEnter resolves when ENTER close is pressed on the final screen (2.2636ms)
+✔ waitForEnter does not render the same final screen twice when ENTER closes it (0.3808ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 459.7622
+✔ runHappyTGInstall semantically dedupes repeated setup next steps and compresses repeated post-check warning sets (24.8633ms)
+✔ runHappyTGInstall removes contradictory start commands when setup already says to reuse the running stack (6.8316ms)
+✔ runHappyTGInstall refreshes the pairing code automatically when an existing local host is still registering (11.7062ms)
+✔ runHappyTGInstall reuses an already paired existing host without requesting a fresh pairing code (10.5258ms)
+✔ runHappyTGInstall renders an honest manual fallback when the existing-host probe is unavailable (9.7747ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 369.1872

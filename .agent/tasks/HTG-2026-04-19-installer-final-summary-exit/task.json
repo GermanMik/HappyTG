@@ -1,0 +1,20 @@
+{
+  "id": "HTG-2026-04-19-installer-final-summary-exit",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-installer-final-summary-exit",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Installer pairing final summary and exit regressions",
+  "acceptanceCriteria": [
+    "Live installer finalization no longer shows contradictory manual pairing fallback when a host can already be truthfully classified as reused or auto-refreshed.",
+    "Existing paired or active hosts render a reuse-only summary with no manual `pnpm daemon:pair` step.",
+    "Existing unpaired/registering hosts render auto-refresh guidance with a concrete `/pair CODE` handoff when prerequisites are ready.",
+    "Probe/request failures remain honest and actionable, with blocked/manual fallback only when automation truly cannot proceed safely.",
+    "Final summary closes on Enter and the installer process can return the shell prompt.",
+    "Deterministic regression coverage exists for reuse, refresh, manual fallback, final-screen close, and no unresolved wait path after the final summary."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T00:00:00.000Z",
+  "updatedAt": "2026-04-19T14:45:00+03:00"
+}

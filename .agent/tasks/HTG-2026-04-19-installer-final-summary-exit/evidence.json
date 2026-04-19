@@ -1,0 +1,42 @@
+{
+  "taskId": "HTG-2026-04-19-installer-final-summary-exit",
+  "status": "passed",
+  "phase": "fresh verify passed",
+  "commands": [
+    {
+      "name": "build",
+      "command": "pnpm --filter @happytg/bootstrap run build",
+      "result": "passed",
+      "raw": "raw/build.txt"
+    },
+    {
+      "name": "typecheck",
+      "command": "pnpm --filter @happytg/bootstrap run typecheck",
+      "result": "passed",
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "name": "lint",
+      "command": "pnpm --filter @happytg/bootstrap run lint",
+      "result": "passed",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "name": "targeted-installer-regressions",
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern \"delegates install requests through the CLI wrapper|releases stdin after ENTER closes the final summary|waitForEnter resolves|does not render the same final screen twice\" src/cli.test.ts src/install.test.ts src/install.runtime.test.ts && pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern \"refreshes the pairing code automatically|reuses an already paired existing host|renders an honest manual fallback|semantically dedupes repeated setup next steps|removes contradictory start commands\" src/install.runtime.test.ts",
+      "result": "passed",
+      "raw": "raw/test-integration.txt"
+    },
+    {
+      "name": "full-bootstrap-tests",
+      "command": "pnpm --filter @happytg/bootstrap run test",
+      "result": "passed",
+      "raw": "raw/test-unit.txt"
+    }
+  ],
+  "notes": [
+    "Manual-fallback finalization now replaces bootstrap placeholder pairing items with truthful fallback messaging.",
+    "The shared TUI keypress loop now resumes stdin on entry and pauses stdin on exit so the final summary does not leave the process waiting on input.",
+    "The CLI layer now has a dedicated install-wrapper regression so proof does not rely only on code inspection for `executeHappyTG`."
+  ]
+}
