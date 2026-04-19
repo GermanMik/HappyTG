@@ -1,6 +1,6 @@
 {
   "taskId": "HTG-2026-04-19-release-0316-installer-pairing-auto-handoff",
-  "status": "workflow_pending",
+  "status": "released",
   "baseVersion": "0.3.15",
   "targetVersion": "0.3.16",
   "branch": "main",
@@ -14,9 +14,20 @@
     "test": "pass",
     "build": "pass",
     "bootstrapTest": "pass",
-    "apiTest": "pass"
+    "apiTest": "pass",
+    "releaseWorkflow": "pass"
   },
   "notes": [
-    "GitHub Release workflow evidence is pending."
-  ]
+    "GitHub Release workflow 24625972276 succeeded on main commit 745a6406a8d0ea68a1f7e0261a147ccacd5d2f0b.",
+    "GitHub published HappyTG 0.3.16 at https://github.com/GermanMik/HappyTG/releases/tag/v0.3.16."
+  ],
+  "release": {
+    "tag": "v0.3.16",
+    "name": "HappyTG 0.3.16",
+    "url": "https://github.com/GermanMik/HappyTG/releases/tag/v0.3.16",
+    "publishedAt": "2026-04-19T09:34:15Z",
+    "workflowRunId": 24625972276,
+    "workflowUrl": "https://github.com/GermanMik/HappyTG/actions/runs/24625972276",
+    "targetCommit": "745a6406a8d0ea68a1f7e0261a147ccacd5d2f0b"
+  }
 }

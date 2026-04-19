@@ -24,4 +24,5 @@
 
 ## Notes
 
-- Fresh release publication evidence is still pending GitHub Actions `Release` workflow dispatch and completion.
+- GitHub Actions `Release` workflow `24625972276` completed successfully against `main` commit `745a6406a8d0ea68a1f7e0261a147ccacd5d2f0b`.
+- GitHub published `HappyTG 0.3.16` at `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.16`.

@@ -1,5 +1,5 @@
 {
   "taskId": "HTG-2026-04-19-release-0316-installer-pairing-auto-handoff",
-  "status": "pending_workflow",
-  "summary": "Release 0.3.16 metadata and release-scoped fixes are ready locally. Fresh GitHub Release workflow execution is still required before the task can be marked complete."
+  "status": "complete",
+  "summary": "HappyTG 0.3.16 was published successfully from main commit 745a6406a8d0ea68a1f7e0261a147ccacd5d2f0b after the guarded GitHub Release workflow re-ran release metadata validation, typecheck, test, and build."
 }
