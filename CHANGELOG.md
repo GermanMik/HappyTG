@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.17
+
+### Fixed
+
+- Installer final-summary regression coverage now explicitly proves that the interactive flow releases stdin after `ENTER close`, so the shell-prompt return path is locked not only at the low-level `waitForEnter()` helper but also in the full `runHappyTGInstall` runtime harness.
+- Existing-host pairing fallback coverage now stays honest across reuse, refresh, and manual-fallback branches, including the request-failed path that still needs a real manual `pnpm daemon:pair` handoff when the backend probe or code request cannot complete safely.
+
+### Changed
+
+- `executeHappyTG()` now exposes a narrow test-time runtime override seam, and `cli.test.ts` uses it to prove the `pnpm happytg install` wrapper preserves parsed install options, bootstrap-check delegation, and the installer result contract without mutating `tuiHandled`.
+- Release and proof artifacts now include a completed installer final-summary/exit bundle plus dedicated CLI/runtime/TUI regression evidence for the post-`0.3.16` follow-up hardening.
+
 ## v0.3.16
 
 ### Fixed

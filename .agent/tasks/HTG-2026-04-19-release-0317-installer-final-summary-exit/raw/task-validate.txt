@@ -1,0 +1,9 @@
+
+> happytg@0.3.17 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-19-release-0317-installer-final-summary-exit"
+
+Task: HTG-2026-04-19-release-0317-installer-final-summary-exit
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-19-release-0317-installer-final-summary-exit
+Validation: missing raw\build.txt, raw\test-unit.txt, raw\test-integration.txt, raw\lint.txt
+Phase: frozen
+Verification: not_started

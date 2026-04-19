@@ -472,16 +472,25 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
   return "Unsupported result";
 }
 
-export async function executeHappyTG(argv: string[], cwd = process.cwd()): Promise<BootstrapReport | InstallResult | TaskBundle | TaskStatusResponse> {
+export async function executeHappyTG(
+  argv: string[],
+  cwd = process.cwd(),
+  runtime?: {
+    runBootstrapCommandImpl?: typeof runBootstrapCommand;
+    runHappyTGInstallImpl?: typeof runHappyTGInstall;
+  }
+): Promise<BootstrapReport | InstallResult | TaskBundle | TaskStatusResponse> {
   const request = parseHappyTGArgs(argv, cwd);
+  const runBootstrapCommandImpl = runtime?.runBootstrapCommandImpl ?? runBootstrapCommand;
+  const runHappyTGInstallImpl = runtime?.runHappyTGInstallImpl ?? runHappyTGInstall;
 
   switch (request.kind) {
     case "bootstrap":
-      return runBootstrapCommand(request.command);
+      return runBootstrapCommandImpl(request.command);
     case "install":
       try {
-        return await runHappyTGInstall(request.options, {
-          runBootstrapCheck: runBootstrapCommand
+        return await runHappyTGInstallImpl(request.options, {
+          runBootstrapCheck: runBootstrapCommandImpl
         });
       } catch (error) {
         return createInstallFailureResult({

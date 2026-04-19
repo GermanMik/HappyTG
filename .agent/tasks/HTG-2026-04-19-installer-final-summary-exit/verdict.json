@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-19-installer-final-summary-exit",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "agent": "Codex",
+    "runId": "verify-2026-04-19-final"
+  },
+  "summary": "Installer finalization now renders truthful reuse, refresh, and manual-fallback pairing outcomes, and the shared TUI wait path releases stdin so the interactive installer can close cleanly after the final summary.",
+  "checks": [
+    {
+      "name": "pairing-finalization-branches",
+      "ok": true,
+      "detail": "Fresh runtime coverage proves existing-host refresh, existing-host reuse, request-failed fallback, and probe-unavailable fallback all render the expected finalization items without the stale placeholder manual guidance."
+    },
+    {
+      "name": "final-summary-exit",
+      "ok": true,
+      "detail": "`readKeypress()` now resumes stdin before capture and pauses stdin during cleanup, while unit and interactive runtime tests confirm `ENTER close` resolves and leaves stdin paused with no lingering keypress listener."
+    },
+    {
+      "name": "fresh-verification",
+      "ok": true,
+      "detail": "`pnpm --filter @happytg/bootstrap run build`, `typecheck`, `lint`, the targeted CLI/runtime/TUI regression commands, and `pnpm --filter @happytg/bootstrap run test` all passed and are recorded in the raw evidence bundle."
+    },
+    {
+      "name": "proof-bundle-completeness",
+      "ok": true,
+      "detail": "The task bundle now includes spec.md, evidence.md, evidence.json, problems.md, task.json, verdict.json, and raw verification artifacts, with task metadata set to phase complete and verification passed."
+    },
+    {
+      "name": "cli-wrapper-coverage",
+      "ok": true,
+      "detail": "`executeHappyTG` now has a dedicated regression proving the CLI install wrapper delegates to the installer without changing the install result contract or `tuiHandled` behavior."
+    }
+  ],
+  "residualRisks": [
+    "No proof run exercised the exact operator environment with a live Telegram/API backend and a real console, so final confidence still comes from deterministic CLI/runtime/TUI coverage rather than an end-to-end live install reproduction."
+  ],
+  "generatedAt": "2026-04-19T14:45:00+03:00"
+}

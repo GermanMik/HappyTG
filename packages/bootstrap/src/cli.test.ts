@@ -139,6 +139,127 @@ test("executeHappyTG returns a structured install failure when installer throws 
   }
 });
 
+test("executeHappyTG delegates install requests through the CLI wrapper without changing the installer result contract", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-cli-install-wrapper-"));
+
+  try {
+    let receivedOptions: InstallResult["reportJson"] | undefined;
+    let bootstrapCheckCalls = 0;
+    const expected: InstallResult = {
+      kind: "install",
+      status: "warn",
+      outcome: "success-with-warnings",
+      interactive: true,
+      tuiHandled: true,
+      repo: {
+        mode: "current",
+        path: path.join(tempDir, "HappyTG"),
+        sync: "reused",
+        dirtyStrategy: "keep",
+        source: "local",
+        repoUrl: "https://github.com/GermanMik/HappyTG.git",
+        attempts: 0,
+        fallbackUsed: false
+      },
+      environment: {
+        platform: {
+          platform: "win32",
+          arch: "x64",
+          shell: "powershell.exe",
+          linuxFamily: "unknown",
+          systemPackageManager: "winget",
+          repoPackageManager: "pnpm",
+          isInteractiveTerminal: true
+        },
+        dependencies: []
+      },
+      telegram: {
+        configured: true,
+        allowedUserIds: ["1001"]
+      },
+      background: {
+        mode: "manual",
+        status: "manual",
+        detail: "After pairing, start the daemon with `pnpm dev:daemon`."
+      },
+      finalization: {
+        items: [
+          {
+            id: "request-pair-code",
+            kind: "manual",
+            message: "If `pnpm daemon:pair` prints a code, send the returned `/pair CODE` command to @happytg_bot."
+          }
+        ]
+      },
+      postChecks: [],
+      steps: [],
+      nextSteps: ["If `pnpm daemon:pair` prints a code, send the returned `/pair CODE` command to @happytg_bot."],
+      warnings: [],
+      reportJson: {
+        marker: "install-wrapper-pass-through"
+      }
+    };
+
+    const result = await executeHappyTG([
+      "install",
+      "--repo-mode",
+      "current",
+      "--repo-dir",
+      "./HappyTG",
+      "--telegram-bot-token",
+      "123456:abcdefghijklmnopqrstuvwx",
+      "--allowed-user",
+      "1001",
+      "--background",
+      "manual",
+      "--post-check",
+      "setup"
+    ], tempDir, {
+      runBootstrapCommandImpl: async (command) => {
+        bootstrapCheckCalls += 1;
+        return {
+          id: `btr_${command}`,
+          hostFingerprint: "fp",
+          command,
+          status: "pass",
+          profileRecommendation: "recommended",
+          findings: [],
+          planPreview: [],
+          reportJson: {},
+          createdAt: "2026-04-19T00:00:00.000Z"
+        };
+      },
+      runHappyTGInstallImpl: async (options, input) => {
+        receivedOptions = {
+          repoMode: options.repoMode,
+          repoDir: options.repoDir,
+          backgroundMode: options.backgroundMode,
+          postChecks: options.postChecks,
+          telegramAllowedUserIds: options.telegramAllowedUserIds
+        };
+        await input?.runBootstrapCheck?.("setup", {
+          cwd: options.repoDir,
+          env: process.env,
+          platform: process.platform
+        });
+        return expected;
+      }
+    });
+
+    assert.deepEqual(result, expected);
+    assert.deepEqual(receivedOptions, {
+      repoMode: "current",
+      repoDir: path.resolve(tempDir, "HappyTG"),
+      backgroundMode: "manual",
+      postChecks: ["setup"],
+      telegramAllowedUserIds: ["1001"]
+    });
+    assert.equal(bootstrapCheckCalls, 1);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("renderText returns a compact bootstrap summary with preflight and diagnostics hints", () => {
   const output = renderText({
     id: "btr_1",
