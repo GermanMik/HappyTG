@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-19-telegram-start-still-silent",
+  "status": "complete",
+  "summary": "The current `main` branch still chose Telegram polling correctly, but `/start` remained silent on this Windows host because polling used Node HTTPS only and Node/undici timed out to `api.telegram.org` while PowerShell Bot API access still worked. `apps/bot` now falls back to Windows PowerShell for transport-level `deleteWebhook`, `getUpdates`, and `getWebhookInfo` failures, with targeted tests, passing bot verify commands, and a live startup proof on the current machine."
+}

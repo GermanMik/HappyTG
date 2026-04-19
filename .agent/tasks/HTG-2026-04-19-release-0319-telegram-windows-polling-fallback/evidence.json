@@ -1,0 +1,42 @@
+{
+  "taskId": "HTG-2026-04-19-release-0319-telegram-windows-polling-fallback",
+  "status": "pending_release",
+  "baseVersion": "0.3.18",
+  "targetVersion": "0.3.19",
+  "branch": "codex/release-0.3.19-telegram-windows-polling-fallback",
+  "sourceTasks": [
+    "HTG-2026-04-19-telegram-start-still-silent"
+  ],
+  "verification": {
+    "botTest": "pass",
+    "botTypecheck": "pass",
+    "botBuild": "pass",
+    "sourceTaskValidate": "pass",
+    "releaseCheck": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "test": "pass",
+    "build": "pass",
+    "doctor": "env_blocked",
+    "verify": "env_blocked"
+  },
+  "notes": [
+    "The clean release worktree has no .env or TELEGRAM_BOT_TOKEN, so doctor/verify report expected local-environment blockers rather than release-code regressions.",
+    "PR merge metadata, Release workflow metadata, and GitHub release metadata will be added after publication."
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/spec.md",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/evidence.md",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/verdict.json",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/release-check.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/source-task-validate.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/task-validate.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/lint.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/test.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/build.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/doctor.txt",
+    ".agent/tasks/HTG-2026-04-19-release-0319-telegram-windows-polling-fallback/raw/verify.txt"
+  ],
+  "generatedAt": "2026-04-19T19:56:33Z"
+}

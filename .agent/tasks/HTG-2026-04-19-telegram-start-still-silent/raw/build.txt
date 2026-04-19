@@ -1,0 +1,4 @@
+
+> @happytg/bot@0.3.18 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\bot
+> tsc -p tsconfig.json
+

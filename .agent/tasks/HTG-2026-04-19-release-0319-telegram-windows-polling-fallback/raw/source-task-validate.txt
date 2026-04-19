@@ -1,0 +1,9 @@
+
+> happytg@0.3.19 happytg C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-19-telegram-start-still-silent"
+
+Task: HTG-2026-04-19-telegram-start-still-silent
+Bundle: C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\.agent\tasks\HTG-2026-04-19-telegram-start-still-silent
+Validation: ok
+Phase: complete
+Verification: passed

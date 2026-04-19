@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.3.19
+
+### Fixed
+
+- Local Telegram polling on Windows no longer stays silently degraded when the machine can reach Telegram Bot API through PowerShell but Node/undici times out. `apps/bot` now retries transport-level `deleteWebhook` and `getUpdates` failures through a Windows PowerShell Bot API fallback, so `/start` and other inbound commands can keep working in local dev on affected hosts.
+- Webhook inspection no longer reports a false degraded state on the same class of Windows hosts. `getWebhookInfo` now uses the same bounded fallback path, while real Telegram HTTP/API rejections still stay truthful and are not masked as success.
+- When both Node HTTPS and the Windows PowerShell Bot API fallback fail, bot readiness and logs now report actionable transport diagnostics instead of a raw `fetch failed`.
+
+### Changed
+
+- Release metadata is aligned at `0.3.19` across the workspace for the Windows Telegram polling fallback follow-up release.
+
 ## v0.3.18
 
 ### Fixed

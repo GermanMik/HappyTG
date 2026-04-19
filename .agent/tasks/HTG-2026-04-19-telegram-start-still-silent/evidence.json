@@ -1,0 +1,88 @@
+{
+  "taskId": "HTG-2026-04-19-telegram-start-still-silent",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "passed",
+      "summary": "Repo-local evidence proves the current runtime still selects polling on main and documents the conditions required for Telegram update delivery.",
+      "artifacts": [
+        "raw/init-analysis.txt",
+        "raw/ready-running-process.txt"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "passed",
+      "summary": "The silent `/start` symptom was traced to a Windows-specific Node HTTPS timeout to Telegram Bot API, while PowerShell Bot API access with the same token remains healthy.",
+      "artifacts": [
+        "raw/node-telegram-fetch.txt",
+        "raw/powershell-telegram-fetch.txt"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "passed",
+      "summary": "The runtime fix is minimal and bounded to transport-level Telegram API fallback, preserving explicit `auto|polling|webhook` delivery semantics.",
+      "artifacts": [
+        "apps/bot/src/index.ts"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "passed",
+      "summary": "Regression coverage proves polling can recover via Windows PowerShell fallback, while honest degraded state remains when both transports fail.",
+      "artifacts": [
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "passed",
+      "summary": "A live runtime check on this host shows the new code starting in `polling/ready` and using the Windows PowerShell Bot API fallback during startup.",
+      "artifacts": [
+        "raw/live-runtime.txt",
+        "raw/typecheck.txt",
+        "raw/build.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "raw/init-analysis.txt",
+      "kind": "analysis"
+    },
+    {
+      "path": "raw/ready-running-process.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/node-telegram-fetch.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/powershell-telegram-fetch.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/live-runtime.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/test-unit.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/typecheck.txt",
+      "kind": "typecheck"
+    },
+    {
+      "path": "raw/build.txt",
+      "kind": "build"
+    },
+    {
+      "path": "raw/test-integration.txt",
+      "kind": "validation"
+    }
+  ],
+  "generatedAt": "2026-04-19T16:28:50.0355752Z"
+}

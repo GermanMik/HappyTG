@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-19-telegram-start-still-silent",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-telegram-start-still-silent",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Diagnose why /start is still silent on local main",
+  "acceptanceCriteria": [
+    "Repo-local evidence shows how the current bot runtime on main chooses Telegram delivery mode and what conditions are required for polling to actually consume updates.",
+    "The investigation proves whether the user symptom is caused by code regression, local configuration, launch/orchestration gap, Telegram API state, or another deterministic root cause.",
+    "If a repo bug exists, the fix is minimal, bounded, and preserves the explicit delivery-mode model introduced in 0.3.18.",
+    "If no repo bug exists, diagnostics, logs, docs, or readiness messaging are improved so the silent-failure state stops being misleading.",
+    "Regression coverage or proof artifacts are added for the newly identified root cause."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T00:00:00.000Z",
+  "updatedAt": "2026-04-19T19:28:42+03:00"
+}
