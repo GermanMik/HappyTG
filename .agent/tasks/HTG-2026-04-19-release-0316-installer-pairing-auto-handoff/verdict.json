@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-19-release-0316-installer-pairing-auto-handoff",
+  "status": "pending_workflow",
+  "summary": "Release 0.3.16 metadata and release-scoped fixes are ready locally. Fresh GitHub Release workflow execution is still required before the task can be marked complete."
+}

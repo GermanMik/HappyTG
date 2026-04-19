@@ -299,12 +299,24 @@ test("waitForEnter resolves when ENTER close is pressed on the final screen", as
   const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
   const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
   let rawMode = false;
+  let resumeCalls = 0;
+  let pauseCalls = 0;
   stdin.isTTY = true;
   stdout.isTTY = true;
   stdin.setRawMode = ((value: boolean) => {
     rawMode = value;
     return stdin;
   }) as typeof stdin.setRawMode;
+  const originalResume = stdin.resume.bind(stdin);
+  const originalPause = stdin.pause.bind(stdin);
+  stdin.resume = (() => {
+    resumeCalls += 1;
+    return originalResume();
+  }) as typeof stdin.resume;
+  stdin.pause = (() => {
+    pauseCalls += 1;
+    return originalPause();
+  }) as typeof stdin.pause;
 
   const wait = waitForEnter(stdin, stdout, "ENTER close\n");
   queueMicrotask(() => {
@@ -313,6 +325,9 @@ test("waitForEnter resolves when ENTER close is pressed on the final screen", as
 
   await wait;
   assert.equal(rawMode, false);
+  assert.ok(resumeCalls >= 1);
+  assert.ok(pauseCalls >= 1);
+  assert.equal(stdin.isPaused(), true);
 });
 
 test("waitForEnter does not render the same final screen twice when ENTER closes it", async () => {

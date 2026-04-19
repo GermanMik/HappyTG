@@ -1,6 +1,6 @@
 {
   "name": "@happytg/host-daemon",
-  "version": "0.3.15",
+  "version": "0.3.16",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
@@ -15,6 +15,3 @@
     "test": "tsx --test src/*.test.ts"
   }
 }
-
-
-

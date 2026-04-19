@@ -1,0 +1,22 @@
+{
+  "taskId": "HTG-2026-04-19-release-0316-installer-pairing-auto-handoff",
+  "status": "workflow_pending",
+  "baseVersion": "0.3.15",
+  "targetVersion": "0.3.16",
+  "branch": "main",
+  "sourceTasks": [
+    "HTG-2026-04-19-installer-pairing-auto-handoff"
+  ],
+  "verification": {
+    "releaseCheck": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "test": "pass",
+    "build": "pass",
+    "bootstrapTest": "pass",
+    "apiTest": "pass"
+  },
+  "notes": [
+    "GitHub Release workflow evidence is pending."
+  ]
+}

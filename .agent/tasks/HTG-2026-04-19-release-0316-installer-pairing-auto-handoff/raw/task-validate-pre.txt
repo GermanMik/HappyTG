@@ -1,0 +1,9 @@
+
+> happytg@0.3.16 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-19-release-0316-installer-pairing-auto-handoff"
+
+Task: HTG-2026-04-19-release-0316-installer-pairing-auto-handoff
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-19-release-0316-installer-pairing-auto-handoff
+Validation: ok
+Phase: spec_frozen
+Verification: not_started

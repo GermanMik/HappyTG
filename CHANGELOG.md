@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## v0.3.16
+
+### Fixed
+
+- Installer pairing finalization no longer treats any existing local `hostId` as a blind reuse/manual fallback case. It now probes the HappyTG backend to distinguish already paired or active hosts from merely registered hosts before deciding whether to reuse the host or refresh the pairing code.
+- When prerequisites are ready and an existing host is still `registering`, `pnpm happytg install` now auto-requests a fresh pairing code during install and renders the concrete Telegram handoff instead of requiring a separate manual `pnpm daemon:pair` step.
+- Existing paired or active hosts now stay on a truthful reuse path without emitting a new pairing code, while invalid-token and probe-unavailable paths keep honest blocked/manual diagnostics.
+- Installer finalization no longer adds contradictory daemon-start follow-up when pairing is still blocked, and regression coverage now locks the no-state auto-request, existing-host refresh, existing-host reuse, invalid-token block, and probe-unavailable manual-fallback branches.
+- Interactive installer final summary now closes cleanly on `Enter`, releases stdin, and lets the shell prompt return instead of hanging on the closing screen.
+
+### Changed
+
+- Release metadata is aligned at `0.3.16` across the workspace for the installer pairing handoff automation release.
+- API startup regression coverage now tolerates slower transient port handoffs on this host, keeping the guarded release test gate stable without changing runtime behavior.
+
 ## v0.3.15
 
 ### Fixed

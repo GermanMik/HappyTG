@@ -762,6 +762,9 @@ async function readKeypress(
 ): Promise<void> {
   readline.emitKeypressEvents(stdin);
   const canRawMode = stdin.isTTY && typeof stdin.setRawMode === "function";
+  if (typeof stdin.resume === "function") {
+    stdin.resume();
+  }
 
   if (canRawMode) {
     stdin.setRawMode(true);
@@ -791,6 +794,9 @@ async function readKeypress(
   }).finally(() => {
     if (canRawMode) {
       stdin.setRawMode(false);
+    }
+    if (typeof stdin.pause === "function") {
+      stdin.pause();
     }
   });
 }

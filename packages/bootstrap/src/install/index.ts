@@ -440,6 +440,27 @@ function removeAutomationItems(items: AutomationItem[], ...ids: string[]): void 
   }
 }
 
+function manualPairingFallbackRequestMessage(input: {
+  reason: "probe-unavailable" | "request-failed";
+  hasExistingHost: boolean;
+}): string {
+  if (input.reason === "probe-unavailable" && input.hasExistingHost) {
+    return "The installer could not confirm whether the existing local host is already paired. If this host still needs pairing, request a fresh code manually with `pnpm daemon:pair`.";
+  }
+
+  if (input.hasExistingHost) {
+    return "The installer could not refresh the existing host pairing code automatically. When the HappyTG API is reachable, request a fresh code manually with `pnpm daemon:pair`.";
+  }
+
+  return "The installer could not request a pairing code automatically. When the HappyTG API is reachable, request one manually with `pnpm daemon:pair`.";
+}
+
+function manualPairingFallbackHandoffMessage(pairTarget: string): string {
+  return pairTarget.toLowerCase().includes("telegram")
+    ? "If `pnpm daemon:pair` prints a code, send the returned `/pair CODE` command in Telegram."
+    : `If \`pnpm daemon:pair\` prints a code, send the returned \`/pair CODE\` command to ${pairTarget}.`;
+}
+
 async function buildInstallFinalizationItems(input: {
   background: InstallResult["background"];
   fetchImpl?: typeof fetch;
@@ -537,21 +558,28 @@ async function buildInstallFinalizationItems(input: {
         });
         break;
       case "manual-fallback":
-        if (pairingDecision.reason === "probe-unavailable" && pairingDecision.daemonState.hostId) {
-          pushAutomationItem(items, {
-            id: "pairing-auto-request",
-            kind: "warning",
-            message: "Existing host daemon state was detected locally, but the installer could not confirm its pairing state automatically. Run `pnpm daemon:pair` manually if this host still needs pairing."
-          });
-        } else {
-          pushAutomationItem(items, {
-            id: "pairing-auto-request",
-            kind: "warning",
-            message: pairingDecision.daemonState.hostId
-              ? "Automatic pairing-code refresh did not complete. Run `pnpm daemon:pair` manually if the HappyTG API is reachable."
-              : "Automatic pairing-code request did not complete. Run `pnpm daemon:pair` manually if the HappyTG API is reachable."
-          });
-        }
+        pushAutomationItem(items, {
+          id: "request-pair-code",
+          kind: "manual",
+          message: manualPairingFallbackRequestMessage({
+            reason: pairingDecision.reason,
+            hasExistingHost: Boolean(pairingDecision.daemonState.hostId)
+          })
+        });
+        pushAutomationItem(items, {
+          id: "complete-pairing",
+          kind: "manual",
+          message: manualPairingFallbackHandoffMessage(input.pairTarget)
+        });
+        pushAutomationItem(items, {
+          id: "pairing-auto-request",
+          kind: "warning",
+          message: pairingDecision.reason === "probe-unavailable" && pairingDecision.daemonState.hostId
+            ? "Existing host daemon state was detected locally, but the installer could not confirm its pairing state automatically."
+            : pairingDecision.daemonState.hostId
+              ? "Automatic pairing-code refresh did not complete."
+              : "Automatic pairing-code request did not complete."
+        });
         break;
       case "not-required":
       default:
@@ -564,7 +592,9 @@ async function buildInstallFinalizationItems(input: {
     removeAutomationItems(items, "complete-pairing", "start-daemon");
   }
 
-  const pairingPending = !pairingBlocked && items.some((item) => item.id === "complete-pairing");
+  const pairingPending = !pairingBlocked
+    && items.some((item) => item.id === "complete-pairing"
+      || (item.id === "request-pair-code" && item.kind === "manual"));
 
   if (input.background.status === "configured") {
     removeAutomationItems(items, "start-daemon");

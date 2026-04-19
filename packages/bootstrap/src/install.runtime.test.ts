@@ -1352,6 +1352,166 @@ test("runHappyTGInstall interactive Telegram form starts blank even when draft a
   }
 });
 
+test("runHappyTGInstall releases stdin after ENTER closes the final summary", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-final-summary-exit-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const transcript: string[] = [];
+  let pauseCalls = 0;
+  let resumeCalls = 0;
+
+  const stdin = new PassThrough() as PassThrough & NodeJS.ReadStream & { setRawMode: (value: boolean) => void; isTTY: boolean };
+  const stdout = new PassThrough() as PassThrough & NodeJS.WriteStream & { isTTY: boolean };
+  stdin.isTTY = true;
+  stdout.isTTY = true;
+  stdin.setRawMode = ((_: boolean) => stdin) as typeof stdin.setRawMode;
+  const originalPause = stdin.pause.bind(stdin);
+  const originalResume = stdin.resume.bind(stdin);
+  stdin.pause = (() => {
+    pauseCalls += 1;
+    return originalPause();
+  }) as typeof stdin.pause;
+  stdin.resume = (() => {
+    resumeCalls += 1;
+    return originalResume();
+  }) as typeof stdin.resume;
+  stdout.on("data", (chunk) => {
+    transcript.push(String(chunk));
+  });
+
+  const emitKeypress = async (chunk: string, key: { name?: string; ctrl?: boolean; meta?: boolean } = {}) => {
+    await new Promise((resolve) => setImmediate(resolve));
+    stdin.emit("keypress", chunk, key);
+  };
+  const waitForOutput = async (pattern: string | RegExp) => {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < 5000) {
+      const rendered = transcript.join("");
+      const matched = typeof pattern === "string"
+        ? rendered.includes(pattern)
+        : pattern.test(rendered);
+      if (matched) {
+        return rendered;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    throw new Error(`Timed out waiting for ${pattern.toString()}`);
+  };
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(
+      path.join(repoPath, ".env.example"),
+      [
+        "TELEGRAM_BOT_TOKEN=",
+        "TELEGRAM_ALLOWED_USER_IDS=",
+        "TELEGRAM_HOME_CHANNEL=",
+        "TELEGRAM_BOT_USERNAME="
+      ].join("\n"),
+      "utf8"
+    );
+
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: [],
+      backgroundMode: "skip",
+      postChecks: []
+    }, {
+      stdin,
+      stdout,
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: {
+            ...baseEnvironment().platform,
+            isInteractiveTerminal: true
+          }
+        }),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: false,
+          changed: false,
+          addedKeys: [],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background launcher setup was skipped."
+        })
+      }
+    });
+
+    await waitForOutput("Welcome / Preflight");
+    await emitKeypress("\r", { name: "enter" });
+    await waitForOutput("Repo Mode");
+    await emitKeypress("\r", { name: "enter" });
+    await waitForOutput("Telegram Setup");
+    await emitKeypress("", { name: "down" });
+    await emitKeypress("", { name: "down" });
+    await emitKeypress("", { name: "down" });
+    await emitKeypress("\r", { name: "enter" });
+    await waitForOutput("Background Run Mode");
+    await emitKeypress("\r", { name: "enter" });
+    await waitForOutput("Post-Install Checks");
+    await emitKeypress("\r", { name: "enter" });
+    await waitForOutput("Final Summary");
+    await emitKeypress("\r", { name: "enter" });
+
+    const result = await install;
+    assert.equal(result.status, "pass");
+    assert.ok(resumeCalls >= 1);
+    assert.ok(pauseCalls >= 1);
+    assert.equal(stdin.isPaused(), true);
+    assert.equal(stdin.listenerCount("keypress"), 0);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("runHappyTGInstall interactive port preflight offers three suggested ports and saves the selected override", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-port-suggested-"));
   const repoPath = path.join(tempDir, "HappyTG");
@@ -2830,8 +2990,14 @@ test("runHappyTGInstall semantically dedupes repeated setup next steps and compr
 
     assert.equal(result.nextSteps.some((step) => step === "pnpm dev"), false);
     assert.equal(result.nextSteps.filter((step) => step === "Start repo services: `pnpm dev`.").length, 1);
-    assert.equal(result.nextSteps.filter((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`.").length, 1);
-    assert.equal(result.nextSteps.filter((step) => /Send `\/pair <CODE>`/u.test(step)).length, 1);
+    assert.equal(
+      result.nextSteps.filter((step) => step === "The installer could not request a pairing code automatically. When the HappyTG API is reachable, request one manually with `pnpm daemon:pair`.").length,
+      1
+    );
+    assert.equal(
+      result.nextSteps.filter((step) => step === "If `pnpm daemon:pair` prints a code, send the returned `/pair CODE` command to @happytg_bot.").length,
+      1
+    );
     assert.equal(result.finalization?.items.filter((item) => item.id === "start-repo-services" && item.kind === "manual").length, 1);
     assert.equal(result.finalization?.items.filter((item) => item.id === "request-pair-code" && item.kind === "manual").length, 1);
     assert.equal(result.finalization?.items.filter((item) => item.id === "pairing-auto-request" && item.kind === "warning").length, 1);
@@ -2975,7 +3141,10 @@ test("runHappyTGInstall removes contradictory start commands when setup already 
     });
 
     assert.equal(result.nextSteps.includes("pnpm dev"), false);
-    assert.equal(result.nextSteps.filter((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`.").length, 1);
+    assert.equal(
+      result.nextSteps.filter((step) => step === "The installer could not request a pairing code automatically. When the HappyTG API is reachable, request one manually with `pnpm daemon:pair`.").length,
+      1
+    );
     assert.equal(result.finalization?.items.filter((item) => item.id === "shared-infra-ready" && item.kind === "reuse").length, 1);
     assert.equal(result.finalization?.items.filter((item) => item.id === "running-stack-reuse" && item.kind === "reuse").length, 1);
     assert.equal(result.finalization?.items.some((item) => item.id === "start-repo-services"), false);
@@ -3483,7 +3652,7 @@ test("runHappyTGInstall keeps pairing blocked and skips code requests when Teleg
   }
 });
 
-test("runHappyTGInstall keeps an existing-host pairing handoff manual when the backend probe is unavailable", async () => {
+test("runHappyTGInstall renders an honest manual fallback when the existing-host probe is unavailable", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-probe-unavailable-"));
   const repoPath = path.join(tempDir, "HappyTG");
   const stateDir = path.join(tempDir, ".happytg-state");
@@ -3603,11 +3772,27 @@ test("runHappyTGInstall keeps an existing-host pairing handoff manual when the b
 
     assert.equal(daemonPairCalls, 0);
     assert.equal(result.finalization?.items.find((item) => item.id === "request-pair-code")?.kind, "manual");
-    assert.equal(result.finalization?.items.find((item) => item.id === "complete-pairing")?.message, "Send `/pair <CODE>` to @happytg_bot.");
+    assert.equal(
+      result.finalization?.items.find((item) => item.id === "request-pair-code")?.message,
+      "The installer could not confirm whether the existing local host is already paired. If this host still needs pairing, request a fresh code manually with `pnpm daemon:pair`."
+    );
+    assert.equal(
+      result.finalization?.items.find((item) => item.id === "complete-pairing")?.message,
+      "If `pnpm daemon:pair` prints a code, send the returned `/pair CODE` command to @happytg_bot."
+    );
     assert.equal(result.finalization?.items.find((item) => item.id === "pairing-auto-request")?.kind, "warning");
-    assert.equal(result.finalization?.items.find((item) => item.id === "pairing-auto-request")?.message, "Existing host daemon state was detected locally, but the installer could not confirm its pairing state automatically. Run `pnpm daemon:pair` manually if this host still needs pairing.");
-    assert.equal(result.nextSteps.filter((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`.").length, 1);
-    assert.equal(result.nextSteps.filter((step) => step === "Send `/pair <CODE>` to @happytg_bot.").length, 1);
+    assert.equal(
+      result.finalization?.items.find((item) => item.id === "pairing-auto-request")?.message,
+      "Existing host daemon state was detected locally, but the installer could not confirm its pairing state automatically."
+    );
+    assert.equal(
+      result.nextSteps.filter((step) => step === "The installer could not confirm whether the existing local host is already paired. If this host still needs pairing, request a fresh code manually with `pnpm daemon:pair`.").length,
+      1
+    );
+    assert.equal(
+      result.nextSteps.filter((step) => step === "If `pnpm daemon:pair` prints a code, send the returned `/pair CODE` command to @happytg_bot.").length,
+      1
+    );
     assert.equal(result.nextSteps.filter((step) => step === "After pairing, start the daemon with `pnpm dev:daemon`.").length, 1);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
