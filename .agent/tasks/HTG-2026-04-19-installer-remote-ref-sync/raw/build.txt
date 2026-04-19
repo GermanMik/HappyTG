@@ -1,0 +1,80 @@
+
+> happytg@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running build in 13 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/approval-engine:build: cache miss, executing 96aa4dbfdb27cc23
+@happytg/protocol:build: cache miss, executing a2a09fe9037147d4
+@happytg/bot:build: cache miss, executing 745673ff7897f37d
+@happytg/policy-engine:build: cache miss, executing 5b34dd89b00feb0b
+@happytg/miniapp:build: cache miss, executing 973dca0ace34d301
+@happytg/shared:build: cache miss, executing c21191827ee5746c
+@happytg/bootstrap:build: cache miss, executing 1aaaaa23256c8984
+@happytg/api:build: cache miss, executing d6243971422c703e
+@happytg/host-daemon:build: cache miss, executing a33f6832cf7ceea2
+@happytg/runtime-adapters:build: cache miss, executing a6fb105e0c19b719
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/miniapp:build: 
+@happytg/miniapp:build: > @happytg/miniapp@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/hooks:build: cache miss, executing 2c00ca3a8b622797
+@happytg/repo-proof:build: cache miss, executing ef8c35c33ae266b0
+@happytg/worker:build: cache miss, executing c1fa55d89282f315
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build: 
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.3.20 build C:\Develop\Projects\HappyTG-installer-remote-ref-sync\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    9.62s 
+

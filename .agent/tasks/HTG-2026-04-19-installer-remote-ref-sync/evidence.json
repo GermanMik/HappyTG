@@ -1,0 +1,58 @@
+{
+  "taskId": "HTG-2026-04-19-installer-remote-ref-sync",
+  "criteria": [
+    {
+      "criterion": "Installer update/current repo sync no longer requires checking out the requested local branch.",
+      "artifacts": [
+        "packages/bootstrap/src/install/repo.ts",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Installer can update to the requested branch tip even when that branch is already occupied by another linked worktree.",
+      "artifacts": [
+        "packages/bootstrap/src/install/repo.ts",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Dirty worktree safety behavior remains unchanged for stash/keep/cancel flows.",
+      "artifacts": [
+        "packages/bootstrap/src/install/repo.ts",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Regression coverage proves update/current sync avoids local target-branch checkout and still updates to the fetched commit.",
+      "artifacts": [
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Task bundle remains valid and fresh verification evidence is recorded.",
+      "artifacts": [
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/build.txt",
+        "raw/task-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "packages/bootstrap/src/install/repo.ts",
+    "packages/bootstrap/src/install.runtime.test.ts",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt",
+    "raw/task-validate.txt"
+  ],
+  "generatedAt": "2026-04-19T21:18:25.3534123+03:00"
+}

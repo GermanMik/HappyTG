@@ -206,23 +206,47 @@ async function syncRepositoryFromSource(input: {
     throw new Error(commandOutput(fetchRun, "Git fetch failed."));
   }
 
-  const checkoutRun = await git(["-C", inspection.rootPath, "checkout", input.branch]);
-  if (checkoutRun.exitCode !== 0) {
+  const fetchedCommitRun = await git(["-C", inspection.rootPath, "rev-parse", "--verify", "FETCH_HEAD^{commit}"]);
+  if (fetchedCommitRun.exitCode !== 0) {
     throw createInstallRuntimeError({
       code: "command_execution_failure",
-      message: commandOutput(checkoutRun, `Unable to checkout ${input.branch}.`),
-      lastError: commandOutput(checkoutRun, `Unable to checkout ${input.branch}.`),
+      message: commandOutput(fetchedCommitRun, `Unable to resolve the fetched commit for ${input.branch}.`),
+      lastError: commandOutput(fetchedCommitRun, `Unable to resolve the fetched commit for ${input.branch}.`),
       retryable: false,
-      suggestedAction: `Verify that branch ${input.branch} exists locally or remotely, then rerun the installer.`,
+      suggestedAction: `Verify that branch ${input.branch} exists on the configured remote, then rerun the installer.`,
       repoUrl: input.source.url,
       repoSource: input.source.id,
       fallbackUsed: input.source.id === "fallback"
     });
   }
 
-  const pullRun = await git(["-C", inspection.rootPath, "pull", "--ff-only", input.source.url, input.branch]);
-  if (pullRun.exitCode !== 0) {
-    throw new Error(commandOutput(pullRun, "Git pull failed."));
+  const fetchedCommit = fetchedCommitRun.stdout.trim().split(/\r?\n/u)[0]?.trim();
+  if (!fetchedCommit) {
+    throw createInstallRuntimeError({
+      code: "command_execution_failure",
+      message: `Unable to resolve the fetched commit for ${input.branch}.`,
+      lastError: `Unable to resolve the fetched commit for ${input.branch}.`,
+      retryable: false,
+      suggestedAction: `Verify that branch ${input.branch} exists on the configured remote, then rerun the installer.`,
+      repoUrl: input.source.url,
+      repoSource: input.source.id,
+      fallbackUsed: input.source.id === "fallback"
+    });
+  }
+
+  // Detach to the fetched commit so installer sync stays independent of local branch occupancy in linked worktrees.
+  const checkoutRun = await git(["-C", inspection.rootPath, "checkout", "--detach", fetchedCommit]);
+  if (checkoutRun.exitCode !== 0) {
+    throw createInstallRuntimeError({
+      code: "command_execution_failure",
+      message: commandOutput(checkoutRun, `Unable to checkout the fetched commit for ${input.branch}.`),
+      lastError: commandOutput(checkoutRun, `Unable to checkout the fetched commit for ${input.branch}.`),
+      retryable: false,
+      suggestedAction: "Ensure the checkout has no conflicting local files, then rerun the installer.",
+      repoUrl: input.source.url,
+      repoSource: input.source.id,
+      fallbackUsed: input.source.id === "fallback"
+    });
   }
 
   return {

@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-19-installer-remote-ref-sync",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG-installer-remote-ref-sync\\.agent\\tasks\\HTG-2026-04-19-installer-remote-ref-sync",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Remove installer dependency on local main branch checkout",
+  "acceptanceCriteria": [
+    "Installer update/current repo sync no longer requires checking out the requested local branch.",
+    "Installer can update to the requested branch tip even when that branch is already occupied by another linked worktree.",
+    "Dirty worktree safety behavior remains unchanged for stash/keep/cancel flows.",
+    "Regression coverage proves update/current sync avoids local target-branch checkout and still updates to the fetched commit.",
+    "Task bundle remains valid and fresh verification evidence is recorded."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T21:20:00+03:00",
+  "updatedAt": "2026-04-19T21:18:25.3534123+03:00"
+}
