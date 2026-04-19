@@ -35,6 +35,22 @@
 4. Pair the host through Telegram and wait for the control plane to record the host heartbeat.
 5. Run `pnpm happytg verify` and one quick Codex smoke session before allowing proof-loop tasks.
 
+## Host Cleanup
+
+When you retire or rebuild an execution host, remove the local HappyTG bootstrap/runtime artifacts there with:
+
+```bash
+pnpm happytg uninstall
+```
+
+That command removes local daemon state, install reports, logs, backups, the default bootstrap checkout, and installer-managed background launchers recorded for that host state scope. If the installer was run multiple times with different background modes, uninstall removes every recorded launcher artifact for that scope. It does not delete the repo checkout, `.env`, or the packaged control-plane containers and volumes.
+
+If you also want to stop the packaged control plane on its own host, do that separately:
+
+```bash
+docker compose -f infra/docker-compose.example.yml down
+```
+
 ## Telegram Delivery
 
 - Prefer webhook in stable deployments.

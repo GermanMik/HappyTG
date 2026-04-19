@@ -21,7 +21,8 @@
     "bootstrap:doctor": "pnpm --filter @happytg/bootstrap run doctor",
     "bootstrap:setup": "pnpm --filter @happytg/bootstrap run setup",
     "bootstrap:repair": "pnpm --filter @happytg/bootstrap run repair",
-    "bootstrap:verify": "pnpm --filter @happytg/bootstrap run verify"
+    "bootstrap:verify": "pnpm --filter @happytg/bootstrap run verify",
+    "bootstrap:uninstall": "pnpm --filter @happytg/bootstrap run uninstall:command"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

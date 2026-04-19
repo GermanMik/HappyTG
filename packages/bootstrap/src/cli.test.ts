@@ -20,6 +20,11 @@ test("parseHappyTGArgs maps config and env nested commands", () => {
     command: "env-snapshot",
     json: false
   });
+
+  assert.deepEqual(parseHappyTGArgs(["uninstall", "--json"]), {
+    kind: "uninstall",
+    json: true
+  });
 });
 
 test("parseHappyTGArgs maps install flags into the installer request", () => {
@@ -255,6 +260,45 @@ test("executeHappyTG delegates install requests through the CLI wrapper without 
       telegramAllowedUserIds: ["1001"]
     });
     assert.equal(bootstrapCheckCalls, 1);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("executeHappyTG delegates uninstall requests through the CLI wrapper without changing the uninstall result contract", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-cli-uninstall-wrapper-"));
+
+  try {
+    const expected = {
+      kind: "uninstall" as const,
+      status: "pass" as const,
+      interactive: false as const,
+      scope: {
+        stateDir: path.join(tempDir, ".happytg-state"),
+        bootstrapRepoPath: path.join(tempDir, ".happytg-state", "bootstrap-repo"),
+        repoRoot: tempDir
+      },
+      removedPaths: [path.join(tempDir, ".happytg-state", "daemon-state.json")],
+      missingPaths: [],
+      kept: ["Repository checkout kept by design."],
+      warnings: [],
+      reportJson: {
+        commands: [],
+        removedPaths: [path.join(tempDir, ".happytg-state", "daemon-state.json")],
+        missingPaths: [],
+        kept: ["Repository checkout kept by design."]
+      }
+    };
+
+    const result = await executeHappyTG(["uninstall"], tempDir, {
+      runHappyTGUninstallImpl: async (options) => {
+        assert.equal(options.cwd, tempDir);
+        assert.equal(options.json, false);
+        return expected;
+      }
+    });
+
+    assert.deepEqual(result, expected);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -539,4 +583,50 @@ test("renderText explains recoverable installer failures without claiming comple
   assert.match(output, /HappyTG install \[FAIL\]/);
   assert.match(output, /Result: install needs follow-up before it is fully ready\./);
   assert.doesNotMatch(output, /Install flow is complete\./);
+});
+
+test("renderText summarizes uninstall scope without claiming checkout deletion", () => {
+  const output = renderText({
+    kind: "uninstall",
+    status: "warn",
+    interactive: false,
+    scope: {
+      stateDir: "/tmp/.happytg",
+      bootstrapRepoPath: "/tmp/.happytg/bootstrap-repo",
+      repoRoot: "/tmp/HappyTG"
+    },
+    removedPaths: [
+      "/tmp/.happytg/daemon-state.json",
+      "/tmp/.happytg/bootstrap-repo"
+    ],
+    missingPaths: [],
+    kept: [
+      "Repository checkout kept by design: /tmp/HappyTG",
+      "Repo `.env`, Docker Compose services, and remote control-plane data were not touched."
+    ],
+    warnings: [
+      "Scheduled Task removal did not complete cleanly."
+    ],
+    reportJson: {
+      commands: [],
+      removedPaths: [
+        "/tmp/.happytg/daemon-state.json",
+        "/tmp/.happytg/bootstrap-repo"
+      ],
+      missingPaths: [],
+      kept: [
+        "Repository checkout kept by design: /tmp/HappyTG",
+        "Repo `.env`, Docker Compose services, and remote control-plane data were not touched."
+      ]
+    }
+  });
+
+  assert.match(output, /HappyTG uninstall \[WARN\]/);
+  assert.match(output, /State dir: \/tmp\/\.happytg/);
+  assert.match(output, /Kept:/);
+  assert.match(output, /Repository checkout kept by design: \/tmp\/HappyTG/);
+  assert.match(output, /Removed paths:/);
+  assert.match(output, /bootstrap-repo/);
+  assert.match(output, /Docker Compose services, and remote control-plane data were not touched/);
+  assert.doesNotMatch(output, /Repository checkout removed/);
 });

@@ -95,6 +95,15 @@ pnpm happytg install --non-interactive --repo-mode current --telegram-bot-token 
 pnpm happytg install --json
 ```
 
+Local cleanup commands:
+
+```bash
+pnpm happytg uninstall
+pnpm bootstrap:uninstall
+```
+
+`pnpm happytg uninstall` removes installer-owned local HappyTG artifacts from `HAPPYTG_STATE_DIR` or `~/.happytg`, including daemon state/journal, install drafts and reports, installer logs/backups, the default bootstrap checkout, and installer-managed background launchers. Repeated installs are handled truthfully: if the same local state scope created both a Windows Scheduled Task and a Startup shortcut across separate installer runs, uninstall removes both recorded artifacts. The command keeps the repo checkout, `.env`, Docker Compose services, volumes, and remote control-plane data by default.
+
 ## First Start
 
 Run the first start in separate terminals so infra, pairing, and daemon startup stay explicit.
@@ -141,6 +150,29 @@ pnpm dev:daemon
 - If the bot logs `telegramConfigured: false`, rerun `pnpm happytg install` or set `TELEGRAM_BOT_TOKEN` in `.env`, then restart `pnpm dev:bot`.
 - If the bot logs `Bot listening with degraded Telegram delivery`, inspect `http://127.0.0.1:4100/ready`. For local work, keep `TELEGRAM_UPDATES_MODE=auto` or set `TELEGRAM_UPDATES_MODE=polling`. For webhook mode, set a public HTTPS `HAPPYTG_PUBLIC_URL` and configure that webhook in Telegram.
 - If pairing is not complete yet, the normal next step is always `pnpm daemon:pair` -> `/pair <CODE>` in Telegram -> `pnpm dev:daemon`.
+
+## Uninstall / Cleanup
+
+Use uninstall on developer machines or external execution hosts when you want to remove local HappyTG bootstrap/runtime artifacts without deleting the repo checkout:
+
+```bash
+pnpm happytg uninstall
+```
+
+Scope:
+
+- removes local daemon state and journal under `HAPPYTG_STATE_DIR` or `~/.happytg`
+- removes install drafts, bootstrap reports, logs, backups, and the default `bootstrap-repo`
+- removes installer-managed background launchers such as LaunchAgent, Scheduled Task, Startup shortcut, or systemd user unit when they were recorded for the current local state scope
+- for repeated installs in the same local state scope, removes all recorded background artifacts, not just the latest background mode
+- keeps the repo checkout and `.env` in place by design
+- keeps Docker Compose services, volumes, database/object storage state, and remote control-plane data untouched
+
+Packaged control plane / external daemon split:
+
+- on execution hosts, run `pnpm happytg uninstall` to remove the external daemon bootstrap/runtime state
+- on the control-plane host, stop the packaged stack separately with `docker compose -f infra/docker-compose.example.yml down`
+- if you intentionally want to delete persistent Compose volumes or the repo checkout itself, do that as a separate explicit operator step
 
 ## First-Run Checkpoints
 

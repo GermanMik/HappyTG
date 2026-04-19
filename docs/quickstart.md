@@ -76,6 +76,12 @@ Use [Installation](./installation.md) if you need the fuller local/self-hosted s
    pnpm happytg verify
    ```
 
+If you later want to remove the local bootstrap/daemon setup without deleting the repo checkout, run:
+
+```bash
+pnpm happytg uninstall
+```
+
 ## What `pnpm dev` Starts
 
 | Surface | Port | Expected startup signal |
@@ -126,6 +132,7 @@ If `6379` is already in use:
 - Mini App shows richer task and artifact views.
 - Repo-local proof artifacts are written to `.agent/tasks/<TASK_ID>/`.
 - `pnpm happytg install` is the primary onboarding path; `pnpm happytg setup` remains the short first-run checklist; `pnpm happytg doctor --json` and `pnpm happytg verify --json` keep the detailed diagnostics.
+- `pnpm happytg uninstall` removes local HappyTG bootstrap/runtime artifacts, including multiple recorded launcher surfaces from repeated installer runs in the same state scope, but intentionally keeps the repo checkout, `.env`, and any Compose-managed control-plane data.
 
 ## Next Reads
 
