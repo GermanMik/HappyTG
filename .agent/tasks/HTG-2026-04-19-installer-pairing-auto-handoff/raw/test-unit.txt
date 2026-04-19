@@ -1,0 +1,13 @@
+✔ runHappyTGInstall auto-requests a pairing code and suppresses the manual request step once the code is available (25.2201ms)
+✔ runHappyTGInstall refreshes the pairing code automatically when an existing local host is still registering (13.2325ms)
+✔ runHappyTGInstall reuses an already paired existing host without requesting a fresh pairing code (11.5528ms)
+✔ runHappyTGInstall keeps pairing blocked and skips code requests when Telegram token validation fails (8.7498ms)
+✔ runHappyTGInstall keeps an existing-host pairing handoff manual when the backend probe is unavailable (11.8138ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 455.6103

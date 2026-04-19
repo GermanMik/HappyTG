@@ -1,0 +1,61 @@
+{
+  "taskId": "HTG-2026-04-19-installer-pairing-auto-handoff",
+  "status": "passed",
+  "classification": {
+    "signal": "install finalization collapsed existing paired and merely registered hosts into one manual pairing branch",
+    "type": "product bug"
+  },
+  "fix": {
+    "type": "minimal production fix with regression coverage",
+    "productionCodeChanged": true,
+    "files": [
+      "packages/bootstrap/src/install/index.ts",
+      "packages/bootstrap/src/install/pairing.ts",
+      "packages/bootstrap/src/install.runtime.test.ts"
+    ]
+  },
+  "commands": [
+    {
+      "name": "build",
+      "command": "pnpm --filter @happytg/bootstrap run build",
+      "artifact": "raw/build.txt",
+      "status": "passed"
+    },
+    {
+      "name": "typecheck",
+      "command": "pnpm --filter @happytg/bootstrap run typecheck",
+      "artifact": "raw/typecheck.txt",
+      "status": "passed"
+    },
+    {
+      "name": "lint",
+      "command": "pnpm --filter @happytg/bootstrap run lint",
+      "artifact": "raw/lint.txt",
+      "status": "passed"
+    },
+    {
+      "name": "test-targeted",
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern \"auto-requests a pairing code|refreshes the pairing code automatically|reuses an already paired existing host|keeps pairing blocked|probe is unavailable\" src/install.runtime.test.ts",
+      "artifact": "raw/test-unit.txt",
+      "status": "passed"
+    },
+    {
+      "name": "test-full",
+      "command": "pnpm --filter @happytg/bootstrap run test",
+      "artifact": "raw/test-integration.txt",
+      "status": "passed"
+    }
+  ],
+  "artifacts": [
+    "raw/build.txt",
+    "raw/typecheck.txt",
+    "raw/lint.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt"
+  ],
+  "notes": [
+    "Installer automation now probes backend host status only to classify reuse vs refresh; it does not move the Telegram claim boundary.",
+    "A follow-up verifier finding required one extra regression test for the existing-host probe-unavailable manual fallback branch.",
+    "Fresh verifier rerun concluded AC1-AC6 are satisfied after the added coverage."
+  ]
+}

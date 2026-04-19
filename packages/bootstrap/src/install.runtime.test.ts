@@ -3098,6 +3098,522 @@ test("runHappyTGInstall auto-requests a pairing code and suppresses the manual r
   }
 });
 
+test("runHappyTGInstall refreshes the pairing code automatically when an existing local host is still registering", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-refresh-pair-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const stateDir = path.join(tempDir, ".happytg-state");
+  await mkdir(repoPath, { recursive: true });
+  await mkdir(stateDir, { recursive: true });
+  await writeFile(path.join(repoPath, ".env"), `HAPPYTG_STATE_DIR=${stateDir}\n`, "utf8");
+  await writeFile(path.join(stateDir, "daemon-state.json"), JSON.stringify({
+    hostId: "host_existing",
+    fingerprint: "fp-existing",
+    apiBaseUrl: "http://127.0.0.1:4000"
+  }, null, 2), "utf8");
+
+  try {
+    const daemonPairCalls: string[][] = [];
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: ["setup"]
+    }, {
+      runBootstrapCheck: async (command) => ({
+        id: `btr_${command}`,
+        hostFingerprint: "fp",
+        command,
+        status: "warn",
+        profileRecommendation: "recommended",
+        findings: [],
+        planPreview: [
+          "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+          "Send `/pair <CODE>` to @happytg_bot."
+        ],
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "request-pair-code",
+            kind: "manual",
+            message: "Request a pairing code on the execution host: `pnpm daemon:pair`."
+          },
+          {
+            id: "complete-pairing",
+            kind: "manual",
+            message: "Send `/pair <CODE>` to @happytg_bot."
+          }
+        ]),
+        createdAt: "2026-04-19T00:00:00.000Z"
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async ({ args }) => {
+          if (args?.[0] === "daemon:pair") {
+            daemonPairCalls.push(args);
+          }
+          return {
+            stdout: args?.[0] === "daemon:pair"
+              ? "Pair this host by sending /pair REFRESH123 to @happytg_bot\nHost ID: host_existing\nExpires at: 2026-04-19T12:00:00.000Z\n"
+              : "",
+            stderr: "",
+            exitCode: 0,
+            binaryPath: path.join(tempDir, "pnpm"),
+            shell: false,
+            fallbackUsed: false
+          };
+        },
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: false,
+          changed: false,
+          addedKeys: [],
+          preservedKeys: ["HAPPYTG_STATE_DIR"]
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        fetchPairingHostStatus: async ({ hostId }) => ({
+          hostId,
+          status: "registering",
+          apiBaseUrl: "http://127.0.0.1:4000"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "manual",
+          detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+        })
+      }
+    });
+
+    assert.equal(daemonPairCalls.length, 1);
+    assert.equal(result.finalization?.items.filter((item) => item.id === "request-pair-code" && item.kind === "auto").length, 1);
+    assert.equal(result.finalization?.items.find((item) => item.id === "request-pair-code")?.message, "Refreshed the existing host pairing code on the execution host. It expires at 2026-04-19T12:00:00.000Z.");
+    assert.equal(result.finalization?.items.find((item) => item.id === "complete-pairing")?.message, "Send `/pair REFRESH123` to @happytg_bot.");
+    assert.equal(result.finalization?.items.some((item) => item.id === "pairing-auto-request"), false);
+    assert.equal(result.nextSteps.some((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`."), false);
+    assert.equal(result.nextSteps.filter((step) => step === "Send `/pair REFRESH123` to @happytg_bot.").length, 1);
+    assert.equal(result.nextSteps.filter((step) => step === "After pairing, start the daemon with `pnpm dev:daemon`.").length, 1);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall reuses an already paired existing host without requesting a fresh pairing code", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-reuse-paired-host-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const stateDir = path.join(tempDir, ".happytg-state");
+  await mkdir(repoPath, { recursive: true });
+  await mkdir(stateDir, { recursive: true });
+  await writeFile(path.join(repoPath, ".env"), `HAPPYTG_STATE_DIR=${stateDir}\n`, "utf8");
+  await writeFile(path.join(stateDir, "daemon-state.json"), JSON.stringify({
+    hostId: "host_active",
+    fingerprint: "fp-active",
+    apiBaseUrl: "http://127.0.0.1:4000"
+  }, null, 2), "utf8");
+
+  try {
+    let daemonPairCalls = 0;
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: ["setup"]
+    }, {
+      runBootstrapCheck: async (command) => ({
+        id: `btr_${command}`,
+        hostFingerprint: "fp",
+        command,
+        status: "warn",
+        profileRecommendation: "recommended",
+        findings: [],
+        planPreview: [
+          "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+          "Send `/pair <CODE>` to @happytg_bot."
+        ],
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "request-pair-code",
+            kind: "manual",
+            message: "Request a pairing code on the execution host: `pnpm daemon:pair`."
+          },
+          {
+            id: "complete-pairing",
+            kind: "manual",
+            message: "Send `/pair <CODE>` to @happytg_bot."
+          }
+        ]),
+        createdAt: "2026-04-19T00:00:00.000Z"
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async ({ args }) => {
+          if (args?.[0] === "daemon:pair") {
+            daemonPairCalls += 1;
+          }
+          return {
+            stdout: "",
+            stderr: "",
+            exitCode: 0,
+            binaryPath: path.join(tempDir, "pnpm"),
+            shell: false,
+            fallbackUsed: false
+          };
+        },
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: false,
+          changed: false,
+          addedKeys: [],
+          preservedKeys: ["HAPPYTG_STATE_DIR"]
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        fetchPairingHostStatus: async ({ hostId }) => ({
+          hostId,
+          status: "active",
+          apiBaseUrl: "http://127.0.0.1:4000"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "manual",
+          detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+        })
+      }
+    });
+
+    assert.equal(daemonPairCalls, 0);
+    assert.equal(result.finalization?.items.find((item) => item.id === "request-pair-code")?.kind, "reuse");
+    assert.match(result.finalization?.items.find((item) => item.id === "request-pair-code")?.message ?? "", /reports this host as active/i);
+    assert.equal(result.finalization?.items.some((item) => item.id === "complete-pairing"), false);
+    assert.equal(result.nextSteps.some((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`."), false);
+    assert.equal(result.nextSteps.some((step) => /\/pair <CODE>|\/pair [A-Z0-9-]+/u.test(step)), false);
+    assert.equal(result.nextSteps.filter((step) => step === "Start the daemon with `pnpm dev:daemon`.").length, 1);
+    assert.equal(result.nextSteps.some((step) => step === "After pairing, start the daemon with `pnpm dev:daemon`."), false);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall keeps pairing blocked and skips code requests when Telegram token validation fails", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-blocked-pairing-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  await mkdir(repoPath, { recursive: true });
+
+  try {
+    let daemonPairCalls = 0;
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: ["setup"]
+    }, {
+      runBootstrapCheck: async (command) => ({
+        id: `btr_${command}`,
+        hostFingerprint: "fp",
+        command,
+        status: "warn",
+        profileRecommendation: "recommended",
+        findings: [],
+        planPreview: [
+          "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+          "Send `/pair <CODE>` to @happytg_bot."
+        ],
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "request-pair-code",
+            kind: "manual",
+            message: "Request a pairing code on the execution host: `pnpm daemon:pair`."
+          },
+          {
+            id: "complete-pairing",
+            kind: "manual",
+            message: "Send `/pair <CODE>` to @happytg_bot."
+          }
+        ]),
+        createdAt: "2026-04-19T00:00:00.000Z"
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async ({ args }) => {
+          if (args?.[0] === "daemon:pair") {
+            daemonPairCalls += 1;
+          }
+          return {
+            stdout: "",
+            stderr: "",
+            exitCode: 0,
+            binaryPath: path.join(tempDir, "pnpm"),
+            shell: false,
+            fallbackUsed: false
+          };
+        },
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: false,
+          changed: false,
+          addedKeys: [],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: false,
+          error: "Telegram API getMe rejected the token with HTTP 401 Unauthorized.",
+          step: "getMe",
+          failureKind: "invalid_token",
+          recoverable: false,
+          statusCode: 401
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "manual",
+          detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+        })
+      }
+    });
+
+    assert.equal(daemonPairCalls, 0);
+    assert.equal(result.finalization?.items.find((item) => item.id === "request-pair-code")?.kind, "blocked");
+    assert.equal(result.finalization?.items.find((item) => item.id === "request-pair-code")?.message, "Pairing remains blocked because Telegram bot validation failed.");
+    assert.deepEqual(result.finalization?.items.find((item) => item.id === "request-pair-code")?.solutions, [
+      "Fix `TELEGRAM_BOT_TOKEN` in `.env` or the shell.",
+      "Rerun `pnpm happytg install` after the bot token works."
+    ]);
+    assert.equal(result.finalization?.items.some((item) => item.id === "complete-pairing"), false);
+    assert.equal(result.finalization?.items.some((item) => item.id === "start-daemon"), false);
+    assert.equal(result.nextSteps.some((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`."), false);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall keeps an existing-host pairing handoff manual when the backend probe is unavailable", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-probe-unavailable-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const stateDir = path.join(tempDir, ".happytg-state");
+  await mkdir(repoPath, { recursive: true });
+  await mkdir(stateDir, { recursive: true });
+  await writeFile(path.join(repoPath, ".env"), `HAPPYTG_STATE_DIR=${stateDir}\n`, "utf8");
+  await writeFile(path.join(stateDir, "daemon-state.json"), JSON.stringify({
+    hostId: "host_probe_pending",
+    fingerprint: "fp-probe-pending",
+    apiBaseUrl: "http://127.0.0.1:4000"
+  }, null, 2), "utf8");
+
+  try {
+    let daemonPairCalls = 0;
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: ["setup"]
+    }, {
+      runBootstrapCheck: async (command) => ({
+        id: `btr_${command}`,
+        hostFingerprint: "fp",
+        command,
+        status: "warn",
+        profileRecommendation: "recommended",
+        findings: [],
+        planPreview: [
+          "Request a pairing code on the execution host: `pnpm daemon:pair`.",
+          "Send `/pair <CODE>` to @happytg_bot."
+        ],
+        reportJson: reportJsonWithOnboarding([
+          {
+            id: "request-pair-code",
+            kind: "manual",
+            message: "Request a pairing code on the execution host: `pnpm daemon:pair`."
+          },
+          {
+            id: "complete-pairing",
+            kind: "manual",
+            message: "Send `/pair <CODE>` to @happytg_bot."
+          }
+        ]),
+        createdAt: "2026-04-19T00:00:00.000Z"
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async ({ args }) => {
+          if (args?.[0] === "daemon:pair") {
+            daemonPairCalls += 1;
+          }
+          return {
+            stdout: "",
+            stderr: "",
+            exitCode: 0,
+            binaryPath: path.join(tempDir, "pnpm"),
+            shell: false,
+            fallbackUsed: false
+          };
+        },
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: false,
+          changed: false,
+          addedKeys: [],
+          preservedKeys: ["HAPPYTG_STATE_DIR"]
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        fetchPairingHostStatus: async ({ hostId }) => ({
+          hostId,
+          status: "unreachable",
+          apiBaseUrl: "http://127.0.0.1:4000",
+          error: "connect ECONNREFUSED 127.0.0.1:4000"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "manual",
+          detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+        })
+      }
+    });
+
+    assert.equal(daemonPairCalls, 0);
+    assert.equal(result.finalization?.items.find((item) => item.id === "request-pair-code")?.kind, "manual");
+    assert.equal(result.finalization?.items.find((item) => item.id === "complete-pairing")?.message, "Send `/pair <CODE>` to @happytg_bot.");
+    assert.equal(result.finalization?.items.find((item) => item.id === "pairing-auto-request")?.kind, "warning");
+    assert.equal(result.finalization?.items.find((item) => item.id === "pairing-auto-request")?.message, "Existing host daemon state was detected locally, but the installer could not confirm its pairing state automatically. Run `pnpm daemon:pair` manually if this host still needs pairing.");
+    assert.equal(result.nextSteps.filter((step) => step === "Request a pairing code on the execution host: `pnpm daemon:pair`.").length, 1);
+    assert.equal(result.nextSteps.filter((step) => step === "Send `/pair <CODE>` to @happytg_bot.").length, 1);
+    assert.equal(result.nextSteps.filter((step) => step === "After pairing, start the daemon with `pnpm dev:daemon`.").length, 1);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("runHappyTGInstall reports requested background automation as a warning when configuration falls back to manual", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-background-fallback-"));
   const repoPath = path.join(tempDir, "HappyTG");

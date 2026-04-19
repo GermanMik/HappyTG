@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-19-installer-pairing-auto-handoff",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "agent": "Codex",
+    "runId": "verify-2026-04-19-rerun"
+  },
+  "summary": "Installer pairing finalization now distinguishes reuse vs refresh for existing hosts, keeps Telegram claim semantics intact, and is covered by fresh targeted plus full bootstrap verification.",
+  "checks": [
+    {
+      "name": "pairing-state-machine",
+      "ok": true,
+      "detail": "Installer finalization now distinguishes no-local-host auto-request, existing-host probe, paired/active reuse, refresh-required reissue, and manual fallback through shared pairing logic."
+    },
+    {
+      "name": "telegram-claim-boundary",
+      "ok": true,
+      "detail": "Telegram `/pair` remains the only host-claim boundary; installer automation is limited to probing state and requesting or refreshing the pairing code."
+    },
+    {
+      "name": "successful-auto-request-paths",
+      "ok": true,
+      "detail": "Fresh runtime coverage proves no-state auto-request, existing `registering` refresh, existing `active` reuse, invalid-token blocking, and existing-host `probe-unavailable` manual fallback, and no contradictory manual `pnpm daemon:pair` remains after successful auto-request."
+    },
+    {
+      "name": "verification-commands",
+      "ok": true,
+      "detail": "`pnpm --filter @happytg/bootstrap run build`, `pnpm --filter @happytg/bootstrap run typecheck`, `pnpm --filter @happytg/bootstrap run lint`, targeted pairing runtime tests, and `pnpm --filter @happytg/bootstrap run test` all passed on 2026-04-19."
+    }
+  ],
+  "residualRisks": [
+    "Normal residual risk remains that future edits could change installer wording or finalization classification, but the critical pairing branches are now regression-covered."
+  ],
+  "generatedAt": "2026-04-19T13:00:00+03:00"
+}

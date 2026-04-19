@@ -7,7 +7,6 @@ import {
   normalizeSpawnEnv,
   nowIso,
   parseDotEnv,
-  readJsonFile,
   readTextFileOrEmpty,
   resolveExecutable,
   writeJsonFileAtomic
@@ -49,6 +48,7 @@ import {
   renderWelcomeScreen,
   waitForEnter
 } from "./tui.js";
+import { evaluateInstallPairingDecision, fetchPairingHostStatus, pairingHandoffMessage } from "./pairing.js";
 import { fetchTelegramBotIdentity, normalizeTelegramAllowedUserIds, pairTargetLabel, telegramLookupDiagnostic, validateTelegramBotToken } from "./telegram.js";
 import type {
   BackgroundMode,
@@ -71,6 +71,7 @@ interface InstallRuntimeDependencies {
   configureBackgroundMode: typeof configureBackgroundMode;
   detectInstallerEnvironment: typeof detectInstallerEnvironment;
   detectRepoModeChoices: typeof detectRepoModeChoices;
+  fetchPairingHostStatus: typeof fetchPairingHostStatus;
   fetchTelegramBotIdentity: typeof fetchTelegramBotIdentity;
   readInstallDraft: typeof readInstallDraft;
   resolveExecutable: typeof resolveExecutable;
@@ -167,73 +168,6 @@ function platformLabel(platform: NodeJS.Platform): string {
     default:
       return platform;
   }
-}
-
-interface DaemonStateSnapshot {
-  hostId?: string;
-}
-
-interface PairingCommandResult {
-  pairingCode: string;
-  hostId?: string;
-  expiresAt?: string;
-}
-
-async function readDaemonStateSnapshot(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): Promise<DaemonStateSnapshot> {
-  const statePath = path.join(getLocalStateDir(env, platform), "daemon-state.json");
-  return readJsonFile<DaemonStateSnapshot>(statePath, {});
-}
-
-function pairingHandoffMessage(pairTarget: string, pairingCode: string): string {
-  return pairTarget.toLowerCase().includes("telegram")
-    ? `Send \`/pair ${pairingCode}\` in Telegram.`
-    : `Send \`/pair ${pairingCode}\` to ${pairTarget}.`;
-}
-
-function parsePairingCommandResult(output: string): PairingCommandResult | undefined {
-  const pairingCode = output.match(/\/pair\s+([A-Z0-9-]+)/u)?.[1];
-  if (!pairingCode) {
-    return undefined;
-  }
-
-  return {
-    pairingCode,
-    hostId: output.match(/Host ID:\s+([^\r\n]+)/u)?.[1]?.trim(),
-    expiresAt: output.match(/Expires at:\s+([^\r\n]+)/u)?.[1]?.trim()
-  };
-}
-
-async function requestPairingCode(input: {
-  env: NodeJS.ProcessEnv;
-  platform: NodeJS.Platform;
-  repoPath: string;
-  runCommandImpl: typeof runCommand;
-  resolveExecutableImpl: typeof resolveExecutable;
-}): Promise<PairingCommandResult | undefined> {
-  const pnpmPath = await input.resolveExecutableImpl("pnpm", {
-    cwd: input.repoPath,
-    env: input.env,
-    platform: input.platform
-  });
-  if (!pnpmPath) {
-    return undefined;
-  }
-
-  const result = await input.runCommandImpl({
-    command: pnpmPath,
-    args: ["daemon:pair"],
-    cwd: input.repoPath,
-    env: input.env,
-    platform: input.platform
-  }).catch(() => undefined);
-  if (!result) {
-    return undefined;
-  }
-  if (result.exitCode !== 0) {
-    return undefined;
-  }
-
-  return parsePairingCommandResult(`${result.stdout}\n${result.stderr}`);
 }
 
 async function buildRepoEnv(repoPath: string, baseEnv: NodeJS.ProcessEnv): Promise<NodeJS.ProcessEnv> {
@@ -508,6 +442,8 @@ function removeAutomationItems(items: AutomationItem[], ...ids: string[]): void 
 
 async function buildInstallFinalizationItems(input: {
   background: InstallResult["background"];
+  fetchImpl?: typeof fetch;
+  fetchPairingHostStatusImpl: typeof fetchPairingHostStatus;
   pairTarget: string;
   platform: NodeJS.Platform;
   postCheckItems: AutomationItem[];
@@ -558,75 +494,104 @@ async function buildInstallFinalizationItems(input: {
           "Rerun `pnpm happytg install` after the token is set."
         ]
     });
-  } else {
-    const daemonState = await readDaemonStateSnapshot(input.repoEnv, input.platform);
-    if (daemonState.hostId) {
-      removeAutomationItems(items, "complete-pairing");
-      pushAutomationItem(items, {
-        id: "request-pair-code",
-        kind: "reuse",
-        message: "Existing host daemon state was detected locally. Reuse that host if it is already paired."
-      });
-      pushAutomationItem(items, {
-        id: "pairing-state-handoff",
-        kind: "manual",
-        message: "If this host still needs pairing, request a fresh code manually with `pnpm daemon:pair`."
-      });
-    } else if (items.some((item) => item.id === "request-pair-code" && item.kind === "manual")) {
-      const pairResult = await requestPairingCode({
-        env: input.repoEnv,
-        platform: input.platform,
-        repoPath: input.repoPath,
-        runCommandImpl: input.runCommandImpl,
-        resolveExecutableImpl: input.resolveExecutableImpl
-      });
-      if (pairResult) {
+  } else if (items.some((item) => item.id === "request-pair-code" && item.kind === "manual")) {
+    const pairingDecision = await evaluateInstallPairingDecision({
+      env: input.repoEnv,
+      fetchImpl: input.fetchImpl,
+      pairingRequested: true,
+      platform: input.platform,
+      repoPath: input.repoPath,
+      resolveExecutableImpl: input.resolveExecutableImpl,
+      runCommandImpl: input.runCommandImpl,
+      fetchPairingHostStatusImpl: input.fetchPairingHostStatusImpl
+    });
+
+    switch (pairingDecision.state) {
+      case "reuse-existing-host":
+        removeAutomationItems(items, "complete-pairing", "pairing-auto-request");
+        pushAutomationItem(items, {
+          id: "request-pair-code",
+          kind: "reuse",
+          message: pairingDecision.probe.status === "active"
+            ? "Existing host daemon state was detected locally, and the HappyTG API reports this host as active. Reuse it without requesting a new pairing code."
+            : "Existing host daemon state was detected locally, and the HappyTG API reports this host as already paired. Reuse it without requesting a new pairing code."
+        });
+        break;
+      case "auto-requested":
+        removeAutomationItems(items, "pairing-auto-request");
         pushAutomationItem(items, {
           id: "request-pair-code",
           kind: "auto",
-          message: pairResult.expiresAt
-            ? `Requested a pairing code on the execution host. It expires at ${pairResult.expiresAt}.`
-            : "Requested a pairing code on the execution host."
+          message: pairingDecision.reason === "host-refresh-required"
+            ? pairingDecision.pairResult.expiresAt
+              ? `Refreshed the existing host pairing code on the execution host. It expires at ${pairingDecision.pairResult.expiresAt}.`
+              : "Refreshed the existing host pairing code on the execution host."
+            : pairingDecision.pairResult.expiresAt
+              ? `Requested a pairing code on the execution host. It expires at ${pairingDecision.pairResult.expiresAt}.`
+              : "Requested a pairing code on the execution host."
         });
         pushAutomationItem(items, {
           id: "complete-pairing",
           kind: "manual",
-          message: pairingHandoffMessage(input.pairTarget, pairResult.pairingCode)
+          message: pairingHandoffMessage(input.pairTarget, pairingDecision.pairResult.pairingCode)
         });
-      } else {
-        pushAutomationItem(items, {
-          id: "pairing-auto-request",
-          kind: "warning",
-          message: "Automatic pairing-code request did not complete. Run `pnpm daemon:pair` manually if the HappyTG API is reachable."
-        });
-      }
+        break;
+      case "manual-fallback":
+        if (pairingDecision.reason === "probe-unavailable" && pairingDecision.daemonState.hostId) {
+          pushAutomationItem(items, {
+            id: "pairing-auto-request",
+            kind: "warning",
+            message: "Existing host daemon state was detected locally, but the installer could not confirm its pairing state automatically. Run `pnpm daemon:pair` manually if this host still needs pairing."
+          });
+        } else {
+          pushAutomationItem(items, {
+            id: "pairing-auto-request",
+            kind: "warning",
+            message: pairingDecision.daemonState.hostId
+              ? "Automatic pairing-code refresh did not complete. Run `pnpm daemon:pair` manually if the HappyTG API is reachable."
+              : "Automatic pairing-code request did not complete. Run `pnpm daemon:pair` manually if the HappyTG API is reachable."
+          });
+        }
+        break;
+      case "not-required":
+      default:
+        break;
     }
   }
 
-  if (items.some((item) => item.id === "request-pair-code" && item.kind === "blocked")) {
-    removeAutomationItems(items, "complete-pairing", "pairing-state-handoff", "start-daemon");
+  const pairingBlocked = items.some((item) => item.id === "request-pair-code" && item.kind === "blocked");
+  if (pairingBlocked) {
+    removeAutomationItems(items, "complete-pairing", "start-daemon");
   }
+
+  const pairingPending = !pairingBlocked && items.some((item) => item.id === "complete-pairing");
 
   if (input.background.status === "configured") {
     removeAutomationItems(items, "start-daemon");
-    if (input.background.mode === "scheduled-task" || input.background.mode === "startup") {
+    if (!pairingBlocked && (input.background.mode === "scheduled-task" || input.background.mode === "startup")) {
       pushAutomationItem(items, {
         id: "background-activation",
         kind: "warning",
-        message: "The host daemon background launcher is configured for the next logon. If you need it immediately after pairing, run `pnpm dev:daemon` once."
+        message: pairingPending
+          ? "The host daemon background launcher is configured for the next logon. If you need it immediately after pairing, run `pnpm dev:daemon` once."
+          : "The host daemon background launcher is configured for the next logon. If you need it immediately, run `pnpm dev:daemon` once."
       });
     }
-  } else if (input.background.status === "manual") {
+  } else if (!pairingBlocked && input.background.status === "manual") {
     pushAutomationItem(items, {
       id: "start-daemon",
       kind: "manual",
-      message: "After pairing, start the daemon with `pnpm dev:daemon`."
+      message: pairingPending
+        ? "After pairing, start the daemon with `pnpm dev:daemon`."
+        : "Start the daemon with `pnpm dev:daemon`."
     });
-  } else if (input.background.status === "failed") {
+  } else if (!pairingBlocked && input.background.status === "failed") {
     pushAutomationItem(items, {
       id: "start-daemon",
       kind: "blocked",
-      message: "Background launcher setup failed. After pairing, start the daemon manually with `pnpm dev:daemon`."
+      message: pairingPending
+        ? "Background launcher setup failed. After pairing, start the daemon manually with `pnpm dev:daemon`."
+        : "Background launcher setup failed. Start the daemon manually with `pnpm dev:daemon`."
     });
   }
 
@@ -1013,6 +978,7 @@ export async function runHappyTGInstall(
     configureBackgroundMode,
     detectInstallerEnvironment,
     detectRepoModeChoices,
+    fetchPairingHostStatus,
     fetchTelegramBotIdentity,
     readInstallDraft,
     resolveExecutable,
@@ -1740,6 +1706,8 @@ export async function runHappyTGInstall(
     pushAutomationItems(finalizationItems, preflightConflictItems);
     pushAutomationItems(finalizationItems, await buildInstallFinalizationItems({
       background,
+      fetchImpl: input?.fetchImpl,
+      fetchPairingHostStatusImpl: deps.fetchPairingHostStatus,
       pairTarget,
       platform: platform.platform.platform,
       postCheckItems: postCheckAutomationItems,
