@@ -1,0 +1,21 @@
+HTTP/1.1 503 Service Unavailable
+content-type: application/json; charset=utf-8
+Date: Sun, 19 Apr 2026 16:27:18 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 589
+
+{
+  "ok": false,
+  "service": "bot",
+  "apiBaseUrl": "http://localhost:4000",
+  "detail": "API /api/v1/pairing/claim failed with 500: {\n  \"error\": \"Internal server error\",\n  \"detail\": \"Pairing code expired\"\n}\n",
+  "telegram": {
+    "configuredMode": "auto",
+    "activeMode": "polling",
+    "status": "degraded",
+    "detail": "API /api/v1/pairing/claim failed with 500: {\n  \"error\": \"Internal server error\",\n  \"detail\": \"Pairing code expired\"\n}\n",
+    "publicUrl": "http://localhost:4000/",
+    "expectedWebhookUrl": "http://localhost:4000/telegram/webhook"
+  }
+}

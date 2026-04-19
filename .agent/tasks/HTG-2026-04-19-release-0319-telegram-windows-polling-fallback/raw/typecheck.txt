@@ -1,0 +1,80 @@
+
+> happytg@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback
+> turbo typecheck
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running typecheck in 13 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/approval-engine:typecheck: cache miss, executing 707b62b2c4e67ce6
+@happytg/bot:typecheck: cache miss, executing ca600f245a91acba
+@happytg/policy-engine:typecheck: cache miss, executing dfd70bc37dd35810
+@happytg/bootstrap:typecheck: cache miss, executing 801f249aba05b0fc
+@happytg/host-daemon:typecheck: cache miss, executing 1364af1cca183c15
+@happytg/hooks:typecheck: cache miss, executing 7dfdc438c17496e5
+@happytg/api:typecheck: cache miss, executing 78a089d1b5f75ad9
+@happytg/protocol:typecheck: cache miss, executing db9d43f760fd9b4a
+@happytg/runtime-adapters:typecheck: cache miss, executing 12d3500a20c0e8dc
+@happytg/worker:typecheck: cache miss, executing ea9e5c7176613cd7
+@happytg/approval-engine:typecheck: 
+@happytg/approval-engine:typecheck: > @happytg/approval-engine@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\approval-engine
+@happytg/approval-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:typecheck: 
+@happytg/bot:typecheck: 
+@happytg/bot:typecheck: > @happytg/bot@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\bot
+@happytg/bot:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bot:typecheck: 
+@happytg/policy-engine:typecheck: 
+@happytg/policy-engine:typecheck: > @happytg/policy-engine@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\policy-engine
+@happytg/policy-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:typecheck: 
+@happytg/host-daemon:typecheck: 
+@happytg/host-daemon:typecheck: > @happytg/host-daemon@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\host-daemon
+@happytg/host-daemon:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:typecheck: 
+@happytg/bootstrap:typecheck: 
+@happytg/bootstrap:typecheck: > @happytg/bootstrap@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\bootstrap
+@happytg/bootstrap:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:typecheck: 
+@happytg/hooks:typecheck: 
+@happytg/hooks:typecheck: > @happytg/hooks@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\hooks
+@happytg/hooks:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:typecheck: 
+@happytg/api:typecheck: 
+@happytg/api:typecheck: > @happytg/api@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\api
+@happytg/api:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/api:typecheck: 
+@happytg/runtime-adapters:typecheck: 
+@happytg/runtime-adapters:typecheck: > @happytg/runtime-adapters@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\runtime-adapters
+@happytg/runtime-adapters:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:typecheck: 
+@happytg/protocol:typecheck: 
+@happytg/protocol:typecheck: > @happytg/protocol@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\protocol
+@happytg/protocol:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:typecheck: 
+@happytg/worker:typecheck: 
+@happytg/worker:typecheck: > @happytg/worker@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\worker
+@happytg/worker:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/worker:typecheck: 
+@happytg/shared:typecheck: cache miss, executing 2649d423c1a98606
+@happytg/miniapp:typecheck: cache miss, executing 46576e7c5776cc14
+@happytg/repo-proof:typecheck: cache miss, executing 6f0c642db6af84f6
+@happytg/shared:typecheck: 
+@happytg/shared:typecheck: > @happytg/shared@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\shared
+@happytg/shared:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/shared:typecheck: 
+@happytg/miniapp:typecheck: 
+@happytg/miniapp:typecheck: > @happytg/miniapp@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\miniapp
+@happytg/miniapp:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/miniapp:typecheck: 
+@happytg/repo-proof:typecheck: 
+@happytg/repo-proof:typecheck: > @happytg/repo-proof@0.3.19 typecheck C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\repo-proof
+@happytg/repo-proof:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:typecheck: 
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    8.934s 
+

@@ -1,0 +1,9 @@
+
+> happytg@0.3.19 happytg C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-19-release-0319-telegram-windows-polling-fallback"
+
+Task: HTG-2026-04-19-release-0319-telegram-windows-polling-fallback
+Bundle: C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\.agent\tasks\HTG-2026-04-19-release-0319-telegram-windows-polling-fallback
+Validation: ok
+Phase: evidence
+Verification: passed

@@ -428,6 +428,127 @@ test("local polling mode receives /pair and preserves the pairing claim API boun
   }
 });
 
+test("local polling mode falls back to Windows PowerShell Bot API calls after a Node transport timeout", async () => {
+  const timeoutFailure = new TypeError("fetch failed");
+  Object.assign(timeoutFailure, {
+    cause: {
+      code: "UND_ERR_CONNECT_TIMEOUT",
+      message: "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"
+    }
+  });
+
+  const infoLogs: string[] = [];
+  const warnLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const messages: Array<{ chatId: number; text: string }> = [];
+  const fallbackCalls: string[] = [];
+  let getUpdatesCalls = 0;
+  const runtime = createBotRuntime({
+    async sendTelegramMessage(chatId, text) {
+      messages.push({ chatId, text });
+    }
+  }, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+    },
+    port: 0,
+    platform: "win32",
+    fetchImpl: async () => {
+      throw timeoutFailure;
+    },
+    invokeTelegramApiViaWindowsPowerShell: async (method) => {
+      fallbackCalls.push(method);
+      if (method === "deleteWebhook") {
+        return { ok: true, result: true };
+      }
+      if (method === "getUpdates") {
+        getUpdatesCalls += 1;
+        if (getUpdatesCalls === 1) {
+          return {
+            ok: true,
+            result: [
+              {
+                update_id: 303,
+                message: {
+                  message_id: 3,
+                  text: "/start",
+                  chat: { id: 17 },
+                  from: { id: 17, username: "fallback" }
+                }
+              }
+            ]
+          };
+        }
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        return { ok: true, result: [] };
+      }
+      throw new Error(`Unexpected Telegram method ${method}`);
+    },
+    logger: {
+      info(message) {
+        infoLogs.push(message);
+      },
+      warn(message, metadata) {
+        warnLogs.push({ message, metadata });
+      },
+      error() {}
+    }
+  });
+
+  try {
+    const snapshot = await runtime.start();
+    await waitForCondition(() => messages.length === 1);
+
+    assert.equal(snapshot.activeMode, "polling");
+    assert.equal(snapshot.status, "ready");
+    assert.deepEqual(fallbackCalls.slice(0, 2), ["deleteWebhook", "getUpdates"]);
+    assert.match(infoLogs.join("\n"), /deleteWebhook delivered via Windows PowerShell fallback/i);
+    assert.match(infoLogs.join("\n"), /getUpdates delivered via Windows PowerShell fallback/i);
+    assert.equal(warnLogs.length, 0);
+    assert.match(messages[0]?.text ?? "", /HappyTG bot is ready/i);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("polling mode stays degraded with actionable detail when both Telegram transports fail on Windows", async () => {
+  const timeoutFailure = new TypeError("fetch failed");
+  Object.assign(timeoutFailure, {
+    cause: {
+      code: "UND_ERR_CONNECT_TIMEOUT",
+      message: "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"
+    }
+  });
+
+  const runtime = createBotRuntime({}, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+    },
+    port: 0,
+    platform: "win32",
+    fetchImpl: async () => {
+      throw timeoutFailure;
+    },
+    invokeTelegramApiViaWindowsPowerShell: async () => ({
+      ok: false,
+      message: "Proxy authentication required."
+    })
+  });
+
+  try {
+    const snapshot = await runtime.start();
+
+    assert.equal(snapshot.activeMode, "polling");
+    assert.equal(snapshot.status, "degraded");
+    assert.match(snapshot.detail, /Node HTTPS/i);
+    assert.match(snapshot.detail, /Windows PowerShell Bot API fallback also failed/i);
+    assert.match(snapshot.detail, /Proxy authentication required/i);
+  } finally {
+    await runtime.stop();
+  }
+});
+
 test("webhook mode stays separate from polling and reports degraded readiness when Telegram webhook is not configured", async () => {
   const telegramCalls: string[] = [];
   const runtime = createBotRuntime({
@@ -480,6 +601,68 @@ test("webhook mode stays separate from polling and reports degraded readiness wh
     assert.equal(payload.telegram.activeMode, "webhook");
     assert.equal(payload.telegram.pendingUpdateCount, 3);
     assert.match(payload.detail, /expects https:\/\/happy\.example\.com\/telegram\/webhook/i);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("webhook inspection falls back to Windows PowerShell Bot API calls after a Node transport timeout", async () => {
+  const timeoutFailure = new TypeError("fetch failed");
+  Object.assign(timeoutFailure, {
+    cause: {
+      code: "UND_ERR_CONNECT_TIMEOUT",
+      message: "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"
+    }
+  });
+
+  const fallbackCalls: string[] = [];
+  const runtime = createBotRuntime({
+    async apiFetch(pathname) {
+      assert.equal(pathname, "/health");
+      return { ok: true } as never;
+    }
+  }, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      TELEGRAM_UPDATES_MODE: "webhook",
+      HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+    },
+    port: 0,
+    platform: "win32",
+    fetchImpl: async () => {
+      throw timeoutFailure;
+    },
+    invokeTelegramApiViaWindowsPowerShell: async (method) => {
+      fallbackCalls.push(method);
+      if (method === "getWebhookInfo") {
+        return {
+          ok: true,
+          result: {
+            url: "https://happy.example.com/telegram/webhook",
+            pending_update_count: 0
+          }
+        };
+      }
+      throw new Error(`Unexpected Telegram method ${method}`);
+    }
+  });
+
+  try {
+    const snapshot = await runtime.start();
+    const address = runtime.server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Bot runtime did not bind to a TCP port");
+    }
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+    const payload = await response.json() as { ok: boolean; telegram: { status: string } };
+
+    assert.equal(snapshot.activeMode, "webhook");
+    assert.equal(snapshot.status, "ready");
+    assert.deepEqual(fallbackCalls, ["getWebhookInfo"]);
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.telegram.status, "ready");
   } finally {
     await runtime.stop();
   }

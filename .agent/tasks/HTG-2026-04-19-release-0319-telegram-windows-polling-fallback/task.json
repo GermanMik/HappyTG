@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-19-release-0319-telegram-windows-polling-fallback",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG-release-0319-telegram-win-fallback\\.agent\\tasks\\HTG-2026-04-19-release-0319-telegram-windows-polling-fallback",
+  "phase": "evidence",
+  "mode": "proof",
+  "title": "Publish Windows Telegram polling fallback as 0.3.19",
+  "acceptanceCriteria": [
+    "Workspace versions, changelog, and docs/releases/0.3.19.md are aligned at 0.3.19.",
+    "The validated source proof bundle HTG-2026-04-19-telegram-start-still-silent remains the canonical product evidence for the release.",
+    "Fresh release verification passes after the version bump.",
+    "The release proof bundle is complete and validates successfully.",
+    "The release branch commit is pushed, merged to main, and the guarded Release workflow is dispatched for 0.3.19."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T00:00:00.000Z",
+  "updatedAt": "2026-04-19T19:56:33.4696357+03:00"
+}

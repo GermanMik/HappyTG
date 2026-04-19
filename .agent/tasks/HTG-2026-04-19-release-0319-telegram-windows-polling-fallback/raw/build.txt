@@ -1,0 +1,80 @@
+
+> happytg@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running build in 13 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/miniapp:build: cache miss, executing a527f4e22052a78e
+@happytg/bootstrap:build: cache miss, executing 0e2167259def1074
+@happytg/worker:build: cache miss, executing c09d133903ef2b26
+@happytg/bot:build: cache miss, executing 0c3bac4c915837ef
+@happytg/approval-engine:build: cache miss, executing 1b88b56b73d6fab9
+@happytg/protocol:build: cache miss, executing 8220f3e2df886054
+@happytg/runtime-adapters:build: cache miss, executing e857f176381d9f16
+@happytg/hooks:build: cache miss, executing caf8bd4008dfb79a
+@happytg/shared:build: cache miss, executing 394306897374a975
+@happytg/host-daemon:build: cache miss, executing 618251435f702278
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/miniapp:build: 
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\approval-engine
+@happytg/miniapp:build: > @happytg/miniapp@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\miniapp
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+@happytg/repo-proof:build: cache miss, executing 15f2af3320b52cd4
+@happytg/api:build: cache miss, executing 96f089d850e97ac3
+@happytg/policy-engine:build: cache miss, executing cf6079feaf33eb28
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.3.19 build C:\Develop\Projects\HappyTG-release-0319-telegram-win-fallback\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+
+ Tasks:    13 successful, 13 total
+Cached:    0 cached, 13 total
+  Time:    9.945s 
+

@@ -1,0 +1,34 @@
+Task: HTG-2026-04-19-telegram-start-still-silent
+
+Root-cause classification:
+- Product bug in the shipped Windows bot runtime transport path, not in delivery-mode selection.
+- `resolveTelegramDeliveryMode()` on current `main` still selects `polling` for the local `.env` (`HAPPYTG_PUBLIC_URL=http://localhost:4000`, `TELEGRAM_UPDATES_MODE=auto`), so the old webhook-only root cause is not the current failure.
+- The real failure is that polling/webhook inspection still used Node HTTPS only for `deleteWebhook`, `getUpdates`, and `getWebhookInfo`, while this Windows host reaches Telegram Bot API through PowerShell but not through Node/undici.
+
+Repo-local proof:
+- `apps/bot/src/index.ts` before the fix already resolved local auto mode to polling and started `startTelegramPolling()`.
+- `apps/bot/src/index.test.ts` already covered polling `/start` and `/pair`, confirming the logical polling path was present.
+- `.env` resolves to:
+  - `TELEGRAM_BOT_TOKEN=<present>`
+  - `HAPPYTG_PUBLIC_URL=http://localhost:4000`
+  - `TELEGRAM_UPDATES_MODE=auto`
+
+Live runtime proof before the fix:
+- `GET http://127.0.0.1:4100/health` returned `{"ok":true,"service":"bot"}`.
+- `GET http://127.0.0.1:4100/ready` initially returned `503` with polling selected but degraded due to Telegram/API failure instead of webhook mode.
+- Direct Node HTTPS probe to `https://api.telegram.org/bot<token>/getMe` failed with:
+  - `message: fetch failed`
+  - `causeCode: UND_ERR_CONNECT_TIMEOUT`
+  - `causeMessage: Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)`
+- Direct PowerShell `Invoke-RestMethod` to the same `getMe` endpoint succeeded (`ok: true`).
+
+Conclusion:
+- On this Windows host, Telegram Bot API access is available through PowerShell but not through Node/undici.
+- Because bot polling used Node HTTPS only, `/start` remained silent even though the bot process, health endpoint, and delivery-mode selection looked otherwise correct.
+
+Fix direction chosen:
+- Add a Windows PowerShell Bot API fallback for transport-level failures in `telegramApiCall()` so polling (`deleteWebhook`, `getUpdates`) and webhook inspection (`getWebhookInfo`) can survive the same class of failures already handled by `sendMessage`.
+- Preserve truthful behavior:
+  - no fallback for HTTP/API rejections returned by Telegram;
+  - explicit webhook mode semantics unchanged;
+  - if both Node and PowerShell transports fail, `/ready` and logs stay degraded with actionable detail.
