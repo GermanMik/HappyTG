@@ -3,7 +3,7 @@
   "sessionId": "manual-session",
   "workspaceId": "HappyTG",
   "rootPath": "C:\\Develop\\Projects\\HappyTG-release-0320-pnpm-build-script-warning-guard\\.agent\\tasks\\HTG-2026-04-19-release-0320-pnpm-build-script-warning-guard",
-  "phase": "fresh verify",
+  "phase": "complete",
   "mode": "proof",
   "title": "Publish installer pnpm warning guard as 0.3.20",
   "acceptanceCriteria": [
@@ -15,5 +15,5 @@
   ],
   "verificationState": "passed",
   "createdAt": "2026-04-19T00:00:00.000Z",
-  "updatedAt": "2026-04-19T21:14:00.000+03:00"
+  "updatedAt": "2026-04-19T20:48:00.000Z"
 }

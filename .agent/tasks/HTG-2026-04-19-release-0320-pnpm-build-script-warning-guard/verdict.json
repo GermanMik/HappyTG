@@ -1,5 +1,5 @@
 {
   "taskId": "HTG-2026-04-19-release-0320-pnpm-build-script-warning-guard",
-  "status": "pending",
-  "summary": "Local release verification passed for 0.3.20, but the branch is not published yet. Merge to main and successful guarded Release workflow are still required."
+  "status": "complete",
+  "summary": "HappyTG 0.3.20 was published successfully from main commit 00732a9be54a193f70137f6fa1d2c4f27d43f46f after merging the release branch and completing the guarded GitHub Release workflow."
 }

@@ -41,6 +41,17 @@
 
 ## Publish Status
 
-- Pending: commit/push release branch
-- Pending: merge to `main`
-- Pending: dispatch and complete guarded GitHub Actions `Release` workflow for `0.3.20`
+- Release branch commit: `a4b2a42` on `codex/release-0.3.20-pnpm-build-script-warning-guard`
+- Merged to `main` as commit `00732a9be54a193f70137f6fa1d2c4f27d43f46f`
+- GitHub Actions workflow: `Release` run `24635223695`
+- Workflow URL: `https://github.com/GermanMik/HappyTG/actions/runs/24635223695`
+- GitHub Release URL: `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.20`
+- Published tag: `v0.3.20`
+
+### Final Raw Artifacts
+
+- `raw/workflow-run.json`
+- `raw/github-release.json`
+- `raw/git-tag.txt`
+- `raw/install-finalize.txt`
+- `raw/task-validate.txt`

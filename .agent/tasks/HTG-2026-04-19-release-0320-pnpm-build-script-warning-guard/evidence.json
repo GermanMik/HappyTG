@@ -1,6 +1,6 @@
 {
   "taskId": "HTG-2026-04-19-release-0320-pnpm-build-script-warning-guard",
-  "status": "local_verification_passed",
+  "status": "complete",
   "artifacts": [
     "raw/install.txt",
     "raw/test-unit.txt",
@@ -11,6 +11,11 @@
     "raw/lint.txt",
     "raw/typecheck.txt",
     "raw/test-integration.txt",
-    "raw/build.txt"
+    "raw/build.txt",
+    "raw/workflow-run.json",
+    "raw/github-release.json",
+    "raw/git-tag.txt",
+    "raw/install-finalize.txt",
+    "raw/task-validate.txt"
   ]
 }
