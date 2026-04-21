@@ -4,7 +4,16 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { checkCodexReadiness, classifyCodexSmokeStderr, codexCliMissingMessage, runCodexExec, summarizeCodexSmokeStderr } from "./index.js";
+import {
+  checkCodexReadiness,
+  classifyActionKind,
+  classifyCodexSmokeStderr,
+  codexCliMissingMessage,
+  planToolExecutionBatches,
+  runCodexExec,
+  summarizeCodexSmokeStderr,
+  toolExecutionPolicyForAction
+} from "./index.js";
 
 async function writeNodeEntrypoint(filePath: string, source: string): Promise<void> {
   await writeFile(filePath, `${source.trim()}\n`, "utf8");
@@ -191,6 +200,32 @@ test("checkCodexReadiness reports available Codex and captures smoke warnings", 
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
+});
+
+test("tool execution model classifies actions and serializes mutations", () => {
+  assert.equal(classifyActionKind("workspace_read"), "safe_read");
+  assert.equal(classifyActionKind("verification_run"), "bounded_compute");
+  assert.equal(classifyActionKind("workspace_write"), "repo_mutation");
+  assert.equal(classifyActionKind("git_push"), "deploy_publish_external_side_effect");
+
+  assert.equal(toolExecutionPolicyForAction("workspace_read").defaultPolicy, "allow");
+  assert.equal(toolExecutionPolicyForAction("workspace_write").defaultPolicy, "require_approval");
+  assert.equal(toolExecutionPolicyForAction("git_push").defaultPolicy, "deny");
+
+  const batches = planToolExecutionBatches([
+    { id: "read-1", actionKind: "read_status" },
+    { id: "read-2", actionKind: "workspace_read" },
+    { id: "write-1", actionKind: "workspace_write" },
+    { id: "verify-1", actionKind: "verification_run" },
+    { id: "push-1", actionKind: "git_push" }
+  ]);
+
+  assert.deepEqual(batches.map((batch) => `${batch.mode}:${batch.calls.map((call) => call.id).join(",")}`), [
+    "parallel:read-1,read-2",
+    "serial:write-1",
+    "parallel:verify-1",
+    "serial:push-1"
+  ]);
 });
 
 test("checkCodexReadiness resolves a Windows-style codex.cmd shim from Path", async () => {

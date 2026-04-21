@@ -10,6 +10,19 @@ It is written as a production-oriented repo bootstrap document, not as an abstra
 4. filling documentation and templates,
 5. starting implementation by module.
 
+## Current Implementation Baseline
+
+The current repository is a TypeScript-first monorepo. Do not treat this document as permission to create a parallel Go implementation or a second CLI. The canonical repo-local proof path is `.agent/tasks/<TASK_ID>/`, with `task.json` kept for compatibility and `state.json` used as the newer phase cursor.
+
+Canonical Wave 1 states are:
+
+- Session: `created`, `preparing`, `ready`, `running`, `blocked`, `needs_approval`, `verifying`, `paused`, `resuming`, `completed`, `failed`, `cancelled`.
+- Task phase: `quick`, `freeze`, `build`, `evidence`, `verify`, `fix`, `complete`.
+- Approval: `not_required`, `pending`, `waiting_human`, `auto_allowed`, `auto_denied`, `approved_once`, `approved_session`, `approved_phase`, `denied`, `expired`, `superseded`.
+- Verification: `not_started`, `queued`, `running`, `passed`, `failed`, `inconclusive`, `stale`.
+
+Older blueprint terms such as `prefetching`, `awaiting_approval`, `pending_dispatch`, `reconnecting`, and `spec_frozen` map to `preparing`, `needs_approval`, `ready`, `resuming`, and `freeze`.
+
 ## Team View
 
 HappyTG is designed as if the following roles reviewed every major decision:
@@ -311,7 +324,7 @@ Telegram Bot ---------------------> Mini App
 1. User sends `/task quick fix lint on host-1`.
 2. Bot creates a session request in control plane.
 3. Control plane prefetches session context, host status, workspace state, policies, approvals context, runtime adapter state, tools, and resume metadata in parallel.
-4. Session engine validates and transitions session to `pending_dispatch`.
+4. Session engine validates and transitions session to `ready`.
 5. Host daemon receives command, performs fast-path checks, and starts Codex CLI.
 6. Read-only inspections execute in parallel; mutating actions queue behind serialized approval-aware lane.
 7. Short summaries return to Telegram; details go to Mini App.
@@ -321,7 +334,7 @@ Telegram Bot ---------------------> Mini App
 1. User sends `/task proof implement X in repo Y`.
 2. Session engine creates task bundle metadata and `task.init` event.
 3. Spec freezer session writes `spec.md`.
-4. Build phase starts only after `spec_frozen`.
+4. Build phase starts only after the `freeze` phase has a frozen spec.
 5. Evidence is collected into bundle artifacts.
 6. Fresh verifier session runs independently and writes `verdict.json` and `problems.md`.
 7. If needed, fixer performs minimal patch.
@@ -350,13 +363,13 @@ HappyTG is an explicit state machine, not a chat loop.
 | State | Meaning | Exit Conditions |
 | --- | --- | --- |
 | `created` | request accepted, not yet validated | validation starts |
-| `prefetching` | context and runtime data loaded in parallel | prefetch complete or fail |
-| `awaiting_policy` | pending policy evaluation | decision emitted |
-| `awaiting_approval` | blocked on human approval | approve, reject, expire |
-| `pending_dispatch` | ready to send to host | daemon ack |
+| `preparing` | context and runtime data loaded in parallel | prefetch complete or fail |
+| `ready` | ready to send to host | daemon ack |
 | `running` | command actively executing | pause, error, await approval, completed |
+| `blocked` | blocked by policy, host, or missing prerequisite | resolve blocker |
+| `needs_approval` | blocked on human approval | approve, deny, expire |
 | `paused` | intentionally paused | resume |
-| `reconnecting` | host/control plane resume in progress | recovered or failed |
+| `resuming` | host/control plane resume in progress | recovered or failed |
 | `verifying` | independent verification executing | pass/fail |
 | `completed` | terminal success | none |
 | `failed` | terminal failure | manual retry/new session |
@@ -366,8 +379,8 @@ HappyTG is an explicit state machine, not a chat loop.
 
 | Phase | Meaning |
 | --- | --- |
-| `init` | task metadata and bundle root created |
-| `spec_frozen` | acceptance criteria and verification plan locked |
+| `quick` | quick non-proof task path |
+| `freeze` | task metadata exists and acceptance criteria / verification plan are locked before build |
 | `build` | implementation in progress |
 | `evidence` | artifacts gathered and mapped |
 | `verify` | fresh verifier run |
@@ -482,19 +495,19 @@ Compression strategies in order:
 
 ```ts
 type HappyTGEvent =
-  | { type: "session.created"; sessionId: string; mode: "quick" | "proof"; }
-  | { type: "session.prefetch.completed"; sessionId: string; sources: string[]; }
-  | { type: "policy.evaluated"; sessionId: string; allowed: boolean; effectiveLayer: string; }
-  | { type: "approval.requested"; approvalId: string; sessionId: string; risk: string; }
-  | { type: "approval.resolved"; approvalId: string; decision: "approved" | "rejected" | "expired"; }
-  | { type: "host.connected"; hostId: string; capabilities: string[]; }
-  | { type: "host.disconnected"; hostId: string; reason: string; }
-  | { type: "task.phase.changed"; taskId: string; phase: string; }
-  | { type: "runtime.exec.started"; sessionId: string; runtime: "codex-cli" | "secondary"; }
-  | { type: "runtime.exec.summary"; sessionId: string; summary: string; }
-  | { type: "artifact.synced"; taskId: string; artifactPath: string; }
-  | { type: "verification.completed"; taskId: string; status: "passed" | "failed"; }
-  | { type: "session.completed"; sessionId: string; verdict: "success" | "failure" | "cancelled"; };
+  | { type: "SessionCreated"; sessionId: string; mode: "quick" | "proof"; }
+  | { type: "PromptBuilt"; sessionId: string; sources: string[]; }
+  | { type: "PolicyEvaluated"; sessionId: string; outcome: string; effectiveLayer: string; }
+  | { type: "ApprovalRequested"; approvalId: string; sessionId: string; risk: string; scope: string; }
+  | { type: "ApprovalResolved"; approvalId: string; decision: "approved_once" | "approved_phase" | "approved_session" | "denied" | "expired"; }
+  | { type: "HostReconnected"; hostId: string; capabilities?: string[]; }
+  | { type: "HostDisconnected"; hostId: string; reason: string; }
+  | { type: "TaskBundleUpdated"; taskId: string; phase: string; verificationState?: string; }
+  | { type: "ToolCallStarted"; sessionId: string; runtime: "codex-cli" | "secondary"; }
+  | { type: "SummaryGenerated"; sessionId: string; summary: string; }
+  | { type: "ArtifactSynced"; taskId: string; artifactPath: string; }
+  | { type: "VerificationPassed" | "VerificationFailed" | "VerificationInconclusive"; taskId: string; runId: string; }
+  | { type: "SessionCompleted" | "SessionFailed" | "SessionCancelled"; sessionId: string; };
 ```
 
 ### Hooks
@@ -545,7 +558,7 @@ Required files:
 Optional human-friendly mirror:
 
 ```text
-.ai/tasks/<TASK_ID>/
+.agent/tasks/<TASK_ID>/
 ```
 
 But `.agent/tasks/<TASK_ID>/` is the canonical proof bundle.
@@ -1136,7 +1149,7 @@ Content-Type: application/json
 ```json
 {
   "sessionId": "ses_001",
-  "state": "prefetching",
+  "state": "preparing",
   "taskId": "HTG-0001",
   "links": {
     "telegramSummary": "/session/ses_001",

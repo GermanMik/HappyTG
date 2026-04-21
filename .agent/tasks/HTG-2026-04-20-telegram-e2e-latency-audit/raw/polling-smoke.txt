@@ -1,0 +1,8 @@
+{
+  "activeMode": "polling",
+  "status": "ready",
+  "detail": "Telegram polling is active; webhook delivery was disabled at the Telegram API.",
+  "dispatchedUpdateIds": [
+    901
+  ]
+}

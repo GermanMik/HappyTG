@@ -1,21 +1,21 @@
 export const SESSION_STATES = [
   "created",
-  "prefetching",
-  "awaiting_policy",
-  "awaiting_approval",
-  "pending_dispatch",
+  "preparing",
+  "ready",
   "running",
-  "paused",
-  "reconnecting",
+  "blocked",
+  "needs_approval",
   "verifying",
+  "paused",
+  "resuming",
   "completed",
   "failed",
   "cancelled"
 ] as const;
 
 export const TASK_PHASES = [
-  "init",
-  "spec_frozen",
+  "quick",
+  "freeze",
   "build",
   "evidence",
   "verify",
@@ -24,29 +24,36 @@ export const TASK_PHASES = [
 ] as const;
 
 export const APPROVAL_STATES = [
-  "draft",
+  "not_required",
   "pending",
-  "approved",
-  "rejected",
+  "waiting_human",
+  "auto_allowed",
+  "auto_denied",
+  "approved_once",
+  "approved_session",
+  "approved_phase",
+  "denied",
   "expired",
-  "superseded",
-  "cancelled"
+  "superseded"
 ] as const;
 
 export const POLICY_LAYERS = [
   "global",
   "deployment",
   "workspace",
+  "project",
   "session",
   "command"
 ] as const;
 
 export const VERIFICATION_STATES = [
   "not_started",
+  "queued",
   "running",
   "passed",
   "failed",
-  "blocked"
+  "inconclusive",
+  "stale"
 ] as const;
 
 export const ACTION_KINDS = [
@@ -62,21 +69,71 @@ export const ACTION_KINDS = [
   "verification_run"
 ] as const;
 
+export const APPROVAL_SCOPES = [
+  "once",
+  "phase",
+  "session"
+] as const;
+
+export const MINIAPP_LAUNCH_KINDS = [
+  "home",
+  "workspace",
+  "session",
+  "task",
+  "invite",
+  "access_grant",
+  "approval",
+  "sessions",
+  "approvals",
+  "hosts",
+  "reports",
+  "diff",
+  "verify"
+] as const;
+
+export const TOOL_CATEGORIES = [
+  "safe_read",
+  "bounded_compute",
+  "repo_mutation",
+  "shell_network_system_sensitive",
+  "deploy_publish_external_side_effect"
+] as const;
+
 export const EVENT_NAMES = [
-  "session.created",
-  "session.prefetch.completed",
-  "policy.evaluated",
-  "approval.requested",
-  "approval.resolved",
-  "host.connected",
-  "host.disconnected",
-  "task.phase.changed",
-  "runtime.exec.started",
-  "runtime.exec.summary",
-  "artifact.synced",
-  "verification.completed",
-  "session.completed",
-  "session.failed"
+  "SessionCreated",
+  "SessionAssigned",
+  "SessionStarted",
+  "SessionPaused",
+  "SessionResumed",
+  "SessionCompleted",
+  "SessionFailed",
+  "SessionCancelled",
+  "UserMessageReceived",
+  "TelegramCallbackReceived",
+  "MiniAppOpened",
+  "PromptBuilt",
+  "ToolBatchPlanned",
+  "ToolCallQueued",
+  "ToolCallStarted",
+  "ToolCallFinished",
+  "ToolCallFailed",
+  "ApprovalRequested",
+  "ApprovalResolved",
+  "ApprovalExpired",
+  "VerificationStarted",
+  "VerificationPassed",
+  "VerificationFailed",
+  "VerificationInconclusive",
+  "TaskBundleInitialized",
+  "TaskBundleUpdated",
+  "SummaryGenerated",
+  "HostHeartbeatReceived",
+  "HostDisconnected",
+  "HostReconnected",
+  "HookExecutionStarted",
+  "HookExecutionFinished",
+  "PolicyEvaluated",
+  "ArtifactSynced"
 ] as const;
 
 export const DAEMON_MESSAGE_TYPES = [
@@ -102,9 +159,114 @@ export type ApprovalState = (typeof APPROVAL_STATES)[number];
 export type PolicyLayer = (typeof POLICY_LAYERS)[number];
 export type VerificationState = (typeof VERIFICATION_STATES)[number];
 export type ActionKind = (typeof ACTION_KINDS)[number];
+export type ApprovalScope = (typeof APPROVAL_SCOPES)[number];
+export type MiniAppLaunchKind = (typeof MINIAPP_LAUNCH_KINDS)[number];
+export type ToolCategory = (typeof TOOL_CATEGORIES)[number];
 export type EventName = (typeof EVENT_NAMES)[number];
 export type DaemonMessageType = (typeof DAEMON_MESSAGE_TYPES)[number];
 export type DispatchExecutionKind = (typeof DISPATCH_EXECUTION_KINDS)[number];
+
+export interface EventContract {
+  name: EventName;
+  payloadShape: string;
+  producer: string;
+  consumers: string[];
+  idempotencyNotes: string;
+}
+
+export const EVENT_CONTRACTS: EventContract[] = [
+  {
+    name: "SessionCreated",
+    payloadShape: "{ mode, runtime, title?, workspaceId? }",
+    producer: "control-plane",
+    consumers: ["worker", "bot", "miniapp"],
+    idempotencyNotes: "Session id plus event sequence is unique; duplicate creates must be rejected by idempotency key."
+  },
+  {
+    name: "SessionAssigned",
+    payloadShape: "{ hostId, workspaceId }",
+    producer: "control-plane",
+    consumers: ["host-daemon", "bot", "miniapp"],
+    idempotencyNotes: "Assignment is idempotent for the same session and host pair."
+  },
+  {
+    name: "SessionStarted",
+    payloadShape: "{ dispatchId?, runtime }",
+    producer: "host-daemon",
+    consumers: ["worker", "bot", "miniapp"],
+    idempotencyNotes: "Dispatch id prevents duplicate starts after reconnect."
+  },
+  {
+    name: "ApprovalRequested",
+    payloadShape: "{ approvalId, risk, scope, reason, expiresAt }",
+    producer: "approval-engine",
+    consumers: ["bot", "miniapp", "worker"],
+    idempotencyNotes: "Approval id and nonce make repeated renders safe."
+  },
+  {
+    name: "ApprovalResolved",
+    payloadShape: "{ approvalId, decision, actorUserId? }",
+    producer: "bot-or-miniapp",
+    consumers: ["worker", "host-daemon", "audit"],
+    idempotencyNotes: "Resolution is accepted only once; repeated callbacks return the stored decision."
+  },
+  {
+    name: "TaskBundleInitialized",
+    payloadShape: "{ taskId, rootPath, phase }",
+    producer: "repo-proof",
+    consumers: ["control-plane", "miniapp"],
+    idempotencyNotes: "Task id maps to one bundle root."
+  },
+  {
+    name: "TaskBundleUpdated",
+    payloadShape: "{ taskId, phase, verificationState?, artifactCount? }",
+    producer: "repo-proof-or-host-daemon",
+    consumers: ["control-plane", "bot", "miniapp"],
+    idempotencyNotes: "Phase history in state.json provides replay-safe ordering."
+  },
+  {
+    name: "VerificationStarted",
+    payloadShape: "{ taskId, runId, verifierRole }",
+    producer: "host-daemon",
+    consumers: ["bot", "miniapp", "audit"],
+    idempotencyNotes: "Run id distinguishes fresh verifier passes."
+  },
+  {
+    name: "VerificationPassed",
+    payloadShape: "{ taskId, runId, summary }",
+    producer: "host-daemon",
+    consumers: ["bot", "miniapp", "audit"],
+    idempotencyNotes: "A pass becomes stale if a later mutation event is appended."
+  },
+  {
+    name: "VerificationFailed",
+    payloadShape: "{ taskId, runId, findings }",
+    producer: "host-daemon",
+    consumers: ["bot", "miniapp", "audit"],
+    idempotencyNotes: "Failures are append-only and require a later fix plus fresh verify."
+  },
+  {
+    name: "HostHeartbeatReceived",
+    payloadShape: "{ hostId, lastSeenAt }",
+    producer: "host-daemon",
+    consumers: ["worker", "miniapp"],
+    idempotencyNotes: "Latest timestamp wins; old heartbeats are ignored by projections."
+  },
+  {
+    name: "HostDisconnected",
+    payloadShape: "{ hostId, reconciliation }",
+    producer: "worker",
+    consumers: ["bot", "miniapp", "session-engine"],
+    idempotencyNotes: "Repeated disconnect events for stale hosts collapse in projections."
+  },
+  {
+    name: "SummaryGenerated",
+    payloadShape: "{ summary, source }",
+    producer: "runtime-adapter",
+    consumers: ["bot", "miniapp"],
+    idempotencyNotes: "Summaries are append-only; session projection stores latest summary."
+  }
+];
 
 export interface User {
   id: string;
@@ -121,6 +283,34 @@ export interface TelegramIdentity {
   username?: string;
   linkedAt: string;
   status: "active" | "revoked";
+}
+
+export interface MiniAppLaunchGrant {
+  id: string;
+  kind: MiniAppLaunchKind;
+  targetId?: string;
+  userId?: string;
+  issuedByUserId?: string;
+  payload: string;
+  nonce: string;
+  expiresAt: string;
+  maxUses: number;
+  uses: number;
+  revokedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MiniAppSession {
+  id: string;
+  userId: string;
+  telegramUserId: string;
+  launchGrantId?: string;
+  tokenHash: string;
+  expiresAt: string;
+  revokedAt?: string;
+  createdAt: string;
+  lastSeenAt: string;
 }
 
 export interface Host {
@@ -205,6 +395,8 @@ export interface ApprovalRequest {
   sessionId: string;
   actionKind: ActionKind;
   state: ApprovalState;
+  scope?: ApprovalScope;
+  nonce?: string;
   risk: "low" | "medium" | "high" | "critical";
   reason: string;
   expiresAt: string;
@@ -216,7 +408,7 @@ export interface ApprovalDecision {
   id: string;
   approvalRequestId: string;
   actorUserId: string;
-  decision: "approved" | "rejected" | "expired" | "cancelled";
+  decision: "approved_once" | "approved_phase" | "approved_session" | "denied" | "expired" | "superseded";
   reason?: string;
   decidedAt: string;
 }
@@ -264,6 +456,17 @@ export interface RuntimeAdapterRecord {
   version?: string;
   capabilities: string[];
   status: "active" | "deprecated";
+}
+
+export interface MCPBinding {
+  id: string;
+  workspaceId?: string;
+  hostId?: string;
+  serverName: string;
+  status: "active" | "disabled" | "revoked";
+  allowedTools: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface HookDefinition {
@@ -360,6 +563,8 @@ export interface HappyTGStore {
   version: 1;
   users: User[];
   telegramIdentities: TelegramIdentity[];
+  miniAppLaunchGrants: MiniAppLaunchGrant[];
+  miniAppSessions: MiniAppSession[];
   hosts: Host[];
   hostRegistrations: HostRegistration[];
   workspaces: Workspace[];
@@ -372,6 +577,7 @@ export interface HappyTGStore {
   evidenceArtifacts: EvidenceArtifact[];
   verificationRuns: VerificationRun[];
   runtimeAdapters: RuntimeAdapterRecord[];
+  mcpBindings: MCPBinding[];
   hookDefinitions: HookDefinition[];
   hookExecutions: HookExecution[];
   auditRecords: AuditRecord[];
@@ -463,7 +669,147 @@ export interface CreateSessionRequest {
 export interface ResolveApprovalRequest {
   userId: string;
   decision: "approved" | "rejected";
+  scope?: ApprovalScope;
+  nonce?: string;
   reason?: string;
+}
+
+export interface CreateMiniAppLaunchGrantRequest {
+  userId?: string;
+  issuedByUserId?: string;
+  kind: MiniAppLaunchKind;
+  targetId?: string;
+  ttlSeconds?: number;
+  maxUses?: number;
+}
+
+export interface CreateMiniAppLaunchGrantResponse {
+  grant: MiniAppLaunchGrant;
+  startAppPayload: string;
+  launchUrl?: string;
+}
+
+export interface CreateMiniAppSessionRequest {
+  initData: string;
+  startAppPayload?: string;
+}
+
+export interface CreateMiniAppSessionResponse {
+  appSession: {
+    id: string;
+    token: string;
+    expiresAt: string;
+  };
+  user: User;
+  launch?: {
+    kind: MiniAppLaunchKind;
+    targetId?: string;
+    expired?: boolean;
+    revoked?: boolean;
+  };
+}
+
+export interface MiniAppAttentionItem {
+  id: string;
+  kind: "approval" | "session" | "host" | "verification" | "draft";
+  title: string;
+  detail: string;
+  severity: "info" | "warn" | "danger";
+  href: string;
+  nextAction: string;
+}
+
+export interface MiniAppDashboardProjection {
+  stats: {
+    activeSessions: number;
+    pendingApprovals: number;
+    blockedSessions: number;
+    verifyProblems: number;
+  };
+  lastContext?: {
+    hostId?: string;
+    hostLabel?: string;
+    workspaceId?: string;
+    repoName?: string;
+  };
+  attention: MiniAppAttentionItem[];
+  recentSessions: MiniAppSessionCard[];
+  recentReports: MiniAppReportCard[];
+}
+
+export interface MiniAppSessionCard {
+  id: string;
+  title: string;
+  state: SessionState;
+  phase?: TaskPhase;
+  verificationState?: VerificationState;
+  hostLabel?: string;
+  repoName?: string;
+  lastUpdatedAt: string;
+  attention?: string;
+  href: string;
+  nextAction: string;
+}
+
+export interface MiniAppApprovalCard {
+  id: string;
+  sessionId: string;
+  title: string;
+  reason: string;
+  risk: ApprovalRequest["risk"];
+  state: ApprovalState;
+  expiresAt: string;
+  scope?: ApprovalScope;
+  nonce?: string;
+  href: string;
+}
+
+export interface MiniAppHostCard {
+  id: string;
+  label: string;
+  status: Host["status"];
+  lastSeenAt?: string;
+  activeSessions: number;
+  repoNames: string[];
+  lastError?: string;
+  href: string;
+}
+
+export interface MiniAppReportCard {
+  id: string;
+  title: string;
+  status: VerificationState | SessionState;
+  generatedAt: string;
+  href: string;
+}
+
+export interface MiniAppDiffProjection {
+  sessionId: string;
+  taskId?: string;
+  summary: {
+    changedFiles: number;
+    insertions?: number;
+    deletions?: number;
+    highRiskFiles: string[];
+  };
+  files: Array<{
+    path: string;
+    category: "code" | "config" | "test" | "docs" | "artifact";
+    status: "added" | "modified" | "deleted" | "unknown";
+    summary: string;
+  }>;
+  rawAvailable: boolean;
+}
+
+export interface MiniAppVerifyProjection {
+  sessionId: string;
+  taskId?: string;
+  state: VerificationState;
+  checkedCriteria: string[];
+  failedCriteria: string[];
+  nextAction: string;
+  reportHref?: string;
+  evidenceHref?: string;
 }
 
 export interface HostHelloRequest {
@@ -535,6 +881,8 @@ export function createEmptyStore(): HappyTGStore {
     version: 1,
     users: [],
     telegramIdentities: [],
+    miniAppLaunchGrants: [],
+    miniAppSessions: [],
     hosts: [],
     hostRegistrations: [],
     workspaces: [],
@@ -547,6 +895,7 @@ export function createEmptyStore(): HappyTGStore {
     evidenceArtifacts: [],
     verificationRuns: [],
     runtimeAdapters: [],
+    mcpBindings: [],
     hookDefinitions: [],
     hookExecutions: [],
     auditRecords: [],

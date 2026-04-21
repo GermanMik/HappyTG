@@ -1,0 +1,46 @@
+
+> @happytg/bot@0.3.23 test C:\Develop\Projects\HappyTG\apps\bot
+> tsx --test src/*.test.ts
+
+✔ resume command sends session transition summary (1.3004ms)
+✔ doctor command resolves telegram identity and creates bootstrap session (0.9674ms)
+✔ verify command surfaces approval keyboard when required (0.5254ms)
+✔ approval callback resolves with the linked HappyTG user (0.487ms)
+✔ bot ready endpoint returns healthy when api is reachable (36.6143ms)
+✔ bot ready endpoint returns 503 when api is unreachable (9.6057ms)
+✔ startBotServer reuses an already-running HappyTG bot on the same port (51.8715ms)
+✔ startBotServer rejects when a different HappyTG service occupies the bot port (5.3963ms)
+✔ startBotServer names a foreign HTTP listener when the port is occupied (4.7403ms)
+✔ createBotRuntime reuses an existing HappyTG bot without starting a second Telegram delivery loop (67.6533ms)
+✔ botConfigurationMessage stays actionable without exposing secrets (0.35ms)
+✔ initializeBotEnvironment prefers a valid .env token over placeholder shell state (4.5389ms)
+✔ createDefaultSendTelegramMessage falls back to Windows PowerShell after a Node transport timeout (0.5423ms)
+✔ createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful without using fallback (1.3942ms)
+✔ resolveTelegramDeliveryMode selects polling for local auto mode (1.0657ms)
+✔ resolveTelegramDeliveryMode selects webhook for public https auto mode (0.1101ms)
+✔ resolveTelegramDeliveryMode keeps explicit webhook mode degraded when the public URL is not webhook-capable (0.1402ms)
+{"at":"2026-04-20T03:39:30.896Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-20T03:39:30.896Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook"}}
+✔ webhook endpoint dispatches updates through the shared bot handlers (8.5793ms)
+{"at":"2026-04-20T03:39:30.925Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-20T03:39:30.925Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook"}}
+✔ local polling mode receives /start without a public webhook (28.3835ms)
+✔ local polling mode receives /pair and preserves the pairing claim API boundary (30.4729ms)
+✔ local polling mode skips a failing update and continues with later updates (29.899ms)
+{"at":"2026-04-20T03:39:31.016Z","level":"WARN","scope":"bot","message":"Telegram polling degraded","metadata":{"detail":"Telegram deleteWebhook could not be confirmed through Node HTTPS (Connection to api.telegram.org timed out.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Proxy authentication required.. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine."}}
+{"at":"2026-04-20T03:39:31.016Z","level":"WARN","scope":"bot","message":"Bot listening with degraded Telegram delivery","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"degraded","telegramDeliveryDetail":"Telegram deleteWebhook could not be confirmed through Node HTTPS (Connection to api.telegram.org timed out.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Proxy authentication required.. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook"}}
+✔ local polling mode falls back to Windows PowerShell Bot API calls after a Node transport timeout (31.2054ms)
+{"at":"2026-04-20T03:39:31.019Z","level":"WARN","scope":"bot","message":"Bot listening with degraded Telegram delivery","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"degraded","telegramDeliveryDetail":"Telegram webhook mode expects https://happy.example.com/telegram/webhook, but current webhook URL is empty.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":3}}
+✔ polling mode stays degraded with actionable detail when both Telegram transports fail on Windows (2.6692ms)
+{"at":"2026-04-20T03:39:31.023Z","level":"INFO","scope":"bot","message":"Telegram getWebhookInfo delivered via Windows PowerShell fallback"}
+{"at":"2026-04-20T03:39:31.024Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram webhook active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram webhook mode is active and matches the expected webhook URL.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","actualWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":0}}
+✔ webhook mode stays separate from polling and reports degraded readiness when Telegram webhook is not configured (4.9878ms)
+✔ webhook inspection falls back to Windows PowerShell Bot API calls after a Node transport timeout (5.6006ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 703.7328

@@ -85,3 +85,53 @@ test("evaluatePolicies requires approval when no deny matches", () => {
   assert.equal(decision.effectiveLayer, "global");
   assert.match(decision.reason, /approval/i);
 });
+
+test("evaluatePolicies ignores policies outside the requested scope", () => {
+  const policies: Policy[] = [
+    {
+      id: "pol-global",
+      layer: "global",
+      scopeRef: "global",
+      status: "active",
+      version: 1,
+      createdAt: new Date().toISOString(),
+      rules: [
+        {
+          id: "allow-read",
+          actionKind: "workspace_read",
+          effect: "allow",
+          reason: "Global read allow"
+        }
+      ]
+    },
+    {
+      id: "pol-other-workspace",
+      layer: "workspace",
+      scopeRef: "ws_other",
+      status: "active",
+      version: 1,
+      createdAt: new Date().toISOString(),
+      rules: [
+        {
+          id: "deny-read",
+          actionKind: "workspace_read",
+          effect: "deny",
+          reason: "Other workspace deny"
+        }
+      ]
+    }
+  ];
+
+  const decision = evaluatePolicies({
+    actionKind: "workspace_read",
+    scopeRefs: {
+      global: "global",
+      workspace: "ws_current"
+    },
+    policies
+  });
+
+  assert.equal(decision.outcome, "allow");
+  assert.equal(decision.matches.length, 1);
+  assert.equal(decision.matches[0]?.policyId, "pol-global");
+});

@@ -1,0 +1,138 @@
+{
+  "taskId": "HTG-2026-04-20-telegram-e2e-latency-audit",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "passed",
+      "summary": "The canonical proof bundle exists and bundle validation passed.",
+      "artifacts": [
+        "spec.md",
+        "task.json",
+        "raw/task-validate.txt"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "passed",
+      "summary": "Fresh evidence isolates the latency bottleneck to outbound Telegram sendMessage and quantifies the Node, fallback-gap, and PowerShell timings.",
+      "artifacts": [
+        "raw/init-analysis.txt",
+        "raw/live-health.txt",
+        "raw/live-ready.txt",
+        "raw/node-getme-timing.txt",
+        "raw/powershell-getme-timing.txt",
+        "raw/sendmessage-node-timing.txt",
+        "raw/sendmessage-fallback-timing.txt",
+        "raw/before-latency.txt",
+        "raw/webhook-smoke.txt",
+        "raw/after-latency.txt"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "passed",
+      "summary": "The bounded repair stays in createDefaultSendTelegramMessage and preserves delivery-mode, pairing, approval, user-binding, and truthful readiness/logging semantics.",
+      "artifacts": [
+        "apps/bot/src/index.ts",
+        "raw/live-ready.txt"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "passed",
+      "summary": "Regression coverage proves a hanging Windows Node transport falls through quickly to fallback.",
+      "artifacts": [
+        "apps/bot/src/index.test.ts",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "passed",
+      "summary": "Post-fix verification commands, bundle validation, and a separate verifier pass all passed.",
+      "artifacts": [
+        "raw/test-unit.txt",
+        "raw/typecheck.txt",
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/task-validate.txt",
+        "raw/fresh-verifier.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "raw/init-analysis.txt",
+      "kind": "analysis"
+    },
+    {
+      "path": "raw/live-health.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/live-ready.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/polling-smoke.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/webhook-smoke.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/node-getme-timing.txt",
+      "kind": "transport"
+    },
+    {
+      "path": "raw/powershell-getme-timing.txt",
+      "kind": "transport"
+    },
+    {
+      "path": "raw/sendmessage-node-timing.txt",
+      "kind": "transport"
+    },
+    {
+      "path": "raw/sendmessage-fallback-timing.txt",
+      "kind": "transport"
+    },
+    {
+      "path": "raw/before-latency.txt",
+      "kind": "latency"
+    },
+    {
+      "path": "raw/after-latency.txt",
+      "kind": "latency"
+    },
+    {
+      "path": "raw/test-unit.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/test-integration.txt",
+      "kind": "validation"
+    },
+    {
+      "path": "raw/typecheck.txt",
+      "kind": "typecheck"
+    },
+    {
+      "path": "raw/build.txt",
+      "kind": "build"
+    },
+    {
+      "path": "raw/lint.txt",
+      "kind": "lint"
+    },
+    {
+      "path": "raw/task-validate.txt",
+      "kind": "validation"
+    },
+    {
+      "path": "raw/fresh-verifier.txt",
+      "kind": "verification"
+    }
+  ],
+  "generatedAt": "2026-04-20T04:15:00.000Z"
+}

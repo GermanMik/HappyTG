@@ -1,0 +1,79 @@
+
+> happytg@0.3.23 lint C:\Develop\Projects\HappyTG
+> turbo lint
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/shared, @happytg/worker
+   • Running lint in 13 packages
+   • Remote caching disabled
+
+@happytg/protocol:lint: cache miss, executing 37ef95819e015e4d
+@happytg/shared:lint: cache hit, replaying logs a43637f2b1f03289
+@happytg/shared:lint:
+@happytg/shared:lint: > @happytg/shared@0.3.23 lint C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:lint: > tsc -p tsconfig.json --noEmit
+@happytg/shared:lint:
+@happytg/host-daemon:lint: cache hit, replaying logs d4f61d7cd46a3901
+@happytg/host-daemon:lint:
+@happytg/host-daemon:lint: > @happytg/host-daemon@0.3.23 lint C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:lint: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:lint:
+@happytg/api:lint: cache miss, executing e29dd58cff570b7e
+@happytg/approval-engine:lint: cache hit, replaying logs fb8201f6f85231f7
+@happytg/approval-engine:lint:
+@happytg/approval-engine:lint: > @happytg/approval-engine@0.3.23 lint C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:lint:
+@happytg/bootstrap:lint: cache hit, replaying logs 59326c2c03ddf10a
+@happytg/bootstrap:lint:
+@happytg/bootstrap:lint: > @happytg/bootstrap@0.3.23 lint C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:lint:
+@happytg/worker:lint: cache hit, replaying logs ed9b8b1cfb2598eb
+@happytg/worker:lint:
+@happytg/worker:lint: > @happytg/worker@0.3.23 lint C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:lint: > tsc -p tsconfig.json --noEmit
+@happytg/worker:lint:
+@happytg/runtime-adapters:lint: cache hit, replaying logs 3a44b02593343a14
+@happytg/runtime-adapters:lint:
+@happytg/runtime-adapters:lint: > @happytg/runtime-adapters@0.3.23 lint C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:lint: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:lint:
+@happytg/miniapp:lint: cache hit, replaying logs 8c76b2254116cc19
+@happytg/miniapp:lint:
+@happytg/miniapp:lint: > @happytg/miniapp@0.3.23 lint C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:lint: > tsc -p tsconfig.json --noEmit
+@happytg/miniapp:lint:
+@happytg/policy-engine:lint: cache hit, replaying logs dc13fa939b9cf640
+@happytg/policy-engine:lint:
+@happytg/policy-engine:lint: > @happytg/policy-engine@0.3.23 lint C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:lint:
+@happytg/bot:lint: cache miss, executing c6dc5f3c842f859e
+@happytg/hooks:lint: cache hit, replaying logs fbe0fd8d9054c486
+@happytg/hooks:lint:
+@happytg/hooks:lint: > @happytg/hooks@0.3.23 lint C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:lint: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:lint:
+@happytg/repo-proof:lint: cache hit, replaying logs 78119269821dc249
+@happytg/repo-proof:lint:
+@happytg/repo-proof:lint: > @happytg/repo-proof@0.3.23 lint C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:lint: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:lint:
+@happytg/api:lint:
+@happytg/api:lint: > @happytg/api@0.3.23 lint C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:lint: > tsc -p tsconfig.json --noEmit
+@happytg/api:lint:
+@happytg/protocol:lint:
+@happytg/protocol:lint: > @happytg/protocol@0.3.23 lint C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:lint: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:lint:
+@happytg/bot:lint:
+@happytg/bot:lint: > @happytg/bot@0.3.23 lint C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bot:lint:
+
+ Tasks:    13 successful, 13 total
+Cached:    10 cached, 13 total
+  Time:    2.166s

@@ -5,7 +5,7 @@ import { createEmptyStore } from "../../../packages/protocol/src/index.js";
 
 import { markExpiredApprovalSessions, reconcileSessionsAndDispatches, updateHostStatuses } from "./reconcile.js";
 
-test("reconcileSessionsAndDispatches moves active sessions to reconnecting when host is stale", () => {
+test("reconcileSessionsAndDispatches moves active sessions to resuming when host is stale", () => {
   const now = Date.now();
   const store = createEmptyStore();
   store.hosts.push({
@@ -58,7 +58,7 @@ test("reconcileSessionsAndDispatches moves active sessions to reconnecting when 
 
   assert.equal(updatedHosts, 1);
   assert.equal(result.sessionsMovedToReconnecting, 1);
-  assert.equal(store.sessions[0]?.state, "reconnecting");
+  assert.equal(store.sessions[0]?.state, "resuming");
 });
 
 test("markExpiredApprovalSessions pauses awaiting approval sessions", () => {
@@ -71,7 +71,7 @@ test("markExpiredApprovalSessions pauses awaiting approval sessions", () => {
     workspaceId: "ws_1",
     mode: "proof",
     runtime: "codex-cli",
-    state: "awaiting_approval",
+    state: "needs_approval",
     title: "test",
     prompt: "test",
     approvalId: "apr_1",

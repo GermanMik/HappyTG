@@ -1,0 +1,54 @@
+{
+  "taskId": "HTG-2026-04-21-wave3-session-policy-proof-core",
+  "criteria": [
+    {
+      "criterion": "Session reducer enforces valid transitions and rejects illegal transitions",
+      "artifacts": [
+        "packages/session-engine/src/index.ts",
+        "packages/session-engine/src/index.test.ts",
+        "apps/api/src/service.ts"
+      ]
+    },
+    {
+      "criterion": "Approval engine supports nonce-aware scoped idempotent resolution and expiry",
+      "artifacts": [
+        "packages/approval-engine/src/index.ts",
+        "packages/approval-engine/src/index.test.ts",
+        "apps/api/src/service.test.ts"
+      ]
+    },
+    {
+      "criterion": "Policy and tool execution model classify actions and serialize mutations",
+      "artifacts": [
+        "packages/policy-engine/src/index.ts",
+        "packages/policy-engine/src/index.test.ts",
+        "packages/runtime-adapters/src/index.ts",
+        "packages/runtime-adapters/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "Repo proof lifecycle supports phase advance, approval references, and stale verification after mutation",
+      "artifacts": [
+        "packages/repo-proof/src/index.ts",
+        "packages/repo-proof/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "API/session resume paths use the reducer without breaking existing daemon flows",
+      "artifacts": [
+        "apps/api/src/service.ts",
+        ".agent/tasks/HTG-2026-04-21-wave3-session-policy-proof-core/raw/test-integration.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "packages/session-engine/src/index.ts",
+    "packages/approval-engine/src/index.ts",
+    "packages/policy-engine/src/index.ts",
+    "packages/runtime-adapters/src/index.ts",
+    "packages/repo-proof/src/index.ts",
+    "apps/api/src/service.ts",
+    "docs/architecture/session-policy-proof-core.md"
+  ],
+  "generatedAt": "2026-04-21T04:31:00.000Z"
+}

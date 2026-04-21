@@ -338,6 +338,45 @@ test("createDefaultSendTelegramMessage falls back to Windows PowerShell after a 
   assert.match(infoLogs[0]?.message ?? "", /Windows PowerShell fallback/i);
 });
 
+test("createDefaultSendTelegramMessage bounds the Windows Node attempt before fallback", async () => {
+  const infoLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const errorLogs: Array<{ message: string; metadata?: unknown }> = [];
+  let fetchCalls = 0;
+  let fallbackCalls = 0;
+  const sendTelegramMessage = createDefaultSendTelegramMessage({
+    botToken: VALID_BOT_TOKEN,
+    platform: "win32",
+    nodeTransportTimeoutMs: 25,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return await new Promise<Response>(() => {});
+    },
+    sendViaWindowsPowerShell: async () => {
+      fallbackCalls += 1;
+      return { ok: true };
+    },
+    logger: {
+      info(message, metadata) {
+        infoLogs.push({ message, metadata });
+      },
+      warn() {},
+      error(message, metadata) {
+        errorLogs.push({ message, metadata });
+      }
+    }
+  });
+
+  const startedAt = Date.now();
+  await sendTelegramMessage(42, "hello");
+  const elapsedMs = Date.now() - startedAt;
+
+  assert.equal(fetchCalls, 1);
+  assert.equal(fallbackCalls, 1);
+  assert.equal(errorLogs.length, 0);
+  assert.match(infoLogs[0]?.message ?? "", /Windows PowerShell fallback/i);
+  assert.ok(elapsedMs < 500, `Expected Windows fallback before the full Node timeout, got ${elapsedMs}ms.`);
+});
+
 test("createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful without using fallback", async () => {
   const errorLogs: Array<{ message: string; metadata?: unknown }> = [];
   let fallbackCalls = 0;
@@ -451,7 +490,7 @@ test("webhook endpoint dispatches updates through the shared bot handlers", asyn
 
     assert.equal(response.status, 200);
     assert.equal(messages.length, 1);
-    assert.match(messages[0]?.text ?? "", /HappyTG bot is ready/i);
+    assert.match(messages[0]?.text ?? "", /Сначала подключите host/i);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
@@ -507,7 +546,7 @@ test("local polling mode receives /start without a public webhook", async () => 
     assert.equal(snapshot.activeMode, "polling");
     assert.equal(runtime.deliveryState.read().status, "ready");
     assert.deepEqual(telegramCalls.slice(0, 2), ["deleteWebhook", "getUpdates"]);
-    assert.match(messages[0]?.text ?? "", /\/pair <PAIRING_CODE>/);
+    assert.match(messages[0]?.text ?? "", /\/pair CODE/);
   } finally {
     await runtime.stop();
   }
@@ -582,7 +621,98 @@ test("local polling mode receives /pair and preserves the pairing claim API boun
       username: "pairer",
       displayName: "Local Dev"
     });
-    assert.match(messages[0]?.text ?? "", /Host paired: devbox/);
+    assert.match(messages[0]?.text ?? "", /Host подключен: devbox/);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("local polling mode skips a failing update and continues with later updates", async () => {
+  const messages: Array<{ chatId: number; text: string }> = [];
+  const apiCalls: Array<{ pathname: string; init?: RequestInit }> = [];
+  const offsets: number[] = [];
+  const errorLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const warnLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const runtime = createBotRuntime({
+    async apiFetch(pathname, init) {
+      apiCalls.push({ pathname, init });
+      if (pathname === "/api/v1/pairing/claim") {
+        throw new Error("API /api/v1/pairing/claim failed with 500: {\n  \"error\": \"Internal server error\",\n  \"detail\": \"Pairing code expired\"\n}\n");
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    },
+    async sendTelegramMessage(chatId, text) {
+      messages.push({ chatId, text });
+    }
+  }, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+    },
+    port: 0,
+    fetchImpl: async (input, init) => {
+      const method = String(input).match(/\/bot[^/]+\/([^/?]+)/u)?.[1] ?? "unknown";
+      if (method === "deleteWebhook") {
+        return telegramOk(true);
+      }
+      if (method === "getUpdates") {
+        const payload = JSON.parse(String(init?.body ?? "{}")) as { offset?: number };
+        offsets.push(payload.offset ?? 0);
+        if ((payload.offset ?? 0) === 0) {
+          return telegramOk([
+            {
+              update_id: 401,
+              message: {
+                message_id: 4,
+                text: "/pair EXPIRED-CODE",
+                chat: { id: 21 },
+                from: {
+                  id: 211,
+                  username: "pairer",
+                  first_name: "Expired",
+                  last_name: "Pair"
+                }
+              }
+            },
+            {
+              update_id: 402,
+              message: {
+                message_id: 5,
+                text: "/start",
+                chat: { id: 21 },
+                from: { id: 211, username: "pairer" }
+              }
+            }
+          ]);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        return telegramOk([]);
+      }
+      throw new Error(`Unexpected Telegram method ${method}`);
+    },
+    logger: {
+      info() {},
+      warn(message, metadata) {
+        warnLogs.push({ message, metadata });
+      },
+      error(message, metadata) {
+        errorLogs.push({ message, metadata });
+      }
+    }
+  });
+
+  try {
+    const snapshot = await runtime.start();
+    await waitForCondition(() => messages.length >= 2 && offsets.length >= 2);
+
+    assert.equal(snapshot.activeMode, "polling");
+    assert.equal(runtime.deliveryState.read().status, "ready");
+    assert.deepEqual(offsets.slice(0, 2), [0, 403]);
+    assert.equal(apiCalls.filter((call) => call.pathname === "/api/v1/pairing/claim").length, 1);
+    assert.equal(warnLogs.length, 0);
+    assert.equal(errorLogs.length, 0);
+    assert.match(messages[0]?.text ?? "", /Pairing code истек/i);
+    assert.match(messages[1]?.text ?? "", /Сначала подключите host/i);
   } finally {
     await runtime.stop();
   }
@@ -665,7 +795,7 @@ test("local polling mode falls back to Windows PowerShell Bot API calls after a 
     assert.match(infoLogs.join("\n"), /deleteWebhook delivered via Windows PowerShell fallback/i);
     assert.match(infoLogs.join("\n"), /getUpdates delivered via Windows PowerShell fallback/i);
     assert.equal(warnLogs.length, 0);
-    assert.match(messages[0]?.text ?? "", /HappyTG bot is ready/i);
+    assert.match(messages[0]?.text ?? "", /Сначала подключите host/i);
   } finally {
     await runtime.stop();
   }

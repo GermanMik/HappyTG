@@ -1,4 +1,13 @@
-import type { CreateSessionRequest, ResolveApprovalRequest } from "../../../packages/protocol/src/index.js";
+import type {
+  ApprovalRequest,
+  ApprovalScope,
+  CreateSessionRequest,
+  Host,
+  ResolveApprovalRequest,
+  Session,
+  TaskBundle,
+  Workspace
+} from "../../../packages/protocol/src/index.js";
 
 export interface TelegramUser {
   id: number;
@@ -34,21 +43,386 @@ export interface TelegramUpdate {
 export interface BotDependencies {
   apiFetch<T>(pathname: string, init?: RequestInit): Promise<T>;
   sendTelegramMessage(chatId: number, text: string, replyMarkup?: Record<string, unknown>): Promise<void>;
+  editTelegramMessage?(chatId: number, messageId: number, text: string, replyMarkup?: Record<string, unknown>): Promise<void>;
   resolveInternalUserId?(user: TelegramUser): Promise<string | undefined>;
+  miniAppBaseUrl?: string;
+  now?(): number;
 }
 
-export function inlineApprovalKeyboard(approvalId: string) {
+interface MiniAppOverview {
+  hosts: Host[];
+  workspaces: Workspace[];
+  sessions: Session[];
+  approvals: ApprovalRequest[];
+  tasks: TaskBundle[];
+}
+
+interface SessionDetail extends Session {
+  task?: TaskBundle;
+  approval?: ApprovalRequest;
+}
+
+interface TaskWizardDraft {
+  userId: string;
+  chatId: number;
+  hostId?: string;
+  hostLabel?: string;
+  workspaceId?: string;
+  workspaceLabel?: string;
+  mode?: "quick" | "proof";
+  prompt?: string;
+  updatedAt: number;
+}
+
+const DRAFT_TTL_MS = 30 * 60 * 1000;
+const TERMINAL_SESSION_STATES = new Set(["completed", "failed", "cancelled"]);
+const WAITING_APPROVAL_STATES = new Set(["pending", "waiting_human"]);
+
+function userDisplayName(user: TelegramUser): string {
+  return [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || `tg-${user.id}`;
+}
+
+function shortId(id: string): string {
+  return id.length <= 10 ? id : `${id.slice(0, 8)}...`;
+}
+
+function trimLine(value: string, max = 90): string {
+  const normalized = value.replace(/\s+/gu, " ").trim();
+  return normalized.length <= max ? normalized : `${normalized.slice(0, max - 1)}...`;
+}
+
+function isActiveSession(session: Session): boolean {
+  return !TERMINAL_SESSION_STATES.has(session.state);
+}
+
+function isWaitingApproval(approval: ApprovalRequest): boolean {
+  return WAITING_APPROVAL_STATES.has(approval.state);
+}
+
+function defaultMiniAppBaseUrl(env = process.env): string {
+  const explicit = env.HAPPYTG_MINIAPP_URL?.trim() || env.HAPPYTG_APP_URL?.trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const publicUrl = env.HAPPYTG_PUBLIC_URL?.trim();
+  if (publicUrl) {
+    try {
+      return new URL("/miniapp", publicUrl).toString();
+    } catch {
+      return publicUrl;
+    }
+  }
+
+  return "https://happytg.gerta.crazedns.ru/miniapp";
+}
+
+function miniAppUrl(baseUrl: string, screen?: string, params: Record<string, string> = {}): string {
+  try {
+    const url = new URL(baseUrl);
+    if (screen) {
+      url.searchParams.set("screen", screen);
+    }
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.set(key, value);
+    }
+    return url.toString();
+  } catch {
+    return baseUrl;
+  }
+}
+
+function mainMenuKeyboard(miniBaseUrl: string): Record<string, unknown> {
   return {
     inline_keyboard: [
       [
-        { text: "Approve", callback_data: `approval:approve:${approvalId}` },
-        { text: "Reject", callback_data: `approval:reject:${approvalId}` }
+        { text: "Новая задача", callback_data: "m:t" },
+        { text: "Активные сессии", callback_data: "m:s" }
+      ],
+      [
+        { text: "Подтверждения", callback_data: "m:a" },
+        { text: "Хосты", callback_data: "m:h" }
+      ],
+      [
+        { text: "Последние отчеты", callback_data: "m:r" },
+        { text: "Открыть Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "home") } }
       ]
     ]
   };
 }
 
+function approvalCallbackData(code: "o" | "p" | "s" | "d", approvalId: string, nonce?: string): string {
+  return nonce ? `a:${code}:${approvalId}:${nonce}` : `a:${code}:${approvalId}`;
+}
+
+export function inlineApprovalKeyboard(approvalId: string, nonce?: string) {
+  return {
+    inline_keyboard: [
+      [
+        { text: "Разрешить один раз", callback_data: approvalCallbackData("o", approvalId, nonce) }
+      ],
+      [
+        { text: "Разрешить на фазу", callback_data: approvalCallbackData("p", approvalId, nonce) },
+        { text: "Разрешить на сессию", callback_data: approvalCallbackData("s", approvalId, nonce) }
+      ],
+      [
+        { text: "Отклонить", callback_data: approvalCallbackData("d", approvalId, nonce) },
+        { text: "Подробнее", callback_data: `a:x:${approvalId}` }
+      ]
+    ]
+  };
+}
+
+function hostStatusLabel(status: Host["status"]): string {
+  switch (status) {
+    case "active":
+      return "online";
+    case "paired":
+      return "paired";
+    case "stale":
+      return "offline";
+    case "registering":
+      return "pairing";
+    case "revoked":
+    default:
+      return status;
+  }
+}
+
+function approvalActionLabel(actionKind: string): string {
+  switch (actionKind) {
+    case "workspace_write":
+      return "изменить файлы в repo";
+    case "workspace_write_outside_root":
+      return "затронуть путь вне repo";
+    case "git_push":
+      return "отправить изменения наружу";
+    case "verification_run":
+      return "запустить verify";
+    case "bootstrap_config_edit":
+      return "изменить конфигурацию";
+    case "bootstrap_install":
+      return "выполнить bootstrap install";
+    default:
+      return actionKind;
+  }
+}
+
+function riskLabel(risk: ApprovalRequest["risk"]): string {
+  switch (risk) {
+    case "low":
+      return "низкий";
+    case "medium":
+      return "средний";
+    case "high":
+      return "высокий";
+    case "critical":
+      return "критический";
+    default:
+      return risk;
+  }
+}
+
+function formatMainMenuText(overview?: MiniAppOverview): string {
+  const activeSessions = overview?.sessions.filter(isActiveSession).length ?? 0;
+  const waitingApprovals = overview?.approvals.filter(isWaitingApproval).length ?? 0;
+  const problemSessions = overview?.sessions.filter((item) => item.state === "blocked" || item.state === "failed").length ?? 0;
+  const unfinishedTasks = overview?.tasks.filter((item) => item.phase !== "complete" || item.verificationState === "stale").length ?? 0;
+  const lastHost = overview?.hosts
+    .slice()
+    .sort((left, right) => (right.lastSeenAt ?? right.updatedAt).localeCompare(left.lastSeenAt ?? left.updatedAt))
+    .at(0);
+  const lastWorkspace = overview?.workspaces
+    .slice()
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .at(0);
+
+  return [
+    "HappyTG",
+    "Что делаем дальше?",
+    "",
+    `Активные сессии: ${activeSessions}`,
+    `Ждут подтверждения: ${waitingApprovals}`,
+    `Требуют внимания: ${problemSessions}`,
+    `Незавершенные proof-задачи: ${unfinishedTasks}`,
+    `Последний host/repo: ${lastHost ? lastHost.label : "нет"}${lastWorkspace ? ` / ${lastWorkspace.repoName}` : ""}`
+  ].join("\n");
+}
+
+function formatFirstUseText(): string {
+  return [
+    "HappyTG",
+    "Сначала подключите host, на котором лежит repo.",
+    "",
+    "На host выполните `pnpm daemon:pair`, затем пришлите сюда `/pair CODE`.",
+    "После pairing я покажу меню с задачами, сессиями и approvals."
+  ].join("\n");
+}
+
+function formatSessionCard(session: SessionDetail, overview?: MiniAppOverview): string {
+  const host = overview?.hosts.find((item) => item.id === session.hostId);
+  const workspace = overview?.workspaces.find((item) => item.id === session.workspaceId);
+  const task = session.task ?? overview?.tasks.find((item) => item.id === session.taskId);
+  const approval = session.approval ?? overview?.approvals.find((item) => item.id === session.approvalId);
+  const flags = [
+    approval && isWaitingApproval(approval) ? "approval" : undefined,
+    task?.verificationState === "failed" || task?.verificationState === "inconclusive" ? "verify issue" : undefined,
+    task?.verificationState === "stale" ? "stale verify" : undefined,
+    session.state === "blocked" ? "blocked" : undefined
+  ].filter(Boolean).join(", ") || "нет";
+
+  return [
+    `Сессия ${shortId(session.id)}`,
+    trimLine(session.title, 80),
+    "",
+    `Host: ${host?.label ?? shortId(session.hostId)}`,
+    `Repo: ${workspace?.repoName ?? shortId(session.workspaceId)}`,
+    `Статус: ${session.state}`,
+    `Фаза: ${task?.phase ?? (session.mode === "quick" ? "quick" : "preparing")}`,
+    `Verify: ${task?.verificationState ?? "not_started"}`,
+    `Внимание: ${flags}`,
+    `Обновлено: ${session.updatedAt}`,
+    session.currentSummary ? `\nКратко: ${trimLine(session.currentSummary, 160)}` : undefined,
+    session.lastError ? `\nОшибка: ${trimLine(session.lastError, 160)}` : undefined
+  ].filter(Boolean).join("\n");
+}
+
+function sessionCardKeyboard(session: Session, miniBaseUrl: string): Record<string, unknown> {
+  return {
+    inline_keyboard: [
+      [
+        { text: "Кратко", callback_data: `s:u:${session.id}` },
+        { text: "Resume", callback_data: `s:r:${session.id}` }
+      ],
+      [
+        { text: "Diff", callback_data: `s:d:${session.id}` },
+        { text: "Verify", callback_data: `s:v:${session.id}` }
+      ],
+      [
+        { text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "session", { id: session.id }) } }
+      ]
+    ]
+  };
+}
+
+function formatApprovalDialog(approval: ApprovalRequest, session?: Session): string {
+  return [
+    `Подтверждение ${shortId(approval.id)}`,
+    "",
+    `Что: ${approvalActionLabel(approval.actionKind)}`,
+    `Зачем: ${approval.reason}`,
+    `Риск: ${riskLabel(approval.risk)}`,
+    `Scope сейчас: ${approval.scope ?? "once"}`,
+    `Истекает: ${approval.expiresAt}`,
+    session ? `Сессия: ${trimLine(session.title, 80)}` : undefined
+  ].filter(Boolean).join("\n");
+}
+
+function formatHosts(hosts: Host[]): string {
+  if (hosts.length === 0) {
+    return [
+      "Хостов пока нет.",
+      "На execution host выполните `pnpm daemon:pair`, затем пришлите сюда `/pair CODE`."
+    ].join("\n");
+  }
+
+  return [
+    "Хосты",
+    ...hosts.map((host) => [
+      `- ${host.label}`,
+      `  id: ${shortId(host.id)}`,
+      `  status: ${hostStatusLabel(host.status)}`,
+      host.lastSeenAt ? `  heartbeat: ${host.lastSeenAt}` : undefined
+    ].filter(Boolean).join("\n"))
+  ].join("\n");
+}
+
+function hostSelectionKeyboard(hosts: Host[]): Record<string, unknown> {
+  return {
+    inline_keyboard: [
+      ...hosts.slice(0, 8).map((host) => [
+        { text: `${host.label} (${hostStatusLabel(host.status)})`, callback_data: `w:h:${host.id}` }
+      ]),
+      [
+        { text: "Отмена", callback_data: "w:x" }
+      ]
+    ]
+  };
+}
+
+function workspaceSelectionKeyboard(workspaces: Workspace[]): Record<string, unknown> {
+  return {
+    inline_keyboard: [
+      ...workspaces.slice(0, 8).map((workspace) => [
+        { text: workspace.repoName, callback_data: `w:w:${workspace.id}` }
+      ]),
+      [
+        { text: "Назад", callback_data: "w:b" },
+        { text: "Отмена", callback_data: "w:x" }
+      ]
+    ]
+  };
+}
+
+function modeSelectionKeyboard(): Record<string, unknown> {
+  return {
+    inline_keyboard: [
+      [
+        { text: "Быстрый вопрос", callback_data: "w:m:q" },
+        { text: "Proof-loop задача", callback_data: "w:m:p" }
+      ],
+      [
+        { text: "Назад", callback_data: "w:b" },
+        { text: "Отмена", callback_data: "w:x" }
+      ]
+    ]
+  };
+}
+
+function confirmTaskKeyboard(): Record<string, unknown> {
+  return {
+    inline_keyboard: [
+      [
+        { text: "Запустить", callback_data: "w:c" },
+        { text: "Отмена", callback_data: "w:x" }
+      ]
+    ]
+  };
+}
+
+function formatDraftConfirmation(draft: TaskWizardDraft): string {
+  return [
+    "Проверим перед запуском.",
+    "",
+    `Host: ${draft.hostLabel ?? draft.hostId}`,
+    `Repo: ${draft.workspaceLabel ?? draft.workspaceId}`,
+    `Режим: ${draft.mode === "proof" ? "proof-loop" : "быстрый"}`,
+    `Задача: ${trimLine(draft.prompt ?? "", 180)}`
+  ].join("\n");
+}
+
+function formatRecoveryMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/pairing code not found/i.test(message)) {
+    return "Не нашел такой pairing code. Запросите новый через `pnpm daemon:pair` и пришлите его сюда.";
+  }
+  if (/pairing code expired/i.test(message)) {
+    return "Pairing code истек. Запросите свежий через `pnpm daemon:pair`.";
+  }
+  if (/nonce mismatch/i.test(message)) {
+    return "Это подтверждение устарело. Откройте актуальный список approvals.";
+  }
+  if (/already/i.test(message) && /approval/i.test(message)) {
+    return "Это подтверждение уже обработано. Откройте approvals, если нужно проверить состояние.";
+  }
+  return `Не получилось выполнить действие: ${message}`;
+}
+
 export function createBotHandlers(dependencies: BotDependencies) {
+  const miniBaseUrl = dependencies.miniAppBaseUrl ?? defaultMiniAppBaseUrl();
+  const now = dependencies.now ?? (() => Date.now());
+  const wizardDrafts = new Map<string, TaskWizardDraft>();
+
   const resolveInternalUserId = dependencies.resolveInternalUserId ?? (async (user: TelegramUser) => {
     try {
       const result = await dependencies.apiFetch<{ id: string }>(`/api/v1/users/by-telegram/${user.id}`);
@@ -58,28 +432,97 @@ export function createBotHandlers(dependencies: BotDependencies) {
     }
   });
 
-  async function handleStart(message: TelegramMessage): Promise<void> {
+  function draftKey(user: TelegramUser): string {
+    return String(user.id);
+  }
+
+  function getFreshDraft(user: TelegramUser): TaskWizardDraft | undefined {
+    const key = draftKey(user);
+    const draft = wizardDrafts.get(key);
+    if (!draft) {
+      return undefined;
+    }
+    if (now() - draft.updatedAt > DRAFT_TTL_MS) {
+      wizardDrafts.delete(key);
+      return undefined;
+    }
+    return draft;
+  }
+
+  async function sendOrEdit(callback: TelegramCallbackQuery, text: string, replyMarkup?: Record<string, unknown>): Promise<void> {
+    if (dependencies.editTelegramMessage && callback.message) {
+      await dependencies.editTelegramMessage(callback.message.chat.id, callback.message.message_id, text, replyMarkup);
+      return;
+    }
+
+    await dependencies.sendTelegramMessage(callback.message?.chat.id ?? callback.from.id, text, replyMarkup);
+  }
+
+  async function resolveUserOrPrompt(chatId: number, user?: TelegramUser): Promise<string | undefined> {
+    if (!user) {
+      await dependencies.sendTelegramMessage(chatId, "Telegram не передал данные пользователя. Повторите действие из личного чата с ботом.");
+      return undefined;
+    }
+
+    const userId = await resolveInternalUserId(user);
+    if (!userId) {
+      await dependencies.sendTelegramMessage(chatId, formatFirstUseText(), mainMenuKeyboard(miniBaseUrl));
+      return undefined;
+    }
+
+    return userId;
+  }
+
+  async function fetchOverview(userId: string): Promise<MiniAppOverview> {
+    return dependencies.apiFetch<MiniAppOverview>(`/api/v1/miniapp/bootstrap?userId=${encodeURIComponent(userId)}`);
+  }
+
+  async function fetchHosts(userId: string): Promise<Host[]> {
+    const result = await dependencies.apiFetch<{ hosts: Host[] }>(`/api/v1/hosts?userId=${encodeURIComponent(userId)}`);
+    return result.hosts;
+  }
+
+  async function fetchWorkspaces(hostId: string, userId: string): Promise<Workspace[]> {
+    const result = await dependencies.apiFetch<{ workspaces: Workspace[] }>(`/api/v1/hosts/${encodeURIComponent(hostId)}/workspaces?userId=${encodeURIComponent(userId)}`);
+    return result.workspaces;
+  }
+
+  async function handleMenu(message: TelegramMessage): Promise<void> {
+    if (!message.from) {
+      await dependencies.sendTelegramMessage(message.chat.id, formatFirstUseText(), mainMenuKeyboard(miniBaseUrl));
+      return;
+    }
+
+    const userId = await resolveInternalUserId(message.from);
+    if (!userId) {
+      await dependencies.sendTelegramMessage(message.chat.id, formatFirstUseText(), mainMenuKeyboard(miniBaseUrl));
+      return;
+    }
+
+    await dependencies.sendTelegramMessage(message.chat.id, formatMainMenuText(await fetchOverview(userId)), mainMenuKeyboard(miniBaseUrl));
+  }
+
+  async function handleHelp(message: TelegramMessage): Promise<void> {
     await dependencies.sendTelegramMessage(
       message.chat.id,
       [
-        "HappyTG bot is ready.",
-        "Commands:",
-        "/pair <PAIRING_CODE>",
-        "/hosts",
-        "/status <SESSION_ID>",
-        "/resume <SESSION_ID>",
-        "/doctor <HOST_ID>",
-        "/verify <HOST_ID>",
-        "/approve <APPROVAL_ID> <approve|reject> [reason]",
-        "/session quick <HOST_ID> <WORKSPACE_ID> <PROMPT>",
-        "/session proof <HOST_ID> <WORKSPACE_ID> <TITLE> || <PROMPT> || <criterion1;criterion2>"
-      ].join("\n")
+        "HappyTG управляется кнопками.",
+        "",
+        "Полезные команды:",
+        "/menu - главное меню",
+        "/task - мастер новой задачи",
+        "/sessions - активные сессии",
+        "/approve - подтверждения",
+        "/hosts - подключенные hosts",
+        "/pair CODE - подключить host"
+      ].join("\n"),
+      mainMenuKeyboard(miniBaseUrl)
     );
   }
 
   async function handlePair(message: TelegramMessage, pairingCode: string): Promise<void> {
     if (!message.from) {
-      await dependencies.sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
+      await dependencies.sendTelegramMessage(message.chat.id, "Telegram не передал данные пользователя. Откройте личный чат с ботом и повторите pairing.");
       return;
     }
 
@@ -90,98 +533,277 @@ export function createBotHandlers(dependencies: BotDependencies) {
         telegramUserId: String(message.from.id),
         chatId: String(message.chat.id),
         username: message.from.username,
-        displayName: [message.from.first_name, message.from.last_name].filter(Boolean).join(" ") || message.from.username || `tg-${message.from.id}`
+        displayName: userDisplayName(message.from)
       })
     });
 
-    await dependencies.sendTelegramMessage(message.chat.id, `Host paired: ${result.host.label} (${result.host.id}) is now linked to ${result.user.displayName}.`);
+    await dependencies.sendTelegramMessage(
+      message.chat.id,
+      [
+        `Host подключен: ${result.host.label}.`,
+        "Теперь можно запускать задачи и смотреть сессии из меню."
+      ].join("\n"),
+      mainMenuKeyboard(miniBaseUrl)
+    );
   }
 
   async function handleHosts(message: TelegramMessage): Promise<void> {
-    if (!message.from) {
-      await dependencies.sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
-      return;
-    }
-
-    const userId = await resolveInternalUserId(message.from);
+    const userId = await resolveUserOrPrompt(message.chat.id, message.from);
     if (!userId) {
-      await dependencies.sendTelegramMessage(message.chat.id, "No HappyTG user is linked to this Telegram account yet. Pair a host first.");
       return;
     }
 
-    const result = await dependencies.apiFetch<{ hosts: Array<{ id: string; label: string; status: string; lastSeenAt?: string }> }>(`/api/v1/hosts?userId=${encodeURIComponent(userId)}`);
-    if (result.hosts.length === 0) {
-      await dependencies.sendTelegramMessage(message.chat.id, "No hosts linked to this Telegram account yet.");
+    const hosts = await fetchHosts(userId);
+    await dependencies.sendTelegramMessage(message.chat.id, formatHosts(hosts), hostSelectionKeyboard(hosts));
+  }
+
+  async function handleSessions(message: TelegramMessage): Promise<void> {
+    const userId = await resolveUserOrPrompt(message.chat.id, message.from);
+    if (!userId) {
+      return;
+    }
+
+    const overview = await fetchOverview(userId);
+    const sessions = overview.sessions.filter(isActiveSession).slice(0, 5);
+    if (sessions.length === 0) {
+      await dependencies.sendTelegramMessage(
+        message.chat.id,
+        "Активных сессий нет. Можно начать новую задачу.",
+        {
+          inline_keyboard: [
+            [{ text: "Новая задача", callback_data: "m:t" }],
+            [{ text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "sessions") } }]
+          ]
+        }
+      );
       return;
     }
 
     await dependencies.sendTelegramMessage(
       message.chat.id,
-      result.hosts.map((host) => `- ${host.label} (${host.id}) status=${host.status}${host.lastSeenAt ? ` lastSeen=${host.lastSeenAt}` : ""}`).join("\n")
+      ["Активные сессии", ...sessions.map((session, index) => `${index + 1}. ${trimLine(session.title, 70)} - ${session.state}`)].join("\n"),
+      {
+        inline_keyboard: [
+          ...sessions.map((session) => [
+            { text: `Открыть ${shortId(session.id)}`, callback_data: `s:u:${session.id}` }
+          ]),
+          [{ text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "sessions") } }]
+        ]
+      }
     );
   }
 
-  async function handleStatus(message: TelegramMessage, sessionId: string): Promise<void> {
-    const session = await dependencies.apiFetch<{
-      id: string;
-      state: string;
-      title: string;
-      currentSummary?: string;
-      lastError?: string;
-      approval?: { id: string; state: string; reason: string };
-      task?: { id: string; phase: string; verificationState: string };
-    }>(`/api/v1/sessions/${sessionId}`);
-
-    const lines = [
-      `Session ${session.id}`,
-      `State: ${session.state}`,
-      `Title: ${session.title}`
-    ];
-    if (session.task) {
-      lines.push(`Task: ${session.task.id} phase=${session.task.phase} verify=${session.task.verificationState}`);
-    }
-    if (session.approval) {
-      lines.push(`Approval: ${session.approval.id} state=${session.approval.state}`);
-    }
-    if (session.currentSummary) {
-      lines.push(`Summary: ${session.currentSummary}`);
-    }
-    if (session.lastError) {
-      lines.push(`Error: ${session.lastError}`);
-    }
-
-    await dependencies.sendTelegramMessage(message.chat.id, lines.join("\n"));
+  async function sendSessionCard(chatId: number, sessionId: string, user?: TelegramUser): Promise<void> {
+    const session = await dependencies.apiFetch<SessionDetail>(`/api/v1/sessions/${encodeURIComponent(sessionId)}`);
+    const userId = user ? await resolveInternalUserId(user) : undefined;
+    const overview = userId ? await fetchOverview(userId) : undefined;
+    await dependencies.sendTelegramMessage(chatId, formatSessionCard(session, overview), sessionCardKeyboard(session, miniBaseUrl));
   }
 
-  async function handleResume(message: TelegramMessage, sessionId: string): Promise<void> {
-    const session = await dependencies.apiFetch<{
-      id: string;
-      state: string;
-      currentSummary?: string;
-      lastError?: string;
-    }>(`/api/v1/sessions/${sessionId}/resume`, {
-      method: "POST"
-    });
-
-    const lines = [`Session ${session.id} moved to ${session.state}.`];
-    if (session.currentSummary) {
-      lines.push(`Summary: ${session.currentSummary}`);
-    }
-    if (session.lastError) {
-      lines.push(`Last error: ${session.lastError}`);
-    }
-    await dependencies.sendTelegramMessage(message.chat.id, lines.join("\n"));
-  }
-
-  async function handleApprovalCommand(message: TelegramMessage, approvalId: string, decisionWord: string, reason?: string): Promise<void> {
-    if (!message.from) {
-      await dependencies.sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
+  async function handleApprovals(message: TelegramMessage): Promise<void> {
+    const userId = await resolveUserOrPrompt(message.chat.id, message.from);
+    if (!userId) {
       return;
     }
 
-    const userId = await resolveInternalUserId(message.from);
+    const result = await dependencies.apiFetch<{ approvals: ApprovalRequest[] }>(`/api/v1/approvals?userId=${encodeURIComponent(userId)}&state=waiting_human,pending`);
+    if (result.approvals.length === 0) {
+      await dependencies.sendTelegramMessage(
+        message.chat.id,
+        "Подтверждений сейчас нет.",
+        {
+          inline_keyboard: [
+            [{ text: "Активные сессии", callback_data: "m:s" }],
+            [{ text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "approvals") } }]
+          ]
+        }
+      );
+      return;
+    }
+
+    await dependencies.sendTelegramMessage(
+      message.chat.id,
+      `Ждут решения: ${result.approvals.length}. Откройте нужное подтверждение.`,
+      {
+        inline_keyboard: [
+          ...result.approvals.slice(0, 8).map((approval) => [
+            { text: `${approvalActionLabel(approval.actionKind)} (${riskLabel(approval.risk)})`, callback_data: `a:x:${approval.id}` }
+          ]),
+          [{ text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "approvals") } }]
+        ]
+      }
+    );
+  }
+
+  async function startTaskWizard(chatId: number, user?: TelegramUser): Promise<void> {
+    const userId = await resolveUserOrPrompt(chatId, user);
+    if (!userId || !user) {
+      return;
+    }
+
+    const hosts = await fetchHosts(userId);
+    if (hosts.length === 0) {
+      await dependencies.sendTelegramMessage(chatId, "Сначала подключите host через `pnpm daemon:pair` и `/pair CODE`.", mainMenuKeyboard(miniBaseUrl));
+      return;
+    }
+
+    wizardDrafts.set(draftKey(user), {
+      userId,
+      chatId,
+      updatedAt: now()
+    });
+
+    if (hosts.length === 1) {
+      await chooseWizardHost(chatId, user, hosts[0]!.id, hosts[0]);
+      return;
+    }
+
+    await dependencies.sendTelegramMessage(chatId, "Выберите host для новой задачи.", hostSelectionKeyboard(hosts));
+  }
+
+  async function chooseWizardHost(chatId: number, user: TelegramUser, hostId: string, knownHost?: Host): Promise<void> {
+    const draft = getFreshDraft(user);
+    if (!draft) {
+      await startTaskWizard(chatId, user);
+      return;
+    }
+
+    const host = knownHost ?? (await fetchHosts(draft.userId)).find((item) => item.id === hostId);
+    if (!host) {
+      await dependencies.sendTelegramMessage(chatId, "Host больше недоступен. Откройте список hosts и выберите заново.");
+      return;
+    }
+
+    draft.hostId = host.id;
+    draft.hostLabel = host.label;
+    draft.updatedAt = now();
+
+    const workspaces = await fetchWorkspaces(host.id, draft.userId);
+    if (workspaces.length === 0) {
+      await dependencies.sendTelegramMessage(chatId, "На этом host пока нет доступных repos. Запустите daemon, чтобы он отправил hello с workspace list.");
+      return;
+    }
+
+    if (workspaces.length === 1) {
+      await chooseWizardWorkspace(chatId, user, workspaces[0]!.id, workspaces[0]);
+      return;
+    }
+
+    await dependencies.sendTelegramMessage(chatId, `Host: ${host.label}. Теперь выберите repo.`, workspaceSelectionKeyboard(workspaces));
+  }
+
+  async function chooseWizardWorkspace(chatId: number, user: TelegramUser, workspaceId: string, knownWorkspace?: Workspace): Promise<void> {
+    const draft = getFreshDraft(user);
+    if (!draft?.hostId) {
+      await startTaskWizard(chatId, user);
+      return;
+    }
+
+    const workspace = knownWorkspace ?? (await fetchWorkspaces(draft.hostId, draft.userId)).find((item) => item.id === workspaceId);
+    if (!workspace) {
+      await dependencies.sendTelegramMessage(chatId, "Repo больше недоступен. Выберите repo заново.");
+      return;
+    }
+
+    draft.workspaceId = workspace.id;
+    draft.workspaceLabel = workspace.repoName;
+    draft.updatedAt = now();
+
+    await dependencies.sendTelegramMessage(
+      chatId,
+      `Repo: ${workspace.repoName}. Выберите режим.`,
+      modeSelectionKeyboard()
+    );
+  }
+
+  async function chooseWizardMode(chatId: number, user: TelegramUser, modeCode: string): Promise<void> {
+    const draft = getFreshDraft(user);
+    if (!draft?.workspaceId) {
+      await startTaskWizard(chatId, user);
+      return;
+    }
+
+    draft.mode = modeCode === "p" ? "proof" : "quick";
+    draft.updatedAt = now();
+    await dependencies.sendTelegramMessage(
+      chatId,
+      draft.mode === "proof"
+        ? "Опишите задачу одним сообщением. Я запущу proof-loop: freeze, build, evidence, fresh verify."
+        : "Напишите быстрый вопрос или короткую задачу одним сообщением."
+    );
+  }
+
+  async function captureWizardPrompt(message: TelegramMessage): Promise<boolean> {
+    if (!message.from || !message.text || message.text.startsWith("/")) {
+      return false;
+    }
+
+    const draft = getFreshDraft(message.from);
+    if (!draft?.mode || !draft.workspaceId) {
+      return false;
+    }
+
+    draft.prompt = message.text.trim();
+    draft.updatedAt = now();
+    await dependencies.sendTelegramMessage(message.chat.id, formatDraftConfirmation(draft), confirmTaskKeyboard());
+    return true;
+  }
+
+  async function confirmWizard(chatId: number, user: TelegramUser): Promise<void> {
+    const draft = getFreshDraft(user);
+    if (!draft?.hostId || !draft.workspaceId || !draft.mode || !draft.prompt) {
+      await dependencies.sendTelegramMessage(chatId, "Черновик задачи устарел. Начните заново через /task.", mainMenuKeyboard(miniBaseUrl));
+      return;
+    }
+
+    const titlePrefix = draft.mode === "proof" ? "Proof task" : "Quick task";
+    const payload: CreateSessionRequest = {
+      userId: draft.userId,
+      hostId: draft.hostId,
+      workspaceId: draft.workspaceId,
+      mode: draft.mode,
+      runtime: "codex-cli",
+      title: `${titlePrefix}: ${trimLine(draft.prompt, 48)}`,
+      prompt: draft.prompt,
+      acceptanceCriteria: draft.mode === "proof"
+        ? [
+          "Frozen scope matches the Telegram instruction",
+          "Implementation evidence is written to the repo proof bundle",
+          "Fresh verifier pass is recorded"
+        ]
+        : undefined
+    };
+
+    const result = await dependencies.apiFetch<{
+      session: Session;
+      task?: TaskBundle;
+      approval?: ApprovalRequest;
+      dispatch?: { id: string };
+    }>("/api/v1/sessions", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    wizardDrafts.delete(draftKey(user));
+
+    if (result.approval) {
+      await dependencies.sendTelegramMessage(
+        chatId,
+        [
+          `Сессия создана: ${shortId(result.session.id)}.`,
+          "Для продолжения нужно подтверждение."
+        ].join("\n")
+      );
+      await dependencies.sendTelegramMessage(chatId, formatApprovalDialog(result.approval, result.session), inlineApprovalKeyboard(result.approval.id, result.approval.nonce));
+      return;
+    }
+
+    await dependencies.sendTelegramMessage(chatId, formatSessionCard({ ...result.session, task: result.task }), sessionCardKeyboard(result.session, miniBaseUrl));
+  }
+
+  async function handleApprovalCommand(message: TelegramMessage, approvalId: string, decisionWord: string, reason?: string): Promise<void> {
+    const userId = await resolveUserOrPrompt(message.chat.id, message.from);
     if (!userId) {
-      await dependencies.sendTelegramMessage(message.chat.id, "No HappyTG user is linked to this Telegram account yet.");
       return;
     }
 
@@ -189,155 +811,106 @@ export function createBotHandlers(dependencies: BotDependencies) {
     const payload: ResolveApprovalRequest = {
       userId,
       decision,
+      scope: "once",
       reason
     };
-    const result = await dependencies.apiFetch<{ approval: { id: string; state: string }; session: { id: string; state: string } }>(`/api/v1/approvals/${approvalId}/resolve`, {
+    const result = await dependencies.apiFetch<{ approval: ApprovalRequest; session: Session }>(`/api/v1/approvals/${encodeURIComponent(approvalId)}/resolve`, {
       method: "POST",
       body: JSON.stringify(payload)
     });
 
-    await dependencies.sendTelegramMessage(message.chat.id, `Approval ${result.approval.id} is now ${result.approval.state}. Session ${result.session.id} -> ${result.session.state}.`);
+    await dependencies.sendTelegramMessage(message.chat.id, `Готово: approval ${shortId(result.approval.id)} -> ${result.approval.state}. Сессия -> ${result.session.state}.`);
   }
 
   async function handleSessionCommand(message: TelegramMessage, parts: string[]): Promise<void> {
-    if (!message.from) {
-      await dependencies.sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
-      return;
-    }
-
-    const userId = await resolveInternalUserId(message.from);
+    const userId = await resolveUserOrPrompt(message.chat.id, message.from);
     if (!userId) {
-      await dependencies.sendTelegramMessage(message.chat.id, "No HappyTG user is linked to this Telegram account yet. Pair a host first.");
       return;
     }
 
     const mode = parts[0];
-    if (mode === "quick") {
-      const [hostId, workspaceId, ...promptParts] = parts.slice(1);
-      const prompt = promptParts.join(" ").trim();
-      const payload: CreateSessionRequest = {
-        userId,
-        hostId,
-        workspaceId,
-        mode: "quick",
-        runtime: "codex-cli",
-        title: `Quick task: ${prompt.slice(0, 40) || "untitled"}`,
-        prompt
-      };
-      const result = await dependencies.apiFetch<{
-        session: { id: string; state: string };
-        approval?: { id: string; reason: string; state: string };
-        dispatch?: { id: string };
-      }>("/api/v1/sessions", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-
-      if (result.approval) {
-        await dependencies.sendTelegramMessage(
-          message.chat.id,
-          `Approval required for session ${result.session.id}: ${result.approval.reason}`,
-          inlineApprovalKeyboard(result.approval.id)
-        );
-        return;
-      }
-
-      await dependencies.sendTelegramMessage(message.chat.id, `Session ${result.session.id} created with state ${result.session.state}.`);
+    if (mode !== "quick" && mode !== "proof") {
+      await dependencies.sendTelegramMessage(message.chat.id, "Используйте /task для мастера или /session quick|proof ... для power-user запуска.");
       return;
     }
 
-    if (mode === "proof") {
-      const [hostId, workspaceId, ...rest] = parts.slice(1);
-      const joined = rest.join(" ");
-      const [title, prompt, criteriaRaw] = joined.split("||").map((item) => item.trim());
-      const acceptanceCriteria = (criteriaRaw ?? "Prompt satisfied;Independent verifier passed")
-        .split(";")
-        .map((item) => item.trim())
-        .filter(Boolean);
-
-      const payload: CreateSessionRequest = {
-        userId,
-        hostId,
-        workspaceId,
-        mode: "proof",
-        runtime: "codex-cli",
-        title: title || "Proof task",
-        prompt: prompt || title || "Proof task",
-        acceptanceCriteria
-      };
-
-      const result = await dependencies.apiFetch<{
-        session: { id: string; state: string };
-        task?: { id: string };
-        approval?: { id: string; reason: string; state: string };
-      }>("/api/v1/sessions", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-
-      if (result.approval) {
-        await dependencies.sendTelegramMessage(
-          message.chat.id,
-          `Proof session ${result.session.id} created. Approval required: ${result.approval.reason}. Task: ${result.task?.id ?? "pending"}`,
-          inlineApprovalKeyboard(result.approval.id)
-        );
-        return;
-      }
-
-      await dependencies.sendTelegramMessage(message.chat.id, `Proof session ${result.session.id} created. Task: ${result.task?.id ?? "n/a"}.`);
+    const [hostId, workspaceId, ...rest] = parts.slice(1);
+    const joined = rest.join(" ").trim();
+    if (!hostId || !workspaceId || !joined) {
+      await dependencies.sendTelegramMessage(message.chat.id, "Для ручного запуска нужны host, repo и текст задачи. Проще открыть /task.");
       return;
     }
 
-    await dependencies.sendTelegramMessage(message.chat.id, "Usage: /session quick ... or /session proof ...");
+    const payload: CreateSessionRequest = {
+      userId,
+      hostId,
+      workspaceId,
+      mode,
+      runtime: "codex-cli",
+      title: `${mode === "proof" ? "Proof task" : "Quick task"}: ${trimLine(joined, 48)}`,
+      prompt: joined,
+      acceptanceCriteria: mode === "proof" ? ["Prompt satisfied", "Independent verifier passed"] : undefined
+    };
+    const result = await dependencies.apiFetch<{ session: Session; task?: TaskBundle; approval?: ApprovalRequest }>("/api/v1/sessions", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    if (result.approval) {
+      await dependencies.sendTelegramMessage(message.chat.id, formatApprovalDialog(result.approval, result.session), inlineApprovalKeyboard(result.approval.id, result.approval.nonce));
+      return;
+    }
+
+    await dependencies.sendTelegramMessage(message.chat.id, formatSessionCard({ ...result.session, task: result.task }), sessionCardKeyboard(result.session, miniBaseUrl));
   }
 
   async function handleBootstrapCommand(message: TelegramMessage, hostId: string, command: "doctor" | "verify"): Promise<void> {
-    if (!message.from) {
-      await dependencies.sendTelegramMessage(message.chat.id, "Telegram user info is missing in this update.");
-      return;
-    }
-
-    const userId = await resolveInternalUserId(message.from);
+    const userId = await resolveUserOrPrompt(message.chat.id, message.from);
     if (!userId) {
-      await dependencies.sendTelegramMessage(message.chat.id, "No HappyTG user is linked to this Telegram account yet. Pair a host first.");
       return;
     }
 
     const result = await dependencies.apiFetch<{
-      session: { id: string; state: string; title: string };
-      approval?: { id: string; reason: string; state: string };
-    }>(`/api/v1/hosts/${hostId}/bootstrap/${command}`, {
+      session: Session;
+      approval?: ApprovalRequest;
+    }>(`/api/v1/hosts/${encodeURIComponent(hostId)}/bootstrap/${command}`, {
       method: "POST",
       body: JSON.stringify({ userId })
     });
 
     if (result.approval) {
-      await dependencies.sendTelegramMessage(
-        message.chat.id,
-        `${result.session.title} requires approval: ${result.approval.reason}`,
-        inlineApprovalKeyboard(result.approval.id)
-      );
+      await dependencies.sendTelegramMessage(message.chat.id, formatApprovalDialog(result.approval, result.session), inlineApprovalKeyboard(result.approval.id, result.approval.nonce));
       return;
     }
 
-    await dependencies.sendTelegramMessage(message.chat.id, `${result.session.title} created as session ${result.session.id}. State: ${result.session.state}.`);
+    await dependencies.sendTelegramMessage(message.chat.id, formatSessionCard(result.session), sessionCardKeyboard(result.session, miniBaseUrl));
   }
 
-  async function handleMessage(message: TelegramMessage): Promise<void> {
+  async function dispatchMessage(message: TelegramMessage): Promise<void> {
     const text = message.text?.trim();
     if (!text) {
+      return;
+    }
+
+    if (await captureWizardPrompt(message)) {
       return;
     }
 
     const [command, ...rest] = text.split(" ");
     switch (command) {
       case "/start":
+      case "/menu":
+        await handleMenu(message);
+        return;
       case "/help":
-        await handleStart(message);
+        await handleHelp(message);
+        return;
+      case "/task":
+        await startTaskWizard(message.chat.id, message.from);
         return;
       case "/pair":
         if (!rest[0]) {
-          await dependencies.sendTelegramMessage(message.chat.id, "Usage: /pair <PAIRING_CODE>");
+          await dependencies.sendTelegramMessage(message.chat.id, "Пришлите pairing code так: `/pair CODE`.");
           return;
         }
         await handlePair(message, rest[0]);
@@ -345,79 +918,221 @@ export function createBotHandlers(dependencies: BotDependencies) {
       case "/hosts":
         await handleHosts(message);
         return;
+      case "/sessions":
+        await handleSessions(message);
+        return;
       case "/status":
         if (!rest[0]) {
-          await dependencies.sendTelegramMessage(message.chat.id, "Usage: /status <SESSION_ID>");
+          await dependencies.sendTelegramMessage(message.chat.id, "Пришлите session id или откройте /sessions.");
           return;
         }
-        await handleStatus(message, rest[0]);
+        await sendSessionCard(message.chat.id, rest[0], message.from);
         return;
       case "/resume":
         if (!rest[0]) {
-          await dependencies.sendTelegramMessage(message.chat.id, "Usage: /resume <SESSION_ID>");
+          await dependencies.sendTelegramMessage(message.chat.id, "Пришлите session id или откройте /sessions.");
           return;
         }
-        await handleResume(message, rest[0]);
+        await dependencies.apiFetch(`/api/v1/sessions/${encodeURIComponent(rest[0])}/resume`, { method: "POST" });
+        await sendSessionCard(message.chat.id, rest[0], message.from);
         return;
       case "/doctor":
         if (!rest[0]) {
-          await dependencies.sendTelegramMessage(message.chat.id, "Usage: /doctor <HOST_ID>");
+          await dependencies.sendTelegramMessage(message.chat.id, "Выберите host через /hosts или передайте id: /doctor HOST_ID.");
           return;
         }
         await handleBootstrapCommand(message, rest[0], "doctor");
         return;
       case "/verify":
         if (!rest[0]) {
-          await dependencies.sendTelegramMessage(message.chat.id, "Usage: /verify <HOST_ID>");
+          await dependencies.sendTelegramMessage(message.chat.id, "Выберите host через /hosts или передайте id: /verify HOST_ID.");
           return;
         }
         await handleBootstrapCommand(message, rest[0], "verify");
         return;
       case "/approve":
-        if (!rest[0] || !rest[1]) {
-          await dependencies.sendTelegramMessage(message.chat.id, "Usage: /approve <APPROVAL_ID> <approve|reject> [reason]");
+        if (!rest[0]) {
+          await handleApprovals(message);
+          return;
+        }
+        if (!rest[1]) {
+          await dependencies.sendTelegramMessage(message.chat.id, "Формат: /approve APPROVAL_ID approve|reject. Для списка используйте /approve.");
           return;
         }
         await handleApprovalCommand(message, rest[0], rest[1], rest.slice(2).join(" "));
         return;
       case "/session":
-        if (rest.length < 4) {
-          await dependencies.sendTelegramMessage(message.chat.id, "Usage: /session quick <HOST_ID> <WORKSPACE_ID> <PROMPT> OR /session proof <HOST_ID> <WORKSPACE_ID> <TITLE> || <PROMPT> || <criterion1;criterion2>");
-          return;
-        }
         await handleSessionCommand(message, rest);
         return;
       default:
-        await dependencies.sendTelegramMessage(message.chat.id, `Unknown command: ${command}`);
+        await dependencies.sendTelegramMessage(message.chat.id, "Я не знаю такую команду. Откройте меню и выберите действие кнопкой.", mainMenuKeyboard(miniBaseUrl));
     }
   }
 
-  async function handleCallbackQuery(callback: TelegramCallbackQuery): Promise<void> {
-    const data = callback.data ?? "";
-    const [prefix, decision, approvalId] = data.split(":");
-    if (prefix !== "approval" || !approvalId) {
+  function parseApprovalCallback(data: string): { approvalId: string; scope?: ApprovalScope; decision: "approved" | "rejected"; nonce?: string; detailsOnly?: boolean } | undefined {
+    const [prefix, action, approvalId, nonce] = data.split(":");
+    if (prefix === "a" && approvalId) {
+      if (action === "x") {
+        return { approvalId, decision: "approved", detailsOnly: true };
+      }
+      const scope = action === "p" ? "phase" : action === "s" ? "session" : "once";
+      return {
+        approvalId,
+        decision: action === "d" ? "rejected" : "approved",
+        scope,
+        nonce
+      };
+    }
+
+    if (prefix === "approval" && approvalId) {
+      return {
+        approvalId,
+        decision: action === "approve" ? "approved" : "rejected",
+        scope: "once"
+      };
+    }
+
+    return undefined;
+  }
+
+  async function handleApprovalCallback(callback: TelegramCallbackQuery, parsed: NonNullable<ReturnType<typeof parseApprovalCallback>>): Promise<void> {
+    if (parsed.detailsOnly) {
+      const approval = await dependencies.apiFetch<ApprovalRequest>(`/api/v1/approvals/${encodeURIComponent(parsed.approvalId)}`);
+      await sendOrEdit(callback, formatApprovalDialog(approval), inlineApprovalKeyboard(approval.id, approval.nonce));
+      return;
+    }
+
+    const userId = await resolveUserOrPrompt(callback.message?.chat.id ?? callback.from.id, callback.from);
+    if (!userId) {
       return;
     }
 
     const payload: ResolveApprovalRequest = {
-      userId: (await resolveInternalUserId(callback.from)) ?? "",
-      decision: decision === "approve" ? "approved" : "rejected"
+      userId,
+      decision: parsed.decision,
+      scope: parsed.scope,
+      nonce: parsed.nonce
     };
-
-    if (!payload.userId) {
-      await dependencies.sendTelegramMessage(callback.message?.chat.id ?? callback.from.id, "No HappyTG user is linked to this Telegram account yet.");
-      return;
-    }
-
-    const result = await dependencies.apiFetch<{ approval: { id: string; state: string }; session: { id: string; state: string } }>(`/api/v1/approvals/${approvalId}/resolve`, {
+    const result = await dependencies.apiFetch<{ approval: ApprovalRequest; session: Session }>(`/api/v1/approvals/${encodeURIComponent(parsed.approvalId)}/resolve`, {
       method: "POST",
       body: JSON.stringify(payload)
     });
 
-    await dependencies.sendTelegramMessage(
-      callback.message?.chat.id ?? callback.from.id,
-      `Approval ${result.approval.id} is now ${result.approval.state}. Session ${result.session.id} -> ${result.session.state}.`
-    );
+    await sendOrEdit(callback, `Готово: approval ${shortId(result.approval.id)} -> ${result.approval.state}. Сессия -> ${result.session.state}.`, sessionCardKeyboard(result.session, miniBaseUrl));
+  }
+
+  async function handleSessionCallback(callback: TelegramCallbackQuery, action: string, sessionId: string): Promise<void> {
+    const chatId = callback.message?.chat.id ?? callback.from.id;
+    if (action === "r") {
+      await dependencies.apiFetch(`/api/v1/sessions/${encodeURIComponent(sessionId)}/resume`, { method: "POST" });
+    }
+
+    if (action === "d" || action === "v") {
+      await sendOrEdit(
+        callback,
+        action === "d"
+          ? "Большой diff удобнее смотреть в Mini App."
+          : "Verify details удобнее смотреть в Mini App.",
+        {
+          inline_keyboard: [
+            [{ text: "Открыть Mini App", web_app: { url: miniAppUrl(miniBaseUrl, action === "d" ? "diff" : "verify", { sessionId }) } }],
+            [{ text: "К карточке сессии", callback_data: `s:u:${sessionId}` }]
+          ]
+        }
+      );
+      return;
+    }
+
+    const session = await dependencies.apiFetch<SessionDetail>(`/api/v1/sessions/${encodeURIComponent(sessionId)}`);
+    const userId = await resolveInternalUserId(callback.from);
+    const overview = userId ? await fetchOverview(userId) : undefined;
+    await sendOrEdit(callback, formatSessionCard(session, overview), sessionCardKeyboard(session, miniBaseUrl));
+  }
+
+  async function dispatchCallback(callback: TelegramCallbackQuery): Promise<void> {
+    const data = callback.data ?? "";
+    const chatId = callback.message?.chat.id ?? callback.from.id;
+    const [prefix, action, value] = data.split(":");
+
+    const approvalCallback = parseApprovalCallback(data);
+    if (approvalCallback) {
+      await handleApprovalCallback(callback, approvalCallback);
+      return;
+    }
+
+    if (prefix === "m") {
+      if (action === "t") {
+        await startTaskWizard(chatId, callback.from);
+        return;
+      }
+      if (action === "s") {
+        await handleSessions({ message_id: callback.message?.message_id ?? 0, chat: { id: chatId }, from: callback.from });
+        return;
+      }
+      if (action === "a") {
+        await handleApprovals({ message_id: callback.message?.message_id ?? 0, chat: { id: chatId }, from: callback.from });
+        return;
+      }
+      if (action === "h") {
+        await handleHosts({ message_id: callback.message?.message_id ?? 0, chat: { id: chatId }, from: callback.from });
+        return;
+      }
+      if (action === "r") {
+        await sendOrEdit(callback, "Последние отчеты открываются в Mini App.", {
+          inline_keyboard: [[{ text: "Открыть Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "reports") } }]]
+        });
+        return;
+      }
+    }
+
+    if (prefix === "w") {
+      if (action === "x") {
+        wizardDrafts.delete(draftKey(callback.from));
+        await sendOrEdit(callback, "Ок, задачу не запускаю.", mainMenuKeyboard(miniBaseUrl));
+        return;
+      }
+      if (action === "b") {
+        await startTaskWizard(chatId, callback.from);
+        return;
+      }
+      if (action === "h" && value) {
+        await chooseWizardHost(chatId, callback.from, value);
+        return;
+      }
+      if (action === "w" && value) {
+        await chooseWizardWorkspace(chatId, callback.from, value);
+        return;
+      }
+      if (action === "m" && value) {
+        await chooseWizardMode(chatId, callback.from, value);
+        return;
+      }
+      if (action === "c") {
+        await confirmWizard(chatId, callback.from);
+        return;
+      }
+    }
+
+    if (prefix === "s" && value) {
+      await handleSessionCallback(callback, action, value);
+      return;
+    }
+  }
+
+  async function handleMessage(message: TelegramMessage): Promise<void> {
+    try {
+      await dispatchMessage(message);
+    } catch (error) {
+      await dependencies.sendTelegramMessage(message.chat.id, formatRecoveryMessage(error), mainMenuKeyboard(miniBaseUrl));
+    }
+  }
+
+  async function handleCallbackQuery(callback: TelegramCallbackQuery): Promise<void> {
+    try {
+      await dispatchCallback(callback);
+    } catch (error) {
+      await dependencies.sendTelegramMessage(callback.message?.chat.id ?? callback.from.id, formatRecoveryMessage(error), mainMenuKeyboard(miniBaseUrl));
+    }
   }
 
   return {

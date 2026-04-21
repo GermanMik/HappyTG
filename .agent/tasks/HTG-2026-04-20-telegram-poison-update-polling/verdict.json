@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-20-telegram-poison-update-polling",
+  "status": "complete",
+  "summary": "The bot was not stuck on Telegram transport anymore; instead, one expired `/pair` update poisoned the polling loop because offset advancement happened only after a successful handler call. `apps/bot` now logs per-update handler failures and still advances the Telegram offset, so later messages keep flowing. Bot tests, typecheck, build, and the live watched process on port 4100 all confirm recovery to polling/ready."
+}

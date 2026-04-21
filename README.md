@@ -66,6 +66,7 @@ flowchart LR
 | Document | Use it when |
 | --- | --- |
 | [Architecture](./ARCHITECTURE.md) | You want the high-level system model and source-of-truth boundaries. |
+| [Foundation Contracts](./docs/architecture/foundation-contracts.md) | You need the current canonical Wave 1 state, event, topology, and proof-bundle contracts. |
 | [Agent Guidance](./AGENTS.md) | You are contributing through Codex or Cursor and need repo rules. |
 | [Engineering Blueprint](./docs/engineering-blueprint.md) | You need the full production-oriented design blueprint. |
 | [Quickstart](./docs/quickstart.md) | You want the shortest path from clone to paired host. |

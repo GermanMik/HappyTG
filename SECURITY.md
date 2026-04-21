@@ -18,6 +18,8 @@ HappyTG is built for self-hosted deployments where the operator controls:
 - Repo-local evidence for auditable completion.
 - Secrets referenced indirectly where possible.
 - Explicit trust boundaries between Telegram, control plane, host, and repo.
+- Structured logs redact sensitive metadata fields before writing.
+- Mini App launch grants and app sessions are short-lived and revocable.
 
 ## Reporting
 
@@ -34,3 +36,7 @@ Report vulnerabilities privately before opening an issue. Include:
 - Telegram must not carry internal execution events.
 - Host reconnect must not replay mutating actions without idempotency keys.
 - Bootstrap installers must come from manifests and whitelisted backends only.
+
+## Operational Hardening
+
+See `docs/security/hardening.md` for approval defaults, revoke paths, rotation guidance, and the MVP forbidden-action list.

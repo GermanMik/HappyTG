@@ -1,0 +1,7 @@
+Root cause summary:
+- Current .env resolves to TELEGRAM_UPDATES_MODE=auto with HAPPYTG_PUBLIC_URL=http://localhost:4000, so bot selects polling.
+- Direct Node fetch to Telegram getMe fails on this host with transport error `fetch failed`.
+- Direct PowerShell Bot API getMe succeeds for the configured token and returns the configured bot identity.
+- Live bot process is already listening on port 4100 from this repo.
+- Live /ready currently reports degraded because a previously received /pair update failed against /api/v1/pairing/claim with `Pairing code expired`.
+- In current code before this fix, startTelegramPolling advanced offset only after successful dispatchUpdate, so a handler exception replayed the same failing update forever and blocked later messages.

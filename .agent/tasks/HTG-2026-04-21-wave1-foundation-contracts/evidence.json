@@ -1,0 +1,44 @@
+{
+  "taskId": "HTG-2026-04-21-wave1-foundation-contracts",
+  "criteria": [
+    {
+      "criterion": "Protocol state and event contracts match the Wave 1 canonical model without adding a parallel architecture",
+      "artifacts": [
+        "packages/protocol/src/index.ts",
+        "packages/protocol/src/index.test.ts",
+        "apps/api/src/service.ts",
+        "apps/worker/src/reconcile.ts",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Repo-proof bundle supports state.json while preserving existing .agent/tasks compatibility",
+      "artifacts": [
+        "packages/repo-proof/src/index.ts",
+        "packages/repo-proof/src/index.test.ts",
+        "packages/bootstrap/src/cli.ts",
+        ".agent/tasks/HTG-2026-04-21-wave1-foundation-contracts/state.json",
+        "raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Public topology and infra skeleton are documented for happytg.gerta.crazedns.ru",
+      "artifacts": [
+        "infra/caddy/Caddyfile",
+        "infra/db/migrations/.gitkeep",
+        "docs/architecture/foundation-contracts.md",
+        "docs/self-hosting.md",
+        ".env.example"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/typecheck.txt",
+    "raw/lint.txt",
+    "raw/test-unit.txt",
+    "raw/build.txt",
+    "raw/test-integration.txt"
+  ],
+  "generatedAt": "2026-04-21T03:53:30.090Z"
+}

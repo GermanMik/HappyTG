@@ -1,0 +1,7 @@
+{
+  "url": "http://127.0.0.1:4100/ready",
+  "ok": true,
+  "status": 200,
+  "elapsedMs": 394.2,
+  "body": "{\n  \"ok\": true,\n  \"service\": \"bot\",\n  \"apiBaseUrl\": \"http://localhost:4000\",\n  \"telegram\": {\n    \"configuredMode\": \"auto\",\n    \"activeMode\": \"polling\",\n    \"status\": \"ready\",\n    \"detail\": \"Telegram polling is active; webhook delivery was disabled at the Telegram API.\",\n    \"publicUrl\": \"http://localhost:4000/\",\n    \"expectedWebhookUrl\": \"http://localhost:4000/telegram/webhook\"\n  }\n}\n"
+}

@@ -1,0 +1,59 @@
+{
+  "taskId": "HTG-2026-04-21-wave2-bot-auth-pairing",
+  "criteria": [
+    {
+      "criterion": "Bot main menu is wizard-first and command-light",
+      "artifacts": [
+        "apps/bot/src/handlers.ts",
+        "apps/bot/src/handlers.test.ts",
+        "docs/architecture/bot-first-ux.md"
+      ]
+    },
+    {
+      "criterion": "API exposes host/workspace/session/approval projections for bot flows",
+      "artifacts": [
+        "apps/api/src/service.ts",
+        "apps/api/src/index.ts",
+        "apps/api/src/service.test.ts"
+      ]
+    },
+    {
+      "criterion": "Approval callbacks use scoped decisions and nonce-aware replay basics",
+      "artifacts": [
+        "packages/protocol/src/index.ts",
+        "apps/api/src/service.ts",
+        "apps/bot/src/handlers.ts",
+        "apps/bot/src/handlers.test.ts"
+      ]
+    },
+    {
+      "criterion": "Existing daemon pairing and heartbeat flow remains compatible",
+      "artifacts": [
+        "apps/host-daemon/src/index.ts",
+        ".agent/tasks/HTG-2026-04-21-wave2-bot-auth-pairing/raw/test-integration.txt"
+      ]
+    },
+    {
+      "criterion": "Wave 2 proof evidence is recorded under .agent/tasks",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-21-wave2-bot-auth-pairing/spec.md",
+        ".agent/tasks/HTG-2026-04-21-wave2-bot-auth-pairing/evidence.md",
+        ".agent/tasks/HTG-2026-04-21-wave2-bot-auth-pairing/raw/build.txt",
+        ".agent/tasks/HTG-2026-04-21-wave2-bot-auth-pairing/raw/lint.txt",
+        ".agent/tasks/HTG-2026-04-21-wave2-bot-auth-pairing/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-21-wave2-bot-auth-pairing/raw/test-integration.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "packages/protocol/src/index.ts",
+    "apps/api/src/service.ts",
+    "apps/api/src/index.ts",
+    "apps/api/src/service.test.ts",
+    "apps/bot/src/handlers.ts",
+    "apps/bot/src/handlers.test.ts",
+    "apps/bot/src/index.test.ts",
+    "docs/architecture/bot-first-ux.md"
+  ],
+  "generatedAt": "2026-04-21T04:19:00.000Z"
+}

@@ -1,0 +1,58 @@
+{
+  "taskId": "HTG-2026-04-21-wave4-miniapp-rich-ux",
+  "criteria": [
+    {
+      "criterion": "Mini App launch validates Telegram initData and issues short-lived app sessions",
+      "artifacts": [
+        "packages/telegram-kit/src/index.ts",
+        "packages/telegram-kit/src/index.test.ts",
+        "apps/api/src/service.ts",
+        "apps/api/src/service.test.ts"
+      ]
+    },
+    {
+      "criterion": "API exposes action-first dashboard, sessions, approvals, hosts, reports, diff, verify, and bundle projections",
+      "artifacts": [
+        "packages/protocol/src/index.ts",
+        "apps/api/src/index.ts",
+        "apps/api/src/service.ts"
+      ]
+    },
+    {
+      "criterion": "Mini App renders mobile-first next-action screens with draft recovery and deep-link continuity",
+      "artifacts": [
+        "apps/miniapp/src/index.ts",
+        "apps/miniapp/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "Dev CORS uses explicit allowlist without production wildcard",
+      "artifacts": [
+        "packages/shared/src/index.ts",
+        "apps/api/src/index.test.ts",
+        ".env.example"
+      ]
+    },
+    {
+      "criterion": "Mini App UX documentation includes required principles, IA, microcopy, and recovery examples",
+      "artifacts": [
+        "docs/architecture/miniapp-rich-ux.md",
+        "docs/configuration.md"
+      ]
+    }
+  ],
+  "artifacts": [
+    "packages/telegram-kit/src/index.ts",
+    "packages/protocol/src/index.ts",
+    "packages/shared/src/index.ts",
+    "apps/api/src/index.ts",
+    "apps/api/src/service.ts",
+    "apps/miniapp/src/index.ts",
+    "docs/architecture/miniapp-rich-ux.md",
+    ".agent/tasks/HTG-2026-04-21-wave4-miniapp-rich-ux/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-04-21-wave4-miniapp-rich-ux/raw/lint.txt",
+    ".agent/tasks/HTG-2026-04-21-wave4-miniapp-rich-ux/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-04-21-wave4-miniapp-rich-ux/raw/build.txt"
+  ],
+  "generatedAt": "2026-04-21T04:55:00.000Z"
+}

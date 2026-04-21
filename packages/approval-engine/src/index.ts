@@ -1,4 +1,4 @@
-import type { ApprovalDecision, ApprovalRequest, ActionKind } from "../../protocol/src/index.js";
+import type { ApprovalDecision, ApprovalRequest, ActionKind, ApprovalScope, ApprovalState } from "../../protocol/src/index.js";
 import { createId, nowIso } from "../../shared/src/index.js";
 
 export interface CreateApprovalInput {
@@ -6,7 +6,51 @@ export interface CreateApprovalInput {
   actionKind: ActionKind;
   reason: string;
   risk: ApprovalRequest["risk"];
+  scope?: ApprovalScope;
   ttlSeconds?: number;
+}
+
+export interface ResolveApprovalInput {
+  request: ApprovalRequest;
+  actorUserId: string;
+  decision: "approved" | "rejected";
+  reason?: string;
+  scope?: ApprovalScope;
+  nonce?: string;
+}
+
+export interface ResolveApprovalResult {
+  approval: ApprovalRequest;
+  auditDecision?: ApprovalDecision;
+  changed: boolean;
+  idempotent: boolean;
+}
+
+const RESOLVABLE_APPROVAL_STATES: readonly ApprovalState[] = ["pending", "waiting_human"] as const;
+const RESOLVED_APPROVAL_STATES: readonly ApprovalState[] = [
+  "approved_once",
+  "approved_phase",
+  "approved_session",
+  "denied",
+  "expired",
+  "superseded",
+  "auto_allowed",
+  "auto_denied",
+  "not_required"
+] as const;
+
+export function isApprovalWaitingForHuman(request: ApprovalRequest): boolean {
+  return RESOLVABLE_APPROVAL_STATES.includes(request.state);
+}
+
+export function isApprovalResolved(request: ApprovalRequest): boolean {
+  return RESOLVED_APPROVAL_STATES.includes(request.state);
+}
+
+export function assertApprovalNonce(request: ApprovalRequest, nonce?: string): void {
+  if (request.nonce && nonce && request.nonce !== nonce) {
+    throw new Error("Approval callback nonce mismatch");
+  }
 }
 
 export function createApprovalRequest(input: CreateApprovalInput): ApprovalRequest {
@@ -17,7 +61,9 @@ export function createApprovalRequest(input: CreateApprovalInput): ApprovalReque
     id: createId("apr"),
     sessionId: input.sessionId,
     actionKind: input.actionKind,
-    state: "pending",
+    state: "waiting_human",
+    scope: input.scope ?? "once",
+    nonce: createId("apn"),
     risk: input.risk,
     reason: input.reason,
     expiresAt,
@@ -30,28 +76,60 @@ export function resolveApprovalRequest(
   request: ApprovalRequest,
   actorUserId: string,
   decision: "approved" | "rejected",
-  reason?: string
+  reason?: string,
+  scope: ApprovalScope = request.scope ?? "once"
 ): { approval: ApprovalRequest; auditDecision: ApprovalDecision } {
   const decidedAt = nowIso();
+  const resolvedState: ApprovalState = decision === "approved"
+    ? scope === "phase"
+      ? "approved_phase"
+      : scope === "session"
+        ? "approved_session"
+        : "approved_once"
+    : "denied";
   return {
     approval: {
       ...request,
-      state: decision,
+      state: resolvedState,
       updatedAt: decidedAt
     },
     auditDecision: {
       id: createId("apd"),
       approvalRequestId: request.id,
       actorUserId,
-      decision,
+      decision: resolvedState,
       reason,
       decidedAt
     }
   };
 }
 
+export function resolveApprovalRequestIdempotent(input: ResolveApprovalInput): ResolveApprovalResult {
+  assertApprovalNonce(input.request, input.nonce);
+
+  if (isApprovalResolved(input.request)) {
+    return {
+      approval: input.request,
+      changed: false,
+      idempotent: true
+    };
+  }
+
+  if (!isApprovalWaitingForHuman(input.request)) {
+    throw new Error(`Approval is not waiting for a human decision: ${input.request.state}`);
+  }
+
+  const resolved = resolveApprovalRequest(input.request, input.actorUserId, input.decision, input.reason, input.scope);
+  return {
+    approval: resolved.approval,
+    auditDecision: resolved.auditDecision,
+    changed: true,
+    idempotent: false
+  };
+}
+
 export function refreshExpiredApproval(request: ApprovalRequest, at = new Date()): ApprovalRequest {
-  if (request.state !== "pending") {
+  if (request.state !== "pending" && request.state !== "waiting_human") {
     return request;
   }
 

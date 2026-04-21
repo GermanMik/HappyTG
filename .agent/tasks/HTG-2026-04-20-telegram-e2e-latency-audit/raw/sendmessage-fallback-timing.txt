@@ -1,0 +1,7 @@
+{
+  "probe": "windows-powershell-sendMessage-fallback",
+  "elapsedMs": 607.4,
+  "ok": false,
+  "statusCode": 400,
+  "message": "The remote server returned an error: (400) Bad Request."
+}

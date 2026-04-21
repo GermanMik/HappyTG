@@ -1,0 +1,32 @@
+{
+	email {$CADDY_ACME_EMAIL:}
+}
+
+{$HAPPYTG_DOMAIN:happytg.gerta.crazedns.ru} {
+	encode zstd gzip
+
+	handle /health {
+		reverse_proxy api:4000
+	}
+
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	handle /bot/webhook {
+		rewrite * /telegram/webhook
+		reverse_proxy bot:4100
+	}
+
+	handle_path /miniapp* {
+		reverse_proxy miniapp:3001
+	}
+
+	handle_path /static* {
+		reverse_proxy miniapp:3001
+	}
+
+	handle {
+		redir /miniapp 302
+	}
+}

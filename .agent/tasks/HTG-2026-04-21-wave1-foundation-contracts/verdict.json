@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-21-wave1-foundation-contracts",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "manual-wave1-verify-2026-04-21"
+  },
+  "checks": [
+    {
+      "name": "typecheck",
+      "ok": true,
+      "detail": "pnpm typecheck passed across 13 packages."
+    },
+    {
+      "name": "lint",
+      "ok": true,
+      "detail": "pnpm lint passed; lint scripts now run TypeScript no-emit checks instead of TODO echoes."
+    },
+    {
+      "name": "test",
+      "ok": true,
+      "detail": "pnpm test passed across 13 packages after rerunning bootstrap sequentially."
+    },
+    {
+      "name": "build",
+      "ok": true,
+      "detail": "pnpm build passed across 13 packages."
+    },
+    {
+      "name": "task-validate",
+      "ok": true,
+      "detail": "Task bundle validation passed with ok=true and canonicalOk=true."
+    }
+  ],
+  "generatedAt": "2026-04-21T03:53:30.090Z"
+}

@@ -18,6 +18,8 @@
       "@happytg/shared": ["packages/shared/src"],
       "@happytg/runtime-adapters": ["packages/runtime-adapters/src"],
       "@happytg/repo-proof": ["packages/repo-proof/src"],
+      "@happytg/session-engine": ["packages/session-engine/src"],
+      "@happytg/telegram-kit": ["packages/telegram-kit/src"],
       "@happytg/policy-engine": ["packages/policy-engine/src"],
       "@happytg/approval-engine": ["packages/approval-engine/src"],
       "@happytg/bootstrap": ["packages/bootstrap/src"],

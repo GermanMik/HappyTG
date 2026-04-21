@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { ApprovalRequest, Host, Session, TaskBundle, Workspace } from "../../../packages/protocol/src/index.js";
+
 import type { BotDependencies } from "./handlers.js";
 import { createBotHandlers } from "./handlers.js";
 
@@ -10,40 +12,91 @@ interface CapturedMessage {
   replyMarkup?: Record<string, unknown>;
 }
 
-test("resume command sends session transition summary", async () => {
-  const messages: CapturedMessage[] = [];
-  const calls: Array<{ pathname: string; init?: RequestInit }> = [];
-  const apiFetch: BotDependencies["apiFetch"] = async (pathname, init) => {
-    calls.push({ pathname, init });
-    if (pathname === "/api/v1/sessions/ses_1/resume") {
-      return {
-        id: "ses_1",
-        state: "reconnecting",
-        currentSummary: "Waiting for host reconnect"
-      } as never;
-    }
-    throw new Error(`Unexpected path ${pathname}`);
+const now = "2026-04-21T00:00:00.000Z";
+
+function host(overrides: Partial<Host> = {}): Host {
+  return {
+    id: "host_1",
+    label: "devbox",
+    fingerprint: "fp",
+    status: "active",
+    capabilities: ["codex-cli"],
+    lastSeenAt: now,
+    pairedUserId: "usr_42",
+    runtimePreference: "codex-cli",
+    createdAt: now,
+    updatedAt: now,
+    ...overrides
   };
-  const handlers = createBotHandlers({
-    apiFetch,
-    async sendTelegramMessage(chatId, text, replyMarkup) {
-      messages.push({ chatId, text, replyMarkup });
-    }
-  });
+}
 
-  await handlers.handleMessage({
-    message_id: 1,
-    text: "/resume ses_1",
-    chat: { id: 100 }
-  });
+function workspace(overrides: Partial<Workspace> = {}): Workspace {
+  return {
+    id: "ws_1",
+    hostId: "host_1",
+    path: "C:/repo",
+    repoName: "repo",
+    defaultBranch: "main",
+    status: "active",
+    createdAt: now,
+    updatedAt: now,
+    ...overrides
+  };
+}
 
-  assert.equal(calls[0]?.pathname, "/api/v1/sessions/ses_1/resume");
-  assert.equal(calls[0]?.init?.method, "POST");
-  assert.match(messages[0]?.text ?? "", /Session ses_1 moved to reconnecting/);
-  assert.match(messages[0]?.text ?? "", /Waiting for host reconnect/);
-});
+function session(overrides: Partial<Session> = {}): Session {
+  return {
+    id: "ses_1",
+    userId: "usr_42",
+    hostId: "host_1",
+    workspaceId: "ws_1",
+    mode: "quick",
+    runtime: "codex-cli",
+    state: "ready",
+    title: "Quick task: inspect status",
+    prompt: "inspect status",
+    currentSummary: "Waiting for host reconnect",
+    createdAt: now,
+    updatedAt: now,
+    ...overrides
+  };
+}
 
-test("doctor command resolves telegram identity and creates bootstrap session", async () => {
+function approval(overrides: Partial<ApprovalRequest> = {}): ApprovalRequest {
+  return {
+    id: "apr_1",
+    sessionId: "ses_1",
+    actionKind: "workspace_write",
+    state: "waiting_human",
+    scope: "once",
+    nonce: "apn_1",
+    risk: "high",
+    reason: "Policy requires approval",
+    expiresAt: "2026-04-21T00:10:00.000Z",
+    createdAt: now,
+    updatedAt: now,
+    ...overrides
+  };
+}
+
+function task(overrides: Partial<TaskBundle> = {}): TaskBundle {
+  return {
+    id: "HTG-0001",
+    sessionId: "ses_1",
+    workspaceId: "ws_1",
+    rootPath: "C:/repo/.agent/tasks/HTG-0001",
+    phase: "freeze",
+    mode: "proof",
+    title: "Proof task",
+    acceptanceCriteria: ["criterion"],
+    verificationState: "not_started",
+    createdAt: now,
+    updatedAt: now,
+    ...overrides
+  };
+}
+
+test("menu command renders a concise action-first main menu", async () => {
   const messages: CapturedMessage[] = [];
   const calls: Array<{ pathname: string; init?: RequestInit }> = [];
   const apiFetch: BotDependencies["apiFetch"] = async (pathname, init) => {
@@ -51,39 +104,115 @@ test("doctor command resolves telegram identity and creates bootstrap session", 
     if (pathname === "/api/v1/users/by-telegram/42") {
       return { id: "usr_42" } as never;
     }
-    if (pathname === "/api/v1/hosts/host_1/bootstrap/doctor") {
+    if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_42") {
       return {
-        session: {
-          id: "ses_doc",
-          state: "pending_dispatch",
-          title: "Bootstrap doctor: devbox"
-        }
+        hosts: [host()],
+        workspaces: [workspace()],
+        sessions: [session()],
+        approvals: [approval()],
+        tasks: [task()]
       } as never;
     }
     throw new Error(`Unexpected path ${pathname}`);
   };
   const handlers = createBotHandlers({
     apiFetch,
+    miniAppBaseUrl: "https://happy.example/miniapp",
     async sendTelegramMessage(chatId, text, replyMarkup) {
       messages.push({ chatId, text, replyMarkup });
     }
   });
 
   await handlers.handleMessage({
-    message_id: 2,
-    text: "/doctor host_1",
-    chat: { id: 101 },
+    message_id: 1,
+    text: "/menu",
+    chat: { id: 100 },
     from: { id: 42, username: "dev" }
   });
 
-  assert.deepEqual(
-    calls.map((call) => call.pathname),
-    ["/api/v1/users/by-telegram/42", "/api/v1/hosts/host_1/bootstrap/doctor"]
-  );
-  assert.match(messages[0]?.text ?? "", /Bootstrap doctor: devbox created as session ses_doc/);
+  assert.deepEqual(calls.map((call) => call.pathname), [
+    "/api/v1/users/by-telegram/42",
+    "/api/v1/miniapp/bootstrap?userId=usr_42"
+  ]);
+  assert.match(messages[0]?.text ?? "", /Активные сессии: 1/);
+  assert.match(messages[0]?.text ?? "", /Ждут подтверждения: 1/);
+  assert.deepEqual((messages[0]?.replyMarkup as { inline_keyboard: unknown[] })?.inline_keyboard.length, 3);
 });
 
-test("verify command surfaces approval keyboard when required", async () => {
+test("task wizard uses smart defaults and creates a proof session from callback flow", async () => {
+  const messages: CapturedMessage[] = [];
+  const calls: Array<{ pathname: string; init?: RequestInit }> = [];
+  const apiFetch: BotDependencies["apiFetch"] = async (pathname, init) => {
+    calls.push({ pathname, init });
+    if (pathname === "/api/v1/users/by-telegram/42") {
+      return { id: "usr_42" } as never;
+    }
+    if (pathname === "/api/v1/hosts?userId=usr_42") {
+      return { hosts: [host()] } as never;
+    }
+    if (pathname === "/api/v1/hosts/host_1/workspaces?userId=usr_42") {
+      return { workspaces: [workspace()] } as never;
+    }
+    if (pathname === "/api/v1/sessions") {
+      const payload = JSON.parse(String(init?.body ?? "{}")) as { mode: string; prompt: string };
+      assert.equal(payload.mode, "proof");
+      assert.equal(payload.prompt, "Build the dashboard");
+      return {
+        session: session({
+          id: "ses_proof",
+          mode: "proof",
+          state: "needs_approval",
+          title: "Proof task: Build the dashboard",
+          taskId: "HTG-0001",
+          approvalId: "apr_1"
+        }),
+        task: task({ id: "HTG-0001", sessionId: "ses_proof" }),
+        approval: approval({ id: "apr_1", sessionId: "ses_proof" })
+      } as never;
+    }
+    throw new Error(`Unexpected path ${pathname}`);
+  };
+  const handlers = createBotHandlers({
+    apiFetch,
+    miniAppBaseUrl: "https://happy.example/miniapp",
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/task",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+  await handlers.handleCallbackQuery({
+    id: "cb_mode",
+    data: "w:m:p",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 2, chat: { id: 100 }, text: "mode" }
+  });
+  await handlers.handleMessage({
+    message_id: 3,
+    text: "Build the dashboard",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+  await handlers.handleCallbackQuery({
+    id: "cb_confirm",
+    data: "w:c",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 4, chat: { id: 100 }, text: "confirm" }
+  });
+
+  assert.match(messages[0]?.text ?? "", /Repo: repo/);
+  assert.match(messages[1]?.text ?? "", /proof-loop/);
+  assert.match(messages[2]?.text ?? "", /Проверим перед запуском/);
+  assert.match(messages.at(-1)?.text ?? "", /Подтверждение apr_1/);
+  assert.equal(calls.some((call) => call.pathname === "/api/v1/sessions" && call.init?.method === "POST"), true);
+});
+
+test("verify command surfaces scoped approval keyboard with nonce", async () => {
   const messages: CapturedMessage[] = [];
   const apiFetch: BotDependencies["apiFetch"] = async (pathname) => {
     if (pathname === "/api/v1/users/by-telegram/77") {
@@ -91,16 +220,14 @@ test("verify command surfaces approval keyboard when required", async () => {
     }
     if (pathname === "/api/v1/hosts/host_2/bootstrap/verify") {
       return {
-        session: {
+        session: session({
           id: "ses_verify",
-          state: "awaiting_approval",
-          title: "Bootstrap verify: buildbox"
-        },
-        approval: {
-          id: "apr_1",
-          reason: "Policy requires approval",
-          state: "pending"
-        }
+          userId: "usr_77",
+          hostId: "host_2",
+          title: "Bootstrap verify: buildbox",
+          state: "needs_approval"
+        }),
+        approval: approval({ id: "apr_1", sessionId: "ses_verify", nonce: "apn_1" })
       } as never;
     }
     throw new Error(`Unexpected path ${pathname}`);
@@ -119,18 +246,25 @@ test("verify command surfaces approval keyboard when required", async () => {
     from: { id: 77, username: "ops" }
   });
 
-  assert.match(messages[0]?.text ?? "", /requires approval/);
+  assert.match(messages[0]?.text ?? "", /Подтверждение/);
   assert.deepEqual(messages[0]?.replyMarkup, {
     inline_keyboard: [
       [
-        { text: "Approve", callback_data: "approval:approve:apr_1" },
-        { text: "Reject", callback_data: "approval:reject:apr_1" }
+        { text: "Разрешить один раз", callback_data: "a:o:apr_1:apn_1" }
+      ],
+      [
+        { text: "Разрешить на фазу", callback_data: "a:p:apr_1:apn_1" },
+        { text: "Разрешить на сессию", callback_data: "a:s:apr_1:apn_1" }
+      ],
+      [
+        { text: "Отклонить", callback_data: "a:d:apr_1:apn_1" },
+        { text: "Подробнее", callback_data: "a:x:apr_1" }
       ]
     ]
   });
 });
 
-test("approval callback resolves with the linked HappyTG user", async () => {
+test("approval callback resolves with scope and nonce for the linked HappyTG user", async () => {
   const messages: CapturedMessage[] = [];
   const calls: Array<{ pathname: string; init?: RequestInit }> = [];
   const apiFetch: BotDependencies["apiFetch"] = async (pathname, init) => {
@@ -139,9 +273,12 @@ test("approval callback resolves with the linked HappyTG user", async () => {
       return { id: "usr_88" } as never;
     }
     if (pathname === "/api/v1/approvals/apr_9/resolve") {
+      const payload = JSON.parse(String(init?.body ?? "{}")) as { scope?: string; nonce?: string };
+      assert.equal(payload.scope, "session");
+      assert.equal(payload.nonce, "apn_9");
       return {
-        approval: { id: "apr_9", state: "approved" },
-        session: { id: "ses_9", state: "pending_dispatch" }
+        approval: approval({ id: "apr_9", state: "approved_session" }),
+        session: session({ id: "ses_9", state: "ready" })
       } as never;
     }
     throw new Error(`Unexpected path ${pathname}`);
@@ -155,7 +292,7 @@ test("approval callback resolves with the linked HappyTG user", async () => {
 
   await handlers.handleCallbackQuery({
     id: "cb_1",
-    data: "approval:approve:apr_9",
+    data: "a:s:apr_9:apn_9",
     from: { id: 88, username: "lead" },
     message: {
       message_id: 4,
@@ -168,6 +305,51 @@ test("approval callback resolves with the linked HappyTG user", async () => {
     calls.map((call) => call.pathname),
     ["/api/v1/users/by-telegram/88", "/api/v1/approvals/apr_9/resolve"]
   );
-  assert.match(messages[0]?.text ?? "", /Approval apr_9 is now approved/);
-  assert.match(messages[0]?.text ?? "", /Session ses_9 -> pending_dispatch/);
+  assert.match(messages[0]?.text ?? "", /approved_session/);
+  assert.match(messages[0]?.text ?? "", /Сессия -> ready/);
+});
+
+test("resume command posts resume and then renders a session card", async () => {
+  const messages: CapturedMessage[] = [];
+  const calls: Array<{ pathname: string; init?: RequestInit }> = [];
+  const apiFetch: BotDependencies["apiFetch"] = async (pathname, init) => {
+    calls.push({ pathname, init });
+    if (pathname === "/api/v1/sessions/ses_1/resume") {
+      return session({ id: "ses_1", state: "resuming" }) as never;
+    }
+    if (pathname === "/api/v1/sessions/ses_1") {
+      return session({ id: "ses_1", state: "resuming" }) as never;
+    }
+    if (pathname === "/api/v1/users/by-telegram/42") {
+      return { id: "usr_42" } as never;
+    }
+    if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_42") {
+      return {
+        hosts: [host()],
+        workspaces: [workspace()],
+        sessions: [session({ id: "ses_1", state: "resuming" })],
+        approvals: [],
+        tasks: []
+      } as never;
+    }
+    throw new Error(`Unexpected path ${pathname}`);
+  };
+  const handlers = createBotHandlers({
+    apiFetch,
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/resume ses_1",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+
+  assert.equal(calls[0]?.pathname, "/api/v1/sessions/ses_1/resume");
+  assert.equal(calls[0]?.init?.method, "POST");
+  assert.match(messages[0]?.text ?? "", /Сессия ses_1/);
+  assert.match(messages[0]?.text ?? "", /resuming/);
 });

@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-21-wave3-session-policy-proof-core",
+  "sessionId": "manual-wave3",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-21-wave3-session-policy-proof-core",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Wave 3 session policy proof core",
+  "acceptanceCriteria": [
+    "Session reducer enforces valid transitions and rejects illegal transitions",
+    "Approval engine supports nonce-aware scoped idempotent resolution and expiry",
+    "Policy and tool execution model classify actions and serialize mutations",
+    "Repo proof lifecycle supports phase advance, approval references, and stale verification after mutation",
+    "API/session resume paths use the reducer without breaking existing daemon flows"
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-21T04:23:05.295Z",
+  "updatedAt": "2026-04-21T04:31:00.000Z"
+}

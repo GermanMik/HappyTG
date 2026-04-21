@@ -1,0 +1,19 @@
+Initial audit summary for HTG-2026-04-20-telegram-e2e-latency-audit
+
+Fresh before-state evidence:
+- raw/live-health.txt: API /health 142.3ms, bot /health 2.9ms.
+- raw/live-ready.txt: bot /ready 394.2ms, activeMode=polling, status=ready.
+- raw/polling-smoke.txt: mocked polling path dispatches update 901 in ready polling mode.
+- raw/node-getme-timing.txt: direct Node HTTPS getMe fails after 10756.9ms with UND_ERR_CONNECT_TIMEOUT.
+- raw/powershell-getme-timing.txt: direct PowerShell getMe succeeds in 488.0ms.
+- raw/sendmessage-node-timing.txt: direct Node sendMessage fails after 10685.2ms with UND_ERR_CONNECT_TIMEOUT.
+- raw/sendmessage-fallback-timing.txt: direct Windows PowerShell sendMessage returns 400 in 607.4ms for the synthetic invalid chat probe.
+- raw/before-latency.txt: current createDefaultSendTelegramMessage path spends 10646.5ms in Node, starts fallback 0.4ms later, spends 598.4ms in fallback, and returns after 11245.5ms total.
+- raw/webhook-smoke.txt: local POST /telegram/webhook with /start returns 200 only after 11506.5ms.
+
+Conclusions before the fix:
+1. Inbound delivery is not the main latency source: polling is active and ready, and the webhook route itself only becomes slow because it awaits the outbound send path.
+2. Local API latency is not the main source: /health and /ready are sub-second.
+3. The dominant bottleneck is outbound Telegram sendMessage on Node HTTPS, which waits the full 10s connect timeout before the Windows fallback runs.
+4. The fallback transition itself is negligible (about 0.4ms in raw/before-latency.txt).
+5. A bounded fix should target createDefaultSendTelegramMessage rather than delivery-mode selection, pairing boundaries, or webhook/polling semantics.

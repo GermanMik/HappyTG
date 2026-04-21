@@ -92,7 +92,7 @@ test("executeHappyTG initializes and inspects repo-local task bundles", async ()
     ]) as { id: string; phase: string; verificationState: string; rootPath: string };
 
     assert.equal(initialized.id, "HTG-3000");
-    assert.equal(initialized.phase, "init");
+    assert.equal(initialized.phase, "freeze");
     assert.equal(initialized.verificationState, "not_started");
 
     const status = await executeHappyTG([
@@ -102,9 +102,10 @@ test("executeHappyTG initializes and inspects repo-local task bundles", async ()
       repoRoot,
       "--task",
       "HTG-3000"
-    ]) as { task?: { id: string; title: string }; validation: { ok: boolean } };
+    ]) as { task?: { id: string; title: string }; validation: { ok: boolean; canonicalOk: boolean } };
 
     assert.equal(status.validation.ok, true);
+    assert.equal(status.validation.canonicalOk, true);
     assert.equal(status.task?.id, "HTG-3000");
     assert.equal(status.task?.title, "Manual proof bundle");
   } finally {

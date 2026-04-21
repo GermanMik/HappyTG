@@ -46,12 +46,48 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
       if (pathname === "/health") {
         return { ok: true } as never;
       }
-      if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_1") {
+      if (pathname === "/api/v1/miniapp/dashboard?userId=usr_1") {
         return {
-          hosts: [{ id: "host_1", label: "devbox", status: "active" }],
-          sessions: [{ id: "ses_1", title: "Quick fix", state: "completed", taskId: "HTG-0001" }],
-          approvals: [{ id: "apr_1", sessionId: "ses_1", state: "approved", reason: "workspace write" }],
-          tasks: [{ id: "HTG-0001", phase: "complete", verificationState: "passed" }]
+          stats: {
+            activeSessions: 1,
+            pendingApprovals: 1,
+            blockedSessions: 0,
+            verifyProblems: 0
+          },
+          attention: [
+            {
+              id: "apr_1",
+              kind: "approval",
+              title: "Нужно подтверждение",
+              detail: "workspace write",
+              severity: "warn",
+              href: "/approval/apr_1",
+              nextAction: "Открыть approval"
+            }
+          ],
+          recentSessions: [
+            {
+              id: "ses_1",
+              title: "Quick fix",
+              state: "completed",
+              phase: "complete",
+              verificationState: "passed",
+              hostLabel: "devbox",
+              repoName: "projection-repo",
+              lastUpdatedAt: "2026-04-21T04:00:00.000Z",
+              href: "/session/ses_1",
+              nextAction: "open"
+            }
+          ],
+          recentReports: [
+            {
+              id: "HTG-0001",
+              title: "Quick fix",
+              status: "passed",
+              generatedAt: "2026-04-21T04:00:00.000Z",
+              href: "/task/HTG-0001"
+            }
+          ]
         } as never;
       }
       throw new Error(`Unexpected path ${pathname}`);
@@ -69,11 +105,12 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
     const html = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(html, /HappyTG Mini App/);
+    assert.match(html, /Панель управления HappyTG/);
     assert.match(html, /devbox/);
-    assert.match(html, /badge badge-success">active/);
+    assert.match(html, /Нужно подтверждение/);
     assert.match(html, /href="\/session\/ses_1"/);
     assert.match(html, /href="\/task\/HTG-0001"/);
+    assert.match(html, /happytg:miniapp:draft:v1/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
@@ -142,33 +179,55 @@ test("session page renders timeline, summary, and task link", async () => {
       if (pathname === "/health") {
         return { ok: true } as never;
       }
-      if (pathname === "/api/v1/miniapp/session/ses_2/timeline") {
+      if (pathname === "/api/v1/miniapp/sessions/ses_2") {
         return {
           session: {
             id: "ses_2",
             title: "Proof task",
             state: "verifying",
+            phase: "verify",
+            verificationState: "running",
+            hostLabel: "devbox",
+            repoName: "projection-repo",
+            lastUpdatedAt: "2026-04-07T10:00:00.000Z",
+            href: "/session/ses_2",
+            nextAction: "open",
             currentSummary: "Verifier running",
-            lastError: undefined
+            lastError: undefined,
+            prompt: "Run proof"
           },
           task: {
             id: "HTG-0002",
+            sessionId: "ses_2",
+            workspaceId: "ws_1",
+            rootPath: "/repo/.agent/tasks/HTG-0002",
+            mode: "proof",
+            title: "Proof task",
+            acceptanceCriteria: ["criterion"],
             phase: "verify",
-            verificationState: "running"
+            verificationState: "running",
+            createdAt: "2026-04-07T10:00:00.000Z",
+            updatedAt: "2026-04-07T10:00:00.000Z"
           },
           approval: {
             id: "apr_2",
-            state: "approved",
-            reason: "workspace write"
+            sessionId: "ses_2",
+            title: "Proof task",
+            state: "approved_once",
+            reason: "workspace write",
+            risk: "medium",
+            expiresAt: "2026-04-07T10:10:00.000Z",
+            href: "/approval/apr_2"
           },
           events: [
             {
               sequence: 1,
               occurredAt: "2026-04-07T10:00:00.000Z",
-              type: "session.created",
+              type: "SessionCreated",
               payload: { mode: "proof" }
             }
-          ]
+          ],
+          actions: ["diff", "summary"]
         } as never;
       }
       throw new Error(`Unexpected path ${pathname}`);
@@ -186,11 +245,11 @@ test("session page renders timeline, summary, and task link", async () => {
     const html = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(html, /Session ses_2/);
+    assert.match(html, /Proof task/);
     assert.match(html, /Verifier running/);
     assert.match(html, /Proof Progress/);
     assert.match(html, /href="\/task\/HTG-0002"/);
-    assert.match(html, /1\. 2026-04-07T10:00:00.000Z session\.created/);
+    assert.match(html, /SessionCreated/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }

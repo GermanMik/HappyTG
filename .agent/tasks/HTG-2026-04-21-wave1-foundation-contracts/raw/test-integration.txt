@@ -1,0 +1,30 @@
+
+> happytg@0.3.23 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-21-wave1-foundation-contracts" "--json"
+
+{
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-21-wave1-foundation-contracts",
+  "task": {
+    "id": "HTG-2026-04-21-wave1-foundation-contracts",
+    "sessionId": "manual-wave1",
+    "workspaceId": "HappyTG",
+    "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-21-wave1-foundation-contracts",
+    "phase": "complete",
+    "mode": "proof",
+    "title": "Wave 1 foundation contracts alignment",
+    "acceptanceCriteria": [
+      "Protocol state and event contracts match the Wave 1 canonical model without adding a parallel architecture",
+      "Repo-proof bundle supports state.json while preserving existing .agent/tasks compatibility",
+      "Public topology and infra skeleton are documented for happytg.gerta.crazedns.ru"
+    ],
+    "verificationState": "passed",
+    "createdAt": "2026-04-21T03:36:15.505Z",
+    "updatedAt": "2026-04-21T03:53:30.090Z"
+  },
+  "validation": {
+    "ok": true,
+    "missing": [],
+    "canonicalOk": true,
+    "canonicalMissing": []
+  }
+}

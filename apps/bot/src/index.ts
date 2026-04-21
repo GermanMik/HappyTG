@@ -474,6 +474,7 @@ interface CreateDefaultSendTelegramMessageOptions {
   botToken?: string;
   fetchImpl?: typeof fetch;
   platform?: NodeJS.Platform;
+  nodeTransportTimeoutMs?: number;
   logger?: Logger;
   sendViaWindowsPowerShell?: (
     token: string,
@@ -488,6 +489,63 @@ function windowsPowerShellPath(): string {
 }
 
 const NODE_TRANSPORT_ADVICE = "Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine.";
+const WINDOWS_NODE_SENDMESSAGE_TIMEOUT_MS = 1_500;
+
+function createTelegramNodeSendTimeoutError(timeoutMs: number, cause?: unknown): Error & { code: string; cause?: unknown } {
+  const error = new Error(`Node HTTPS sendMessage exceeded ${timeoutMs}ms before Windows fallback.`) as Error & {
+    code: string;
+    cause?: unknown;
+  };
+  error.code = "HAPPYTG_TELEGRAM_NODE_TIMEOUT";
+  if (cause !== undefined) {
+    error.cause = cause;
+  }
+  return error;
+}
+
+async function fetchTelegramWithTimeout(
+  input: string,
+  init: RequestInit,
+  options: {
+    fetchImpl: typeof fetch;
+    timeoutMs?: number;
+  }
+): Promise<Response> {
+  const timeoutMs = options.timeoutMs;
+  if (!timeoutMs || timeoutMs <= 0) {
+    return await options.fetchImpl(input, init);
+  }
+
+  const controller = new AbortController();
+  let timedOut = false;
+  let timeoutError: Error & { code: string; cause?: unknown } | undefined;
+  let timer: NodeJS.Timeout | undefined;
+  const request = options.fetchImpl(input, {
+    ...init,
+    signal: controller.signal
+  });
+  const timeout = new Promise<Response>((_, reject) => {
+    timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+      timeoutError = createTelegramNodeSendTimeoutError(timeoutMs);
+      reject(timeoutError);
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([request, timeout]);
+  } catch (error) {
+    if (timedOut) {
+      throw timeoutError ?? createTelegramNodeSendTimeoutError(timeoutMs, error);
+    }
+    throw error;
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+}
 
 async function invokeTelegramBotApiViaWindowsPowerShell(
   method: string,
@@ -870,6 +928,8 @@ export function createDefaultSendTelegramMessage(options: CreateDefaultSendTeleg
   const configuredBotToken = options.botToken ?? process.env.TELEGRAM_BOT_TOKEN?.trim();
   const fetchImpl = options.fetchImpl ?? fetch;
   const platform = options.platform ?? process.platform;
+  const nodeTransportTimeoutMs = options.nodeTransportTimeoutMs
+    ?? (platform === "win32" ? WINDOWS_NODE_SENDMESSAGE_TIMEOUT_MS : undefined);
   const botLogger = options.logger ?? logger;
   const sendViaWindowsPowerShell = options.sendViaWindowsPowerShell ?? sendTelegramMessageViaWindowsPowerShell;
 
@@ -886,13 +946,20 @@ export function createDefaultSendTelegramMessage(options: CreateDefaultSendTeleg
     };
 
     try {
-      const response = await fetchImpl(`https://api.telegram.org/bot${configuredBotToken}/sendMessage`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json"
+      const response = await fetchTelegramWithTimeout(
+        `https://api.telegram.org/bot${configuredBotToken}/sendMessage`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json"
+          },
+          body: JSON.stringify(payload)
         },
-        body: JSON.stringify(payload)
-      });
+        {
+          fetchImpl,
+          timeoutMs: nodeTransportTimeoutMs
+        }
+      );
 
       if (!response.ok) {
         botLogger.error("Telegram sendMessage failed", {
@@ -1055,8 +1122,19 @@ export function startTelegramPolling(options: StartTelegramPollingOptions): Tele
           detail: "Telegram polling is active; webhook delivery was disabled at the Telegram API."
         });
         for (const update of updates) {
-          await options.dispatchUpdate(update);
-          offset = Math.max(offset, update.update_id + 1);
+          const nextOffset = Math.max(offset, update.update_id + 1);
+          try {
+            await options.dispatchUpdate(update);
+          } catch (error) {
+            const detail = error instanceof Error ? error.message : String(error);
+            botLogger.error("Telegram update handler failed", {
+              updateId: update.update_id,
+              updateType: update.callback_query ? "callback_query" : update.message ? "message" : "unknown",
+              detail
+            });
+          } finally {
+            offset = nextOffset;
+          }
         }
       } catch (error) {
         if (abortController.signal.aborted) {
