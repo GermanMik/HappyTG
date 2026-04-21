@@ -1,0 +1,7 @@
+No standalone bot integration test command exists in this workspace.
+Near-live integration evidence for this task is captured in:
+- raw/polling-smoke.txt
+- raw/webhook-smoke.txt
+- raw/before-latency.txt
+- raw/after-latency.txt
+These artifacts exercise the live or source-local update dispatch and outbound sendMessage path that this bounded repair changed.

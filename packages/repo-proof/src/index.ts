@@ -15,7 +15,35 @@ const REQUIRED_FILES = [
   path.join("raw", "lint.txt")
 ] as const;
 
+const CANONICAL_REQUIRED_FILES = [
+  ...REQUIRED_FILES,
+  "state.json"
+] as const;
+
 export const TASK_METADATA_FILE = "task.json";
+export const TASK_STATE_FILE = "state.json";
+
+export interface TaskBundlePhaseHistoryEntry {
+  phase: TaskPhase;
+  entered_at: string;
+  event: string;
+}
+
+export interface TaskBundleState {
+  task_id: string;
+  session_id: string;
+  current_phase: TaskPhase;
+  phase_history: TaskBundlePhaseHistoryEntry[];
+  verification_state: VerificationState;
+  approvals: string[];
+  artifact_manifest: string[];
+  unresolved_issues: string[];
+  last_event_cursor?: string;
+  timestamps: {
+    created_at: string;
+    updated_at: string;
+  };
+}
 
 export function taskBundlePath(repoRoot: string, taskId: string): string {
   return path.join(repoRoot, ".agent", "tasks", taskId);
@@ -23,6 +51,70 @@ export function taskBundlePath(repoRoot: string, taskId: string): string {
 
 async function writeTaskMetadata(task: TaskBundle): Promise<void> {
   await writeJsonFileAtomic(path.join(task.rootPath, TASK_METADATA_FILE), task);
+}
+
+function defaultArtifactManifest(rootPath: string): string[] {
+  return CANONICAL_REQUIRED_FILES.map((relativePath) => path.join(rootPath, relativePath));
+}
+
+async function readTaskState(rootPath: string): Promise<TaskBundleState | undefined> {
+  const statePath = path.join(rootPath, TASK_STATE_FILE);
+  if (!(await fileExists(statePath))) {
+    return undefined;
+  }
+
+  return readJsonFile<TaskBundleState | undefined>(statePath, undefined);
+}
+
+export async function readTaskBundleState(rootPath: string): Promise<TaskBundleState | undefined> {
+  return readTaskState(rootPath);
+}
+
+async function writeTaskState(task: TaskBundle, event: string, input?: {
+  approvals?: string[];
+  artifactManifest?: string[];
+  unresolvedIssues?: string[];
+  lastEventCursor?: string;
+}): Promise<void> {
+  const existing = await readTaskState(task.rootPath);
+  const now = task.updatedAt;
+  const phaseHistory = [...(existing?.phase_history ?? [])];
+  const lastPhase = phaseHistory.at(-1)?.phase;
+  if (lastPhase !== task.phase) {
+    phaseHistory.push({
+      phase: task.phase,
+      entered_at: now,
+      event
+    });
+  }
+
+  const state: TaskBundleState = {
+    task_id: task.id,
+    session_id: task.sessionId,
+    current_phase: task.phase,
+    phase_history: phaseHistory,
+    verification_state: task.verificationState,
+    approvals: input?.approvals ?? existing?.approvals ?? [],
+    artifact_manifest: input?.artifactManifest ?? existing?.artifact_manifest ?? defaultArtifactManifest(task.rootPath),
+    unresolved_issues: input?.unresolvedIssues ?? existing?.unresolved_issues ?? [],
+    last_event_cursor: input?.lastEventCursor ?? existing?.last_event_cursor,
+    timestamps: {
+      created_at: existing?.timestamps.created_at ?? task.createdAt,
+      updated_at: now
+    }
+  };
+
+  await writeJsonFileAtomic(path.join(task.rootPath, TASK_STATE_FILE), state);
+}
+
+async function persistTask(task: TaskBundle, event: string, input?: {
+  approvals?: string[];
+  artifactManifest?: string[];
+  unresolvedIssues?: string[];
+  lastEventCursor?: string;
+}): Promise<void> {
+  await writeTaskMetadata(task);
+  await writeTaskState(task, event, input);
 }
 
 export async function readTaskBundle(rootPath: string): Promise<TaskBundle | undefined> {
@@ -51,7 +143,7 @@ export async function initTaskBundle(input: {
     sessionId: input.sessionId,
     workspaceId: input.workspaceId,
     rootPath,
-    phase: input.mode === "proof" ? "init" : "complete",
+    phase: input.mode === "proof" ? "freeze" : "quick",
     mode: input.mode,
     title: input.title,
     acceptanceCriteria: input.acceptanceCriteria,
@@ -118,7 +210,7 @@ export async function initTaskBundle(input: {
     writeTextFileAtomic(path.join(rootPath, "raw", "test-unit.txt"), ""),
     writeTextFileAtomic(path.join(rootPath, "raw", "test-integration.txt"), ""),
     writeTextFileAtomic(path.join(rootPath, "raw", "lint.txt"), ""),
-    writeTaskMetadata(task)
+    persistTask(task, "TaskBundleInitialized")
   ]);
 
   return task;
@@ -161,10 +253,49 @@ export async function freezeTaskSpec(task: TaskBundle, details: {
 
   const updatedTask: TaskBundle = {
     ...task,
-    phase: "spec_frozen",
+    phase: "freeze",
     updatedAt: nowIso()
   };
-  await writeTaskMetadata(updatedTask);
+  await persistTask(updatedTask, "TaskSpecFrozen");
+  return updatedTask;
+}
+
+export async function advanceTaskPhase(
+  task: TaskBundle,
+  phase: TaskPhase,
+  event = "TaskBundleUpdated",
+  verificationState: VerificationState = task.verificationState
+): Promise<TaskBundle> {
+  const updatedTask: TaskBundle = {
+    ...task,
+    phase,
+    verificationState,
+    updatedAt: nowIso()
+  };
+  await persistTask(updatedTask, event);
+  return updatedTask;
+}
+
+export async function recordTaskApproval(task: TaskBundle, approvalId: string): Promise<TaskBundle> {
+  const state = await readTaskState(task.rootPath);
+  await persistTask(task, "ApprovalRequested", {
+    approvals: [...new Set([...(state?.approvals ?? []), approvalId])]
+  });
+  return task;
+}
+
+export async function markVerificationStaleAfterMutation(task: TaskBundle, event = "MutationAfterVerification"): Promise<TaskBundle> {
+  if (task.verificationState !== "passed") {
+    return task;
+  }
+
+  const updatedTask: TaskBundle = {
+    ...task,
+    phase: task.phase === "complete" ? "fix" : task.phase,
+    verificationState: "stale",
+    updatedAt: nowIso()
+  };
+  await persistTask(updatedTask, event);
   return updatedTask;
 }
 
@@ -201,7 +332,9 @@ export async function updateEvidence(task: TaskBundle, summary: string, artifact
     phase: "evidence",
     updatedAt: nowIso()
   };
-  await writeTaskMetadata(updatedTask);
+  await persistTask(updatedTask, "EvidenceUpdated", {
+    artifactManifest: [...new Set([...defaultArtifactManifest(task.rootPath), ...artifacts])]
+  });
   return updatedTask;
 }
 
@@ -237,7 +370,9 @@ export async function writeVerificationVerdict(input: {
     verificationState: input.status,
     updatedAt: now
   };
-  await writeTaskMetadata(updatedTask);
+  await persistTask(updatedTask, input.status === "passed" ? "VerificationPassed" : "VerificationFailed", {
+    unresolvedIssues: input.findings
+  });
   return {
     task: updatedTask,
     verificationRun: {
@@ -252,7 +387,12 @@ export async function writeVerificationVerdict(input: {
   };
 }
 
-export async function validateTaskBundle(rootPath: string): Promise<{ ok: boolean; missing: string[] }> {
+export async function validateTaskBundle(rootPath: string): Promise<{
+  ok: boolean;
+  missing: string[];
+  canonicalOk: boolean;
+  canonicalMissing: string[];
+}> {
   const missing: string[] = [];
   await Promise.all(
     REQUIRED_FILES.map(async (relativePath) => {
@@ -264,8 +404,21 @@ export async function validateTaskBundle(rootPath: string): Promise<{ ok: boolea
     })
   );
 
+  const canonicalMissing: string[] = [];
+  await Promise.all(
+    CANONICAL_REQUIRED_FILES.map(async (relativePath) => {
+      const fullPath = path.join(rootPath, relativePath);
+      const exists = await fileExists(fullPath);
+      if (!exists) {
+        canonicalMissing.push(relativePath);
+      }
+    })
+  );
+
   return {
     ok: missing.length === 0,
-    missing
+    missing,
+    canonicalOk: canonicalMissing.length === 0,
+    canonicalMissing
   };
 }

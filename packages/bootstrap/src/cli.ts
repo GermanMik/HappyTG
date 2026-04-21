@@ -37,6 +37,8 @@ interface TaskStatusResponse {
   validation: {
     ok: boolean;
     missing: string[];
+    canonicalOk: boolean;
+    canonicalMissing: string[];
   };
 }
 

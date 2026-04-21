@@ -1,0 +1,42 @@
+{
+  "task_id": "HTG-2026-04-21-wave1-foundation-contracts",
+  "session_id": "manual-wave1",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "freeze",
+      "entered_at": "2026-04-21T03:36:15.505Z",
+      "event": "TaskSpecFrozen"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-04-21T03:53:30.090Z",
+      "event": "EvidenceUpdated"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-04-21T03:53:30.090Z",
+      "event": "VerificationPassed"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "spec.md",
+    "state.json",
+    "evidence.md",
+    "evidence.json",
+    "verdict.json",
+    "problems.md",
+    "raw/build.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-04-21T03:36:15.505Z",
+    "updated_at": "2026-04-21T03:53:30.090Z"
+  }
+}

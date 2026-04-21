@@ -11,8 +11,21 @@
 - Redis or NATS JetStream for queueing and pub/sub.
 - S3-compatible object storage for artifacts that do not belong in Git.
 - Reverse proxy with TLS in front of API and Mini App.
+- Prometheus and Grafana for MVP observability.
 - `infra/Dockerfile.app` for packaged API, worker, bot, and Mini App surfaces.
 - `apps/host-daemon` running directly on each execution host, outside the control-plane container stack.
+
+## Public Topology
+
+For `happytg.gerta.crazedns.ru`, use one HTTPS origin and path-based routing:
+
+- `/miniapp` -> Mini App frontend
+- `/api/*` -> control-plane API
+- `/health` -> fast API health
+- `/bot/webhook` -> Telegram webhook, rewritten to the bot app's internal `/telegram/webhook`
+- `/static/*` -> Mini App static assets
+
+The starter Caddy config is `infra/caddy/Caddyfile`.
 
 ## Control Plane Bring-Up
 
@@ -25,7 +38,8 @@
    ```
 
 4. Confirm API, bot, worker, and Mini App logs are healthy.
-5. Configure Telegram webhook delivery against the public API endpoint.
+5. Confirm Prometheus can scrape API `/metrics` and Grafana can see the Prometheus datasource.
+6. Configure Telegram webhook delivery against the public API endpoint.
 
 ## Execution Host Bring-Up
 
@@ -46,9 +60,27 @@
 ## Backup and Upgrade
 
 - Backup PostgreSQL, object storage metadata, and `.happytg/` host state.
+- Backup `.happytg-dev/control-plane.json` while the MVP file store is in use.
+- Backup repo-local `.agent/tasks/<task-id>/` proof bundles for completed and in-flight proof tasks.
 - Run migrations before app restart when required.
 - Preserve event log and approval records across upgrades.
 - Keep `.env`, reverse proxy config, and `~/.codex/config.toml` under your normal secrets/config backup process.
+- Follow the detailed runbook in `docs/operations/runbook.md`.
+
+## Observability
+
+- API exposes `/metrics` for internal Prometheus scraping.
+- `/health`, `/ready`, and `/version` remain fast-path checks.
+- The starter compose file includes Prometheus and Grafana. Keep those ports private or behind your own access control.
+- See `docs/operations/observability.md`.
+
+## Rollback
+
+- Freeze new task intake.
+- Stop compose services.
+- Restore the previous image/check-out and backed-up state if needed.
+- Start API first, then bot, Mini App, worker, and Caddy.
+- Confirm pending approvals and resumable sessions before allowing new mutations.
 
 ## Host Reconnect
 

@@ -1,0 +1,16 @@
+[
+  {
+    "url": "http://127.0.0.1:4000/health",
+    "ok": true,
+    "status": 200,
+    "elapsedMs": 142.3,
+    "body": "{\n  \"ok\": true,\n  \"service\": \"api\"\n}\n"
+  },
+  {
+    "url": "http://127.0.0.1:4100/health",
+    "ok": true,
+    "status": 200,
+    "elapsedMs": 2.9,
+    "body": "{\n  \"ok\": true,\n  \"service\": \"bot\"\n}\n"
+  }
+]

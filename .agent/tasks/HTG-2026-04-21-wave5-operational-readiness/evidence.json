@@ -1,0 +1,65 @@
+{
+  "taskId": "HTG-2026-04-21-wave5-operational-readiness",
+  "criteria": [
+    {
+      "criterion": "Shared logging redacts secrets and API exposes fast version and Prometheus metrics endpoints",
+      "artifacts": [
+        "packages/shared/src/index.ts",
+        "packages/shared/src/index.test.ts",
+        "apps/api/src/index.ts",
+        "apps/api/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "Mini App sessions and launch grants support explicit revoke paths with audit records",
+      "artifacts": [
+        "apps/api/src/service.ts",
+        "apps/api/src/service.test.ts"
+      ]
+    },
+    {
+      "criterion": "Self-hosted compose includes Caddy plus Prometheus/Grafana observability scaffold",
+      "artifacts": [
+        "infra/docker-compose.example.yml",
+        "infra/prometheus/prometheus.yml",
+        "infra/grafana/provisioning/datasources/prometheus.yml",
+        ".env.example"
+      ]
+    },
+    {
+      "criterion": "Security, observability, backup, upgrade, rollback, and release readiness docs are updated",
+      "artifacts": [
+        "SECURITY.md",
+        "docs/security/hardening.md",
+        "docs/operations/observability.md",
+        "docs/operations/runbook.md",
+        "docs/self-hosting.md"
+      ]
+    },
+    {
+      "criterion": "CI and verification gates cover lint, typecheck, test, build, and task validation",
+      "artifacts": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml",
+        ".agent/tasks/HTG-2026-04-21-wave5-operational-readiness/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-21-wave5-operational-readiness/raw/lint.txt",
+        ".agent/tasks/HTG-2026-04-21-wave5-operational-readiness/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-21-wave5-operational-readiness/raw/build.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "packages/shared/src/index.ts",
+    "apps/api/src/index.ts",
+    "apps/api/src/service.ts",
+    "infra/docker-compose.example.yml",
+    "infra/prometheus/prometheus.yml",
+    "infra/grafana/provisioning/datasources/prometheus.yml",
+    "docs/operations/observability.md",
+    "docs/operations/runbook.md",
+    "docs/security/hardening.md",
+    ".github/workflows/ci.yml",
+    ".github/workflows/release.yml"
+  ],
+  "generatedAt": "2026-04-21T05:08:00.000Z"
+}

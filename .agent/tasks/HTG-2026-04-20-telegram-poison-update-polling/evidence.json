@@ -1,0 +1,87 @@
+{
+  "taskId": "HTG-2026-04-20-telegram-poison-update-polling",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "passed",
+      "summary": "Repo-local evidence proves the silent Telegram symptom came from replayed failing updates rather than delivery-mode selection or token validity.",
+      "artifacts": [
+        "raw/init-analysis.txt",
+        "raw/live-ready-before.txt"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "passed",
+      "summary": "The polling runtime no longer lets one failing update block subsequent updates.",
+      "artifacts": [
+        "apps/bot/src/index.ts",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "passed",
+      "summary": "Telegram readiness now reflects Telegram delivery rather than command handler failures.",
+      "artifacts": [
+        "raw/live-ready-before.txt",
+        "raw/live-ready-after.txt"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "passed",
+      "summary": "Regression coverage proves a failed /pair update is skipped, offset advances, and a later /start still replies.",
+      "artifacts": [
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "passed",
+      "summary": "Bot-scope verification passed for test, typecheck, and build.",
+      "artifacts": [
+        "raw/test-unit.txt",
+        "raw/typecheck.txt",
+        "raw/build.txt",
+        "raw/test-integration.txt",
+        "raw/lint.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "raw/init-analysis.txt",
+      "kind": "analysis"
+    },
+    {
+      "path": "raw/live-ready-before.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/live-ready-after.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/test-unit.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/typecheck.txt",
+      "kind": "typecheck"
+    },
+    {
+      "path": "raw/build.txt",
+      "kind": "build"
+    },
+    {
+      "path": "raw/test-integration.txt",
+      "kind": "validation"
+    },
+    {
+      "path": "raw/lint.txt",
+      "kind": "lint"
+    }
+  ],
+  "generatedAt": "2026-04-20T03:41:58.4727824Z"
+}

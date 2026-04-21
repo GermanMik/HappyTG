@@ -1,0 +1,7 @@
+Integration verification for this bounded bot task uses package-level typecheck and build rather than a separate integration test suite.
+
+Executed commands:
+- pnpm --filter @happytg/bot run typecheck
+- pnpm --filter @happytg/bot run build
+
+See raw/typecheck.txt and raw/build.txt for command output.

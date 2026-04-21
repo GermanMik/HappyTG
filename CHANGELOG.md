@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+## v0.4.0
+
+### Added
+
+- Foundation contracts now include the canonical HappyTG state/event model, task phases, approval scopes, tool categories, daemon protocol contracts, Caddy topology, and repo-local `state.json` proof bundle metadata.
+- Telegram bot UX now provides command-light `/start` and `/menu`, guided task wizard, session cards, host/session/approval browsing, scoped approval callbacks, and Mini App continuity links.
+- Added `@happytg/session-engine` for reducer-backed session transitions, resume semantics, and transition tests.
+- Added `@happytg/telegram-kit` for Telegram Mini App `initData` validation and compact signed launch payloads.
+- Mini App launch grants, short-lived app sessions, dashboard/session/approval/host/report/diff/verify projections, mobile-first screens, and local draft recovery are now available.
+- API now exposes fast `/version` and Prometheus `/metrics` endpoints, plus explicit Mini App session and launch-grant revoke paths.
+- Self-hosted compose now includes Caddy, Prometheus, and Grafana scaffolding.
+
+### Changed
+
+- Control-plane session, approval, policy, proof-loop, and Mini App flows now build on the existing TypeScript monorepo instead of introducing a parallel runtime.
+- API session moves now route through the reducer-backed state model where applicable.
+- Approval resolution is nonce-aware and idempotent for retry-safe Telegram and Mini App actions.
+- Policy evaluation now respects scoped policy layers without allowing lower scopes to weaken higher denies.
+- Tool execution planning now classifies read, compute, mutation, sensitive, and deploy/publish actions with serial mutation lanes.
+- CI and release workflows now run lint in addition to typecheck, test, and build.
+
+### Security
+
+- Structured logger metadata now redacts token, secret, password, authorization, API key, signing key, and related sensitive fields.
+- Mini App launch payloads are signed, expiring, use-limited, and revocable; Mini App app-session tokens are hashed in state and revocable.
+- Security hardening docs now define approval defaults, forbidden MVP operations, rotation, revocation, and audit checklist.
+
+### Documentation
+
+- Added architecture docs for foundation contracts, bot-first UX, session/policy/proof core, and Mini App rich UX.
+- Added operations runbook, observability notes, security hardening guidance, and updated self-hosting/configuration docs for backup, upgrade, rollback, CORS, Mini App launch/session settings, Prometheus, and Grafana.
+
+### Verification
+
+- Release metadata is aligned at `0.4.0` across the workspace.
+- Release validated with `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, and canonical task validation for Wave 3, Wave 4, and Wave 5 proof bundles.
+
 ## v0.3.23
 
 ### Fixed

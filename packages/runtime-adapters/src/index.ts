@@ -3,7 +3,7 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import type { RuntimeExecutionResult, RuntimeReadiness } from "../../protocol/src/index.js";
+import type { ActionKind, RuntimeExecutionResult, RuntimeReadiness, ToolCategory } from "../../protocol/src/index.js";
 import { ensureDir, fileExists, normalizeSpawnEnv, nowIso, readTextFileOrEmpty, resolveExecutable, resolveHome } from "../../shared/src/index.js";
 
 export interface RuntimeAdapter {
@@ -19,6 +19,128 @@ export const primaryRuntimeAdapter: RuntimeAdapter = {
   supportsProofLoop: true,
   supportsResumableSessions: true
 };
+
+export interface ToolExecutionCategoryPolicy {
+  category: ToolCategory;
+  defaultPolicy: "allow" | "require_approval" | "deny";
+  approvalRequired: boolean;
+  loggingRequired: boolean;
+  evidenceRequired: boolean;
+  executionLane: "parallel_read" | "serial_mutation";
+}
+
+export interface PlannedToolCall {
+  id: string;
+  actionKind: ActionKind;
+}
+
+export interface ToolExecutionBatch {
+  mode: "parallel" | "serial";
+  category: ToolCategory;
+  calls: PlannedToolCall[];
+}
+
+const ACTION_TOOL_CATEGORIES: Readonly<Record<ActionKind, ToolCategory>> = {
+  read_status: "safe_read",
+  workspace_read: "safe_read",
+  verification_run: "bounded_compute",
+  session_resume: "bounded_compute",
+  workspace_write: "repo_mutation",
+  workspace_write_outside_root: "shell_network_system_sensitive",
+  bootstrap_install: "shell_network_system_sensitive",
+  bootstrap_config_edit: "shell_network_system_sensitive",
+  daemon_pair: "shell_network_system_sensitive",
+  git_push: "deploy_publish_external_side_effect"
+};
+
+export const TOOL_EXECUTION_CATEGORY_POLICIES: Readonly<Record<ToolCategory, ToolExecutionCategoryPolicy>> = {
+  safe_read: {
+    category: "safe_read",
+    defaultPolicy: "allow",
+    approvalRequired: false,
+    loggingRequired: true,
+    evidenceRequired: false,
+    executionLane: "parallel_read"
+  },
+  bounded_compute: {
+    category: "bounded_compute",
+    defaultPolicy: "allow",
+    approvalRequired: false,
+    loggingRequired: true,
+    evidenceRequired: true,
+    executionLane: "parallel_read"
+  },
+  repo_mutation: {
+    category: "repo_mutation",
+    defaultPolicy: "require_approval",
+    approvalRequired: true,
+    loggingRequired: true,
+    evidenceRequired: true,
+    executionLane: "serial_mutation"
+  },
+  shell_network_system_sensitive: {
+    category: "shell_network_system_sensitive",
+    defaultPolicy: "require_approval",
+    approvalRequired: true,
+    loggingRequired: true,
+    evidenceRequired: true,
+    executionLane: "serial_mutation"
+  },
+  deploy_publish_external_side_effect: {
+    category: "deploy_publish_external_side_effect",
+    defaultPolicy: "deny",
+    approvalRequired: true,
+    loggingRequired: true,
+    evidenceRequired: true,
+    executionLane: "serial_mutation"
+  }
+};
+
+export function classifyActionKind(actionKind: ActionKind): ToolCategory {
+  return ACTION_TOOL_CATEGORIES[actionKind];
+}
+
+export function toolExecutionPolicyForAction(actionKind: ActionKind): ToolExecutionCategoryPolicy {
+  return TOOL_EXECUTION_CATEGORY_POLICIES[classifyActionKind(actionKind)];
+}
+
+export function planToolExecutionBatches(calls: PlannedToolCall[]): ToolExecutionBatch[] {
+  const batches: ToolExecutionBatch[] = [];
+  let readBatch: ToolExecutionBatch | undefined;
+
+  const flushReadBatch = () => {
+    if (readBatch && readBatch.calls.length > 0) {
+      batches.push(readBatch);
+    }
+    readBatch = undefined;
+  };
+
+  for (const call of calls) {
+    const category = classifyActionKind(call.actionKind);
+    const policy = TOOL_EXECUTION_CATEGORY_POLICIES[category];
+    if (policy.executionLane === "parallel_read") {
+      if (!readBatch) {
+        readBatch = {
+          mode: "parallel",
+          category,
+          calls: []
+        };
+      }
+      readBatch.calls.push(call);
+      continue;
+    }
+
+    flushReadBatch();
+    batches.push({
+      mode: "serial",
+      category,
+      calls: [call]
+    });
+  }
+
+  flushReadBatch();
+  return batches;
+}
 
 const BENIGN_CODEX_SMOKE_WARNING_PATTERNS = [
   /codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit/i,

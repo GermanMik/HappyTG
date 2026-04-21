@@ -1,0 +1,8 @@
+{
+  "ok": false,
+  "elapsedMs": 10756.9,
+  "name": "TypeError",
+  "message": "fetch failed",
+  "causeCode": "UND_ERR_CONNECT_TIMEOUT",
+  "causeMessage": "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"
+}

@@ -57,7 +57,9 @@ async function main() {
     "packages/protocol/package.json",
     "packages/repo-proof/package.json",
     "packages/runtime-adapters/package.json",
-    "packages/shared/package.json"
+    "packages/session-engine/package.json",
+    "packages/shared/package.json",
+    "packages/telegram-kit/package.json"
   ];
   const changelogPath = path.join(repoRoot, "CHANGELOG.md");
   const releaseNotesPath = path.join(repoRoot, "docs", "releases", `${version}.md`);

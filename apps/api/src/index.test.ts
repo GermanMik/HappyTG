@@ -34,6 +34,67 @@ test("api ready endpoint returns store metadata", async () => {
   }
 });
 
+test("api exposes fast version and prometheus metrics endpoints", async () => {
+  const server = createApiServer();
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("API server did not bind to a TCP port");
+  }
+
+  try {
+    const versionResponse = await fetch(`http://127.0.0.1:${address.port}/version`);
+    const version = await versionResponse.json() as { service: string; name: string };
+    assert.equal(versionResponse.status, 200);
+    assert.deepEqual({ service: version.service, name: version.name }, { service: "api", name: "HappyTG" });
+
+    const metricsResponse = await fetch(`http://127.0.0.1:${address.port}/metrics`);
+    const metrics = await metricsResponse.text();
+    assert.equal(metricsResponse.status, 200);
+    assert.match(metrics, /happytg_service_up\{service="api"\} 1/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("api dev CORS allows only explicit Mini App origins", async () => {
+  const previousOrigins = process.env.HAPPYTG_DEV_CORS_ORIGINS;
+  process.env.HAPPYTG_DEV_CORS_ORIGINS = "http://localhost:3001";
+
+  const server = createApiServer();
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("API server did not bind to a TCP port");
+  }
+
+  try {
+    const allowed = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/dashboard`, {
+      method: "OPTIONS",
+      headers: {
+        origin: "http://localhost:3001"
+      }
+    });
+    assert.equal(allowed.status, 204);
+    assert.equal(allowed.headers.get("access-control-allow-origin"), "http://localhost:3001");
+
+    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/dashboard`, {
+      method: "OPTIONS",
+      headers: {
+        origin: "http://evil.test"
+      }
+    });
+    assert.equal(denied.status, 403);
+  } finally {
+    await closeServer(server);
+    if (previousOrigins === undefined) {
+      delete process.env.HAPPYTG_DEV_CORS_ORIGINS;
+    } else {
+      process.env.HAPPYTG_DEV_CORS_ORIGINS = previousOrigins;
+    }
+  }
+});
+
 test("startApiServer reuses an already-running HappyTG API on the same port", async () => {
   const occupied = createHttpServer((req, res) => {
     res.writeHead(200, {

@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-20-telegram-e2e-latency-audit",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-20-telegram-e2e-latency-audit",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Telegram end-to-end latency audit and bounded transport repair",
+  "acceptanceCriteria": [
+    "A canonical proof bundle exists with the required spec, evidence, verdict, task, problems, and raw artifacts.",
+    "Fresh evidence proves whether reply slowness is inbound delivery, handler logic, local API latency, outbound sendMessage, or a combination, including Node-vs-fallback timing split.",
+    "Any product change is bounded to the real bottleneck and preserves delivery-mode, pairing, approval, user-binding, truthful logging, and /ready semantics.",
+    "Regression coverage proves the exact latency or transport failure mode repaired.",
+    "Fresh verification and task validation are recorded after the fix without self-certifying from the builder pass alone."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-20T00:00:00.000Z",
+  "updatedAt": "2026-04-20T04:20:00.000Z"
+}

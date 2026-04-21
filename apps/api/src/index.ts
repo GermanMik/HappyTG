@@ -2,6 +2,8 @@ import { fileURLToPath } from "node:url";
 
 import type {
   ClaimPairingRequest,
+  CreateMiniAppLaunchGrantRequest,
+  CreateMiniAppSessionRequest,
   CreatePairingRequest,
   CreateSessionRequest,
   DaemonCompleteRequest,
@@ -15,13 +17,16 @@ import type {
 } from "../../../packages/protocol/src/index.js";
 import {
   createJsonServer,
+  createDevCorsOptions,
   createLogger,
   getControlPlaneStorePath,
   json,
   loadHappyTGEnv,
   readJsonBody,
   readPort,
+  renderPrometheusMetrics,
   route,
+  text,
   type Logger
 } from "../../../packages/shared/src/index.js";
 
@@ -32,6 +37,14 @@ loadHappyTGEnv();
 const port = readPort(process.env, ["HAPPYTG_API_PORT", "PORT"], 4000);
 
 export function createApiServer(service = new HappyTGControlPlaneService()) {
+  async function miniAppUserId(req: { headers: Record<string, string | string[] | undefined> }, url: URL): Promise<string | undefined> {
+    const authorization = req.headers.authorization;
+    const token = typeof authorization === "string" && authorization.toLowerCase().startsWith("bearer ")
+      ? authorization.slice("bearer ".length).trim()
+      : undefined;
+    return service.resolveMiniAppUserId(token, url.searchParams.get("userId") ?? undefined);
+  }
+
   return createJsonServer(
     [
       route("GET", "/health", async ({ res }) => {
@@ -44,6 +57,16 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
           stateStorePath: getControlPlaneStorePath()
         });
       }),
+      route("GET", "/version", async ({ res }) => {
+        json(res, 200, {
+          service: "api",
+          name: "HappyTG",
+          version: process.env.npm_package_version ?? "0.4.0"
+        });
+      }),
+      route("GET", "/metrics", async ({ res }) => {
+        text(res, 200, renderPrometheusMetrics("api"));
+      }),
       route("POST", "/api/v1/pairing/start", async ({ req, res }) => {
         const body = await readJsonBody<CreatePairingRequest>(req);
         json(res, 200, await service.startPairing(body));
@@ -54,6 +77,11 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
       }),
       route("GET", "/api/v1/hosts", async ({ res, url }) => {
         json(res, 200, { hosts: await service.listHosts(url.searchParams.get("userId") ?? undefined) });
+      }),
+      route("GET", "/api/v1/hosts/:id/workspaces", async ({ res, params, url }) => {
+        json(res, 200, {
+          workspaces: await service.listWorkspaces(params.id, url.searchParams.get("userId") ?? undefined)
+        });
       }),
       route("POST", "/api/v1/hosts/:id/bootstrap/:command", async ({ req, res, params }) => {
         const body = await readJsonBody<{ userId: string }>(req);
@@ -80,6 +108,9 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
       route("POST", "/api/v1/sessions", async ({ req, res }) => {
         const body = await readJsonBody<CreateSessionRequest>(req);
         json(res, 200, await service.createSession(body));
+      }),
+      route("GET", "/api/v1/sessions", async ({ res, url }) => {
+        json(res, 200, { sessions: await service.listSessions(url.searchParams.get("userId") ?? undefined) });
       }),
       route("GET", "/api/v1/sessions/:id", async ({ res, params }) => {
         const session = await service.getSession(params.id);
@@ -123,12 +154,74 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
 
         json(res, 200, approval);
       }),
+      route("GET", "/api/v1/approvals", async ({ res, url }) => {
+        const states = url.searchParams.get("state")?.split(",").map((item) => item.trim()).filter(Boolean);
+        json(res, 200, {
+          approvals: await service.listApprovals(url.searchParams.get("userId") ?? undefined, states)
+        });
+      }),
       route("POST", "/api/v1/approvals/:id/resolve", async ({ req, res, params }) => {
         const body = await readJsonBody<ResolveApprovalRequest>(req);
         json(res, 200, await service.resolveApproval(params.id, body));
       }),
       route("GET", "/api/v1/miniapp/bootstrap", async ({ res, url }) => {
         json(res, 200, await service.getMiniAppOverview(url.searchParams.get("userId") ?? undefined));
+      }),
+      route("POST", "/api/v1/miniapp/launch-grants", async ({ req, res }) => {
+        const body = await readJsonBody<CreateMiniAppLaunchGrantRequest>(req);
+        json(res, 200, await service.createMiniAppLaunchGrant(body));
+      }),
+      route("POST", "/api/v1/miniapp/launch-grants/:id/revoke", async ({ req, res, params }) => {
+        const body = await readJsonBody<{ userId?: string }>(req);
+        json(res, 200, { grant: await service.revokeMiniAppLaunchGrant(params.id, body.userId) });
+      }),
+      route("POST", "/api/v1/miniapp/auth/session", async ({ req, res }) => {
+        try {
+          const body = await readJsonBody<CreateMiniAppSessionRequest>(req);
+          json(res, 200, await service.createMiniAppSession(body));
+        } catch (error) {
+          json(res, 401, {
+            error: "Mini App auth failed",
+            detail: error instanceof Error ? error.message : "Unknown error"
+          });
+        }
+      }),
+      route("POST", "/api/v1/miniapp/auth/session/:id/revoke", async ({ req, res, params }) => {
+        const body = await readJsonBody<{ userId?: string }>(req);
+        json(res, 200, { appSession: await service.revokeMiniAppSession(params.id, body.userId) });
+      }),
+      route("GET", "/api/v1/miniapp/dashboard", async ({ req, res, url }) => {
+        json(res, 200, await service.getMiniAppDashboard(await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/sessions", async ({ req, res, url }) => {
+        json(res, 200, await service.listMiniAppSessions(await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/sessions/:id", async ({ req, res, params, url }) => {
+        json(res, 200, await service.getMiniAppSessionDetail(params.id, await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/sessions/:id/diff", async ({ req, res, params, url }) => {
+        json(res, 200, await service.getMiniAppDiffSummary(params.id, await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/sessions/:id/verify", async ({ req, res, params, url }) => {
+        json(res, 200, await service.getMiniAppVerifySummary(params.id, await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/approvals", async ({ req, res, url }) => {
+        json(res, 200, await service.listMiniAppApprovals(await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/approvals/:id", async ({ req, res, params, url }) => {
+        json(res, 200, await service.getMiniAppApprovalDetail(params.id, await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/hosts", async ({ req, res, url }) => {
+        json(res, 200, await service.listMiniAppHosts(await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/hosts/:id", async ({ req, res, params, url }) => {
+        json(res, 200, await service.getMiniAppHostDetail(params.id, await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/reports", async ({ req, res, url }) => {
+        json(res, 200, await service.listMiniAppReports(await miniAppUserId(req, url)));
+      }),
+      route("GET", "/api/v1/miniapp/tasks/:id/bundle", async ({ req, res, params, url }) => {
+        json(res, 200, await service.getMiniAppBundleDetail(params.id, await miniAppUserId(req, url)));
       }),
       route("GET", "/api/v1/miniapp/session/:id/timeline", async ({ res, params }) => {
         json(res, 200, await service.getSessionTimeline(params.id));
@@ -162,7 +255,10 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
         json(res, 200, await service.completeDispatch(body));
       })
     ],
-    logger
+    logger,
+    {
+      cors: createDevCorsOptions()
+    }
   );
 }
 

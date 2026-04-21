@@ -1,0 +1,32 @@
+{
+  "sendPath": {
+    "nodeAttemptMs": 1517.6,
+    "nodeError": "This operation was aborted",
+    "fallbackStartOffsetMs": 1518,
+    "fallbackCallMs": 1649.5,
+    "fallbackOk": false,
+    "fallbackStatusCode": 400,
+    "fallbackMessage": "The remote server returned an error: (400) Bad Request.",
+    "totalMs": 3167.9,
+    "fallbackGapMs": 0.4,
+    "infoLogs": [],
+    "errorLogs": [
+      {
+        "message": "Telegram sendMessage failed",
+        "metadata": {
+          "nodeTransport": {
+            "message": "Node HTTPS sendMessage exceeded 1500ms before Windows fallback.",
+            "code": "HAPPYTG_TELEGRAM_NODE_TIMEOUT"
+          },
+          "fallbackStatus": 400,
+          "fallbackMessage": "The remote server returned an error: (400) Bad Request."
+        }
+      }
+    ]
+  },
+  "webhookPost": {
+    "status": 200,
+    "elapsedMs": 2135.5,
+    "body": "{\n  \"ok\": true\n}\n"
+  }
+}

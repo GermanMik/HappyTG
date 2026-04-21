@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-04-21-wave3-session-policy-proof-core",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "manual-wave3-verification-2026-04-21"
+  },
+  "checks": [
+    {
+      "name": "typecheck",
+      "ok": true,
+      "artifact": "raw/test-unit.txt"
+    },
+    {
+      "name": "lint",
+      "ok": true,
+      "artifact": "raw/lint.txt"
+    },
+    {
+      "name": "test",
+      "ok": true,
+      "artifact": "raw/test-integration.txt"
+    },
+    {
+      "name": "build",
+      "ok": true,
+      "artifact": "raw/build.txt"
+    }
+  ],
+  "generatedAt": "2026-04-21T04:31:00.000Z"
+}

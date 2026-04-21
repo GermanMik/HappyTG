@@ -1,6 +1,6 @@
 {
   "name": "@happytg/bootstrap",
-  "version": "0.3.23",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "bin": {
@@ -17,7 +17,7 @@
     "config:init": "tsx src/cli.ts config init",
     "env:snapshot": "tsx src/cli.ts env snapshot",
     "build": "tsc -p tsconfig.json",
-    "lint": "echo \"TODO: lint bootstrap\"",
+    "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test src/*.test.ts"
   }

@@ -9,13 +9,16 @@ import type { Logger } from "./index.js";
 import {
   FileStateStore,
   createJsonServer,
+  createLogger,
   findExecutable,
   getLocalStateDir,
   loadHappyTGEnv,
   json,
   normalizeSpawnEnv,
+  redactSecrets,
   readJsonFile,
   readTextFileOrEmpty,
+  renderPrometheusMetrics,
   resolveHome,
   route,
   telegramTokenStatus,
@@ -352,4 +355,45 @@ test("createJsonServer returns a structured 500 when handler throws", async () =
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
+});
+
+test("redactSecrets and createLogger remove sensitive metadata values", () => {
+  assert.deepEqual(redactSecrets({
+    token: "secret-token",
+    nested: {
+      password: "secret-password",
+      value: "safe"
+    }
+  }), {
+    token: "[REDACTED]",
+    nested: {
+      password: "[REDACTED]",
+      value: "safe"
+    }
+  });
+
+  const originalLog = console.log;
+  const lines: string[] = [];
+  console.log = (line?: unknown) => {
+    lines.push(String(line));
+  };
+  try {
+    createLogger("test").info("hello", {
+      authorization: "Bearer secret",
+      visible: "ok"
+    });
+  } finally {
+    console.log = originalLog;
+  }
+
+  assert.match(lines[0] ?? "", /\[REDACTED\]/);
+  assert.doesNotMatch(lines[0] ?? "", /Bearer secret/);
+  assert.match(lines[0] ?? "", /"visible":"ok"/);
+});
+
+test("renderPrometheusMetrics returns stable service gauges", () => {
+  const metrics = renderPrometheusMetrics("api", Date.now() - 5_000);
+  assert.match(metrics, /happytg_service_up\{service="api"\} 1/);
+  assert.match(metrics, /happytg_service_uptime_seconds\{service="api"\}/);
+  assert.match(metrics, /happytg_nodejs_memory_rss_bytes\{service="api"\}/);
 });

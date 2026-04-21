@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-20-telegram-e2e-latency-audit",
+  "status": "complete",
+  "summary": "Fresh repo-local evidence proved the live reply bottleneck is outbound Telegram sendMessage on Node HTTPS, not inbound delivery or local API latency. apps/bot now caps the Windows Node sendMessage attempt at 1500ms before falling back, reducing the measured direct send path from 11245.5ms to 3167.9ms and the webhook /start path from 11506.5ms to 2135.5ms. The separate verifier reran the required checks, found no blocking code defects, and confirmed the bounded repair and proof bundle are complete."
+}

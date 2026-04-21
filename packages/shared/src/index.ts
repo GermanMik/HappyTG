@@ -508,6 +508,36 @@ export interface Logger {
   error(message: string, metadata?: unknown): void;
 }
 
+const SECRET_FIELD_PATTERN = /(token|secret|password|authorization|api[_-]?key|signing[_-]?key|refresh|access[_-]?token|private[_-]?key)/iu;
+
+export function redactSecrets(value: unknown, keyHint = "", depth = 0): unknown {
+  if (depth > 8) {
+    return "[REDACTED:MAX_DEPTH]";
+  }
+
+  if (SECRET_FIELD_PATTERN.test(keyHint)) {
+    return value === undefined ? undefined : "[REDACTED]";
+  }
+
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (typeof value !== "object") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactSecrets(item, keyHint, depth + 1));
+  }
+
+  const output: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+    output[key] = redactSecrets(nested, key, depth + 1);
+  }
+  return output;
+}
+
 export function createLogger(scope: string): Logger {
   const write = (level: "INFO" | "WARN" | "ERROR", message: string, metadata?: unknown) => {
     const line = {
@@ -515,7 +545,7 @@ export function createLogger(scope: string): Logger {
       level,
       scope,
       message,
-      ...(metadata ? { metadata } : {})
+      ...(metadata ? { metadata: redactSecrets(metadata) } : {})
     };
     console.log(JSON.stringify(line));
   };
@@ -622,6 +652,86 @@ export function text(res: ServerResponse, statusCode: number, value: string): vo
   res.end(value);
 }
 
+export interface CorsOptions {
+  allowedOrigins: string[];
+  allowedMethods?: string[];
+  allowedHeaders?: string[];
+  allowCredentials?: boolean;
+  maxAgeSeconds?: number;
+}
+
+export function parseCorsOriginList(value: string | undefined): string[] {
+  return [...new Set((value ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0 && item !== "*"))];
+}
+
+export function createDevCorsOptions(env: NodeJS.ProcessEnv = process.env): CorsOptions | undefined {
+  if (env.NODE_ENV === "production") {
+    return undefined;
+  }
+
+  const allowedOrigins = parseCorsOriginList(env.HAPPYTG_DEV_CORS_ORIGINS);
+  if (allowedOrigins.length === 0) {
+    return undefined;
+  }
+
+  return {
+    allowedOrigins,
+    allowedMethods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["content-type", "authorization"],
+    allowCredentials: false,
+    maxAgeSeconds: 600
+  };
+}
+
+export function renderPrometheusMetrics(service: string, startedAt = Date.now() - Math.round(process.uptime() * 1000)): string {
+  const uptimeSeconds = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+  const memory = process.memoryUsage();
+  const serviceLabel = service.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+  return [
+    "# HELP happytg_service_up Whether the HappyTG service process is running.",
+    "# TYPE happytg_service_up gauge",
+    `happytg_service_up{service="${serviceLabel}"} 1`,
+    "# HELP happytg_service_uptime_seconds Process uptime in seconds.",
+    "# TYPE happytg_service_uptime_seconds gauge",
+    `happytg_service_uptime_seconds{service="${serviceLabel}"} ${uptimeSeconds}`,
+    "# HELP happytg_nodejs_memory_rss_bytes Node.js RSS memory in bytes.",
+    "# TYPE happytg_nodejs_memory_rss_bytes gauge",
+    `happytg_nodejs_memory_rss_bytes{service="${serviceLabel}"} ${memory.rss}`,
+    ""
+  ].join("\n");
+}
+
+function setCorsHeaders(req: IncomingMessage, res: ServerResponse, options?: CorsOptions): boolean {
+  if (!options) {
+    return false;
+  }
+
+  const origin = req.headers.origin;
+  if (typeof origin !== "string") {
+    return false;
+  }
+
+  res.setHeader("vary", "Origin");
+  if (!options.allowedOrigins.includes(origin)) {
+    return false;
+  }
+
+  res.setHeader("access-control-allow-origin", origin);
+  res.setHeader("access-control-allow-methods", (options.allowedMethods ?? ["GET", "POST", "OPTIONS"]).join(", "));
+  res.setHeader("access-control-allow-headers", (options.allowedHeaders ?? ["content-type", "authorization"]).join(", "));
+  if (options.allowCredentials) {
+    res.setHeader("access-control-allow-credentials", "true");
+  }
+  if (options.maxAgeSeconds !== undefined) {
+    res.setHeader("access-control-max-age", String(options.maxAgeSeconds));
+  }
+
+  return true;
+}
+
 export async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) {
@@ -636,11 +746,28 @@ export async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
   return JSON.parse(raw) as T;
 }
 
-export function createJsonServer(routes: RouteDefinition[], logger: Logger) {
+export function createJsonServer(routes: RouteDefinition[], logger: Logger, options?: { cors?: CorsOptions }) {
   return createServer(async (req, res) => {
     try {
       if (!req.url || !req.method) {
         json(res, 400, { error: "Bad request" });
+        return;
+      }
+
+      const corsAllowed = setCorsHeaders(req, res, options?.cors);
+      if (req.method.toUpperCase() === "OPTIONS") {
+        if (!options?.cors) {
+          json(res, 404, { error: "Not found", path: req.url });
+          return;
+        }
+
+        if (!corsAllowed) {
+          json(res, 403, { error: "CORS origin is not allowed" });
+          return;
+        }
+
+        res.statusCode = 204;
+        res.end();
         return;
       }
 

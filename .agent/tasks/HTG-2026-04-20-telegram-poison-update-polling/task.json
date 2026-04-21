@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-20-telegram-poison-update-polling",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-20-telegram-poison-update-polling",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Prevent stale Telegram update failures from blocking polling delivery",
+  "acceptanceCriteria": [
+    "Repo-local evidence proves that the current silent-Telegram symptom comes from a replayed failing update, not from delivery-mode selection or Telegram token validity.",
+    "The bot polling runtime no longer lets one failing update block subsequent updates.",
+    "Telegram transport readiness remains about Telegram delivery state, not user-command handler failures.",
+    "Regression coverage proves that a failing update does not get replayed forever and that later updates still run.",
+    "Verification artifacts for the bounded bot-scope fix are captured in this task bundle."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-20T00:00:00.000Z",
+  "updatedAt": "2026-04-20T06:41:58.4727824+03:00"
+}

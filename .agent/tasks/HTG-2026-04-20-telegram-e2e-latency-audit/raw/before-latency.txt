@@ -1,0 +1,29 @@
+{
+  "probe": "createDefaultSendTelegramMessage-before-fix",
+  "nodeAttemptMs": 10646.5,
+  "nodeError": "fetch failed",
+  "nodeCauseCode": "UND_ERR_CONNECT_TIMEOUT",
+  "nodeCauseMessage": "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)",
+  "fallbackStartOffsetMs": 10646.9,
+  "fallbackCallMs": 598.4,
+  "fallbackOk": false,
+  "fallbackStatusCode": 400,
+  "fallbackMessage": "The remote server returned an error: (400) Bad Request.",
+  "totalMs": 11245.5,
+  "fallbackGapMs": 0.4,
+  "infoLogs": [],
+  "errorLogs": [
+    {
+      "message": "Telegram sendMessage failed",
+      "metadata": {
+        "nodeTransport": {
+          "message": "fetch failed",
+          "causeCode": "UND_ERR_CONNECT_TIMEOUT",
+          "causeMessage": "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"
+        },
+        "fallbackStatus": 400,
+        "fallbackMessage": "The remote server returned an error: (400) Bad Request."
+      }
+    }
+  ]
+}

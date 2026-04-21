@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-21-wave2-bot-auth-pairing",
+  "sessionId": "manual-wave2",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-21-wave2-bot-auth-pairing",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Wave 2 bot auth pairing UX",
+  "acceptanceCriteria": [
+    "Bot main menu is wizard-first and command-light",
+    "API exposes host/workspace/session/approval projections for bot flows",
+    "Approval callbacks use scoped decisions and nonce-aware replay basics",
+    "Existing daemon pairing and heartbeat flow remains compatible",
+    "Wave 2 proof evidence is recorded under .agent/tasks"
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-21T04:07:42.148Z",
+  "updatedAt": "2026-04-21T04:20:00.000Z"
+}

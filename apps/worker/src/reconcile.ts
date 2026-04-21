@@ -46,7 +46,7 @@ function findLatestDispatch(store: HappyTGStore, sessionId: string): PendingDisp
 }
 
 function isActiveSessionState(state: Session["state"]): boolean {
-  return state === "pending_dispatch" || state === "running" || state === "verifying";
+  return state === "ready" || state === "running" || state === "verifying";
 }
 
 export function reconcileSessionsAndDispatches(store: HappyTGStore, currentTimeMs: number, config: ReconcileConfig): ReconcileResult {
@@ -84,7 +84,7 @@ export function reconcileSessionsAndDispatches(store: HappyTGStore, currentTimeM
       session.updatedAt = timestamp;
       sessionsFailed += 1;
 
-      appendEvent(store, session.id, "session.failed", {
+      appendEvent(store, session.id, "SessionFailed", {
         reason: session.lastError,
         dispatchId: dispatch.id,
         reconciliation: true
@@ -92,12 +92,12 @@ export function reconcileSessionsAndDispatches(store: HappyTGStore, currentTimeM
       continue;
     }
 
-    if (session.state !== "reconnecting") {
-      session.state = "reconnecting";
+    if (session.state !== "resuming") {
+      session.state = "resuming";
       session.currentSummary = "Waiting for host reconnect to resume in-flight work.";
       session.updatedAt = timestamp;
       sessionsMovedToReconnecting += 1;
-      appendEvent(store, session.id, "host.disconnected", {
+      appendEvent(store, session.id, "HostDisconnected", {
         hostId: session.hostId,
         reconciliation: true
       }, timestamp);
@@ -161,7 +161,7 @@ export function markExpiredApprovalSessions(store: HappyTGStore, currentTimeMs: 
       continue;
     }
 
-    if (session.state !== "awaiting_approval") {
+    if (session.state !== "needs_approval") {
       continue;
     }
 
@@ -171,7 +171,7 @@ export function markExpiredApprovalSessions(store: HappyTGStore, currentTimeMs: 
     session.updatedAt = timestamp;
     updatedSessions += 1;
 
-    appendEvent(store, session.id, "approval.resolved", {
+    appendEvent(store, session.id, "ApprovalExpired", {
       approvalId: approval.id,
       decision: "expired"
     }, timestamp);

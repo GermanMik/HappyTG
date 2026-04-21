@@ -1,6 +1,6 @@
 import type { Policy, PolicyDecision, PolicyEvaluationRequest, PolicyLayer, PolicyMatch, PolicyRule } from "../../protocol/src/index.js";
 
-const LAYER_ORDER: PolicyLayer[] = ["global", "deployment", "workspace", "session", "command"];
+const LAYER_ORDER: PolicyLayer[] = ["global", "deployment", "workspace", "project", "session", "command"];
 
 function findMatchingRules(policy: Policy, actionKind: PolicyRule["actionKind"]): PolicyMatch[] {
   return policy.rules
@@ -14,9 +14,19 @@ function findMatchingRules(policy: Policy, actionKind: PolicyRule["actionKind"])
     }));
 }
 
+function policyAppliesToScope(policy: Policy, request: PolicyEvaluationRequest): boolean {
+  const requestedScope = request.scopeRefs[policy.layer];
+  if (!requestedScope) {
+    return policy.layer === "global" && policy.scopeRef === "global";
+  }
+
+  return policy.scopeRef === requestedScope;
+}
+
 export function evaluatePolicies(input: PolicyEvaluationRequest): PolicyDecision {
   const matches = input.policies
     .filter((policy) => policy.status === "active")
+    .filter((policy) => policyAppliesToScope(policy, input))
     .flatMap((policy) => findMatchingRules(policy, input.actionKind))
     .sort((left, right) => LAYER_ORDER.indexOf(left.layer) - LAYER_ORDER.indexOf(right.layer));
 

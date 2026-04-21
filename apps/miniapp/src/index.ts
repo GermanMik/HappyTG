@@ -10,6 +10,18 @@ import {
   text,
   type Logger
 } from "../../../packages/shared/src/index.js";
+import type {
+  MiniAppApprovalCard,
+  MiniAppDashboardProjection,
+  MiniAppDiffProjection,
+  MiniAppHostCard,
+  MiniAppReportCard,
+  MiniAppSessionCard,
+  MiniAppVerifyProjection,
+  SessionEvent,
+  TaskBundle,
+  Workspace
+} from "../../../packages/protocol/src/index.js";
 
 const logger = createLogger("miniapp");
 loadHappyTGEnv();
@@ -30,8 +42,8 @@ async function defaultFetchJson<T>(pathname: string): Promise<T> {
 }
 
 const proofProgressSteps = [
-  { phase: "init", label: "Init" },
-  { phase: "spec_frozen", label: "Freeze/Spec" },
+  { phase: "quick", label: "Quick" },
+  { phase: "freeze", label: "Freeze/Spec" },
   { phase: "build", label: "Build" },
   { phase: "evidence", label: "Evidence" },
   { phase: "verify", label: "Fresh Verify" },
@@ -185,41 +197,69 @@ async function detectPortOccupant(listenPort: number, fetchImpl: typeof fetch = 
 
 export function renderPage(title: string, body: string): string {
   return `<!doctype html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${title}</title>
     <style>
       :root {
-        --bg: #f6f1e8;
-        --panel: #fffaf2;
-        --ink: #1d1c1a;
-        --muted: #6f675c;
-        --accent: #0c7c59;
-        --border: #d6cab7;
+        --bg: #f7f8fb;
+        --surface: #ffffff;
+        --surface-soft: #eef6f3;
+        --ink: #172026;
+        --muted: #68727d;
+        --accent: #0d7f66;
+        --accent-strong: #075c4b;
+        --warn: #9a6700;
+        --danger: #b42318;
+        --info: #1c5d99;
+        --border: #d7dee8;
+        --shadow: 0 10px 28px rgba(23, 32, 38, 0.08);
+      }
+      * {
+        box-sizing: border-box;
       }
       body {
         margin: 0;
-        padding: 24px;
-        background: radial-gradient(circle at top left, #fef6de 0%, var(--bg) 55%, #ebe1d5 100%);
+        padding: 16px 14px 92px;
+        background: var(--bg);
         color: var(--ink);
-        font-family: Georgia, "Iowan Old Style", serif;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
       main {
-        max-width: 980px;
+        max-width: 1080px;
         margin: 0 auto;
       }
       .panel {
-        background: var(--panel);
+        background: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 20px;
-        margin-bottom: 16px;
-        box-shadow: 0 14px 40px rgba(20, 20, 20, 0.08);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: var(--shadow);
+      }
+      .hero {
+        background: linear-gradient(135deg, #ffffff 0%, #eef6f3 52%, #f8fafc 100%);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
       }
       h1, h2 {
         margin-top: 0;
+        letter-spacing: 0;
+      }
+      h1 {
+        font-size: 26px;
+        line-height: 1.12;
+        margin-bottom: 8px;
+      }
+      h2 {
+        font-size: 18px;
+        line-height: 1.25;
+        margin-bottom: 12px;
       }
       code, pre {
         font-family: "SFMono-Regular", ui-monospace, monospace;
@@ -227,15 +267,28 @@ export function renderPage(title: string, body: string): string {
       pre {
         white-space: pre-wrap;
         overflow-wrap: anywhere;
+        max-height: 48vh;
+        overflow: auto;
       }
       a {
         color: var(--accent);
+        text-decoration-thickness: 1px;
       }
       ul {
         padding-left: 20px;
       }
       .muted {
         color: var(--muted);
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .topbar a {
+        text-decoration: none;
       }
       .panel-header {
         display: flex;
@@ -247,10 +300,10 @@ export function renderPage(title: string, body: string): string {
       .badge {
         display: inline-flex;
         align-items: center;
-        border-radius: 999px;
+        border-radius: 8px;
         padding: 4px 10px;
         font-size: 12px;
-        letter-spacing: 0.04em;
+        letter-spacing: 0;
         text-transform: uppercase;
         border: 1px solid currentColor;
       }
@@ -284,7 +337,7 @@ export function renderPage(title: string, body: string): string {
         justify-content: space-between;
         gap: 16px;
         padding: 12px 0;
-        border-top: 1px solid rgba(214, 202, 183, 0.7);
+        border-top: 1px solid var(--border);
       }
       .status-list li:first-child {
         border-top: 0;
@@ -309,9 +362,9 @@ export function renderPage(title: string, body: string): string {
         gap: 12px;
         align-items: center;
         padding: 12px 14px;
-        border-radius: 14px;
+        border-radius: 8px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.45);
+        background: #fff;
       }
       .progress-step-done {
         border-color: rgba(12, 124, 89, 0.35);
@@ -339,23 +392,392 @@ export function renderPage(title: string, body: string): string {
       }
       .kv-item {
         padding: 12px 14px;
-        border-radius: 14px;
-        border: 1px solid rgba(214, 202, 183, 0.8);
-        background: rgba(255, 255, 255, 0.45);
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
       }
       .eyebrow {
         margin: 0 0 8px;
         font-size: 12px;
-        letter-spacing: 0.08em;
+        letter-spacing: 0;
         text-transform: uppercase;
         color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .button {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 650;
+      }
+      .button-primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+      .button-danger {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .bottom-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0;
+        border-top: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(12px);
+      }
+      .bottom-nav a {
+        min-height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 650;
+      }
+      .empty {
+        border: 1px dashed var(--border);
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+      }
+      .draft-recovery {
+        display: none;
+        border-color: rgba(154, 103, 0, 0.35);
+        background: #fff8e7;
+      }
+      .timeline {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .timeline li {
+        border-left: 2px solid var(--border);
+        padding: 0 0 12px 12px;
+      }
+      textarea, input, select {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px;
+        font: inherit;
+      }
+      textarea {
+        min-height: 92px;
+        resize: vertical;
+      }
+      @media (min-width: 760px) {
+        body {
+          padding: 24px 24px 96px;
+        }
+        h1 {
+          font-size: 34px;
+        }
       }
     </style>
   </head>
   <body>
-    <main>${body}</main>
+    <main>
+      <div class="topbar">
+        <a href="/"><strong>HappyTG</strong></a>
+        <span class="badge badge-info">Mini App</span>
+      </div>
+      <section id="draft-recovery" class="panel draft-recovery">
+        <h2>Есть незавершенный ввод</h2>
+        <p class="muted">Можно продолжить с места остановки или начать заново. Это только локальный draft, backend state не меняется.</p>
+        <div class="actions">
+          <button class="button button-primary" type="button" data-draft-restore>Продолжить</button>
+          <button class="button" type="button" data-draft-clear>Начать заново</button>
+        </div>
+      </section>
+      ${body}
+    </main>
+    <nav class="bottom-nav" aria-label="Основная навигация">
+      <a href="/">Home</a>
+      <a href="/sessions">Sessions</a>
+      <a href="/approvals">Approvals</a>
+      <a href="/hosts">Hosts</a>
+      <a href="/reports">Reports</a>
+    </nav>
+    <script>
+      window.HAPPYTgApiBase = ${JSON.stringify(apiBaseUrl)};
+      (function () {
+        var key = "happytg:miniapp:draft:v1";
+        var ttlMs = 24 * 60 * 60 * 1000;
+        var recovery = document.getElementById("draft-recovery");
+        function readDraft() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(key) || "null");
+            if (!parsed || !parsed.savedAt || Date.now() - parsed.savedAt > ttlMs) {
+              localStorage.removeItem(key);
+              return null;
+            }
+            return parsed;
+          } catch (_error) {
+            localStorage.removeItem(key);
+            return null;
+          }
+        }
+        var draft = readDraft();
+        if (draft && recovery) {
+          recovery.style.display = "block";
+        }
+        document.querySelectorAll("[data-draft]").forEach(function (input) {
+          input.addEventListener("input", function () {
+            localStorage.setItem(key, JSON.stringify({
+              path: location.pathname + location.search,
+              value: input.value,
+              savedAt: Date.now()
+            }));
+          });
+        });
+        document.querySelector("[data-draft-restore]")?.addEventListener("click", function () {
+          var current = readDraft();
+          if (!current) return;
+          var input = document.querySelector("[data-draft]");
+          if (input && "value" in input) input.value = current.value || "";
+        });
+        document.querySelector("[data-draft-clear]")?.addEventListener("click", function () {
+          localStorage.removeItem(key);
+          if (recovery) recovery.style.display = "none";
+        });
+        var webApp = window.Telegram && window.Telegram.WebApp;
+        if (webApp && webApp.initData) {
+          var savedSession = localStorage.getItem("happytg:miniapp:session:v1");
+          var params = new URLSearchParams(location.search);
+          if (!savedSession) {
+            fetch(new URL("/api/v1/miniapp/auth/session", window.HAPPYTgApiBase), {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                initData: webApp.initData,
+                startAppPayload: params.get("tgWebAppStartParam") || params.get("startapp") || params.get("payload")
+              })
+            }).then(function (response) {
+              return response.ok ? response.json() : undefined;
+            }).then(function (payload) {
+              if (payload && payload.appSession) {
+                localStorage.setItem("happytg:miniapp:session:v1", JSON.stringify(payload.appSession));
+              }
+            }).catch(function () {});
+          }
+          webApp.ready();
+        }
+      })();
+    </script>
   </body>
 </html>`;
+}
+
+function linkButton(label: string, href: string, primary = false): string {
+  return `<a class="button${primary ? " button-primary" : ""}" href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
+}
+
+function renderEmptyState(title: string, detail: string, actionLabel: string, href: string): string {
+  return `<div class="empty">
+    <h2>${escapeHtml(title)}</h2>
+    <p class="muted">${escapeHtml(detail)}</p>
+    <div class="actions">${linkButton(actionLabel, href, true)}</div>
+  </div>`;
+}
+
+function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
+  const attention = dashboard.attention.length > 0
+    ? `<ul class="status-list">${dashboard.attention.map((item) => `<li>
+        <div><strong>${escapeHtml(item.title)}</strong><div class="muted">${escapeHtml(item.detail)}</div></div>
+        <div class="status-meta">${renderBadge(item.severity)}${linkButton(item.nextAction, item.href)}</div>
+      </li>`).join("")}</ul>`
+    : renderEmptyState("Сейчас ничего не требует внимания", "Активные проблемы, approvals и verify failures появятся здесь.", "Открыть sessions", "/sessions");
+
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Что важно сейчас</p>
+      <h1>Панель управления HappyTG</h1>
+      <p class="muted">Короткий статус, быстрые действия и переход к деталям без чтения raw logs.</p>
+      <div class="actions">
+        ${linkButton("Новая задача", "/new-task", true)}
+        ${linkButton("Approvals", "/approvals")}
+        ${dashboard.recentSessions[0] ? linkButton("Продолжить последнюю", dashboard.recentSessions[0].href) : ""}
+      </div>
+    </section>
+    <section class="grid">
+      <div class="kv-item"><div class="eyebrow">Active</div><strong>${dashboard.stats.activeSessions}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Approvals</div><strong>${dashboard.stats.pendingApprovals}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Blocked</div><strong>${dashboard.stats.blockedSessions}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Verify</div><strong>${dashboard.stats.verifyProblems}</strong></div>
+    </section>
+    <section class="panel">
+      <h2>Требует внимания</h2>
+      ${attention}
+    </section>
+    <section class="panel">
+      <h2>Активные и последние сессии</h2>
+      ${renderSessionCards(dashboard.recentSessions)}
+    </section>
+    <section class="panel">
+      <h2>Последние отчеты</h2>
+      ${renderReportCards(dashboard.recentReports)}
+    </section>
+  `;
+}
+
+function renderSessionCards(sessions: MiniAppSessionCard[]): string {
+  if (sessions.length === 0) {
+    return renderEmptyState("Нет активных сессий", "Когда host будет подключен, новая задача появится здесь.", "Проверить hosts", "/hosts");
+  }
+
+  return `<ul class="status-list">${sessions.map((session) => `<li>
+    <div>
+      <strong><a href="${escapeHtml(session.href)}">${escapeHtml(session.title)}</a></strong>
+      <div class="muted">${escapeHtml(session.repoName ?? "repo not selected")} · ${escapeHtml(session.hostLabel ?? "host n/a")} · ${escapeHtml(session.lastUpdatedAt)}</div>
+      ${session.attention ? `<div class="muted">Needs: ${escapeHtml(session.attention)}</div>` : ""}
+    </div>
+    <div class="status-meta">${renderBadge(session.state)}${session.phase ? renderBadge(session.phase, "info") : ""}${session.verificationState ? renderBadge(session.verificationState) : ""}${linkButton(session.nextAction, session.href)}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderApprovalCards(approvals: MiniAppApprovalCard[]): string {
+  if (approvals.length === 0) {
+    return renderEmptyState("Нет pending approvals", "Если агенту понадобится рискованное действие, запрос появится отдельной карточкой.", "Открыть sessions", "/sessions");
+  }
+
+  return `<ul class="status-list">${approvals.map((approval) => `<li>
+    <div>
+      <strong><a href="${escapeHtml(approval.href)}">${escapeHtml(approval.title)}</a></strong>
+      <div class="muted">${escapeHtml(approval.reason)} · expires ${escapeHtml(approval.expiresAt)}</div>
+    </div>
+    <div class="status-meta">${renderBadge(approval.risk)}${renderBadge(approval.state)}${linkButton("Открыть", approval.href, approval.state === "waiting_human")}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderHostCards(hosts: MiniAppHostCard[]): string {
+  if (hosts.length === 0) {
+    return renderEmptyState("Host еще не подключен", "Подключите host daemon через pairing, чтобы HappyTG мог работать рядом с repo.", "Открыть справку", "/hosts");
+  }
+
+  return `<ul class="status-list">${hosts.map((host) => `<li>
+    <div>
+      <strong><a href="${escapeHtml(host.href)}">${escapeHtml(host.label)}</a></strong>
+      <div class="muted">${escapeHtml(host.repoNames.join(", ") || "repos not reported")} · active ${host.activeSessions}</div>
+      ${host.lastError ? `<div class="muted">${escapeHtml(host.lastError)}</div>` : ""}
+    </div>
+    <div class="status-meta">${renderBadge(host.status)}${linkButton("Открыть", host.href)}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderReportCards(reports: MiniAppReportCard[]): string {
+  if (reports.length === 0) {
+    return renderEmptyState("Отчетов пока нет", "Proof-loop отчеты появятся после первой задачи с evidence и verify.", "Открыть sessions", "/sessions");
+  }
+
+  return `<ul class="status-list">${reports.map((report) => `<li>
+    <div><strong><a href="${escapeHtml(report.href)}">${escapeHtml(report.title)}</a></strong><div class="muted">${escapeHtml(report.generatedAt)}</div></div>
+    <div class="status-meta">${renderBadge(report.status)}${linkButton("Отчет", report.href)}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderDiffView(diff: MiniAppDiffProjection): string {
+  const filters = ["все", "код", "конфиг", "тесты", "docs"].map((label) => `<span class="badge badge-info">${label}</span>`).join("");
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Diff summary</p>
+      <h1>Изменения по сессии</h1>
+      <p class="muted">Сначала summary и риск-файлы, raw details открываются ниже.</p>
+      <div class="grid">
+        <div class="kv-item"><div class="eyebrow">Files</div><strong>${diff.summary.changedFiles}</strong></div>
+        <div class="kv-item"><div class="eyebrow">High risk</div><strong>${diff.summary.highRiskFiles.length}</strong></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Фильтры</h2>
+      <div class="actions">${filters}</div>
+    </section>
+    <section class="panel">
+      <h2>Файлы</h2>
+      ${diff.files.length === 0 ? renderEmptyState("Diff пока недоступен", "Host еще не отправил diff artifacts для этой сессии.", "Открыть session", `/session/${encodeURIComponent(diff.sessionId)}`) : `<ul class="status-list">${diff.files.map((file) => `<li><div><strong>${escapeHtml(file.path)}</strong><div class="muted">${escapeHtml(file.summary)}</div></div><div class="status-meta">${renderBadge(file.category)}${renderBadge(file.status)}</div></li>`).join("")}</ul>`}
+    </section>
+  `;
+}
+
+function renderVerifyView(verify: MiniAppVerifyProjection): string {
+  const headline = verify.state === "passed" ? "PASS" : verify.state === "failed" ? "FAIL" : verify.state.toUpperCase();
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Fresh verify</p>
+      <h1>${escapeHtml(headline)}</h1>
+      <p class="muted">Decision-first summary: что проверено, что упало и что делать дальше.</p>
+      <div class="actions">
+        ${verify.nextAction === "run_fix" ? linkButton("Запустить fix", `/session/${encodeURIComponent(verify.sessionId)}`, true) : ""}
+        ${linkButton("Открыть evidence", verify.evidenceHref ?? `/session/${encodeURIComponent(verify.sessionId)}`)}
+        ${linkButton("Diff", `/diff/${encodeURIComponent(verify.sessionId)}`)}
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Acceptance criteria</h2>
+      <div class="grid">
+        <div class="kv-item"><div class="eyebrow">Checked</div><strong>${verify.checkedCriteria.length}</strong></div>
+        <div class="kv-item"><div class="eyebrow">Failed</div><strong>${verify.failedCriteria.length}</strong></div>
+      </div>
+      <pre>${escapeHtml([...verify.checkedCriteria.map((item) => `OK ${item}`), ...verify.failedCriteria.map((item) => `FAIL ${item}`)].join("\n") || "Verifier details are not available yet.")}</pre>
+    </section>
+  `;
+}
+
+function renderSessionDetail(detail: {
+  session: MiniAppSessionCard & { prompt: string; currentSummary?: string; lastError?: string };
+  task?: TaskBundle;
+  approval?: MiniAppApprovalCard;
+  events: SessionEvent[];
+  actions: string[];
+}): string {
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Session</p>
+      <h1>${escapeHtml(detail.session.title)}</h1>
+      <p class="muted">${escapeHtml(detail.session.repoName ?? "repo n/a")} · ${escapeHtml(detail.session.hostLabel ?? "host n/a")}</p>
+      <div class="actions">
+        ${detail.approval && detail.approval.state === "waiting_human" ? linkButton("Открыть approval", detail.approval.href, true) : ""}
+        ${detail.task ? linkButton("Proof timeline", `/task/${encodeURIComponent(detail.task.id)}`) : ""}
+        ${linkButton("Diff", `/diff/${encodeURIComponent(detail.session.id)}`)}
+        ${linkButton("Verify", `/verify/${encodeURIComponent(detail.session.id)}`)}
+      </div>
+    </section>
+    <section class="grid">
+      <div class="kv-item"><div class="eyebrow">Status</div><strong>${escapeHtml(detail.session.state)}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Phase</div><strong>${escapeHtml(detail.session.phase ?? "n/a")}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Verify</div><strong>${escapeHtml(detail.session.verificationState ?? "not_started")}</strong></div>
+    </section>
+    <section class="panel">
+      <h2>Summary</h2>
+      <p>${escapeHtml(detail.session.currentSummary ?? "Сводки пока нет.")}</p>
+      ${detail.session.lastError ? `<p class="muted">${escapeHtml(detail.session.lastError)}</p>` : ""}
+    </section>
+    ${detail.task ? renderProofProgress(detail.task, { sessionState: detail.session.state }) : ""}
+    <section class="panel">
+      <h2>Timeline</h2>
+      <ol class="timeline">${detail.events.map((event) => `<li><strong>${event.sequence}. ${escapeHtml(event.type)}</strong><div class="muted">${escapeHtml(event.occurredAt)}</div><pre>${escapeHtml(JSON.stringify(event.payload, null, 2))}</pre></li>`).join("") || "<li>No events recorded.</li>"}</ol>
+    </section>
+  `;
 }
 
 export async function startMiniAppServer(
@@ -437,6 +859,11 @@ export async function startMiniAppServer(
 }
 
 export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJson: defaultFetchJson }) {
+  const withUser = (pathname: string, url: URL) => {
+    const userId = url.searchParams.get("userId");
+    return userId ? `${pathname}${pathname.includes("?") ? "&" : "?"}userId=${encodeURIComponent(userId)}` : pathname;
+  };
+
   return createJsonServer(
     [
       route("GET", "/health", async ({ res }) => {
@@ -456,39 +883,98 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
       }),
       route("GET", "/", async ({ res, url }) => {
-        const userId = url.searchParams.get("userId");
-        const overview = await dependencies.fetchJson<{
-          hosts: Array<{ id: string; label: string; status: string }>;
-          sessions: Array<{ id: string; title: string; state: string; taskId?: string }>;
-          approvals: Array<{ id: string; sessionId: string; state: string; reason: string }>;
-          tasks: Array<{ id: string; phase: string; verificationState: string }>;
-        }>(`/api/v1/miniapp/bootstrap${userId ? `?userId=${encodeURIComponent(userId)}` : ""}`);
+        const screen = url.searchParams.get("screen");
+        if (screen === "sessions") {
+          const sessions = await dependencies.fetchJson<{ sessions: MiniAppSessionCard[] }>(withUser("/api/v1/miniapp/sessions", url));
+          text(res, 200, renderPage("Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`));
+          return;
+        }
+        if (screen === "approvals") {
+          const approvals = await dependencies.fetchJson<{ approvals: MiniAppApprovalCard[] }>(withUser("/api/v1/miniapp/approvals", url));
+          text(res, 200, renderPage("Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`));
+          return;
+        }
+        if (screen === "session" && url.searchParams.get("id")) {
+          const id = url.searchParams.get("id")!;
+          const detail = await dependencies.fetchJson<{
+            session: MiniAppSessionCard & { prompt: string; currentSummary?: string; lastError?: string };
+            task?: TaskBundle;
+            approval?: MiniAppApprovalCard;
+            events: SessionEvent[];
+            actions: string[];
+          }>(withUser(`/api/v1/miniapp/sessions/${encodeURIComponent(id)}`, url));
+          text(res, 200, renderPage(`Session ${detail.session.id}`, renderSessionDetail(detail)));
+          return;
+        }
+        if (screen === "diff" && url.searchParams.get("sessionId")) {
+          const diff = await dependencies.fetchJson<MiniAppDiffProjection>(withUser(`/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/diff`, url));
+          text(res, 200, renderPage("Diff", renderDiffView(diff)));
+          return;
+        }
+        if (screen === "verify" && url.searchParams.get("sessionId")) {
+          const verify = await dependencies.fetchJson<MiniAppVerifyProjection>(withUser(`/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/verify`, url));
+          text(res, 200, renderPage("Verify", renderVerifyView(verify)));
+          return;
+        }
 
-        const body = `
-          <section class="panel">
-            <p class="eyebrow">Overview</p>
-            <h1>HappyTG Mini App</h1>
-            <p class="muted">Telegram-first render layer for deep inspection. Source of truth remains the control plane and repo-local task bundles.</p>
-          </section>
-          <section class="panel">
-            <h2>Hosts</h2>
-            <ul class="status-list">${overview.hosts.map((host) => `<li><div><strong>${escapeHtml(host.label)}</strong><div class="muted"><code>${escapeHtml(host.id)}</code></div></div><div class="status-meta">${renderBadge(host.status)}</div></li>`).join("") || "<li><span>No hosts found.</span></li>"}</ul>
-          </section>
-          <section class="panel">
-            <h2>Sessions</h2>
-            <ul class="status-list">${overview.sessions.map((session) => `<li><div><strong><a href="/session/${encodeURIComponent(session.id)}">${escapeHtml(session.id)}</a></strong><div class="muted">${escapeHtml(session.title)}${session.taskId ? ` · task ${escapeHtml(session.taskId)}` : ""}</div></div><div class="status-meta">${renderBadge(session.state)}</div></li>`).join("") || "<li><span>No sessions found.</span></li>"}</ul>
-          </section>
-          <section class="panel">
-            <h2>Approvals</h2>
-            <ul class="status-list">${overview.approvals.map((approval) => `<li><div><strong>${escapeHtml(approval.id)}</strong><div class="muted">session ${escapeHtml(approval.sessionId)} · ${escapeHtml(approval.reason)}</div></div><div class="status-meta">${renderBadge(approval.state)}</div></li>`).join("") || "<li><span>No approvals found.</span></li>"}</ul>
-          </section>
-          <section class="panel">
-            <h2>Tasks</h2>
-            <ul class="status-list">${overview.tasks.map((task) => `<li><div><strong><a href="/task/${encodeURIComponent(task.id)}">${escapeHtml(task.id)}</a></strong><div class="muted">phase ${escapeHtml(task.phase)}</div></div><div class="status-meta">${renderBadge(task.verificationState)}</div></li>`).join("") || "<li><span>No tasks found.</span></li>"}</ul>
-          </section>
-        `;
-
-        text(res, 200, renderPage("HappyTG Mini App", body));
+        const dashboard = await dependencies.fetchJson<MiniAppDashboardProjection>(withUser("/api/v1/miniapp/dashboard", url));
+        text(res, 200, renderPage("HappyTG Mini App", renderDashboardView(dashboard)));
+      }),
+      route("GET", "/sessions", async ({ res, url }) => {
+        const sessions = await dependencies.fetchJson<{ sessions: MiniAppSessionCard[] }>(withUser("/api/v1/miniapp/sessions", url));
+        text(res, 200, renderPage("Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Статус, фаза, verify и следующий шаг в одном месте.</p></section>${renderSessionCards(sessions.sessions)}`));
+      }),
+      route("GET", "/approvals", async ({ res, url }) => {
+        const approvals = await dependencies.fetchJson<{ approvals: MiniAppApprovalCard[] }>(withUser("/api/v1/miniapp/approvals", url));
+        text(res, 200, renderPage("Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`));
+      }),
+      route("GET", "/approval/:id", async ({ res, params, url }) => {
+        const detail = await dependencies.fetchJson<{ approval: MiniAppApprovalCard; session?: MiniAppSessionCard }>(withUser(`/api/v1/miniapp/approvals/${params.id}`, url));
+        const body = `<section class="panel hero">
+          <p class="eyebrow">Approval</p>
+          <h1>${escapeHtml(detail.approval.title)}</h1>
+          <p class="muted">${escapeHtml(detail.approval.reason)}</p>
+          <div class="grid">
+            <div class="kv-item"><div class="eyebrow">Risk</div><strong>${escapeHtml(detail.approval.risk)}</strong></div>
+            <div class="kv-item"><div class="eyebrow">Scope</div><strong>${escapeHtml(detail.approval.scope ?? "once")}</strong></div>
+            <div class="kv-item"><div class="eyebrow">Expires</div><strong>${escapeHtml(detail.approval.expiresAt)}</strong></div>
+          </div>
+          <div class="actions">${linkButton("Разрешить один раз", "#", true)}${linkButton("Разрешить на фазу", "#")}${linkButton("Отклонить", "#")}${detail.session ? linkButton("Открыть session", detail.session.href) : ""}</div>
+        </section>`;
+        text(res, 200, renderPage(`Approval ${detail.approval.id}`, body));
+      }),
+      route("GET", "/hosts", async ({ res, url }) => {
+        const hosts = await dependencies.fetchJson<{ hosts: MiniAppHostCard[] }>(withUser("/api/v1/miniapp/hosts", url));
+        text(res, 200, renderPage("Hosts", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`));
+      }),
+      route("GET", "/host/:id", async ({ res, params, url }) => {
+        const detail = await dependencies.fetchJson<{ host: MiniAppHostCard; workspaces: Workspace[]; sessions: MiniAppSessionCard[] }>(withUser(`/api/v1/miniapp/hosts/${params.id}`, url));
+        const body = `<section class="panel hero"><h1>${escapeHtml(detail.host.label)}</h1><p class="muted">${escapeHtml(detail.host.repoNames.join(", ") || "repos not reported")}</p><div class="actions">${linkButton("Использовать для новой задачи", "/new-task", true)}${linkButton("Проверить состояние", "/hosts")}</div></section>
+          <section class="panel"><h2>Repos</h2><ul class="status-list">${detail.workspaces.map((workspace) => `<li><div><strong>${escapeHtml(workspace.repoName)}</strong><div class="muted">${escapeHtml(workspace.path)}</div></div><div class="status-meta">${renderBadge(workspace.status)}</div></li>`).join("")}</ul></section>
+          <section class="panel"><h2>Sessions</h2>${renderSessionCards(detail.sessions)}</section>`;
+        text(res, 200, renderPage(`Host ${detail.host.label}`, body));
+      }),
+      route("GET", "/reports", async ({ res, url }) => {
+        const reports = await dependencies.fetchJson<{ reports: MiniAppReportCard[] }>(withUser("/api/v1/miniapp/reports", url));
+        text(res, 200, renderPage("Reports", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`));
+      }),
+      route("GET", "/diff/:id", async ({ res, params, url }) => {
+        const diff = await dependencies.fetchJson<MiniAppDiffProjection>(withUser(`/api/v1/miniapp/sessions/${params.id}/diff`, url));
+        text(res, 200, renderPage("Diff", renderDiffView(diff)));
+      }),
+      route("GET", "/verify/:id", async ({ res, params, url }) => {
+        const verify = await dependencies.fetchJson<MiniAppVerifyProjection>(withUser(`/api/v1/miniapp/sessions/${params.id}/verify`, url));
+        text(res, 200, renderPage("Verify", renderVerifyView(verify)));
+      }),
+      route("GET", "/new-task", async ({ res }) => {
+        const body = `<section class="panel hero">
+          <h1>Новая задача</h1>
+          <p class="muted">Draft хранится локально с TTL. Запуск через backend будет добавлен к execution flow, когда host/session готовы.</p>
+          <label class="eyebrow" for="task-draft">Инструкция</label>
+          <textarea id="task-draft" data-draft placeholder="Опишите задачу коротко и конкретно"></textarea>
+          <div class="actions">${linkButton("Выбрать host", "/hosts", true)}${linkButton("Отмена", "/")}</div>
+        </section>`;
+        text(res, 200, renderPage("New task", body));
       }),
       route("GET", "/task/:id", async ({ res, params }) => {
         const task = await dependencies.fetchJson<{
@@ -498,7 +984,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
 
         const artifacts = await dependencies.fetchJson<{ artifacts: string[] }>(`/api/v1/tasks/${params.id}/artifacts`);
         const artifactSections = await Promise.all(
-          ["spec.md", "evidence.md", "problems.md", "verdict.json"].map(async (artifact) => {
+          ["spec.md", "state.json", "evidence.md", "problems.md", "verdict.json"].map(async (artifact) => {
             const response = await dependencies.fetchJson<{ path: string; content: string }>(`/api/v1/tasks/${params.id}/artifact?path=${encodeURIComponent(artifact)}`);
             return `<section class="panel"><h2>${escapeHtml(artifact)}</h2><pre>${escapeHtml(response.content)}</pre></section>`;
           })
@@ -525,36 +1011,15 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
 
         text(res, 200, renderPage(`Task ${task.task.id}`, body));
       }),
-      route("GET", "/session/:id", async ({ res, params }) => {
-        const timeline = await dependencies.fetchJson<{
-          session: { id: string; title: string; state: string; currentSummary?: string; lastError?: string };
-          task?: { id: string; phase: string; verificationState: string };
-          approval?: { id: string; state: string; reason: string };
-          events: Array<{ sequence: number; type: string; occurredAt: string; payload: unknown }>;
-        }>(`/api/v1/miniapp/session/${params.id}/timeline`);
-
-        const body = `
-          <section class="panel">
-            <div class="panel-header">
-              <h1>Session ${escapeHtml(timeline.session.id)}</h1>
-              ${renderBadge(timeline.session.state)}
-            </div>
-            <div class="kv-grid">
-              <div class="kv-item"><div class="eyebrow">Title</div><strong>${escapeHtml(timeline.session.title)}</strong></div>
-              <div class="kv-item"><div class="eyebrow">Summary</div><strong>${escapeHtml(timeline.session.currentSummary ?? "n/a")}</strong></div>
-              <div class="kv-item"><div class="eyebrow">Last error</div><strong>${escapeHtml(timeline.session.lastError ?? "n/a")}</strong></div>
-              <div class="kv-item"><div class="eyebrow">Approval</div><strong>${timeline.approval ? `${escapeHtml(timeline.approval.id)} · ${escapeHtml(timeline.approval.reason)}` : "n/a"}</strong></div>
-            </div>
-            <p>Task: ${timeline.task ? `<a href="/task/${encodeURIComponent(timeline.task.id)}">${escapeHtml(timeline.task.id)}</a> phase=${escapeHtml(timeline.task.phase)} verify=${escapeHtml(timeline.task.verificationState)}` : "n/a"}</p>
-          </section>
-          ${timeline.task ? renderProofProgress(timeline.task, { sessionState: timeline.session.state }) : ""}
-          <section class="panel">
-            <h2>Timeline</h2>
-            <pre>${escapeHtml(timeline.events.map((event) => `${event.sequence}. ${event.occurredAt} ${event.type} ${JSON.stringify(event.payload)}`).join("\n") || "No events recorded.")}</pre>
-          </section>
-        `;
-
-        text(res, 200, renderPage(`Session ${timeline.session.id}`, body));
+      route("GET", "/session/:id", async ({ res, params, url }) => {
+        const detail = await dependencies.fetchJson<{
+          session: MiniAppSessionCard & { prompt: string; currentSummary?: string; lastError?: string };
+          task?: TaskBundle;
+          approval?: MiniAppApprovalCard;
+          events: SessionEvent[];
+          actions: string[];
+        }>(withUser(`/api/v1/miniapp/sessions/${params.id}`, url));
+        text(res, 200, renderPage(`Session ${detail.session.id}`, renderSessionDetail(detail)));
       })
     ],
     logger

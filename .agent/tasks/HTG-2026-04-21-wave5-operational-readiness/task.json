@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-21-wave5-operational-readiness",
+  "sessionId": "manual-wave5",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-21-wave5-operational-readiness",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Wave 5 operational readiness",
+  "acceptanceCriteria": [
+    "Shared logging redacts secrets and API exposes fast version and Prometheus metrics endpoints",
+    "Mini App sessions and launch grants support explicit revoke paths with audit records",
+    "Self-hosted compose includes Caddy plus Prometheus/Grafana observability scaffold",
+    "Security, observability, backup, upgrade, rollback, and release readiness docs are updated",
+    "CI and verification gates cover lint, typecheck, test, build, and task validation"
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-21T05:02:38.900Z",
+  "updatedAt": "2026-04-21T05:08:00.000Z"
+}
