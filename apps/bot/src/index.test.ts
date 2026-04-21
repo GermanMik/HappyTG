@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer as createHttpServer } from "node:http";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -14,6 +14,7 @@ import {
   formatBotPortConflictMessageDetailed,
   formatBotPortReuseMessage,
   initializeBotEnvironment,
+  resolveTelegramMiniAppSnapshot,
   resolveTelegramDeliveryMode,
   startBotServer
 } from "./index.js";
@@ -458,6 +459,27 @@ test("resolveTelegramDeliveryMode keeps explicit webhook mode degraded when the 
   assert.match(resolved.detail, /HAPPYTG_PUBLIC_URL/i);
 });
 
+test("telegram mini app readiness degrades invalid public URL", () => {
+  const resolved = resolveTelegramMiniAppSnapshot({
+    NODE_ENV: "production",
+    HAPPYTG_MINIAPP_URL: "http://localhost:3001"
+  });
+
+  assert.equal(resolved.status, "degraded");
+  assert.equal(resolved.publicUrl, undefined);
+  assert.equal(resolved.menuButtonConfigured, false);
+});
+
+test("caddy and docs use the public /telegram/webhook contract", async () => {
+  const caddy = await readFile(new URL("../../../infra/caddy/Caddyfile", import.meta.url), "utf8");
+  const selfHosting = await readFile(new URL("../../../docs/self-hosting.md", import.meta.url), "utf8");
+
+  assert.match(caddy, /handle \/telegram\/webhook/);
+  assert.doesNotMatch(caddy, /\/bot\/webhook/);
+  assert.match(selfHosting, /\/telegram\/webhook/);
+  assert.doesNotMatch(selfHosting, /\/bot\/webhook/);
+});
+
 test("webhook endpoint dispatches updates through the shared bot handlers", async () => {
   const messages: Array<{ chatId: number; text: string }> = [];
   const server = createBotServer({
@@ -896,6 +918,116 @@ test("webhook mode stays separate from polling and reports degraded readiness wh
   }
 });
 
+test("bot runtime auto configures Telegram Mini App menu button when public URL is valid", async () => {
+  const telegramCalls: Array<{ method: string; payload?: unknown }> = [];
+  const runtime = createBotRuntime({
+    async apiFetch(pathname) {
+      assert.equal(pathname, "/health");
+      return { ok: true } as never;
+    }
+  }, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      TELEGRAM_UPDATES_MODE: "webhook",
+      HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+    },
+    port: 0,
+    fetchImpl: async (input, init) => {
+      const method = String(input).match(/\/bot[^/]+\/([^/?]+)/u)?.[1] ?? "unknown";
+      telegramCalls.push({
+        method,
+        payload: init?.body ? JSON.parse(String(init.body)) : undefined
+      });
+      if (method === "getWebhookInfo") {
+        return telegramOk({
+          url: "https://happy.example.com/telegram/webhook",
+          pending_update_count: 0
+        });
+      }
+      if (method === "setChatMenuButton") {
+        return telegramOk(true);
+      }
+      if (method === "getChatMenuButton") {
+        return telegramOk({
+          type: "web_app",
+          text: "HappyTG",
+          web_app: {
+            url: "https://happy.example.com/miniapp"
+          }
+        });
+      }
+      throw new Error(`Unexpected Telegram method ${method}`);
+    }
+  });
+
+  try {
+    await runtime.start();
+    const address = runtime.server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Bot runtime did not bind to a TCP port");
+    }
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+    const payload = await response.json() as { ok: boolean; miniApp: { status: string; menuButtonConfigured: boolean } };
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.miniApp.status, "ready");
+    assert.equal(payload.miniApp.menuButtonConfigured, true);
+    assert.deepEqual(telegramCalls.map((call) => call.method), ["getWebhookInfo", "setChatMenuButton", "getChatMenuButton"]);
+    assert.match(JSON.stringify(telegramCalls.find((call) => call.method === "setChatMenuButton")?.payload), /https:\/\/happy\.example\.com\/miniapp/);
+  } finally {
+    await runtime.stop();
+  }
+});
+
+test("bot ready reports degraded Mini App public URL", async () => {
+  let getUpdatesCalls = 0;
+  const runtime = createBotRuntime({
+    async apiFetch(pathname) {
+      assert.equal(pathname, "/health");
+      return { ok: true } as never;
+    }
+  }, {
+    env: {
+      TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      TELEGRAM_UPDATES_MODE: "polling",
+      HAPPYTG_MINIAPP_URL: "http://localhost:3001"
+    },
+    port: 0,
+    fetchImpl: async (input) => {
+      const method = String(input).match(/\/bot[^/]+\/([^/?]+)/u)?.[1] ?? "unknown";
+      if (method === "deleteWebhook") {
+        return telegramOk(true);
+      }
+      if (method === "getUpdates") {
+        getUpdatesCalls += 1;
+        await new Promise((resolve) => setTimeout(resolve, getUpdatesCalls === 1 ? 1 : 25));
+        return telegramOk([]);
+      }
+      throw new Error(`Unexpected Telegram method ${method}`);
+    }
+  });
+
+  try {
+    await runtime.start();
+    const address = runtime.server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Bot runtime did not bind to a TCP port");
+    }
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+    const payload = await response.json() as { ok: boolean; detail: string; miniApp: { status: string } };
+
+    assert.equal(response.status, 503);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.miniApp.status, "degraded");
+    assert.match(payload.detail, /HTTPS|localhost/i);
+  } finally {
+    await runtime.stop();
+  }
+});
+
 test("webhook inspection falls back to Windows PowerShell Bot API calls after a Node transport timeout", async () => {
   const timeoutFailure = new TypeError("fetch failed");
   Object.assign(timeoutFailure, {
@@ -933,6 +1065,24 @@ test("webhook inspection falls back to Windows PowerShell Bot API calls after a 
           }
         };
       }
+      if (method === "setChatMenuButton") {
+        return {
+          ok: true,
+          result: true
+        };
+      }
+      if (method === "getChatMenuButton") {
+        return {
+          ok: true,
+          result: {
+            type: "web_app",
+            text: "HappyTG",
+            web_app: {
+              url: "https://happy.example.com/miniapp"
+            }
+          }
+        };
+      }
       throw new Error(`Unexpected Telegram method ${method}`);
     }
   });
@@ -949,7 +1099,7 @@ test("webhook inspection falls back to Windows PowerShell Bot API calls after a 
 
     assert.equal(snapshot.activeMode, "webhook");
     assert.equal(snapshot.status, "ready");
-    assert.deepEqual(fallbackCalls, ["getWebhookInfo"]);
+    assert.deepEqual(fallbackCalls, ["getWebhookInfo", "setChatMenuButton", "getChatMenuButton"]);
     assert.equal(response.status, 200);
     assert.equal(payload.ok, true);
     assert.equal(payload.telegram.status, "ready");

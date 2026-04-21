@@ -17,6 +17,8 @@
 - `TELEGRAM_ALLOWED_USER_IDS`
 - `TELEGRAM_HOME_CHANNEL`
 - `HAPPYTG_PUBLIC_URL`
+- `HAPPYTG_MINIAPP_URL`
+- `HAPPYTG_BROWSER_API_URL`
 - `HAPPYTG_DOMAIN`
 - `CADDY_ACME_EMAIL`
 - `HAPPYTG_DEV_CORS_ORIGINS`
@@ -50,6 +52,15 @@ Lower layers may tighten but must not weaken higher layers.
 - `auto` selects webhook when `HAPPYTG_PUBLIC_URL` is a public HTTPS URL.
 - `polling` is the intended local-dev mode when you do not want to expose a public webhook.
 - `webhook` keeps the bot in webhook-first mode and reports degraded readiness if the expected public webhook is not actually configured at Telegram.
+- The public Telegram webhook delivery URL is `HAPPYTG_PUBLIC_URL + /telegram/webhook`.
+
+## Telegram Mini App Public URL
+
+- `HAPPYTG_MINIAPP_URL` is the production Mini App URL used in Telegram `web_app` buttons and Bot API menu setup. It must be public HTTPS, for example `https://happy.example.com/miniapp`.
+- If `HAPPYTG_MINIAPP_URL` is empty and `HAPPYTG_PUBLIC_URL` is public HTTPS, HappyTG derives the Mini App URL as `HAPPYTG_PUBLIC_URL + /miniapp`.
+- `HAPPYTG_APP_URL` is a development fallback only, and Telegram `web_app` buttons still require a public HTTPS URL. Do not use `http://localhost:3001` for production Telegram `web_app` buttons.
+- `HAPPYTG_BROWSER_API_URL` optionally overrides the browser-visible API origin. In production with Caddy, leave it empty so Mini App browser actions use same-origin `/api/...`.
+- The bot attempts `setChatMenuButton` with a `MenuButtonWebApp` when the Mini App URL is valid public HTTPS. If Telegram cannot verify the menu button, `/ready` reports degraded Mini App readiness.
 
 ## Mini App CORS Configuration
 

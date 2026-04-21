@@ -1,0 +1,121 @@
+# Unit tests
+
+
+## pnpm --filter @happytg/api test
+
+
+> @happytg/api@0.4.0 test C:\Users\tikta\.codex\worktrees\d2bb\HappyTG\apps\api
+> tsx --test src/*.test.ts
+
+✔ api ready endpoint returns store metadata (63.8182ms)
+✔ api exposes fast version and prometheus metrics endpoints (23.5832ms)
+✔ api dev CORS allows only explicit Mini App origins (15.6582ms)
+✔ mini app projection endpoints require session auth instead of falling back to global state (9.5914ms)
+✔ mini app approval resolve endpoint uses bearer session user (17.8439ms)
+✔ startApiServer reuses an already-running HappyTG API on the same port (55.0704ms)
+✔ startApiServer rejects with an actionable message when another process occupies the port (12.1348ms)
+✔ startApiServer rejects when a different HappyTG service occupies the API port (7.3211ms)
+✔ startApiServer retries a transient HappyTG API handoff before classifying reuse (43.9567ms)
+✔ proof session creates task bundle and approval, then approval dispatches session (49.7588ms)
+✔ quick session dispatches immediately without approval (18.1088ms)
+✔ session timeline and task artifact reads are available for mini app inspection (40.6536ms)
+✔ bootstrap sessions dispatch deterministic doctor runs and support resume state transitions (18.3246ms)
+✔ bot projections list user-scoped workspaces, sessions, approvals, and reject stale callback nonce (32.2774ms)
+✔ mini app launch validates initData, issues app session, and exposes action-first projections (69.1121ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 637.7497
+
+## pnpm --filter @happytg/miniapp test
+
+
+> @happytg/miniapp@0.4.0 test C:\Users\tikta\.codex\worktrees\d2bb\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+✔ mini app ready endpoint returns 503 when api health fails (29.1084ms)
+✔ overview page renders hosts, sessions, approvals, and tasks (9.3425ms)
+✔ mini app links honor the /miniapp reverse-proxy base path (10.8204ms)
+✔ mini app forwards browser session cookie as bearer auth (5.9851ms)
+✔ task page renders scoped canonical artifacts (7.0357ms)
+✔ session page renders timeline, summary, and task link (5.451ms)
+✔ approval page renders real authenticated action buttons (4.4553ms)
+✔ startMiniAppServer returns an actionable message when the port is already in use (5526.5829ms)
+✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (47.894ms)
+✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (5.4724ms)
+✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (4.6604ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5954.3172
+
+## pnpm --filter @happytg/bot test
+
+
+> @happytg/bot@0.4.0 test C:\Users\tikta\.codex\worktrees\d2bb\HappyTG\apps\bot
+> tsx --test src/*.test.ts
+
+✔ menu command renders a concise action-first main menu (2.7453ms)
+✔ mini app url resolver derives public https URL before legacy dev app URL (0.4409ms)
+✔ mini app url resolver degrades invalid production URL (0.2012ms)
+✔ inline web_app buttons use the production mini app URL (0.4049ms)
+✔ task wizard uses smart defaults and creates a proof session from callback flow (2.3237ms)
+✔ verify command surfaces scoped approval keyboard with nonce (0.657ms)
+✔ approval callback resolves with scope and nonce for the linked HappyTG user (0.7431ms)
+✔ resume command posts resume and then renders a session card (0.632ms)
+✔ bot ready endpoint returns healthy when api is reachable (33.0371ms)
+✔ bot ready endpoint returns 503 when api is unreachable (10.2452ms)
+✔ startBotServer reuses an already-running HappyTG bot on the same port (61.9087ms)
+✔ startBotServer rejects when a different HappyTG service occupies the bot port (4.346ms)
+✔ startBotServer names a foreign HTTP listener when the port is occupied (4.4322ms)
+✔ createBotRuntime reuses an existing HappyTG bot without starting a second Telegram delivery loop (66.0034ms)
+✔ botConfigurationMessage stays actionable without exposing secrets (0.3002ms)
+✔ initializeBotEnvironment prefers a valid .env token over placeholder shell state (4.5964ms)
+✔ createDefaultSendTelegramMessage falls back to Windows PowerShell after a Node transport timeout (0.6779ms)
+✔ createDefaultSendTelegramMessage bounds the Windows Node attempt before fallback (39.599ms)
+✔ createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful without using fallback (1.7771ms)
+✔ resolveTelegramDeliveryMode selects polling for local auto mode (1.3755ms)
+✔ resolveTelegramDeliveryMode selects webhook for public https auto mode (0.1289ms)
+✔ resolveTelegramDeliveryMode keeps explicit webhook mode degraded when the public URL is not webhook-capable (0.1874ms)
+✔ telegram mini app readiness degrades invalid public URL (0.1318ms)
+✔ caddy and docs use the public /telegram/webhook contract (3.8184ms)
+{"at":"2026-04-21T19:41:21.067Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-21T19:41:21.067Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook"}}
+✔ webhook endpoint dispatches updates through the shared bot handlers (19.6164ms)
+{"at":"2026-04-21T19:41:21.101Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-21T19:41:21.101Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook"}}
+✔ local polling mode receives /start without a public webhook (33.9208ms)
+✔ local polling mode receives /pair and preserves the pairing claim API boundary (31.0679ms)
+✔ local polling mode skips a failing update and continues with later updates (30.9398ms)
+{"at":"2026-04-21T19:41:21.194Z","level":"WARN","scope":"bot","message":"Telegram polling degraded","metadata":{"detail":"Telegram deleteWebhook could not be confirmed through Node HTTPS (Connection to api.telegram.org timed out.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Proxy authentication required.. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine."}}
+{"at":"2026-04-21T19:41:21.194Z","level":"WARN","scope":"bot","message":"Bot listening with degraded Telegram delivery","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"degraded","telegramDeliveryDetail":"Telegram deleteWebhook could not be confirmed through Node HTTPS (Connection to api.telegram.org timed out.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Proxy authentication required.. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook"}}
+✔ local polling mode falls back to Windows PowerShell Bot API calls after a Node transport timeout (30.7406ms)
+{"at":"2026-04-21T19:41:21.196Z","level":"WARN","scope":"bot","message":"Bot listening with degraded Telegram delivery","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"degraded","telegramDeliveryDetail":"Telegram webhook mode expects https://happy.example.com/telegram/webhook, but current webhook URL is empty.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":3}}
+✔ polling mode stays degraded with actionable detail when both Telegram transports fail on Windows (2.7303ms)
+{"at":"2026-04-21T19:41:21.201Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram webhook active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram webhook mode is active and matches the expected webhook URL.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","actualWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":0}}
+✔ webhook mode stays separate from polling and reports degraded readiness when Telegram webhook is not configured (4.3657ms)
+{"at":"2026-04-21T19:41:21.205Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-21T19:41:21.205Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"polling","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API."}}
+✔ bot runtime auto configures Telegram Mini App menu button when public URL is valid (4.3211ms)
+{"at":"2026-04-21T19:41:21.241Z","level":"INFO","scope":"bot","message":"Telegram getWebhookInfo delivered via Windows PowerShell fallback"}
+{"at":"2026-04-21T19:41:21.241Z","level":"INFO","scope":"bot","message":"Telegram setChatMenuButton delivered via Windows PowerShell fallback"}
+{"at":"2026-04-21T19:41:21.241Z","level":"INFO","scope":"bot","message":"Telegram getChatMenuButton delivered via Windows PowerShell fallback"}
+{"at":"2026-04-21T19:41:21.241Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram webhook active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram webhook mode is active and matches the expected webhook URL.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","actualWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":0}}
+✔ bot ready reports degraded Mini App public URL (35.019ms)
+✔ webhook inspection falls back to Windows PowerShell Bot API calls after a Node transport timeout (5.8167ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 783.0367

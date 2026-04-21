@@ -45,7 +45,11 @@ importers:
 
   packages/runtime-adapters: {}
 
+  packages/session-engine: {}
+
   packages/shared: {}
+
+  packages/telegram-kit: {}
 
 packages:
 

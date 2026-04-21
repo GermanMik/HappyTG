@@ -1,0 +1,6 @@
+
+> happytg@0.4.0 release:check C:\Users\tikta\.codex\worktrees\d2bb\HappyTG
+> node scripts/release/validate-release.mjs "--version" "0.4.0"
+
+Release validation passed for 0.4.0.
+Checked 16 package versions, CHANGELOG.md, and docs/releases/0.4.0.md.

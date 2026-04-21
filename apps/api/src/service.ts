@@ -360,6 +360,16 @@ function reportCards(store: HappyTGStore, sessions: Session[]): MiniAppReportCar
 }
 
 function scopedMiniAppStore(store: HappyTGStore, userId?: string) {
+  if (!userId) {
+    return {
+      hosts: [],
+      workspaces: [],
+      sessions: [],
+      approvals: [],
+      tasks: []
+    };
+  }
+
   const hostIds = new Set(store.hosts.filter((item) => !userId || item.pairedUserId === userId).map((item) => item.id));
   const sessions = store.sessions.filter((item) => hostIds.has(item.hostId));
   const sessionIds = new Set(sessions.map((item) => item.id));
@@ -522,6 +532,9 @@ export class HappyTGControlPlaneService {
       const session = store.miniAppSessions.find((item) => item.id === sessionId);
       if (!session) {
         throw new Error("Mini App session not found");
+      }
+      if (actorUserId && session.userId !== actorUserId) {
+        throw new Error("Mini App session is not available to this user");
       }
 
       if (!session.revokedAt) {
@@ -970,6 +983,9 @@ export class HappyTGControlPlaneService {
       if (!session) {
         throw new Error("Session not found for approval");
       }
+      if (session.userId !== input.userId) {
+        throw new Error("Approval is not available to this user");
+      }
 
       const resolved = resolveApprovalRequestIdempotent({
         request: approval,
@@ -1238,15 +1254,13 @@ export class HappyTGControlPlaneService {
     tasks: TaskBundle[];
   }> {
     const store = await this.store.read();
-    const hostIds = new Set(store.hosts.filter((item) => !userId || item.pairedUserId === userId).map((item) => item.id));
-    const sessions = store.sessions.filter((item) => hostIds.has(item.hostId));
-    const sessionIds = new Set(sessions.map((item) => item.id));
+    const scoped = scopedMiniAppStore(store, userId);
     return {
-      hosts: Array.from(hostIds).map((hostId) => store.hosts.find((item) => item.id === hostId)!),
-      workspaces: store.workspaces.filter((item) => hostIds.has(item.hostId) && item.status === "active"),
-      sessions,
-      approvals: store.approvals.filter((item) => sessionIds.has(item.sessionId)),
-      tasks: store.tasks.filter((item) => sessionIds.has(item.sessionId))
+      hosts: scoped.hosts,
+      workspaces: scoped.workspaces,
+      sessions: scoped.sessions,
+      approvals: scoped.approvals,
+      tasks: scoped.tasks
     };
   }
 

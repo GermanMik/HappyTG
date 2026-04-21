@@ -116,35 +116,42 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
   }
 });
 
-test("task page renders canonical artifacts and escapes file content", async () => {
+test("mini app links honor the /miniapp reverse-proxy base path", async () => {
   const server = createMiniAppServer({
     async fetchJson(pathname) {
       if (pathname === "/health") {
         return { ok: true } as never;
       }
-      if (pathname === "/api/v1/tasks/HTG-0001") {
+      if (pathname === "/api/v1/miniapp/dashboard?userId=usr_1") {
         return {
-          task: {
-            id: "HTG-0001",
-            rootPath: "/repo/.agent/tasks/HTG-0001",
-            phase: "verify",
-            verificationState: "failed"
+          stats: {
+            activeSessions: 1,
+            pendingApprovals: 0,
+            blockedSessions: 0,
+            verifyProblems: 0
           },
-          validation: {
-            ok: false,
-            missing: ["raw/test-unit.txt"]
-          }
-        } as never;
-      }
-      if (pathname === "/api/v1/tasks/HTG-0001/artifacts") {
-        return {
-          artifacts: ["/repo/.agent/tasks/HTG-0001/spec.md", "/repo/.agent/tasks/HTG-0001/verdict.json"]
-        } as never;
-      }
-      if (pathname.startsWith("/api/v1/tasks/HTG-0001/artifact?path=")) {
-        return {
-          path: pathname,
-          content: "<unsafe>content</unsafe>"
+          attention: [],
+          recentSessions: [
+            {
+              id: "ses_1",
+              title: "Quick fix",
+              state: "running",
+              hostLabel: "devbox",
+              repoName: "repo",
+              lastUpdatedAt: "2026-04-21T04:00:00.000Z",
+              href: "/session/ses_1",
+              nextAction: "open"
+            }
+          ],
+          recentReports: [
+            {
+              id: "HTG-0001",
+              title: "Quick fix",
+              status: "passed",
+              generatedAt: "2026-04-21T04:00:00.000Z",
+              href: "/task/HTG-0001"
+            }
+          ]
         } as never;
       }
       throw new Error(`Unexpected path ${pathname}`);
@@ -158,7 +165,112 @@ test("task page renders canonical artifacts and escapes file content", async () 
   }
 
   try {
-    const response = await fetch(`http://127.0.0.1:${address.port}/task/HTG-0001`);
+    const response = await fetch(`http://127.0.0.1:${address.port}/?userId=usr_1`, {
+      headers: {
+        "x-forwarded-prefix": "/miniapp"
+      }
+    });
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /href="\/miniapp\/sessions"/);
+    assert.match(html, /href="\/miniapp\/session\/ses_1"/);
+    assert.match(html, /href="\/miniapp\/task\/HTG-0001"/);
+    assert.doesNotMatch(html, /href="\/sessions"/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("mini app forwards browser session cookie as bearer auth", async () => {
+  const calls: Array<{ pathname: string; authorization?: string }> = [];
+  const server = createMiniAppServer({
+    async fetchJson(pathname, init) {
+      calls.push({
+        pathname,
+        authorization: init?.headers instanceof Headers
+          ? init.headers.get("authorization") ?? undefined
+          : (init?.headers as Record<string, string> | undefined)?.authorization
+      });
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions") {
+        return { sessions: [] } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/sessions`, {
+      headers: {
+        cookie: "happytg_miniapp_session=mas_token"
+      }
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(calls, [
+      {
+        pathname: "/api/v1/miniapp/sessions",
+        authorization: "Bearer mas_token"
+      }
+    ]);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("task page renders scoped canonical artifacts", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/tasks/HTG-0001/bundle?userId=usr_1") {
+        return {
+          task: {
+            id: "HTG-0001",
+            rootPath: "/repo/.agent/tasks/HTG-0001",
+            phase: "verify",
+            verificationState: "failed"
+          },
+          validation: {
+            ok: false,
+            missing: ["raw/test-unit.txt"]
+          },
+          sections: [
+            {
+              id: "spec",
+              label: "Spec",
+              files: ["spec.md"]
+            },
+            {
+              id: "verify",
+              label: "Verify",
+              files: ["verdict.json", "problems.md"]
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/task/HTG-0001?userId=usr_1`);
     const html = await response.text();
 
     assert.equal(response.status, 200);
@@ -166,8 +278,8 @@ test("task page renders canonical artifacts and escapes file content", async () 
     assert.match(html, /Proof Progress/);
     assert.match(html, /Fresh Verify/);
     assert.match(html, /missing raw\/test-unit.txt/);
-    assert.match(html, /&lt;unsafe&gt;content&lt;\/unsafe&gt;/);
-    assert.doesNotMatch(html, /<unsafe>content<\/unsafe>/);
+    assert.match(html, /Spec: spec\.md/);
+    assert.match(html, /Verify: verdict\.json/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
@@ -179,7 +291,7 @@ test("session page renders timeline, summary, and task link", async () => {
       if (pathname === "/health") {
         return { ok: true } as never;
       }
-      if (pathname === "/api/v1/miniapp/sessions/ses_2") {
+      if (pathname === "/api/v1/miniapp/sessions/ses_2?userId=usr_1") {
         return {
           session: {
             id: "ses_2",
@@ -241,7 +353,7 @@ test("session page renders timeline, summary, and task link", async () => {
   }
 
   try {
-    const response = await fetch(`http://127.0.0.1:${address.port}/session/ses_2`);
+    const response = await fetch(`http://127.0.0.1:${address.port}/session/ses_2?userId=usr_1`);
     const html = await response.text();
 
     assert.equal(response.status, 200);
@@ -252,6 +364,61 @@ test("session page renders timeline, summary, and task link", async () => {
     assert.match(html, /SessionCreated/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("approval page renders real authenticated action buttons", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/approvals/apr_1?userId=usr_1") {
+        return {
+          approval: {
+            id: "apr_1",
+            sessionId: "ses_1",
+            title: "Approval task",
+            state: "waiting_human",
+            reason: "workspace write",
+            risk: "high",
+            scope: "once",
+            nonce: "apn_1",
+            expiresAt: "2026-04-21T04:10:00.000Z",
+            href: "/approval/apr_1"
+          },
+          session: {
+            id: "ses_1",
+            title: "Approval task",
+            state: "needs_approval",
+            lastUpdatedAt: "2026-04-21T04:00:00.000Z",
+            href: "/session/ses_1",
+            nextAction: "open"
+          }
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/approval/apr_1?userId=usr_1`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /data-approval-action/);
+    assert.match(html, /data-approval-id="apr_1"/);
+    assert.match(html, /"authorization": "Bearer " \+ sessionToken/);
+    assert.match(html, /\/api\/v1\/miniapp\/approvals\//);
+    assert.doesNotMatch(html, /href="#"/);
+  } finally {
+    await closeServer(server);
   }
 });
 

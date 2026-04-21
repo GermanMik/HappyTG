@@ -1,0 +1,51 @@
+# Targeted integration/static checks
+
+## Caddy exposes /telegram/webhook
+Select-String -Path infra\caddy\Caddyfile -Pattern "handle /telegram/webhook"
+
+
+infra\caddy\Caddyfile:25:	handle /telegram/webhook {
+
+
+## Caddy blocks generic /api/*
+Select-String -Path infra\caddy\Caddyfile -Pattern "handle /api/\*" -Context 0,2
+
+
+> infra\caddy\Caddyfile:21:	handle /api/* {
+  infra\caddy\Caddyfile:22:		respond "Not found" 404
+  infra\caddy\Caddyfile:23:	}
+
+
+## Caddy exposes Mini App auth endpoint only
+Select-String -Path infra\caddy\Caddyfile -Pattern "miniapp/auth/session|miniappApprovalResolve"
+
+
+infra\caddy\Caddyfile:12:	handle /api/v1/miniapp/auth/session {
+infra\caddy\Caddyfile:16:	@miniappApprovalResolve path_regexp miniapp_approval_resolve ^/api/v1/miniapp/approvals/[^/]+/resolve$
+infra\caddy\Caddyfile:17:	handle @miniappApprovalResolve {
+
+
+## Docs use /telegram/webhook
+Select-String -Path docs\self-hosting.md,docs\configuration.md,docs\releases\0.4.0.md -Pattern "/telegram/webhook|HAPPYTG_MINIAPP_URL|setChatMenuButton"
+
+
+docs\self-hosting.md:27:- `/telegram/webhook` -> public Telegram webhook delivery endpoint
+docs\self-hosting.md:44:6. Configure Telegram webhook delivery against `https://<domain>/telegram/webhook`.
+docs\self-hosting.md:45:7. Configure the Telegram Mini App entry point with `https://<domain>/miniapp`; HappyTG also attempts Bot API `setChatMenuButton` automatically when the URL is valid public HTTPS.
+docs\self-hosting.md:63:  - webhook delivery: `https://<domain>/telegram/webhook`
+docs\configuration.md:20:- `HAPPYTG_MINIAPP_URL`
+docs\configuration.md:55:- The public Telegram webhook delivery URL is `HAPPYTG_PUBLIC_URL + /telegram/webhook`.
+docs\configuration.md:59:- `HAPPYTG_MINIAPP_URL` is the production Mini App URL used in Telegram `web_app` buttons and Bot API menu setup. It must be public HTTPS, for example `https://happy.example.com/miniapp`.
+docs\configuration.md:60:- If `HAPPYTG_MINIAPP_URL` is empty and `HAPPYTG_PUBLIC_URL` is public HTTPS, HappyTG derives the Mini App URL as `HAPPYTG_PUBLIC_URL + /miniapp`.
+docs\configuration.md:63:- The bot attempts `setChatMenuButton` with a `MenuButtonWebApp` when the Mini App URL is valid public HTTPS. If Telegram cannot verify the menu button, `/ready` reports degraded Mini App readiness.
+docs\releases\0.4.0.md:40:- Telegram webhook delivery URL: `https://<domain>/telegram/webhook`.
+docs\releases\0.4.0.md:41:- Telegram Mini App public URL: `https://<domain>/miniapp` or explicit `HAPPYTG_MINIAPP_URL`.
+docs\releases\0.4.0.md:42:- `HAPPYTG_APP_URL=http://localhost:3001` is development-only and is not used for production `web_app` links when `HAPPYTG_PUBLIC_URL` or `HAPPYTG_MINIAPP_URL` provides a public HTTPS Mini App URL.
+docs\releases\0.4.0.md:43:- The bot attempts `setChatMenuButton` for the Telegram Menu/Main Mini App when the Mini App URL is valid public HTTPS; `/ready` reports degraded Mini App readiness if the URL is invalid or menu verification fails.
+docs\releases\0.4.0.md:61:- Set `HAPPYTG_MINIAPP_URL=https://<domain>/miniapp` or set `HAPPYTG_PUBLIC_URL=https://<domain>` so HappyTG can derive it.
+
+
+## No legacy /bot/webhook in Caddy/docs
+if (Select-String -Path infra\caddy\Caddyfile,docs\self-hosting.md,docs\architecture\foundation-contracts.md -Pattern "/bot/webhook" -Quiet) { throw "legacy /bot/webhook found" } else { "OK: no legacy /bot/webhook contract" }
+
+OK: no legacy /bot/webhook contract

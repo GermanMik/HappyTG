@@ -78,6 +78,13 @@ const DRAFT_TTL_MS = 30 * 60 * 1000;
 const TERMINAL_SESSION_STATES = new Set(["completed", "failed", "cancelled"]);
 const WAITING_APPROVAL_STATES = new Set(["pending", "waiting_human"]);
 
+export interface MiniAppUrlResolution {
+  status: "ready" | "degraded";
+  detail: string;
+  url?: string;
+  source?: "HAPPYTG_MINIAPP_URL" | "HAPPYTG_PUBLIC_URL" | "HAPPYTG_APP_URL" | "default";
+}
+
 function userDisplayName(user: TelegramUser): string {
   return [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || `tg-${user.id}`;
 }
@@ -99,25 +106,95 @@ function isWaitingApproval(approval: ApprovalRequest): boolean {
   return WAITING_APPROVAL_STATES.has(approval.state);
 }
 
-function defaultMiniAppBaseUrl(env = process.env): string {
-  const explicit = env.HAPPYTG_MINIAPP_URL?.trim() || env.HAPPYTG_APP_URL?.trim();
-  if (explicit) {
-    return explicit;
+function isLocalMiniAppHost(hostname: string): boolean {
+  const normalized = hostname.toLowerCase();
+  return normalized === "localhost"
+    || normalized === "127.0.0.1"
+    || normalized === "0.0.0.0"
+    || normalized === "::1"
+    || normalized.endsWith(".local");
+}
+
+function validatePublicHttpsMiniAppUrl(rawUrl: string, source: MiniAppUrlResolution["source"]): MiniAppUrlResolution {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== "https:") {
+      return {
+        status: "degraded",
+        detail: `${source} must be HTTPS for Telegram Mini App web_app buttons.`,
+        source
+      };
+    }
+    if (isLocalMiniAppHost(parsed.hostname)) {
+      return {
+        status: "degraded",
+        detail: `${source} must not point at localhost or a local-only host for Telegram Mini App web_app buttons.`,
+        source
+      };
+    }
+
+    return {
+      status: "ready",
+      detail: `${source} is a public HTTPS Mini App URL.`,
+      url: parsed.toString(),
+      source
+    };
+  } catch {
+    return {
+      status: "degraded",
+      detail: `${source} is not a valid URL.`,
+      source
+    };
+  }
+}
+
+export function resolveMiniAppBaseUrl(env = process.env): MiniAppUrlResolution {
+  const explicitMiniAppUrl = env.HAPPYTG_MINIAPP_URL?.trim();
+  if (explicitMiniAppUrl) {
+    return validatePublicHttpsMiniAppUrl(explicitMiniAppUrl, "HAPPYTG_MINIAPP_URL");
   }
 
   const publicUrl = env.HAPPYTG_PUBLIC_URL?.trim();
+  let publicUrlProblem: MiniAppUrlResolution | undefined;
   if (publicUrl) {
     try {
-      return new URL("/miniapp", publicUrl).toString();
+      const derived = new URL("/miniapp", publicUrl).toString();
+      const resolved = validatePublicHttpsMiniAppUrl(derived, "HAPPYTG_PUBLIC_URL");
+      if (resolved.status === "ready") {
+        return resolved;
+      }
+      publicUrlProblem = resolved;
     } catch {
-      return publicUrl;
+      publicUrlProblem = {
+        status: "degraded",
+        detail: "HAPPYTG_PUBLIC_URL is not a valid URL, so the Telegram Mini App URL cannot be derived.",
+        source: "HAPPYTG_PUBLIC_URL"
+      };
     }
   }
 
-  return "https://happytg.gerta.crazedns.ru/miniapp";
+  const legacyAppUrl = env.HAPPYTG_APP_URL?.trim();
+  if (publicUrlProblem) {
+    return publicUrlProblem;
+  }
+
+  if (legacyAppUrl) {
+    return validatePublicHttpsMiniAppUrl(legacyAppUrl, "HAPPYTG_APP_URL");
+  }
+
+  return {
+    status: "ready",
+    detail: "Using the built-in public Mini App URL fallback.",
+    url: "https://happytg.gerta.crazedns.ru/miniapp",
+    source: "default"
+  };
 }
 
-function miniAppUrl(baseUrl: string, screen?: string, params: Record<string, string> = {}): string {
+function miniAppUrl(baseUrl: string | undefined, screen?: string, params: Record<string, string> = {}): string | undefined {
+  if (!baseUrl) {
+    return undefined;
+  }
+
   try {
     const url = new URL(baseUrl);
     if (screen) {
@@ -128,26 +205,29 @@ function miniAppUrl(baseUrl: string, screen?: string, params: Record<string, str
     }
     return url.toString();
   } catch {
-    return baseUrl;
+    return undefined;
   }
 }
 
-function mainMenuKeyboard(miniBaseUrl: string): Record<string, unknown> {
-  return {
-    inline_keyboard: [
-      [
-        { text: "Новая задача", callback_data: "m:t" },
-        { text: "Активные сессии", callback_data: "m:s" }
-      ],
-      [
-        { text: "Подтверждения", callback_data: "m:a" },
-        { text: "Хосты", callback_data: "m:h" }
-      ],
-      [
-        { text: "Последние отчеты", callback_data: "m:r" },
-        { text: "Открыть Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "home") } }
-      ]
+function mainMenuKeyboard(miniBaseUrl?: string): Record<string, unknown> {
+  const homeUrl = miniAppUrl(miniBaseUrl, "home");
+  const inlineKeyboard = [
+    [
+      { text: "Новая задача", callback_data: "m:t" },
+      { text: "Активные сессии", callback_data: "m:s" }
+    ],
+    [
+      { text: "Подтверждения", callback_data: "m:a" },
+      { text: "Хосты", callback_data: "m:h" }
+    ],
+    [
+      { text: "Последние отчеты", callback_data: "m:r" },
+      ...(homeUrl ? [{ text: "Открыть Mini App", web_app: { url: homeUrl } }] : [])
     ]
+  ];
+
+  return {
+    inline_keyboard: inlineKeyboard
   };
 }
 
@@ -287,21 +367,22 @@ function formatSessionCard(session: SessionDetail, overview?: MiniAppOverview): 
   ].filter(Boolean).join("\n");
 }
 
-function sessionCardKeyboard(session: Session, miniBaseUrl: string): Record<string, unknown> {
+function sessionCardKeyboard(session: Session, miniBaseUrl?: string): Record<string, unknown> {
+  const sessionUrl = miniAppUrl(miniBaseUrl, "session", { id: session.id });
+  const inlineKeyboard = [
+    [
+      { text: "Кратко", callback_data: `s:u:${session.id}` },
+      { text: "Resume", callback_data: `s:r:${session.id}` }
+    ],
+    [
+      { text: "Diff", callback_data: `s:d:${session.id}` },
+      { text: "Verify", callback_data: `s:v:${session.id}` }
+    ],
+    ...(sessionUrl ? [[{ text: "Mini App", web_app: { url: sessionUrl } }]] : [])
+  ];
+
   return {
-    inline_keyboard: [
-      [
-        { text: "Кратко", callback_data: `s:u:${session.id}` },
-        { text: "Resume", callback_data: `s:r:${session.id}` }
-      ],
-      [
-        { text: "Diff", callback_data: `s:d:${session.id}` },
-        { text: "Verify", callback_data: `s:v:${session.id}` }
-      ],
-      [
-        { text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "session", { id: session.id }) } }
-      ]
-    ]
+    inline_keyboard: inlineKeyboard
   };
 }
 
@@ -419,7 +500,7 @@ function formatRecoveryMessage(error: unknown): string {
 }
 
 export function createBotHandlers(dependencies: BotDependencies) {
-  const miniBaseUrl = dependencies.miniAppBaseUrl ?? defaultMiniAppBaseUrl();
+  const miniBaseUrl = dependencies.miniAppBaseUrl ?? resolveMiniAppBaseUrl().url;
   const now = dependencies.now ?? (() => Date.now());
   const wizardDrafts = new Map<string, TaskWizardDraft>();
 
@@ -565,6 +646,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
 
     const overview = await fetchOverview(userId);
     const sessions = overview.sessions.filter(isActiveSession).slice(0, 5);
+    const sessionsUrl = miniAppUrl(miniBaseUrl, "sessions");
     if (sessions.length === 0) {
       await dependencies.sendTelegramMessage(
         message.chat.id,
@@ -572,7 +654,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
         {
           inline_keyboard: [
             [{ text: "Новая задача", callback_data: "m:t" }],
-            [{ text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "sessions") } }]
+            ...(sessionsUrl ? [[{ text: "Mini App", web_app: { url: sessionsUrl } }]] : [])
           ]
         }
       );
@@ -587,7 +669,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
           ...sessions.map((session) => [
             { text: `Открыть ${shortId(session.id)}`, callback_data: `s:u:${session.id}` }
           ]),
-          [{ text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "sessions") } }]
+          ...(sessionsUrl ? [[{ text: "Mini App", web_app: { url: sessionsUrl } }]] : [])
         ]
       }
     );
@@ -607,6 +689,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
     }
 
     const result = await dependencies.apiFetch<{ approvals: ApprovalRequest[] }>(`/api/v1/approvals?userId=${encodeURIComponent(userId)}&state=waiting_human,pending`);
+    const approvalsUrl = miniAppUrl(miniBaseUrl, "approvals");
     if (result.approvals.length === 0) {
       await dependencies.sendTelegramMessage(
         message.chat.id,
@@ -614,7 +697,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
         {
           inline_keyboard: [
             [{ text: "Активные сессии", callback_data: "m:s" }],
-            [{ text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "approvals") } }]
+            ...(approvalsUrl ? [[{ text: "Mini App", web_app: { url: approvalsUrl } }]] : [])
           ]
         }
       );
@@ -629,7 +712,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
           ...result.approvals.slice(0, 8).map((approval) => [
             { text: `${approvalActionLabel(approval.actionKind)} (${riskLabel(approval.risk)})`, callback_data: `a:x:${approval.id}` }
           ]),
-          [{ text: "Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "approvals") } }]
+          ...(approvalsUrl ? [[{ text: "Mini App", web_app: { url: approvalsUrl } }]] : [])
         ]
       }
     );
@@ -1028,14 +1111,17 @@ export function createBotHandlers(dependencies: BotDependencies) {
     }
 
     if (action === "d" || action === "v") {
+      const actionUrl = miniAppUrl(miniBaseUrl, action === "d" ? "diff" : "verify", { sessionId });
       await sendOrEdit(
         callback,
-        action === "d"
-          ? "Большой diff удобнее смотреть в Mini App."
-          : "Verify details удобнее смотреть в Mini App.",
+        actionUrl
+          ? action === "d"
+            ? "Большой diff удобнее смотреть в Mini App."
+            : "Verify details удобнее смотреть в Mini App."
+          : "Mini App public URL не настроен для Telegram.",
         {
           inline_keyboard: [
-            [{ text: "Открыть Mini App", web_app: { url: miniAppUrl(miniBaseUrl, action === "d" ? "diff" : "verify", { sessionId }) } }],
+            ...(actionUrl ? [[{ text: "Открыть Mini App", web_app: { url: actionUrl } }]] : []),
             [{ text: "К карточке сессии", callback_data: `s:u:${sessionId}` }]
           ]
         }
@@ -1078,8 +1164,9 @@ export function createBotHandlers(dependencies: BotDependencies) {
         return;
       }
       if (action === "r") {
-        await sendOrEdit(callback, "Последние отчеты открываются в Mini App.", {
-          inline_keyboard: [[{ text: "Открыть Mini App", web_app: { url: miniAppUrl(miniBaseUrl, "reports") } }]]
+        const reportsUrl = miniAppUrl(miniBaseUrl, "reports");
+        await sendOrEdit(callback, reportsUrl ? "Последние отчеты открываются в Mini App." : "Mini App public URL не настроен для Telegram.", {
+          inline_keyboard: reportsUrl ? [[{ text: "Открыть Mini App", web_app: { url: reportsUrl } }]] : [[{ text: "К меню", callback_data: "m:s" }]]
         });
         return;
       }

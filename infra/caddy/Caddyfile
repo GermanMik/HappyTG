@@ -9,17 +9,27 @@
 		reverse_proxy api:4000
 	}
 
-	handle /api/* {
+	handle /api/v1/miniapp/auth/session {
 		reverse_proxy api:4000
 	}
 
-	handle /bot/webhook {
-		rewrite * /telegram/webhook
+	@miniappApprovalResolve path_regexp miniapp_approval_resolve ^/api/v1/miniapp/approvals/[^/]+/resolve$
+	handle @miniappApprovalResolve {
+		reverse_proxy api:4000
+	}
+
+	handle /api/* {
+		respond "Not found" 404
+	}
+
+	handle /telegram/webhook {
 		reverse_proxy bot:4100
 	}
 
 	handle_path /miniapp* {
-		reverse_proxy miniapp:3001
+		reverse_proxy miniapp:3001 {
+			header_up X-Forwarded-Prefix /miniapp
+		}
 	}
 
 	handle_path /static* {

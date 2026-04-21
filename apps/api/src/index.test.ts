@@ -8,6 +8,7 @@ import {
   formatApiPortReuseMessage,
   startApiServer
 } from "./index.js";
+import { HappyTGControlPlaneService } from "./service.js";
 
 async function closeServer(server: ReturnType<typeof createHttpServer>): Promise<void> {
   await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
@@ -92,6 +93,81 @@ test("api dev CORS allows only explicit Mini App origins", async () => {
     } else {
       process.env.HAPPYTG_DEV_CORS_ORIGINS = previousOrigins;
     }
+  }
+});
+
+test("mini app projection endpoints require session auth instead of falling back to global state", async () => {
+  const server = createApiServer();
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("API server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/dashboard`);
+    const payload = await response.json() as { error: string };
+
+    assert.equal(response.status, 401);
+    assert.match(payload.error, /session auth required/i);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("mini app approval resolve endpoint uses bearer session user", async () => {
+  const calls: Array<{ approvalId: string; userId: string; decision: string; scope?: string; nonce?: string }> = [];
+  const service = {
+    async resolveMiniAppUserId(token?: string) {
+      return token === "mas_token" ? "usr_1" : undefined;
+    },
+    async resolveApproval(approvalId: string, input: { userId: string; decision: string; scope?: string; nonce?: string }) {
+      calls.push({ approvalId, ...input });
+      return {
+        approval: { id: approvalId, state: "approved_once" },
+        session: { id: "ses_1", state: "ready" },
+        decision: { id: "apd_1" }
+      };
+    }
+  } as unknown as HappyTGControlPlaneService;
+  const server = createApiServer(service);
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("API server did not bind to a TCP port");
+  }
+
+  try {
+    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/approvals/apr_1/resolve`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ decision: "approved", scope: "once" })
+    });
+    assert.equal(denied.status, 401);
+
+    const allowed = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/approvals/apr_1/resolve`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer mas_token"
+      },
+      body: JSON.stringify({ decision: "approved", scope: "once", nonce: "apn_1" })
+    });
+
+    assert.equal(allowed.status, 200);
+    assert.deepEqual(calls, [
+      {
+        approvalId: "apr_1",
+        userId: "usr_1",
+        decision: "approved",
+        scope: "once",
+        nonce: "apn_1"
+      }
+    ]);
+  } finally {
+    await closeServer(server);
   }
 });
 

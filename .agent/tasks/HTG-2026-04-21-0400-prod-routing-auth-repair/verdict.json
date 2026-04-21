@@ -1,0 +1,61 @@
+{
+  "taskId": "HTG-2026-04-21-0400-prod-routing-auth-repair",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-2026-04-21-0400-prod-routing-auth-repair"
+  },
+  "checks": [
+    {
+      "name": "webhook-contract",
+      "ok": true,
+      "detail": "Caddy, bot readiness, and docs consistently use /telegram/webhook for public Telegram delivery."
+    },
+    {
+      "name": "miniapp-auth-fail-closed",
+      "ok": true,
+      "detail": "Mini App projection endpoints require bearer/session context and do not fall back to global access when userId is missing."
+    },
+    {
+      "name": "no-public-auth-bypass",
+      "ok": true,
+      "detail": "The public reverse proxy does not expose mutating control-plane routes through /api/* without an auth boundary."
+    },
+    {
+      "name": "miniapp-base-path",
+      "ok": true,
+      "detail": "Mini App navigation works locally and behind /miniapp, with forwarded prefix handling and prefixed links."
+    },
+    {
+      "name": "approval-actions-real",
+      "ok": true,
+      "detail": "Approval controls are real authenticated actions and are not rendered as dead href=\"#\" controls."
+    },
+    {
+      "name": "miniapp-url-discovery",
+      "ok": true,
+      "detail": "Production Mini App URL resolution prefers HAPPYTG_MINIAPP_URL, derives from HAPPYTG_PUBLIC_URL + /miniapp, and treats HAPPYTG_APP_URL as dev-only fallback."
+    },
+    {
+      "name": "menu-button-setup",
+      "ok": true,
+      "detail": "The bot auto-configures setChatMenuButton when a valid public HTTPS Mini App URL is available and degrades readiness when it is not."
+    },
+    {
+      "name": "readiness-degradation",
+      "ok": true,
+      "detail": "/ready reports degraded status for invalid Mini App public URLs or failed menu verification."
+    },
+    {
+      "name": "docs-distinguish-contracts",
+      "ok": true,
+      "detail": "Configuration, self-hosting, and release docs distinguish webhook delivery URL, Mini App public URL, and BotFather/Menu Button setup."
+    },
+    {
+      "name": "proof-metadata-closed",
+      "ok": true,
+      "detail": "Proof bundle metadata is synchronized: no pending/unknown verifier state remains and the task is marked complete/passed."
+    }
+  ],
+  "generatedAt": "2026-04-21T22:55:00+03:00"
+}

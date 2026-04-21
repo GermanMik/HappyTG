@@ -1,0 +1,24 @@
+{
+  "id": "HTG-2026-04-21-0400-prod-routing-auth-repair",
+  "sessionId": "manual-prod-routing-auth-repair",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Users\\tikta\\.codex\\worktrees\\d2bb\\HappyTG\\.agent\\tasks\\HTG-2026-04-21-0400-prod-routing-auth-repair",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "HappyTG 0.4.0 production routing/auth repair",
+  "acceptanceCriteria": [
+    "Public Telegram webhook URL is consistently /telegram/webhook in bot readiness, Caddy, and docs",
+    "Mini App projection endpoints fail closed without valid bearer/session user context",
+    "Public reverse proxy does not expose mutating control-plane endpoints without auth boundary",
+    "Mini App navigation works locally and behind /miniapp",
+    "Mini App approval actions are either real authenticated actions or not advertised",
+    "Production web_app links never use localhost/http and prefer HAPPYTG_MINIAPP_URL or HAPPYTG_PUBLIC_URL + /miniapp",
+    "Telegram Menu/Main Mini App setup is automatic when possible or clearly degraded/warned",
+    "Readiness/doctor reports invalid Mini App public URL or menu setup as degraded/warning",
+    "Config, self-hosting, and release docs distinguish webhook URL, Mini App URL, and menu setup",
+    "Regression tests cover auth, routing, Mini App links/actions, URL resolution, and menu setup"
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-21T00:00:00+03:00",
+  "updatedAt": "2026-04-21T22:55:00+03:00"
+}

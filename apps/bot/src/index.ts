@@ -18,8 +18,8 @@ import {
 } from "../../../packages/shared/src/index.js";
 import type { Logger } from "../../../packages/shared/src/index.js";
 
-import type { BotDependencies, TelegramUpdate } from "./handlers.js";
-import { createBotHandlers } from "./handlers.js";
+import type { BotDependencies, MiniAppUrlResolution, TelegramUpdate } from "./handlers.js";
+import { createBotHandlers, resolveMiniAppBaseUrl } from "./handlers.js";
 
 const logger = createLogger("bot");
 
@@ -91,6 +91,14 @@ export interface TelegramDeliverySnapshot {
   actualWebhookUrl?: string;
   pendingUpdateCount?: number;
   lastErrorMessage?: string;
+}
+
+export interface TelegramMiniAppSnapshot {
+  status: "ready" | "degraded";
+  detail: string;
+  publicUrl?: string;
+  source?: MiniAppUrlResolution["source"];
+  menuButtonConfigured?: boolean;
 }
 
 interface TelegramPublicUrlInspection {
@@ -436,6 +444,73 @@ export async function inspectTelegramWebhookDelivery(options: {
     actualWebhookUrl,
     pendingUpdateCount: info.pending_update_count,
     lastErrorMessage
+  };
+}
+
+export function resolveTelegramMiniAppSnapshot(env: NodeJS.ProcessEnv = process.env): TelegramMiniAppSnapshot {
+  const resolved = resolveMiniAppBaseUrl(env);
+  return {
+    status: resolved.status,
+    detail: resolved.detail,
+    publicUrl: resolved.url,
+    source: resolved.source,
+    menuButtonConfigured: false
+  };
+}
+
+interface TelegramMenuButtonInfo {
+  type: string;
+  text?: string;
+  web_app?: {
+    url?: string;
+  };
+}
+
+export async function configureTelegramMiniAppMenuButton(options: {
+  botToken: string;
+  miniAppUrl: string;
+  fetchImpl?: typeof fetch;
+  logger?: Logger;
+  platform?: NodeJS.Platform;
+  invokeViaWindowsPowerShell?: InvokeTelegramBotApiViaWindowsPowerShell;
+}): Promise<Partial<TelegramMiniAppSnapshot>> {
+  await telegramApiCall<true>("setChatMenuButton", {
+    botToken: options.botToken,
+    fetchImpl: options.fetchImpl,
+    payload: {
+      menu_button: {
+        type: "web_app",
+        text: "HappyTG",
+        web_app: {
+          url: options.miniAppUrl
+        }
+      }
+    },
+    logger: options.logger,
+    platform: options.platform,
+    invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell
+  });
+
+  const menuButton = await telegramApiCall<TelegramMenuButtonInfo>("getChatMenuButton", {
+    botToken: options.botToken,
+    fetchImpl: options.fetchImpl,
+    logger: options.logger,
+    platform: options.platform,
+    invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell
+  });
+
+  if (menuButton.type === "web_app" && menuButton.web_app?.url === options.miniAppUrl) {
+    return {
+      status: "ready",
+      detail: "Telegram Mini App menu button is configured and verified.",
+      menuButtonConfigured: true
+    };
+  }
+
+  return {
+    status: "degraded",
+    detail: "Telegram Mini App menu button was set but could not be verified.",
+    menuButtonConfigured: false
   };
 }
 
@@ -993,7 +1068,8 @@ export function createTelegramUpdateDispatcher(dependencies: Partial<BotDependen
   const handlers = createBotHandlers({
     apiFetch,
     sendTelegramMessage,
-    resolveInternalUserId: dependencies.resolveInternalUserId
+    resolveInternalUserId: dependencies.resolveInternalUserId,
+    miniAppBaseUrl: dependencies.miniAppBaseUrl
   });
 
   return {
@@ -1013,6 +1089,7 @@ export function createBotServer(
   options?: {
     dispatchUpdate?(update: TelegramUpdate): Promise<void>;
     getTelegramDeliverySnapshot?(): TelegramDeliverySnapshot | undefined;
+    getTelegramMiniAppSnapshot?(): TelegramMiniAppSnapshot | undefined;
   }
 ) {
   const apiFetch = dependencies.apiFetch ?? createDefaultApiFetch();
@@ -1027,17 +1104,30 @@ export function createBotServer(
         try {
           await apiFetch<{ ok: boolean }>("/health");
           const telegram = options?.getTelegramDeliverySnapshot?.();
+          const miniApp = options?.getTelegramMiniAppSnapshot?.();
           if (telegram && telegram.status !== "ready") {
             json(res, 503, {
               ok: false,
               service: "bot",
               apiBaseUrl,
               detail: telegram.detail,
-              telegram
+              telegram,
+              ...(miniApp ? { miniApp } : {})
             });
             return;
           }
-          json(res, 200, { ok: true, service: "bot", apiBaseUrl, ...(telegram ? { telegram } : {}) });
+          if (miniApp && miniApp.status !== "ready") {
+            json(res, 503, {
+              ok: false,
+              service: "bot",
+              apiBaseUrl,
+              detail: miniApp.detail,
+              ...(telegram ? { telegram } : {}),
+              miniApp
+            });
+            return;
+          }
+          json(res, 200, { ok: true, service: "bot", apiBaseUrl, ...(telegram ? { telegram } : {}), ...(miniApp ? { miniApp } : {}) });
         } catch (error) {
           json(res, 503, {
             ok: false,
@@ -1397,10 +1487,16 @@ export function createBotRuntime(
     env,
     configurationMessage: options?.configurationMessage ?? botConfigurationMessage(env)
   }));
-  const dispatcher = createTelegramUpdateDispatcher(dependencies);
-  const server = createBotServer(dependencies, {
+  let miniAppSnapshot = resolveTelegramMiniAppSnapshot(env);
+  const runtimeDependencies: Partial<BotDependencies> = {
+    ...dependencies,
+    miniAppBaseUrl: dependencies.miniAppBaseUrl ?? miniAppSnapshot.publicUrl
+  };
+  const dispatcher = createTelegramUpdateDispatcher(runtimeDependencies);
+  const server = createBotServer(runtimeDependencies, {
     dispatchUpdate: dispatcher.dispatchUpdate,
-    getTelegramDeliverySnapshot: () => deliveryState.read()
+    getTelegramDeliverySnapshot: () => deliveryState.read(),
+    getTelegramMiniAppSnapshot: () => miniAppSnapshot
   });
   let polling: TelegramPollingController | undefined;
   let started = false;
@@ -1456,6 +1552,35 @@ export function createBotRuntime(
               status: "degraded",
               detail: error instanceof Error ? error.message : String(error)
             });
+          }
+        }
+
+        if (
+          configuredBotToken
+          && deliveryState.read().status === "ready"
+          && miniAppSnapshot.status === "ready"
+          && miniAppSnapshot.publicUrl
+          && env.HAPPYTG_MINIAPP_MENU_AUTO_SETUP !== "false"
+        ) {
+          try {
+            miniAppSnapshot = {
+              ...miniAppSnapshot,
+              ...(await configureTelegramMiniAppMenuButton({
+                botToken: configuredBotToken,
+                miniAppUrl: miniAppSnapshot.publicUrl,
+                fetchImpl: options?.fetchImpl,
+                logger: botLogger,
+                platform: options?.platform,
+                invokeViaWindowsPowerShell: options?.invokeTelegramApiViaWindowsPowerShell
+              }))
+            };
+          } catch (error) {
+            miniAppSnapshot = {
+              ...miniAppSnapshot,
+              status: "degraded",
+              detail: error instanceof Error ? error.message : String(error),
+              menuButtonConfigured: false
+            };
           }
         }
 

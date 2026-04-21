@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import type { ServerResponse } from "node:http";
 
 import type {
   ClaimPairingRequest,
@@ -37,12 +38,41 @@ loadHappyTGEnv();
 const port = readPort(process.env, ["HAPPYTG_API_PORT", "PORT"], 4000);
 
 export function createApiServer(service = new HappyTGControlPlaneService()) {
-  async function miniAppUserId(req: { headers: Record<string, string | string[] | undefined> }, url: URL): Promise<string | undefined> {
+  type MiniAppRequest = { headers: Record<string, string | string[] | undefined> };
+
+  function miniAppBearerToken(req: MiniAppRequest): string | undefined {
     const authorization = req.headers.authorization;
-    const token = typeof authorization === "string" && authorization.toLowerCase().startsWith("bearer ")
+    return typeof authorization === "string" && authorization.toLowerCase().startsWith("bearer ")
       ? authorization.slice("bearer ".length).trim()
       : undefined;
-    return service.resolveMiniAppUserId(token, url.searchParams.get("userId") ?? undefined);
+  }
+
+  async function miniAppUserId(req: MiniAppRequest, url: URL): Promise<string | undefined> {
+    return service.resolveMiniAppUserId(miniAppBearerToken(req), url.searchParams.get("userId") ?? undefined);
+  }
+
+  async function requireMiniAppUserId(req: MiniAppRequest, res: ServerResponse, url: URL): Promise<string | undefined> {
+    const userId = await miniAppUserId(req, url);
+    if (!userId) {
+      json(res, 401, { error: "Mini App session auth required" });
+      return undefined;
+    }
+
+    return userId;
+  }
+
+  async function withRequiredMiniAppUser<T>(
+    req: MiniAppRequest,
+    res: ServerResponse,
+    url: URL,
+    handler: (userId: string) => Promise<T>
+  ): Promise<void> {
+    const userId = await requireMiniAppUserId(req, res, url);
+    if (!userId) {
+      return;
+    }
+
+    json(res, 200, await handler(userId));
   }
 
   return createJsonServer(
@@ -186,44 +216,63 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
           });
         }
       }),
-      route("POST", "/api/v1/miniapp/auth/session/:id/revoke", async ({ req, res, params }) => {
-        const body = await readJsonBody<{ userId?: string }>(req);
-        json(res, 200, { appSession: await service.revokeMiniAppSession(params.id, body.userId) });
+      route("POST", "/api/v1/miniapp/auth/session/:id/revoke", async ({ req, res, params, url }) => {
+        await withRequiredMiniAppUser(req, res, url, async (userId) => ({
+          appSession: await service.revokeMiniAppSession(params.id, userId)
+        }));
       }),
       route("GET", "/api/v1/miniapp/dashboard", async ({ req, res, url }) => {
-        json(res, 200, await service.getMiniAppDashboard(await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.getMiniAppDashboard(userId));
       }),
       route("GET", "/api/v1/miniapp/sessions", async ({ req, res, url }) => {
-        json(res, 200, await service.listMiniAppSessions(await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.listMiniAppSessions(userId));
       }),
       route("GET", "/api/v1/miniapp/sessions/:id", async ({ req, res, params, url }) => {
-        json(res, 200, await service.getMiniAppSessionDetail(params.id, await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.getMiniAppSessionDetail(params.id, userId));
       }),
       route("GET", "/api/v1/miniapp/sessions/:id/diff", async ({ req, res, params, url }) => {
-        json(res, 200, await service.getMiniAppDiffSummary(params.id, await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.getMiniAppDiffSummary(params.id, userId));
       }),
       route("GET", "/api/v1/miniapp/sessions/:id/verify", async ({ req, res, params, url }) => {
-        json(res, 200, await service.getMiniAppVerifySummary(params.id, await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.getMiniAppVerifySummary(params.id, userId));
       }),
       route("GET", "/api/v1/miniapp/approvals", async ({ req, res, url }) => {
-        json(res, 200, await service.listMiniAppApprovals(await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.listMiniAppApprovals(userId));
       }),
       route("GET", "/api/v1/miniapp/approvals/:id", async ({ req, res, params, url }) => {
-        json(res, 200, await service.getMiniAppApprovalDetail(params.id, await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.getMiniAppApprovalDetail(params.id, userId));
+      }),
+      route("POST", "/api/v1/miniapp/approvals/:id/resolve", async ({ req, res, params, url }) => {
+        const userId = await requireMiniAppUserId(req, res, url);
+        if (!userId) {
+          return;
+        }
+
+        const body = await readJsonBody<Omit<ResolveApprovalRequest, "userId">>(req);
+        json(res, 200, await service.resolveApproval(params.id, {
+          ...body,
+          userId
+        }));
       }),
       route("GET", "/api/v1/miniapp/hosts", async ({ req, res, url }) => {
-        json(res, 200, await service.listMiniAppHosts(await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.listMiniAppHosts(userId));
       }),
       route("GET", "/api/v1/miniapp/hosts/:id", async ({ req, res, params, url }) => {
-        json(res, 200, await service.getMiniAppHostDetail(params.id, await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.getMiniAppHostDetail(params.id, userId));
       }),
       route("GET", "/api/v1/miniapp/reports", async ({ req, res, url }) => {
-        json(res, 200, await service.listMiniAppReports(await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.listMiniAppReports(userId));
       }),
       route("GET", "/api/v1/miniapp/tasks/:id/bundle", async ({ req, res, params, url }) => {
-        json(res, 200, await service.getMiniAppBundleDetail(params.id, await miniAppUserId(req, url)));
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.getMiniAppBundleDetail(params.id, userId));
       }),
-      route("GET", "/api/v1/miniapp/session/:id/timeline", async ({ res, params }) => {
+      route("GET", "/api/v1/miniapp/session/:id/timeline", async ({ req, res, params, url }) => {
+        const userId = await requireMiniAppUserId(req, res, url);
+        if (!userId) {
+          return;
+        }
+
+        await service.getMiniAppSessionDetail(params.id, userId);
         json(res, 200, await service.getSessionTimeline(params.id));
       }),
       route("POST", "/api/v1/daemon/hello", async ({ req, res }) => {

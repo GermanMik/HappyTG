@@ -110,6 +110,7 @@ services:
     environment:
       PORT: 3001
       HAPPYTG_API_URL: ${COMPOSE_HAPPYTG_API_URL:-http://api:4000}
+      HAPPYTG_BROWSER_API_URL: ${COMPOSE_HAPPYTG_BROWSER_API_URL:-}
     depends_on:
       - api
     ports:

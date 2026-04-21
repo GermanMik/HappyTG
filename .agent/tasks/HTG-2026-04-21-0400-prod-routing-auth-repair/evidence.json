@@ -1,0 +1,70 @@
+{
+  "taskId": "HTG-2026-04-21-0400-prod-routing-auth-repair",
+  "criteria": [
+    {
+      "criterion": "Public Telegram webhook URL is consistently /telegram/webhook in bot readiness, Caddy, and docs",
+      "artifacts": [
+        "infra/caddy/Caddyfile",
+        "apps/bot/src/index.ts",
+        "apps/bot/src/index.test.ts",
+        "docs/self-hosting.md",
+        "docs/configuration.md"
+      ]
+    },
+    {
+      "criterion": "Mini App projection endpoints fail closed without valid bearer/session user context",
+      "artifacts": [
+        "apps/api/src/index.ts",
+        "apps/api/src/service.ts",
+        "apps/api/src/index.test.ts",
+        "apps/api/src/service.test.ts"
+      ]
+    },
+    {
+      "criterion": "Public reverse proxy does not expose mutating control-plane endpoints without auth boundary",
+      "artifacts": [
+        "infra/caddy/Caddyfile",
+        "docs/self-hosting.md",
+        "docs/architecture/foundation-contracts.md",
+        "apps/api/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "Mini App navigation works locally and behind /miniapp",
+      "artifacts": [
+        "apps/miniapp/src/index.ts",
+        "apps/miniapp/src/index.test.ts",
+        "infra/caddy/Caddyfile"
+      ]
+    },
+    {
+      "criterion": "Mini App approval actions are real authenticated actions",
+      "artifacts": [
+        "apps/miniapp/src/index.ts",
+        "apps/miniapp/src/index.test.ts",
+        "apps/api/src/index.ts",
+        "apps/api/src/index.test.ts"
+      ]
+    },
+    {
+      "criterion": "Production Mini App URL discovery and Telegram menu setup are production-safe",
+      "artifacts": [
+        "apps/bot/src/handlers.ts",
+        "apps/bot/src/index.ts",
+        "apps/bot/src/handlers.test.ts",
+        "apps/bot/src/index.test.ts",
+        ".env.example"
+      ]
+    }
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-21-0400-prod-routing-auth-repair/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-04-21-0400-prod-routing-auth-repair/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-04-21-0400-prod-routing-auth-repair/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-04-21-0400-prod-routing-auth-repair/raw/lint.txt",
+    ".agent/tasks/HTG-2026-04-21-0400-prod-routing-auth-repair/raw/build.txt",
+    ".agent/tasks/HTG-2026-04-21-0400-prod-routing-auth-repair/raw/task-validate.txt",
+    ".agent/tasks/HTG-2026-04-21-0400-prod-routing-auth-repair/raw/release-check.txt"
+  ],
+  "generatedAt": "2026-04-21T19:43:00+03:00"
+}

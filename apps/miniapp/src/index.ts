@@ -26,19 +26,89 @@ import type {
 const logger = createLogger("miniapp");
 loadHappyTGEnv();
 const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
+const browserApiBaseUrl = resolveBrowserApiBaseUrl();
+const miniAppSessionCookieName = "happytg_miniapp_session";
 const port = readPort(process.env, ["HAPPYTG_MINIAPP_PORT", "PORT"], 3001);
 
 export interface MiniAppDependencies {
-  fetchJson<T>(pathname: string): Promise<T>;
+  fetchJson<T>(pathname: string, init?: RequestInit): Promise<T>;
 }
 
-async function defaultFetchJson<T>(pathname: string): Promise<T> {
-  const response = await fetch(new URL(pathname, apiBaseUrl));
+async function defaultFetchJson<T>(pathname: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(new URL(pathname, apiBaseUrl), init);
   if (!response.ok) {
     throw new Error(`Mini App fetch failed for ${pathname}: ${response.status}`);
   }
 
   return (await response.json()) as T;
+}
+
+function resolveBrowserApiBaseUrl(env = process.env): string {
+  const explicit = env.HAPPYTG_BROWSER_API_URL?.trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const publicUrl = env.HAPPYTG_PUBLIC_URL?.trim();
+  if (publicUrl) {
+    try {
+      const parsed = new URL(publicUrl);
+      if (parsed.protocol === "https:") {
+        return parsed.origin;
+      }
+    } catch {
+      // Fall back to the direct API URL below.
+    }
+  }
+
+  return env.HAPPYTG_API_URL ?? "http://localhost:4000";
+}
+
+function normalizeBasePath(value: string | string[] | undefined): string {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const trimmed = raw?.trim();
+  if (!trimmed || trimmed === "/") {
+    return "";
+  }
+
+  return `/${trimmed.replace(/^\/+|\/+$/gu, "")}`;
+}
+
+function prefixRootRelativeLinks(html: string, basePath: string): string {
+  if (!basePath) {
+    return html;
+  }
+
+  return html.replace(/href="\/(?!\/)/gu, `href="${basePath}/`);
+}
+
+function parseCookieHeader(header: string | string[] | undefined): Record<string, string> {
+  const raw = Array.isArray(header) ? header.join(";") : header;
+  if (!raw) {
+    return {};
+  }
+
+  return Object.fromEntries(raw
+    .split(";")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const separator = item.indexOf("=");
+      if (separator === -1) {
+        return [item, ""];
+      }
+
+      return [item.slice(0, separator), decodeURIComponent(item.slice(separator + 1))];
+    }));
+}
+
+function miniAppSessionToken(headers: Record<string, string | string[] | undefined>): string | undefined {
+  const authorization = headers.authorization;
+  if (typeof authorization === "string" && authorization.toLowerCase().startsWith("bearer ")) {
+    return authorization.slice("bearer ".length).trim();
+  }
+
+  return parseCookieHeader(headers.cookie)[miniAppSessionCookieName];
 }
 
 const proofProgressSteps = [
@@ -195,8 +265,9 @@ async function detectPortOccupant(listenPort: number, fetchImpl: typeof fetch = 
   return {};
 }
 
-export function renderPage(title: string, body: string): string {
-  return `<!doctype html>
+export function renderPage(title: string, body: string, options?: { basePath?: string; needsAuth?: boolean }): string {
+  const basePath = normalizeBasePath(options?.basePath);
+  const page = `<!doctype html>
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
@@ -520,11 +591,18 @@ export function renderPage(title: string, body: string): string {
       <a href="/reports">Reports</a>
     </nav>
     <script>
-      window.HAPPYTgApiBase = ${JSON.stringify(apiBaseUrl)};
+      window.HAPPYTgApiBase = ${JSON.stringify(browserApiBaseUrl)};
+      window.HAPPYTgMiniAppBasePath = ${JSON.stringify(basePath)};
+      window.HAPPYTgNeedsAuth = ${JSON.stringify(Boolean(options?.needsAuth))};
+      window.HAPPYTgSessionCookie = ${JSON.stringify(miniAppSessionCookieName)};
       (function () {
         var key = "happytg:miniapp:draft:v1";
+        var sessionKey = "happytg:miniapp:session:v1";
         var ttlMs = 24 * 60 * 60 * 1000;
         var recovery = document.getElementById("draft-recovery");
+        function apiUrl(pathname) {
+          return new URL(pathname, window.HAPPYTgApiBase || window.location.origin);
+        }
         function readDraft() {
           try {
             var parsed = JSON.parse(localStorage.getItem(key) || "null");
@@ -537,6 +615,29 @@ export function renderPage(title: string, body: string): string {
             localStorage.removeItem(key);
             return null;
           }
+        }
+        function readSession() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(sessionKey) || "null");
+            if (!parsed || !parsed.token || (parsed.expiresAt && Date.parse(parsed.expiresAt) <= Date.now())) {
+              localStorage.removeItem(sessionKey);
+              return null;
+            }
+            return parsed;
+          } catch (_error) {
+            localStorage.removeItem(sessionKey);
+            return null;
+          }
+        }
+        function persistSession(session) {
+          localStorage.setItem(sessionKey, JSON.stringify(session));
+          var maxAge = session.expiresAt ? Math.max(1, Math.floor((Date.parse(session.expiresAt) - Date.now()) / 1000)) : 3600;
+          var cookiePath = window.HAPPYTgMiniAppBasePath || "/";
+          var secure = location.protocol === "https:" ? "; secure" : "";
+          document.cookie = window.HAPPYTgSessionCookie + "=" + encodeURIComponent(session.token) + "; path=" + cookiePath + "; max-age=" + maxAge + "; samesite=lax" + secure;
+        }
+        function token() {
+          return readSession()?.token;
         }
         var draft = readDraft();
         if (draft && recovery) {
@@ -562,11 +663,18 @@ export function renderPage(title: string, body: string): string {
           if (recovery) recovery.style.display = "none";
         });
         var webApp = window.Telegram && window.Telegram.WebApp;
+        var savedSession = readSession();
+        if (savedSession) {
+          persistSession(savedSession);
+          if (window.HAPPYTgNeedsAuth) {
+            location.reload();
+            return;
+          }
+        }
         if (webApp && webApp.initData) {
-          var savedSession = localStorage.getItem("happytg:miniapp:session:v1");
           var params = new URLSearchParams(location.search);
           if (!savedSession) {
-            fetch(new URL("/api/v1/miniapp/auth/session", window.HAPPYTgApiBase), {
+            fetch(apiUrl("/api/v1/miniapp/auth/session"), {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify({
@@ -577,16 +685,48 @@ export function renderPage(title: string, body: string): string {
               return response.ok ? response.json() : undefined;
             }).then(function (payload) {
               if (payload && payload.appSession) {
-                localStorage.setItem("happytg:miniapp:session:v1", JSON.stringify(payload.appSession));
+                persistSession(payload.appSession);
+                if (window.HAPPYTgNeedsAuth) {
+                  location.reload();
+                }
               }
             }).catch(function () {});
           }
           webApp.ready();
         }
+        document.querySelectorAll("[data-approval-action]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            var sessionToken = token();
+            if (!sessionToken) {
+              return;
+            }
+            button.disabled = true;
+            fetch(apiUrl("/api/v1/miniapp/approvals/" + encodeURIComponent(button.getAttribute("data-approval-id") || "") + "/resolve"), {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "authorization": "Bearer " + sessionToken
+              },
+              body: JSON.stringify({
+                decision: button.getAttribute("data-decision"),
+                scope: button.getAttribute("data-scope") || undefined,
+                nonce: button.getAttribute("data-nonce") || undefined
+              })
+            }).then(function (response) {
+              if (!response.ok) throw new Error("approval action failed");
+              return response.json();
+            }).then(function () {
+              location.reload();
+            }).catch(function () {
+              button.disabled = false;
+            });
+          });
+        });
       })();
     </script>
   </body>
 </html>`;
+  return prefixRootRelativeLinks(page, basePath);
 }
 
 function linkButton(label: string, href: string, primary = false): string {
@@ -599,6 +739,17 @@ function renderEmptyState(title: string, detail: string, actionLabel: string, hr
     <p class="muted">${escapeHtml(detail)}</p>
     <div class="actions">${linkButton(actionLabel, href, true)}</div>
   </div>`;
+}
+
+function renderAuthPending(): string {
+  return `<section class="panel hero">
+    <h1>Открываем HappyTG</h1>
+    <p class="muted">Mini App session проверяется через Telegram.</p>
+  </section>`;
+}
+
+function approvalActionButton(label: string, approval: MiniAppApprovalCard, decision: "approved" | "rejected", scope?: string, primary = false): string {
+  return `<button class="button${primary ? " button-primary" : decision === "rejected" ? " button-danger" : ""}" type="button" data-approval-action data-approval-id="${escapeHtml(approval.id)}" data-decision="${decision}" data-scope="${escapeHtml(scope ?? "")}" data-nonce="${escapeHtml(approval.nonce ?? "")}">${escapeHtml(label)}</button>`;
 }
 
 function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
@@ -863,6 +1014,31 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     const userId = url.searchParams.get("userId");
     return userId ? `${pathname}${pathname.includes("?") ? "&" : "?"}userId=${encodeURIComponent(userId)}` : pathname;
   };
+  const basePathFor = (req: { headers: Record<string, string | string[] | undefined> }) => normalizeBasePath(req.headers["x-forwarded-prefix"] ?? process.env.HAPPYTG_MINIAPP_BASE_PATH);
+  const hasSessionContext = (req: { headers: Record<string, string | string[] | undefined> }, url: URL) => Boolean(miniAppSessionToken(req.headers) || url.searchParams.get("userId"));
+  const authInit = (req: { headers: Record<string, string | string[] | undefined> }): RequestInit | undefined => {
+    const sessionToken = miniAppSessionToken(req.headers);
+    return sessionToken
+      ? {
+          headers: {
+            authorization: `Bearer ${sessionToken}`
+          }
+        }
+      : undefined;
+  };
+  const fetchForRequest = <T>(req: { headers: Record<string, string | string[] | undefined> }, url: URL, pathname: string) => dependencies.fetchJson<T>(withUser(pathname, url), authInit(req));
+  const renderForRequest = (req: { headers: Record<string, string | string[] | undefined> }, title: string, body: string, options?: { needsAuth?: boolean }) => renderPage(title, body, {
+    basePath: basePathFor(req),
+    needsAuth: options?.needsAuth
+  });
+  const requireSessionContext = (req: { headers: Record<string, string | string[] | undefined> }, res: Parameters<typeof text>[0], url: URL, title: string): boolean => {
+    if (hasSessionContext(req, url)) {
+      return true;
+    }
+
+    text(res, 200, renderForRequest(req, title, renderAuthPending(), { needsAuth: true }));
+    return false;
+  };
 
   return createJsonServer(
     [
@@ -882,54 +1058,73 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           });
         }
       }),
-      route("GET", "/", async ({ res, url }) => {
+      route("GET", "/", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "HappyTG Mini App")) {
+          return;
+        }
+
         const screen = url.searchParams.get("screen");
         if (screen === "sessions") {
-          const sessions = await dependencies.fetchJson<{ sessions: MiniAppSessionCard[] }>(withUser("/api/v1/miniapp/sessions", url));
-          text(res, 200, renderPage("Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`));
+          const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
+          text(res, 200, renderForRequest(req, "Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`));
           return;
         }
         if (screen === "approvals") {
-          const approvals = await dependencies.fetchJson<{ approvals: MiniAppApprovalCard[] }>(withUser("/api/v1/miniapp/approvals", url));
-          text(res, 200, renderPage("Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`));
+          const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
+          text(res, 200, renderForRequest(req, "Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`));
           return;
         }
         if (screen === "session" && url.searchParams.get("id")) {
           const id = url.searchParams.get("id")!;
-          const detail = await dependencies.fetchJson<{
+          const detail = await fetchForRequest<{
             session: MiniAppSessionCard & { prompt: string; currentSummary?: string; lastError?: string };
             task?: TaskBundle;
             approval?: MiniAppApprovalCard;
             events: SessionEvent[];
             actions: string[];
-          }>(withUser(`/api/v1/miniapp/sessions/${encodeURIComponent(id)}`, url));
-          text(res, 200, renderPage(`Session ${detail.session.id}`, renderSessionDetail(detail)));
+          }>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(id)}`);
+          text(res, 200, renderForRequest(req, `Session ${detail.session.id}`, renderSessionDetail(detail)));
           return;
         }
         if (screen === "diff" && url.searchParams.get("sessionId")) {
-          const diff = await dependencies.fetchJson<MiniAppDiffProjection>(withUser(`/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/diff`, url));
-          text(res, 200, renderPage("Diff", renderDiffView(diff)));
+          const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/diff`);
+          text(res, 200, renderForRequest(req, "Diff", renderDiffView(diff)));
           return;
         }
         if (screen === "verify" && url.searchParams.get("sessionId")) {
-          const verify = await dependencies.fetchJson<MiniAppVerifyProjection>(withUser(`/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/verify`, url));
-          text(res, 200, renderPage("Verify", renderVerifyView(verify)));
+          const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/verify`);
+          text(res, 200, renderForRequest(req, "Verify", renderVerifyView(verify)));
           return;
         }
 
-        const dashboard = await dependencies.fetchJson<MiniAppDashboardProjection>(withUser("/api/v1/miniapp/dashboard", url));
-        text(res, 200, renderPage("HappyTG Mini App", renderDashboardView(dashboard)));
+        const dashboard = await fetchForRequest<MiniAppDashboardProjection>(req, url, "/api/v1/miniapp/dashboard");
+        text(res, 200, renderForRequest(req, "HappyTG Mini App", renderDashboardView(dashboard)));
       }),
-      route("GET", "/sessions", async ({ res, url }) => {
-        const sessions = await dependencies.fetchJson<{ sessions: MiniAppSessionCard[] }>(withUser("/api/v1/miniapp/sessions", url));
-        text(res, 200, renderPage("Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Статус, фаза, verify и следующий шаг в одном месте.</p></section>${renderSessionCards(sessions.sessions)}`));
+      route("GET", "/sessions", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Sessions")) {
+          return;
+        }
+
+        const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
+        text(res, 200, renderForRequest(req, "Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Статус, фаза, verify и следующий шаг в одном месте.</p></section>${renderSessionCards(sessions.sessions)}`));
       }),
-      route("GET", "/approvals", async ({ res, url }) => {
-        const approvals = await dependencies.fetchJson<{ approvals: MiniAppApprovalCard[] }>(withUser("/api/v1/miniapp/approvals", url));
-        text(res, 200, renderPage("Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`));
+      route("GET", "/approvals", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Approvals")) {
+          return;
+        }
+
+        const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
+        text(res, 200, renderForRequest(req, "Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`));
       }),
-      route("GET", "/approval/:id", async ({ res, params, url }) => {
-        const detail = await dependencies.fetchJson<{ approval: MiniAppApprovalCard; session?: MiniAppSessionCard }>(withUser(`/api/v1/miniapp/approvals/${params.id}`, url));
+      route("GET", "/approval/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Approval")) {
+          return;
+        }
+
+        const detail = await fetchForRequest<{ approval: MiniAppApprovalCard; session?: MiniAppSessionCard }>(req, url, `/api/v1/miniapp/approvals/${params.id}`);
+        const approvalActions = detail.approval.state === "waiting_human"
+          ? `${approvalActionButton("Разрешить один раз", detail.approval, "approved", "once", true)}${approvalActionButton("Разрешить на фазу", detail.approval, "approved", "phase")}${approvalActionButton("Отклонить", detail.approval, "rejected")}`
+          : "";
         const body = `<section class="panel hero">
           <p class="eyebrow">Approval</p>
           <h1>${escapeHtml(detail.approval.title)}</h1>
@@ -939,34 +1134,58 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             <div class="kv-item"><div class="eyebrow">Scope</div><strong>${escapeHtml(detail.approval.scope ?? "once")}</strong></div>
             <div class="kv-item"><div class="eyebrow">Expires</div><strong>${escapeHtml(detail.approval.expiresAt)}</strong></div>
           </div>
-          <div class="actions">${linkButton("Разрешить один раз", "#", true)}${linkButton("Разрешить на фазу", "#")}${linkButton("Отклонить", "#")}${detail.session ? linkButton("Открыть session", detail.session.href) : ""}</div>
+          <div class="actions">${approvalActions}${detail.session ? linkButton("Открыть session", detail.session.href) : ""}</div>
         </section>`;
-        text(res, 200, renderPage(`Approval ${detail.approval.id}`, body));
+        text(res, 200, renderForRequest(req, `Approval ${detail.approval.id}`, body));
       }),
-      route("GET", "/hosts", async ({ res, url }) => {
-        const hosts = await dependencies.fetchJson<{ hosts: MiniAppHostCard[] }>(withUser("/api/v1/miniapp/hosts", url));
-        text(res, 200, renderPage("Hosts", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`));
+      route("GET", "/hosts", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Hosts")) {
+          return;
+        }
+
+        const hosts = await fetchForRequest<{ hosts: MiniAppHostCard[] }>(req, url, "/api/v1/miniapp/hosts");
+        text(res, 200, renderForRequest(req, "Hosts", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`));
       }),
-      route("GET", "/host/:id", async ({ res, params, url }) => {
-        const detail = await dependencies.fetchJson<{ host: MiniAppHostCard; workspaces: Workspace[]; sessions: MiniAppSessionCard[] }>(withUser(`/api/v1/miniapp/hosts/${params.id}`, url));
+      route("GET", "/host/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Host")) {
+          return;
+        }
+
+        const detail = await fetchForRequest<{ host: MiniAppHostCard; workspaces: Workspace[]; sessions: MiniAppSessionCard[] }>(req, url, `/api/v1/miniapp/hosts/${params.id}`);
         const body = `<section class="panel hero"><h1>${escapeHtml(detail.host.label)}</h1><p class="muted">${escapeHtml(detail.host.repoNames.join(", ") || "repos not reported")}</p><div class="actions">${linkButton("Использовать для новой задачи", "/new-task", true)}${linkButton("Проверить состояние", "/hosts")}</div></section>
           <section class="panel"><h2>Repos</h2><ul class="status-list">${detail.workspaces.map((workspace) => `<li><div><strong>${escapeHtml(workspace.repoName)}</strong><div class="muted">${escapeHtml(workspace.path)}</div></div><div class="status-meta">${renderBadge(workspace.status)}</div></li>`).join("")}</ul></section>
           <section class="panel"><h2>Sessions</h2>${renderSessionCards(detail.sessions)}</section>`;
-        text(res, 200, renderPage(`Host ${detail.host.label}`, body));
+        text(res, 200, renderForRequest(req, `Host ${detail.host.label}`, body));
       }),
-      route("GET", "/reports", async ({ res, url }) => {
-        const reports = await dependencies.fetchJson<{ reports: MiniAppReportCard[] }>(withUser("/api/v1/miniapp/reports", url));
-        text(res, 200, renderPage("Reports", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`));
+      route("GET", "/reports", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Reports")) {
+          return;
+        }
+
+        const reports = await fetchForRequest<{ reports: MiniAppReportCard[] }>(req, url, "/api/v1/miniapp/reports");
+        text(res, 200, renderForRequest(req, "Reports", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`));
       }),
-      route("GET", "/diff/:id", async ({ res, params, url }) => {
-        const diff = await dependencies.fetchJson<MiniAppDiffProjection>(withUser(`/api/v1/miniapp/sessions/${params.id}/diff`, url));
-        text(res, 200, renderPage("Diff", renderDiffView(diff)));
+      route("GET", "/diff/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Diff")) {
+          return;
+        }
+
+        const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/diff`);
+        text(res, 200, renderForRequest(req, "Diff", renderDiffView(diff)));
       }),
-      route("GET", "/verify/:id", async ({ res, params, url }) => {
-        const verify = await dependencies.fetchJson<MiniAppVerifyProjection>(withUser(`/api/v1/miniapp/sessions/${params.id}/verify`, url));
-        text(res, 200, renderPage("Verify", renderVerifyView(verify)));
+      route("GET", "/verify/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Verify")) {
+          return;
+        }
+
+        const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/verify`);
+        text(res, 200, renderForRequest(req, "Verify", renderVerifyView(verify)));
       }),
-      route("GET", "/new-task", async ({ res }) => {
+      route("GET", "/new-task", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "New task")) {
+          return;
+        }
+
         const body = `<section class="panel hero">
           <h1>Новая задача</h1>
           <p class="muted">Draft хранится локально с TTL. Запуск через backend будет добавлен к execution flow, когда host/session готовы.</p>
@@ -974,52 +1193,55 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           <textarea id="task-draft" data-draft placeholder="Опишите задачу коротко и конкретно"></textarea>
           <div class="actions">${linkButton("Выбрать host", "/hosts", true)}${linkButton("Отмена", "/")}</div>
         </section>`;
-        text(res, 200, renderPage("New task", body));
+        text(res, 200, renderForRequest(req, "New task", body));
       }),
-      route("GET", "/task/:id", async ({ res, params }) => {
-        const task = await dependencies.fetchJson<{
-          task: { id: string; rootPath: string; phase: string; verificationState: string };
-          validation: { ok: boolean; missing: string[] };
-        }>(`/api/v1/tasks/${params.id}`);
+      route("GET", "/task/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Task")) {
+          return;
+        }
 
-        const artifacts = await dependencies.fetchJson<{ artifacts: string[] }>(`/api/v1/tasks/${params.id}/artifacts`);
-        const artifactSections = await Promise.all(
-          ["spec.md", "state.json", "evidence.md", "problems.md", "verdict.json"].map(async (artifact) => {
-            const response = await dependencies.fetchJson<{ path: string; content: string }>(`/api/v1/tasks/${params.id}/artifact?path=${encodeURIComponent(artifact)}`);
-            return `<section class="panel"><h2>${escapeHtml(artifact)}</h2><pre>${escapeHtml(response.content)}</pre></section>`;
-          })
-        );
+        const bundle = await fetchForRequest<{
+          task: { id: string; rootPath: string; phase: string; verificationState: string };
+          sections: Array<{ id: string; label: string; files: string[] }>;
+          validation: { ok: boolean; missing: string[] };
+        }>(req, url, `/api/v1/miniapp/tasks/${params.id}/bundle`);
+        const artifactList = bundle.sections
+          .flatMap((section) => section.files.map((file) => `${section.label}: ${file}`))
+          .join("\n");
         const body = `
           <section class="panel">
             <div class="panel-header">
-              <h1>Task ${escapeHtml(task.task.id)}</h1>
-              ${renderBadge(task.task.verificationState)}
+              <h1>Task ${escapeHtml(bundle.task.id)}</h1>
+              ${renderBadge(bundle.task.verificationState)}
             </div>
             <div class="kv-grid">
-              <div class="kv-item"><div class="eyebrow">Phase</div><strong>${escapeHtml(task.task.phase)}</strong></div>
-              <div class="kv-item"><div class="eyebrow">Validation</div><strong>${escapeHtml(task.validation.ok ? "ok" : `missing ${task.validation.missing.join(", ")}`)}</strong></div>
-              <div class="kv-item"><div class="eyebrow">Bundle path</div><code>${escapeHtml(task.task.rootPath)}</code></div>
+              <div class="kv-item"><div class="eyebrow">Phase</div><strong>${escapeHtml(bundle.task.phase)}</strong></div>
+              <div class="kv-item"><div class="eyebrow">Validation</div><strong>${escapeHtml(bundle.validation.ok ? "ok" : `missing ${bundle.validation.missing.join(", ")}`)}</strong></div>
+              <div class="kv-item"><div class="eyebrow">Bundle path</div><code>${escapeHtml(bundle.task.rootPath)}</code></div>
             </div>
           </section>
-          ${renderProofProgress(task.task)}
+          ${renderProofProgress(bundle.task)}
           <section class="panel">
             <h2>Artifacts</h2>
-            <pre>${escapeHtml(artifacts.artifacts.join("\n"))}</pre>
+            <pre>${escapeHtml(artifactList || "No scoped artifacts available.")}</pre>
           </section>
-          ${artifactSections.join("\n")}
         `;
 
-        text(res, 200, renderPage(`Task ${task.task.id}`, body));
+        text(res, 200, renderForRequest(req, `Task ${bundle.task.id}`, body));
       }),
-      route("GET", "/session/:id", async ({ res, params, url }) => {
-        const detail = await dependencies.fetchJson<{
+      route("GET", "/session/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Session")) {
+          return;
+        }
+
+        const detail = await fetchForRequest<{
           session: MiniAppSessionCard & { prompt: string; currentSummary?: string; lastError?: string };
           task?: TaskBundle;
           approval?: MiniAppApprovalCard;
           events: SessionEvent[];
           actions: string[];
-        }>(withUser(`/api/v1/miniapp/sessions/${params.id}`, url));
-        text(res, 200, renderPage(`Session ${detail.session.id}`, renderSessionDetail(detail)));
+        }>(req, url, `/api/v1/miniapp/sessions/${params.id}`);
+        text(res, 200, renderForRequest(req, `Session ${detail.session.id}`, renderSessionDetail(detail)));
       })
     ],
     logger

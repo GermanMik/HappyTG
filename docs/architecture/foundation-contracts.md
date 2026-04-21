@@ -23,9 +23,11 @@ Recommended single-origin deployment for `happytg.gerta.crazedns.ru`:
 | --- | --- | --- |
 | `/` | redirect to `/miniapp` | Human entry point. |
 | `/miniapp` | `miniapp:3001` | Telegram Mini App frontend. |
-| `/api/*` | `api:4000` | Control-plane API. |
+| `/api/v1/miniapp/auth/session` | `api:4000` | Public Mini App session creation, validated with Telegram `initData`. |
+| `/api/v1/miniapp/approvals/{id}/resolve` | `api:4000` | Public Mini App approval action endpoint, protected by bearer Mini App session auth. |
+| `/api/*` | blocked by Caddy | Control-plane and daemon API stays internal unless a route has its own auth boundary. |
 | `/health` | `api:4000` | Fast-path health. |
-| `/bot/webhook` | `bot:4100` via `/telegram/webhook` rewrite | Public Telegram webhook path. |
+| `/telegram/webhook` | `bot:4100` | Public Telegram webhook delivery path. |
 | `/static/*` | `miniapp:3001` | Mini App static assets. |
 
 The Caddy skeleton lives at `infra/caddy/Caddyfile`.

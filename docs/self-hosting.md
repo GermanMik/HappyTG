@@ -20,9 +20,11 @@
 For `happytg.gerta.crazedns.ru`, use one HTTPS origin and path-based routing:
 
 - `/miniapp` -> Mini App frontend
-- `/api/*` -> control-plane API
+- `/api/v1/miniapp/auth/session` -> public Mini App session creation, validated with Telegram `initData`
+- `/api/v1/miniapp/approvals/{id}/resolve` -> public Mini App approval action endpoint, protected by Mini App bearer session auth
+- `/api/*` -> not publicly proxied by the starter Caddy config; keep control-plane and daemon mutations internal
 - `/health` -> fast API health
-- `/bot/webhook` -> Telegram webhook, rewritten to the bot app's internal `/telegram/webhook`
+- `/telegram/webhook` -> public Telegram webhook delivery endpoint
 - `/static/*` -> Mini App static assets
 
 The starter Caddy config is `infra/caddy/Caddyfile`.
@@ -30,7 +32,7 @@ The starter Caddy config is `infra/caddy/Caddyfile`.
 ## Control Plane Bring-Up
 
 1. Copy `.env.example` to `.env` on the control-plane host.
-2. Fill production values for database, Redis, object storage, Telegram webhook, and signing keys.
+2. Fill production values for database, Redis, object storage, Telegram webhook, Mini App URL, and signing keys.
 3. Start the packaged services:
 
    ```bash
@@ -39,7 +41,8 @@ The starter Caddy config is `infra/caddy/Caddyfile`.
 
 4. Confirm API, bot, worker, and Mini App logs are healthy.
 5. Confirm Prometheus can scrape API `/metrics` and Grafana can see the Prometheus datasource.
-6. Configure Telegram webhook delivery against the public API endpoint.
+6. Configure Telegram webhook delivery against `https://<domain>/telegram/webhook`.
+7. Configure the Telegram Mini App entry point with `https://<domain>/miniapp`; HappyTG also attempts Bot API `setChatMenuButton` automatically when the URL is valid public HTTPS.
 
 ## Execution Host Bring-Up
 
@@ -56,6 +59,11 @@ The starter Caddy config is `infra/caddy/Caddyfile`.
 - `TELEGRAM_UPDATES_MODE=auto` chooses polling for local/non-public `HAPPYTG_PUBLIC_URL` values and webhook for public HTTPS URLs.
 - `TELEGRAM_UPDATES_MODE=webhook` keeps the deployment webhook-first and surfaces a degraded bot ready state when Telegram is not actually pointed at the expected webhook URL.
 - `TELEGRAM_UPDATES_MODE=polling` is acceptable for local bring-up or temporary degraded operation, but it should not replace webhook-first stable deployments.
+- Webhook delivery and Mini App launch are separate URLs:
+  - webhook delivery: `https://<domain>/telegram/webhook`
+  - Mini App public URL: `https://<domain>/miniapp`
+- In BotFather, set the bot Menu Button/Main Mini App to the Mini App public URL. If you rely on automatic setup, confirm `/ready` reports `miniApp.status=ready` and `menuButtonConfigured=true`.
+- Do not use `http://localhost:3001` or any non-HTTPS/private URL for production Telegram `web_app` buttons.
 
 ## Backup and Upgrade
 

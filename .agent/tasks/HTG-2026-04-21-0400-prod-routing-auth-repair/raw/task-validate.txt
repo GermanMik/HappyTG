@@ -1,0 +1,9 @@
+
+> happytg@0.4.0 happytg C:\Users\tikta\.codex\worktrees\d2bb\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-21-0400-prod-routing-auth-repair"
+
+Task: HTG-2026-04-21-0400-prod-routing-auth-repair
+Bundle: C:\Users\tikta\.codex\worktrees\d2bb\HappyTG\.agent\tasks\HTG-2026-04-21-0400-prod-routing-auth-repair
+Validation: ok
+Phase: complete
+Verification: passed

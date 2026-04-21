@@ -4,7 +4,7 @@ import test from "node:test";
 import type { ApprovalRequest, Host, Session, TaskBundle, Workspace } from "../../../packages/protocol/src/index.js";
 
 import type { BotDependencies } from "./handlers.js";
-import { createBotHandlers } from "./handlers.js";
+import { createBotHandlers, resolveMiniAppBaseUrl } from "./handlers.js";
 
 interface CapturedMessage {
   chatId: number;
@@ -137,6 +137,64 @@ test("menu command renders a concise action-first main menu", async () => {
   assert.match(messages[0]?.text ?? "", /Активные сессии: 1/);
   assert.match(messages[0]?.text ?? "", /Ждут подтверждения: 1/);
   assert.deepEqual((messages[0]?.replyMarkup as { inline_keyboard: unknown[] })?.inline_keyboard.length, 3);
+});
+
+test("mini app url resolver derives public https URL before legacy dev app URL", () => {
+  const resolved = resolveMiniAppBaseUrl({
+    NODE_ENV: "development",
+    HAPPYTG_APP_URL: "http://localhost:3001",
+    HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+  });
+
+  assert.equal(resolved.status, "ready");
+  assert.equal(resolved.url, "https://happy.example.com/miniapp");
+  assert.equal(resolved.source, "HAPPYTG_PUBLIC_URL");
+});
+
+test("mini app url resolver degrades invalid production URL", () => {
+  const resolved = resolveMiniAppBaseUrl({
+    NODE_ENV: "production",
+    HAPPYTG_MINIAPP_URL: "http://localhost:3001"
+  });
+
+  assert.equal(resolved.status, "degraded");
+  assert.equal(resolved.url, undefined);
+  assert.match(resolved.detail, /HTTPS|localhost/i);
+});
+
+test("inline web_app buttons use the production mini app URL", async () => {
+  const messages: CapturedMessage[] = [];
+  const handlers = createBotHandlers({
+    async apiFetch(pathname) {
+      if (pathname === "/api/v1/users/by-telegram/42") {
+        return { id: "usr_42" } as never;
+      }
+      if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_42") {
+        return {
+          hosts: [host()],
+          workspaces: [workspace()],
+          sessions: [session()],
+          approvals: [],
+          tasks: []
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    },
+    miniAppBaseUrl: "https://happy.example.com/miniapp",
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/menu",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+
+  assert.match(JSON.stringify(messages[0]?.replyMarkup ?? {}), /https:\/\/happy\.example\.com\/miniapp\?screen=home/);
+  assert.doesNotMatch(JSON.stringify(messages[0]?.replyMarkup ?? {}), /localhost:3001/);
 });
 
 test("task wizard uses smart defaults and creates a proof session from callback flow", async () => {

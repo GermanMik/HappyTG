@@ -376,6 +376,13 @@ test("mini app launch validates initData, issues app session, and exposes action
     const revokedGrant = await service.revokeMiniAppLaunchGrant(grant.grant.id, claim.user.id);
     assert.ok(revokedGrant.revokedAt);
 
+    const anonymousDashboard = await service.getMiniAppDashboard();
+    assert.equal(anonymousDashboard.stats.pendingApprovals, 0);
+    assert.equal(anonymousDashboard.attention.length, 0);
+    const anonymousOverview = await service.getMiniAppOverview();
+    assert.equal(anonymousOverview.sessions.length, 0);
+    assert.equal(anonymousOverview.approvals.length, 0);
+
     const dashboard = await service.getMiniAppDashboard(claim.user.id);
     assert.equal(dashboard.stats.pendingApprovals, 1);
     assert.equal(dashboard.attention[0]?.kind, "approval");
