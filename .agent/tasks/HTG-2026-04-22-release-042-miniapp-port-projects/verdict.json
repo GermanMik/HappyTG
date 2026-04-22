@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-22-release-042-miniapp-port-projects",
+  "verdict": "passed",
+  "reason": "Mini App rendering, project/session control, Caddy/Compose port separation, release metadata, browser verification, and full repo checks passed."
+}

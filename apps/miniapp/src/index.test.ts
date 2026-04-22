@@ -70,6 +70,7 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
               id: "ses_1",
               title: "Quick fix",
               state: "completed",
+              runtime: "codex-cli",
               phase: "complete",
               verificationState: "passed",
               hostLabel: "devbox",
@@ -105,7 +106,9 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
     const html = await response.text();
 
     assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type") ?? "", /text\/html/);
     assert.match(html, /Панель управления HappyTG/);
+    assert.match(html, /Codex CLI/);
     assert.match(html, /devbox/);
     assert.match(html, /Нужно подтверждение/);
     assert.match(html, /href="\/session\/ses_1"/);
@@ -285,6 +288,100 @@ test("task page renders scoped canonical artifacts", async () => {
   }
 });
 
+test("projects page renders workspaces and new task creates a Codex session", async () => {
+  const calls: Array<{ pathname: string; init?: RequestInit }> = [];
+  const server = createMiniAppServer({
+    async fetchJson(pathname, init) {
+      calls.push({ pathname, init });
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "ws_1",
+              hostId: "host_1",
+              hostLabel: "devbox",
+              hostStatus: "active",
+              repoName: "HappyTG",
+              path: "C:/Develop/Projects/HappyTG",
+              defaultBranch: "main",
+              activeSessions: 2,
+              href: "/project/ws_1",
+              newSessionHref: "/new-task?hostId=host_1&workspaceId=ws_1"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        assert.equal(init?.method, "POST");
+        assert.deepEqual(JSON.parse(String(init?.body)), {
+          hostId: "host_1",
+          workspaceId: "ws_1",
+          mode: "proof",
+          title: "Release check",
+          prompt: "Check project management",
+          acceptanceCriteria: ["Codex session visible"],
+          runtime: "codex-cli"
+        });
+        return {
+          session: {
+            id: "ses_42",
+            title: "Release check",
+            state: "created",
+            runtime: "codex-cli",
+            hostLabel: "devbox",
+            repoName: "HappyTG",
+            lastUpdatedAt: "2026-04-22T04:00:00.000Z",
+            href: "/session/ses_42",
+            nextAction: "open"
+          }
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const projectsResponse = await fetch(`http://127.0.0.1:${address.port}/projects?userId=usr_1`);
+    const projectsHtml = await projectsResponse.text();
+
+    assert.equal(projectsResponse.status, 200);
+    assert.match(projectsHtml, /HappyTG/);
+    assert.match(projectsHtml, /C:\/Develop\/Projects\/HappyTG/);
+    assert.match(projectsHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1"/);
+
+    const taskResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        hostId: "host_1",
+        workspaceId: "ws_1",
+        mode: "proof",
+        title: "Release check",
+        prompt: "Check project management",
+        acceptanceCriteria: ["Codex session visible"]
+      })
+    });
+    const payload = await taskResponse.json() as { sessionHref: string; session: { runtime: string } };
+
+    assert.equal(taskResponse.status, 200);
+    assert.equal(payload.sessionHref, "/session/ses_42");
+    assert.equal(payload.session.runtime, "codex-cli");
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("session page renders timeline, summary, and task link", async () => {
   const server = createMiniAppServer({
     async fetchJson(pathname) {
@@ -297,6 +394,7 @@ test("session page renders timeline, summary, and task link", async () => {
             id: "ses_2",
             title: "Proof task",
             state: "verifying",
+            runtime: "codex-cli",
             phase: "verify",
             verificationState: "running",
             hostLabel: "devbox",
@@ -358,6 +456,7 @@ test("session page renders timeline, summary, and task link", async () => {
 
     assert.equal(response.status, 200);
     assert.match(html, /Proof task/);
+    assert.match(html, /Codex CLI/);
     assert.match(html, /Verifier running/);
     assert.match(html, /Proof Progress/);
     assert.match(html, /href="\/task\/HTG-0002"/);

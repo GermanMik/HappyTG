@@ -323,6 +323,46 @@ function validateManualPortSelection(value: string, current: PlannedPortReport, 
   return undefined;
 }
 
+function isLocalMiniAppUrl(value: string | undefined): boolean {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return true;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    return (url.protocol === "http:" || url.protocol === "https:")
+      && ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function shouldRefreshLocalCorsOrigins(value: string | undefined): boolean {
+  const origins = (value ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return origins.length === 0 || origins.every(isLocalMiniAppUrl);
+}
+
+function portOverrideEnvUpdates(conflict: PlannedPortReport, selectedPort: number, repoEnv: NodeJS.ProcessEnv): Record<string, string> {
+  const updates: Record<string, string> = {
+    [conflict.overrideEnv!]: String(selectedPort)
+  };
+
+  if (conflict.overrideEnv === "HAPPYTG_MINIAPP_PORT") {
+    if (isLocalMiniAppUrl(repoEnv.HAPPYTG_APP_URL)) {
+      updates.HAPPYTG_APP_URL = `http://localhost:${selectedPort}`;
+    }
+    if (shouldRefreshLocalCorsOrigins(repoEnv.HAPPYTG_DEV_CORS_ORIGINS)) {
+      updates.HAPPYTG_DEV_CORS_ORIGINS = `http://localhost:${selectedPort},http://127.0.0.1:${selectedPort}`;
+    }
+  }
+
+  return updates;
+}
+
 function unresolvedPortConflicts(ports: PlannedPortReport[]): PlannedPortReport[] {
   return ports.filter((port) => port.state === "occupied_external" && Boolean(port.overrideEnv));
 }
@@ -431,13 +471,12 @@ async function resolvePortConflictsBeforePostChecks(input: {
     input.updateProgressDetail?.(
       `Saving \`${conflict.overrideEnv}=${selectedPort}\` in ${path.join(input.repoPath, ".env")}.\nRe-running planned port preflight so the installer can continue.`
     );
+    const updates = portOverrideEnvUpdates(conflict, selectedPort, repoEnv);
     const envWrite = await input.writeMergedEnvFileImpl({
       repoRoot: input.repoPath,
       env: input.installEnv,
       platform: input.platform,
-      updates: {
-        [conflict.overrideEnv]: String(selectedPort)
-      }
+      updates
     });
     appliedOverrides.push({
       id: conflict.id,
@@ -447,7 +486,7 @@ async function resolvePortConflictsBeforePostChecks(input: {
       overrideEnv: conflict.overrideEnv,
       envFilePath: envWrite.envFilePath
     });
-    repoEnv[conflict.overrideEnv] = String(selectedPort);
+    Object.assign(repoEnv, updates);
     report = await input.runBootstrapCheck("setup", {
       cwd: input.repoPath,
       env: repoEnv,

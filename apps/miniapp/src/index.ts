@@ -3,18 +3,22 @@ import { fileURLToPath } from "node:url";
 import {
   createJsonServer,
   createLogger,
+  html,
   json,
   loadHappyTGEnv,
+  readJsonBody,
   readPort,
   route,
   text,
   type Logger
 } from "../../../packages/shared/src/index.js";
 import type {
+  CreateSessionRequest,
   MiniAppApprovalCard,
   MiniAppDashboardProjection,
   MiniAppDiffProjection,
   MiniAppHostCard,
+  MiniAppProjectCard,
   MiniAppReportCard,
   MiniAppSessionCard,
   MiniAppVerifyProjection,
@@ -509,7 +513,7 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
         bottom: 0;
         z-index: 20;
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         gap: 0;
         border-top: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.96);
@@ -586,6 +590,7 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
     <nav class="bottom-nav" aria-label="Основная навигация">
       <a href="/">Home</a>
       <a href="/sessions">Sessions</a>
+      <a href="/projects">Projects</a>
       <a href="/approvals">Approvals</a>
       <a href="/hosts">Hosts</a>
       <a href="/reports">Reports</a>
@@ -722,6 +727,41 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
             });
           });
         });
+        document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var form = event.currentTarget;
+          var submit = form.querySelector("[type=submit]");
+          if (submit) submit.disabled = true;
+          var data = new FormData(form);
+          fetch(location.pathname + location.search, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              hostId: data.get("hostId"),
+              workspaceId: data.get("workspaceId"),
+              mode: data.get("mode") || "proof",
+              title: data.get("title") || "Mini App task",
+              prompt: data.get("prompt") || "",
+              acceptanceCriteria: String(data.get("acceptanceCriteria") || "")
+                .split(/\\r?\\n/)
+                .map(function (item) { return item.trim(); })
+                .filter(Boolean)
+            })
+          }).then(function (response) {
+            if (!response.ok) throw new Error("session create failed");
+            return response.json();
+          }).then(function (payload) {
+            localStorage.removeItem(key);
+            var href = payload.sessionHref || (payload.session && payload.session.href) || "/sessions";
+            if (window.HAPPYTgMiniAppBasePath && href.charAt(0) === "/") {
+              href = window.HAPPYTgMiniAppBasePath + href;
+            }
+            location.href = href;
+          }).catch(function () {
+            if (submit) submit.disabled = false;
+          });
+        });
       })();
     </script>
   </body>
@@ -767,6 +807,7 @@ function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
       <p class="muted">Короткий статус, быстрые действия и переход к деталям без чтения raw logs.</p>
       <div class="actions">
         ${linkButton("Новая задача", "/new-task", true)}
+        ${linkButton("Projects", "/projects")}
         ${linkButton("Approvals", "/approvals")}
         ${dashboard.recentSessions[0] ? linkButton("Продолжить последнюю", dashboard.recentSessions[0].href) : ""}
       </div>
@@ -792,6 +833,10 @@ function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
   `;
 }
 
+function runtimeLabel(runtime: string | undefined): string {
+  return runtime === "codex-cli" ? "Codex CLI" : runtime ?? "runtime n/a";
+}
+
 function renderSessionCards(sessions: MiniAppSessionCard[]): string {
   if (sessions.length === 0) {
     return renderEmptyState("Нет активных сессий", "Когда host будет подключен, новая задача появится здесь.", "Проверить hosts", "/hosts");
@@ -800,11 +845,55 @@ function renderSessionCards(sessions: MiniAppSessionCard[]): string {
   return `<ul class="status-list">${sessions.map((session) => `<li>
     <div>
       <strong><a href="${escapeHtml(session.href)}">${escapeHtml(session.title)}</a></strong>
-      <div class="muted">${escapeHtml(session.repoName ?? "repo not selected")} · ${escapeHtml(session.hostLabel ?? "host n/a")} · ${escapeHtml(session.lastUpdatedAt)}</div>
+      <div class="muted">${escapeHtml(runtimeLabel(session.runtime))} · ${escapeHtml(session.repoName ?? "repo not selected")} · ${escapeHtml(session.hostLabel ?? "host n/a")} · ${escapeHtml(session.lastUpdatedAt)}</div>
       ${session.attention ? `<div class="muted">Needs: ${escapeHtml(session.attention)}</div>` : ""}
     </div>
     <div class="status-meta">${renderBadge(session.state)}${session.phase ? renderBadge(session.phase, "info") : ""}${session.verificationState ? renderBadge(session.verificationState) : ""}${linkButton(session.nextAction, session.href)}</div>
   </li>`).join("")}</ul>`;
+}
+
+function renderProjectCards(projects: MiniAppProjectCard[]): string {
+  if (projects.length === 0) {
+    return renderEmptyState("Проекты не найдены", "Подключите host daemon и дождитесь hello со списком workspaces.", "Проверить hosts", "/hosts");
+  }
+
+  return `<ul class="status-list">${projects.map((project) => `<li>
+    <div>
+      <strong><a href="${escapeHtml(project.href)}">${escapeHtml(project.repoName)}</a></strong>
+      <div class="muted">${escapeHtml(project.path)} · ${escapeHtml(project.hostLabel ?? "host n/a")}${project.defaultBranch ? ` · ${escapeHtml(project.defaultBranch)}` : ""}</div>
+    </div>
+    <div class="status-meta">${project.hostStatus ? renderBadge(project.hostStatus) : ""}${renderBadge(`active ${project.activeSessions}`, "info")}${linkButton("Новая задача", project.newSessionHref, true)}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?: string; workspaceId?: string }): string {
+  const selectedWorkspaceId = selected?.workspaceId ?? projects[0]?.id;
+  const selectedProject = projects.find((project) => project.id === selectedWorkspaceId) ?? projects[0];
+  const options = projects.map((project) => `<option value="${escapeHtml(project.id)}" data-host-id="${escapeHtml(project.hostId)}"${project.id === selectedProject?.id ? " selected" : ""}>${escapeHtml(project.repoName)} · ${escapeHtml(project.hostLabel ?? "host n/a")}</option>`).join("");
+
+  return `<section class="panel hero">
+    <h1>Новая Codex-задача</h1>
+    <p class="muted">Выберите project/workspace, задайте инструкцию и создайте Codex CLI session через backend.</p>
+  </section>
+  <section class="panel">
+    ${projects.length === 0 ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form>
+      <input type="hidden" name="hostId" value="${escapeHtml(selectedProject?.hostId ?? selected?.hostId ?? "")}">
+      <label class="eyebrow" for="workspaceId">Project</label>
+      <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''">${options}</select>
+      <label class="eyebrow" for="mode">Mode</label>
+      <select id="mode" name="mode">
+        <option value="proof" selected>proof</option>
+        <option value="quick">quick</option>
+      </select>
+      <label class="eyebrow" for="title">Название</label>
+      <input id="title" name="title" value="Mini App task">
+      <label class="eyebrow" for="task-draft">Инструкция</label>
+      <textarea id="task-draft" name="prompt" data-draft placeholder="Опишите задачу коротко и конкретно"></textarea>
+      <label class="eyebrow" for="acceptanceCriteria">Acceptance criteria</label>
+      <textarea id="acceptanceCriteria" name="acceptanceCriteria" placeholder="Каждый критерий с новой строки"></textarea>
+      <div class="actions"><button class="button button-primary" type="submit">Создать Codex session</button>${linkButton("Отмена", "/projects")}</div>
+    </form>`}
+  </section>`;
 }
 
 function renderApprovalCards(approvals: MiniAppApprovalCard[]): string {
@@ -905,7 +994,7 @@ function renderSessionDetail(detail: {
     <section class="panel hero">
       <p class="eyebrow">Session</p>
       <h1>${escapeHtml(detail.session.title)}</h1>
-      <p class="muted">${escapeHtml(detail.session.repoName ?? "repo n/a")} · ${escapeHtml(detail.session.hostLabel ?? "host n/a")}</p>
+      <p class="muted">${escapeHtml(runtimeLabel(detail.session.runtime))} · ${escapeHtml(detail.session.repoName ?? "repo n/a")} · ${escapeHtml(detail.session.hostLabel ?? "host n/a")}</p>
       <div class="actions">
         ${detail.approval && detail.approval.state === "waiting_human" ? linkButton("Открыть approval", detail.approval.href, true) : ""}
         ${detail.task ? linkButton("Proof timeline", `/task/${encodeURIComponent(detail.task.id)}`) : ""}
@@ -915,6 +1004,7 @@ function renderSessionDetail(detail: {
     </section>
     <section class="grid">
       <div class="kv-item"><div class="eyebrow">Status</div><strong>${escapeHtml(detail.session.state)}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Runtime</div><strong>${escapeHtml(runtimeLabel(detail.session.runtime))}</strong></div>
       <div class="kv-item"><div class="eyebrow">Phase</div><strong>${escapeHtml(detail.session.phase ?? "n/a")}</strong></div>
       <div class="kv-item"><div class="eyebrow">Verify</div><strong>${escapeHtml(detail.session.verificationState ?? "not_started")}</strong></div>
     </section>
@@ -1027,6 +1117,22 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       : undefined;
   };
   const fetchForRequest = <T>(req: { headers: Record<string, string | string[] | undefined> }, url: URL, pathname: string) => dependencies.fetchJson<T>(withUser(pathname, url), authInit(req));
+  const postForRequest = <T>(
+    req: { headers: Record<string, string | string[] | undefined> },
+    url: URL,
+    pathname: string,
+    body: unknown
+  ) => {
+    const authorizationHeaders = authInit(req)?.headers as Record<string, string> | undefined;
+    return dependencies.fetchJson<T>(withUser(pathname, url), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(authorizationHeaders ?? {})
+      },
+      body: JSON.stringify(body)
+    });
+  };
   const renderForRequest = (req: { headers: Record<string, string | string[] | undefined> }, title: string, body: string, options?: { needsAuth?: boolean }) => renderPage(title, body, {
     basePath: basePathFor(req),
     needsAuth: options?.needsAuth
@@ -1036,7 +1142,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       return true;
     }
 
-    text(res, 200, renderForRequest(req, title, renderAuthPending(), { needsAuth: true }));
+    html(res, 200, renderForRequest(req, title, renderAuthPending(), { needsAuth: true }));
     return false;
   };
 
@@ -1066,12 +1172,12 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         const screen = url.searchParams.get("screen");
         if (screen === "sessions") {
           const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
-          text(res, 200, renderForRequest(req, "Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`));
+          html(res, 200, renderForRequest(req, "Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`));
           return;
         }
         if (screen === "approvals") {
           const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
-          text(res, 200, renderForRequest(req, "Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`));
+          html(res, 200, renderForRequest(req, "Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`));
           return;
         }
         if (screen === "session" && url.searchParams.get("id")) {
@@ -1083,22 +1189,22 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             events: SessionEvent[];
             actions: string[];
           }>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(id)}`);
-          text(res, 200, renderForRequest(req, `Session ${detail.session.id}`, renderSessionDetail(detail)));
+          html(res, 200, renderForRequest(req, `Session ${detail.session.id}`, renderSessionDetail(detail)));
           return;
         }
         if (screen === "diff" && url.searchParams.get("sessionId")) {
           const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/diff`);
-          text(res, 200, renderForRequest(req, "Diff", renderDiffView(diff)));
+          html(res, 200, renderForRequest(req, "Diff", renderDiffView(diff)));
           return;
         }
         if (screen === "verify" && url.searchParams.get("sessionId")) {
           const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/verify`);
-          text(res, 200, renderForRequest(req, "Verify", renderVerifyView(verify)));
+          html(res, 200, renderForRequest(req, "Verify", renderVerifyView(verify)));
           return;
         }
 
         const dashboard = await fetchForRequest<MiniAppDashboardProjection>(req, url, "/api/v1/miniapp/dashboard");
-        text(res, 200, renderForRequest(req, "HappyTG Mini App", renderDashboardView(dashboard)));
+        html(res, 200, renderForRequest(req, "HappyTG Mini App", renderDashboardView(dashboard)));
       }),
       route("GET", "/sessions", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Sessions")) {
@@ -1106,7 +1212,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
-        text(res, 200, renderForRequest(req, "Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Статус, фаза, verify и следующий шаг в одном месте.</p></section>${renderSessionCards(sessions.sessions)}`));
+        html(res, 200, renderForRequest(req, "Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Статус, фаза, verify и следующий шаг в одном месте.</p></section>${renderSessionCards(sessions.sessions)}`));
       }),
       route("GET", "/approvals", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Approvals")) {
@@ -1114,7 +1220,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
-        text(res, 200, renderForRequest(req, "Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`));
+        html(res, 200, renderForRequest(req, "Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`));
       }),
       route("GET", "/approval/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Approval")) {
@@ -1136,7 +1242,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           </div>
           <div class="actions">${approvalActions}${detail.session ? linkButton("Открыть session", detail.session.href) : ""}</div>
         </section>`;
-        text(res, 200, renderForRequest(req, `Approval ${detail.approval.id}`, body));
+        html(res, 200, renderForRequest(req, `Approval ${detail.approval.id}`, body));
       }),
       route("GET", "/hosts", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Hosts")) {
@@ -1144,7 +1250,35 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const hosts = await fetchForRequest<{ hosts: MiniAppHostCard[] }>(req, url, "/api/v1/miniapp/hosts");
-        text(res, 200, renderForRequest(req, "Hosts", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`));
+        html(res, 200, renderForRequest(req, "Hosts", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`));
+      }),
+      route("GET", "/projects", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Projects")) {
+          return;
+        }
+
+        const projects = await fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects");
+        html(res, 200, renderForRequest(req, "Projects", `<section class="panel hero"><h1>Projects</h1><p class="muted">Workspaces reported by paired hosts. Start a Codex CLI session from the project you want to operate on.</p></section>${renderProjectCards(projects.projects)}`));
+      }),
+      route("GET", "/project/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Project")) {
+          return;
+        }
+
+        const projects = await fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects");
+        const project = projects.projects.find((item) => item.id === params.id);
+        if (!project) {
+          html(res, 404, renderForRequest(req, "Project not found", renderEmptyState("Project not found", "Workspace is not available for this Mini App session.", "Projects", "/projects")));
+          return;
+        }
+
+        const body = `<section class="panel hero"><h1>${escapeHtml(project.repoName)}</h1><p class="muted">${escapeHtml(project.path)}</p><div class="actions">${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Projects", "/projects")}</div></section>
+          <section class="grid">
+            <div class="kv-item"><div class="eyebrow">Runtime</div><strong>Codex CLI</strong></div>
+            <div class="kv-item"><div class="eyebrow">Host</div><strong>${escapeHtml(project.hostLabel ?? "host n/a")}</strong></div>
+            <div class="kv-item"><div class="eyebrow">Active sessions</div><strong>${project.activeSessions}</strong></div>
+          </section>`;
+        html(res, 200, renderForRequest(req, `Project ${project.repoName}`, body));
       }),
       route("GET", "/host/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Host")) {
@@ -1155,7 +1289,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         const body = `<section class="panel hero"><h1>${escapeHtml(detail.host.label)}</h1><p class="muted">${escapeHtml(detail.host.repoNames.join(", ") || "repos not reported")}</p><div class="actions">${linkButton("Использовать для новой задачи", "/new-task", true)}${linkButton("Проверить состояние", "/hosts")}</div></section>
           <section class="panel"><h2>Repos</h2><ul class="status-list">${detail.workspaces.map((workspace) => `<li><div><strong>${escapeHtml(workspace.repoName)}</strong><div class="muted">${escapeHtml(workspace.path)}</div></div><div class="status-meta">${renderBadge(workspace.status)}</div></li>`).join("")}</ul></section>
           <section class="panel"><h2>Sessions</h2>${renderSessionCards(detail.sessions)}</section>`;
-        text(res, 200, renderForRequest(req, `Host ${detail.host.label}`, body));
+        html(res, 200, renderForRequest(req, `Host ${detail.host.label}`, body));
       }),
       route("GET", "/reports", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Reports")) {
@@ -1163,7 +1297,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const reports = await fetchForRequest<{ reports: MiniAppReportCard[] }>(req, url, "/api/v1/miniapp/reports");
-        text(res, 200, renderForRequest(req, "Reports", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`));
+        html(res, 200, renderForRequest(req, "Reports", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`));
       }),
       route("GET", "/diff/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Diff")) {
@@ -1171,7 +1305,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/diff`);
-        text(res, 200, renderForRequest(req, "Diff", renderDiffView(diff)));
+        html(res, 200, renderForRequest(req, "Diff", renderDiffView(diff)));
       }),
       route("GET", "/verify/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Verify")) {
@@ -1179,21 +1313,33 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/verify`);
-        text(res, 200, renderForRequest(req, "Verify", renderVerifyView(verify)));
+        html(res, 200, renderForRequest(req, "Verify", renderVerifyView(verify)));
       }),
       route("GET", "/new-task", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "New task")) {
           return;
         }
 
-        const body = `<section class="panel hero">
-          <h1>Новая задача</h1>
-          <p class="muted">Draft хранится локально с TTL. Запуск через backend будет добавлен к execution flow, когда host/session готовы.</p>
-          <label class="eyebrow" for="task-draft">Инструкция</label>
-          <textarea id="task-draft" data-draft placeholder="Опишите задачу коротко и конкретно"></textarea>
-          <div class="actions">${linkButton("Выбрать host", "/hosts", true)}${linkButton("Отмена", "/")}</div>
-        </section>`;
-        text(res, 200, renderForRequest(req, "New task", body));
+        const projects = await fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects");
+        html(res, 200, renderForRequest(req, "New task", renderNewTaskForm(projects.projects, {
+          hostId: url.searchParams.get("hostId") ?? undefined,
+          workspaceId: url.searchParams.get("workspaceId") ?? undefined
+        })));
+      }),
+      route("POST", "/new-task", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "New task")) {
+          return;
+        }
+
+        const body = await readJsonBody<Omit<CreateSessionRequest, "userId" | "runtime">>(req);
+        const created = await postForRequest<{ session: MiniAppSessionCard }>(req, url, "/api/v1/miniapp/sessions", {
+          ...body,
+          runtime: "codex-cli"
+        });
+        json(res, 200, {
+          ...created,
+          sessionHref: created.session.href
+        });
       }),
       route("GET", "/task/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Task")) {
@@ -1227,7 +1373,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           </section>
         `;
 
-        text(res, 200, renderForRequest(req, `Task ${bundle.task.id}`, body));
+        html(res, 200, renderForRequest(req, `Task ${bundle.task.id}`, body));
       }),
       route("GET", "/session/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Session")) {
@@ -1241,7 +1387,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           events: SessionEvent[];
           actions: string[];
         }>(req, url, `/api/v1/miniapp/sessions/${params.id}`);
-        text(res, 200, renderForRequest(req, `Session ${detail.session.id}`, renderSessionDetail(detail)));
+        html(res, 200, renderForRequest(req, `Session ${detail.session.id}`, renderSessionDetail(detail)));
       })
     ],
     logger

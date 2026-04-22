@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v0.4.2
+
+### Fixed
+
+- Mini App HTML routes now respond as `text/html`, so Telegram/browser WebViews render the UI instead of displaying raw HTML source.
+- Docker Compose keeps the Mini App container listener on internal port `3001` while still allowing a host port such as `3007`, preventing Caddy from drifting when local port conflicts are resolved.
+- Interactive install port conflict resolution now keeps `HAPPYTG_APP_URL` and `HAPPYTG_DEV_CORS_ORIGINS` in sync when `HAPPYTG_MINIAPP_PORT` changes.
+
+### Added
+
+- Mini App now exposes Projects/workspaces, shows Codex CLI runtime on session cards/details, and can create a Codex CLI session from a selected project.
+- Caddy Mini App upstream can be overridden with `HAPPYTG_MINIAPP_UPSTREAM` for host-run Caddy setups such as `127.0.0.1:3007`.
+
+### Verification
+
+- Release validation covers Mini App project/session UI, API Mini App project/session endpoints, Caddy/Compose port separation, browser rendering, repo checks, and canonical task validation.
+
 ## v0.4.1
 
 ### Fixed

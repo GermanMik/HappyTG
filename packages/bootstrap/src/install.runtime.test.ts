@@ -1861,7 +1861,9 @@ test("runHappyTGInstall interactive port preflight offers three suggested ports 
         "TELEGRAM_ALLOWED_USER_IDS=",
         "TELEGRAM_HOME_CHANNEL=",
         "TELEGRAM_BOT_USERNAME=",
-        "HAPPYTG_MINIAPP_PORT=3001"
+        "HAPPYTG_MINIAPP_PORT=3001",
+        "HAPPYTG_APP_URL=http://localhost:3001",
+        "HAPPYTG_DEV_CORS_ORIGINS=http://localhost:3001,http://127.0.0.1:3001"
       ].join("\n"),
       "utf8"
     );
@@ -2000,6 +2002,8 @@ test("runHappyTGInstall interactive port preflight offers three suggested ports 
     assert.equal(setupCall, 2);
     assert.equal(result.status, "pass");
     assert.match(envText, /HAPPYTG_MINIAPP_PORT=3002/);
+    assert.match(envText, /HAPPYTG_APP_URL=http:\/\/localhost:3002/);
+    assert.match(envText, /HAPPYTG_DEV_CORS_ORIGINS=http:\/\/localhost:3002,http:\/\/127\.0\.0\.1:3002/);
     assert.equal(result.finalization?.items.some((item) => item.id === "port-preflight-miniapp" && item.kind === "auto"), true);
   } finally {
     await rm(tempDir, { recursive: true, force: true });

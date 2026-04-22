@@ -188,6 +188,16 @@ If `3001` is already occupied:
 - use `HAPPYTG_MINIAPP_PORT` or `PORT` to choose a different port manually;
 - or free the existing listener and restart the Mini App.
 
+When you choose a non-default Mini App port such as `3007`, keep the local URL settings on the same port:
+
+```env
+HAPPYTG_MINIAPP_PORT=3007
+HAPPYTG_APP_URL=http://localhost:3007
+HAPPYTG_DEV_CORS_ORIGINS=http://localhost:3007,http://127.0.0.1:3007
+```
+
+If Caddy runs directly on the host, point it at the same listener with `HAPPYTG_MINIAPP_UPSTREAM=127.0.0.1:3007`. If Caddy runs through `infra/docker-compose.example.yml`, leave `HAPPYTG_MINIAPP_UPSTREAM` unset; compose maps the host port to the Mini App container's internal `3001`.
+
 If `4000` is already occupied:
 
 - if `pnpm happytg setup` says HappyTG API is already running there, reuse it;
