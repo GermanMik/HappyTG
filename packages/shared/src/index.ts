@@ -790,6 +790,12 @@ export function text(res: ServerResponse, statusCode: number, value: string): vo
   res.end(value);
 }
 
+export function html(res: ServerResponse, statusCode: number, value: string): void {
+  res.statusCode = statusCode;
+  res.setHeader("content-type", "text/html; charset=utf-8");
+  res.end(value);
+}
+
 export interface CorsOptions {
   allowedOrigins: string[];
   allowedMethods?: string[];

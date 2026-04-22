@@ -51,6 +51,24 @@ HAPPYTG_APP_URL=https://happytg.gerta.crazedns.ru:8443/miniapp
 
 The Compose file maps `${HAPPYTG_HTTPS_PORT:-443}:443`; this supports external `8443` without assuming public `443`. If only non-standard HTTPS is externally reachable, automatic Caddy ACME issuance may require DNS challenge, an external certificate, or an upstream TLS proxy. Verify TLS with the exact public URL before configuring Telegram.
 
+## Mini App Port Model
+
+There are two Mini App ports to keep separate:
+
+- local/host port: `HAPPYTG_MINIAPP_PORT`, for example `3007` when `3001` is occupied on the host;
+- Docker internal port: `3001`, used by the `miniapp` service and Docker-network Caddy upstream `miniapp:3001`.
+
+For Docker Compose, keep `HAPPYTG_MINIAPP_UPSTREAM` unset. The compose file maps `${HAPPYTG_MINIAPP_PORT:-3001}:3001` and forces the Mini App container listener to `3001`, so a host-side `3007` does not break Caddy.
+
+For host-run Caddy with `pnpm dev:miniapp` on `3007`, set:
+
+```env
+HAPPYTG_MINIAPP_PORT=3007
+HAPPYTG_APP_URL=http://localhost:3007
+HAPPYTG_DEV_CORS_ORIGINS=http://localhost:3007,http://127.0.0.1:3007
+HAPPYTG_MINIAPP_UPSTREAM=127.0.0.1:3007
+```
+
 ## Control Plane Bring-Up
 
 1. Copy `.env.example` to `.env` on the control-plane host.

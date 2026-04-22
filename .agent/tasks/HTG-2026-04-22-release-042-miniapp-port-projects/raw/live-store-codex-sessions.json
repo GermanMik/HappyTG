@@ -1,0 +1,42 @@
+{
+  "counts": {
+    "hosts": 1,
+    "workspaces": 1,
+    "sessions": 2,
+    "users": 1
+  },
+  "hosts": [
+    {
+      "id": "host_ee8c201dc8f44ba191ddaeae",
+      "label": "ALFRED",
+      "status": "active",
+      "capabilities": [
+        "codex-cli",
+        "proof-loop",
+        "resume"
+      ]
+    }
+  ],
+  "workspaces": [
+    {
+      "id": "ws_a98e06d0f5a54a278b953ea3",
+      "repoName": "host-daemon",
+      "path": "C:\\Develop\\Projects\\HappyTG\\apps\\host-daemon",
+      "status": "active"
+    }
+  ],
+  "codexSessions": [
+    {
+      "id": "ses_94491f17ad444a3aa109bc59",
+      "title": "Quick task: расскажи как с тобой работать",
+      "state": "completed",
+      "workspaceId": "ws_a98e06d0f5a54a278b953ea3"
+    },
+    {
+      "id": "ses_3b15800fe9b8464b9968da30",
+      "title": "Proof task: проверить проект в C:\\Develop\\Projects\\HappyTG ...",
+      "state": "running",
+      "workspaceId": "ws_a98e06d0f5a54a278b953ea3"
+    }
+  ]
+}

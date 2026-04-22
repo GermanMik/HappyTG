@@ -1,0 +1,23 @@
+{
+  "taskId": "HTG-2026-04-22-release-042-miniapp-port-projects",
+  "status": "passed",
+  "checks": {
+    "targetedMiniAppTest": "passed",
+    "targetedApiTest": "passed",
+    "targetedBootstrapTest": "passed",
+    "targetedTypecheck": "passed",
+    "browserVerification": "passed",
+    "fullTypecheck": "passed",
+    "fullLint": "passed",
+    "fullTest": "passed",
+    "fullBuild": "passed",
+    "releaseCheck": "passed",
+    "taskValidate": "passed"
+  },
+  "artifacts": [
+    "raw/browser-verify.txt",
+    "raw/happytg-projects.png",
+    "raw/happytg-sessions.png",
+    "raw/live-store-codex-sessions.json"
+  ]
+}

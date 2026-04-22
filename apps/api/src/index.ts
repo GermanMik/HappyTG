@@ -227,6 +227,24 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
       route("GET", "/api/v1/miniapp/sessions", async ({ req, res, url }) => {
         await withRequiredMiniAppUser(req, res, url, (userId) => service.listMiniAppSessions(userId));
       }),
+      route("POST", "/api/v1/miniapp/sessions", async ({ req, res, url }) => {
+        const userId = await requireMiniAppUserId(req, res, url);
+        if (!userId) {
+          return;
+        }
+
+        const body = await readJsonBody<Omit<CreateSessionRequest, "userId" | "runtime"> & { runtime?: CreateSessionRequest["runtime"] }>(req);
+        const created = await service.createSession({
+          ...body,
+          userId,
+          runtime: "codex-cli"
+        });
+        const detail = await service.getMiniAppSessionDetail(created.session.id, userId);
+        json(res, 200, {
+          ...created,
+          session: detail.session
+        });
+      }),
       route("GET", "/api/v1/miniapp/sessions/:id", async ({ req, res, params, url }) => {
         await withRequiredMiniAppUser(req, res, url, (userId) => service.getMiniAppSessionDetail(params.id, userId));
       }),
@@ -256,6 +274,9 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
       }),
       route("GET", "/api/v1/miniapp/hosts", async ({ req, res, url }) => {
         await withRequiredMiniAppUser(req, res, url, (userId) => service.listMiniAppHosts(userId));
+      }),
+      route("GET", "/api/v1/miniapp/projects", async ({ req, res, url }) => {
+        await withRequiredMiniAppUser(req, res, url, (userId) => service.listMiniAppProjects(userId));
       }),
       route("GET", "/api/v1/miniapp/hosts/:id", async ({ req, res, params, url }) => {
         await withRequiredMiniAppUser(req, res, url, (userId) => service.getMiniAppHostDetail(params.id, userId));

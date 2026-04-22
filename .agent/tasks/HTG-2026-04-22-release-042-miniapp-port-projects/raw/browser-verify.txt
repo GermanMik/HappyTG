@@ -1,0 +1,9 @@
+Playwright visual verification: PASS
+URL: http://127.0.0.1:3097
+Checked:
+- /projects renders HappyTG project, Codex CLI text, and New Task action.
+- /sessions renders a Codex CLI session.
+- /new-task form creates a session and redirects to /session/ses_created.
+Screenshots:
+- .agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/happytg-projects.png
+- .agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/happytg-sessions.png

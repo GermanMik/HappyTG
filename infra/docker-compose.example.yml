@@ -108,6 +108,9 @@ services:
     env_file:
       - ../.env
     environment:
+      # Keep the container listener stable for Docker-network Caddy. The host
+      # port can still be changed with HAPPYTG_MINIAPP_PORT, e.g. 3007:3001.
+      HAPPYTG_MINIAPP_PORT: 3001
       PORT: 3001
       HAPPYTG_API_URL: ${COMPOSE_HAPPYTG_API_URL:-http://api:4000}
       HAPPYTG_BROWSER_API_URL: ${COMPOSE_HAPPYTG_BROWSER_API_URL:-}

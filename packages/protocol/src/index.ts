@@ -741,6 +741,7 @@ export interface MiniAppSessionCard {
   id: string;
   title: string;
   state: SessionState;
+  runtime?: Session["runtime"];
   phase?: TaskPhase;
   verificationState?: VerificationState;
   hostLabel?: string;
@@ -749,6 +750,19 @@ export interface MiniAppSessionCard {
   attention?: string;
   href: string;
   nextAction: string;
+}
+
+export interface MiniAppProjectCard {
+  id: string;
+  hostId: string;
+  hostLabel?: string;
+  hostStatus?: Host["status"];
+  repoName: string;
+  path: string;
+  defaultBranch?: string;
+  activeSessions: number;
+  href: string;
+  newSessionHref: string;
 }
 
 export interface MiniAppApprovalCard {

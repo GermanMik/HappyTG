@@ -171,6 +171,103 @@ test("mini app approval resolve endpoint uses bearer session user", async () => 
   }
 });
 
+test("mini app project and session mutation endpoints require bearer user context", async () => {
+  const calls: Array<{ kind: string; userId?: string; body?: unknown }> = [];
+  const service = {
+    async resolveMiniAppUserId(token?: string) {
+      return token === "mas_token" ? "usr_1" : undefined;
+    },
+    async listMiniAppProjects(userId?: string) {
+      calls.push({ kind: "projects", userId });
+      return {
+        projects: [
+          {
+            id: "ws_1",
+            hostId: "host_1",
+            repoName: "HappyTG",
+            path: "C:/Develop/Projects/HappyTG",
+            activeSessions: 0,
+            href: "/project/ws_1",
+            newSessionHref: "/new-task?hostId=host_1&workspaceId=ws_1"
+          }
+        ]
+      };
+    },
+    async createSession(body: unknown) {
+      calls.push({ kind: "create", body });
+      return {
+        session: { id: "ses_1" }
+      };
+    },
+    async getMiniAppSessionDetail(sessionId: string, userId?: string) {
+      calls.push({ kind: "detail", userId, body: { sessionId } });
+      return {
+        session: {
+          id: sessionId,
+          title: "Mini App task",
+          state: "ready",
+          runtime: "codex-cli",
+          lastUpdatedAt: "2026-04-22T04:00:00.000Z",
+          href: `/session/${sessionId}`,
+          nextAction: "open"
+        },
+        events: [],
+        actions: []
+      };
+    }
+  } as unknown as HappyTGControlPlaneService;
+  const server = createApiServer(service);
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("API server did not bind to a TCP port");
+  }
+
+  try {
+    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/projects`);
+    assert.equal(denied.status, 401);
+
+    const projects = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/projects`, {
+      headers: {
+        authorization: "Bearer mas_token"
+      }
+    });
+    assert.equal(projects.status, 200);
+
+    const created = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/sessions`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer mas_token"
+      },
+      body: JSON.stringify({
+        hostId: "host_1",
+        workspaceId: "ws_1",
+        mode: "proof",
+        title: "Mini App task",
+        prompt: "Run Codex"
+      })
+    });
+    const payload = await created.json() as { session: { runtime: string; href: string } };
+
+    assert.equal(created.status, 200);
+    assert.equal(payload.session.runtime, "codex-cli");
+    assert.equal(payload.session.href, "/session/ses_1");
+    assert.deepEqual(calls.map((call) => call.kind), ["projects", "create", "detail"]);
+    assert.deepEqual(calls[1]?.body, {
+      hostId: "host_1",
+      workspaceId: "ws_1",
+      mode: "proof",
+      title: "Mini App task",
+      prompt: "Run Codex",
+      userId: "usr_1",
+      runtime: "codex-cli"
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("startApiServer reuses an already-running HappyTG API on the same port", async () => {
   const occupied = createHttpServer((req, res) => {
     res.writeHead(200, {

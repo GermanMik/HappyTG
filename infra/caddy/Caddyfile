@@ -29,13 +29,13 @@
 
 	# Public Telegram Mini App route used by inline web_app buttons and setChatMenuButton.
 	handle_path /miniapp* {
-		reverse_proxy miniapp:3001 {
+		reverse_proxy {$HAPPYTG_MINIAPP_UPSTREAM:miniapp:3001} {
 			header_up X-Forwarded-Prefix /miniapp
 		}
 	}
 
 	handle_path /static* {
-		reverse_proxy miniapp:3001
+		reverse_proxy {$HAPPYTG_MINIAPP_UPSTREAM:miniapp:3001}
 	}
 
 	# Keep the root URL inspectable by redirecting operators to the Mini App.

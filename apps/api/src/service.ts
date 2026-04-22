@@ -39,6 +39,7 @@ import type {
   MiniAppDiffProjection,
   MiniAppHostCard,
   MiniAppLaunchGrant,
+  MiniAppProjectCard,
   MiniAppReportCard,
   MiniAppSession,
   MiniAppSessionCard,
@@ -297,6 +298,7 @@ function sessionCard(store: HappyTGStore, session: Session): MiniAppSessionCard 
     id: session.id,
     title: session.title,
     state: session.state,
+    runtime: session.runtime,
     phase: task?.phase,
     verificationState: task?.verificationState,
     hostLabel: host?.label,
@@ -341,6 +343,23 @@ function hostCard(store: HappyTGStore, host: Host): MiniAppHostCard {
     repoNames: workspaces.map((item) => item.repoName),
     lastError,
     href: `/host/${encodeURIComponent(host.id)}`
+  };
+}
+
+function projectCard(store: HappyTGStore, workspace: Workspace): MiniAppProjectCard {
+  const host = store.hosts.find((item) => item.id === workspace.hostId);
+  const activeSessions = store.sessions.filter((item) => item.workspaceId === workspace.id && !isTerminalSessionState(item.state)).length;
+  return {
+    id: workspace.id,
+    hostId: workspace.hostId,
+    hostLabel: host?.label,
+    hostStatus: host?.status,
+    repoName: workspace.repoName,
+    path: workspace.path,
+    defaultBranch: workspace.defaultBranch,
+    activeSessions,
+    href: `/project/${encodeURIComponent(workspace.id)}`,
+    newSessionHref: `/new-task?hostId=${encodeURIComponent(workspace.hostId)}&workspaceId=${encodeURIComponent(workspace.id)}`
   };
 }
 
@@ -1425,6 +1444,16 @@ export class HappyTGControlPlaneService {
     const scoped = scopedMiniAppStore(store, userId);
     return {
       hosts: scoped.hosts.map((host) => hostCard(store, host))
+    };
+  }
+
+  async listMiniAppProjects(userId?: string): Promise<{ projects: MiniAppProjectCard[] }> {
+    const store = await this.store.read();
+    const scoped = scopedMiniAppStore(store, userId);
+    return {
+      projects: scoped.workspaces
+        .sort((left, right) => left.repoName.localeCompare(right.repoName))
+        .map((workspace) => projectCard(store, workspace))
     };
   }
 
