@@ -1,0 +1,115 @@
+{
+  "taskId": "HTG-2026-04-22-miniapp-local-url-diagnostics",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "passed",
+      "summary": "Inspected Mini App URL resolution and diagnostics in bot, shared, and bootstrap sources before the fix.",
+      "artifacts": [
+        "raw/init-analysis.txt"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "passed",
+      "summary": "Inline /start and /menu continue to omit Telegram web_app buttons for unsafe local HTTP URLs.",
+      "artifacts": [
+        "raw/test-bot.txt",
+        "apps/bot/src/handlers.ts"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "passed",
+      "summary": "Local dev diagnostics now prefer HAPPYTG_APP_URL=http://localhost:3007 over HAPPYTG_PUBLIC_URL=http://localhost:4000 when no public HTTPS URL exists.",
+      "artifacts": [
+        "packages/shared/src/index.ts",
+        "apps/bot/src/handlers.test.ts",
+        "packages/bootstrap/src/telegram-menu.test.ts",
+        "raw/test-bot.txt",
+        "raw/test-bootstrap.txt"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "passed",
+      "summary": "Public HTTPS HAPPYTG_MINIAPP_URL or derived public HTTPS Mini App URLs still enable inline Telegram WebApp buttons.",
+      "artifacts": [
+        "raw/test-bot.txt"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "passed",
+      "summary": "Telegram menu setup still rejects localhost, HTTP, private, internal, and invalid Mini App URLs before Telegram API calls.",
+      "artifacts": [
+        "raw/test-bootstrap.txt",
+        "packages/bootstrap/src/telegram-menu.ts"
+      ]
+    },
+    {
+      "id": "AC6",
+      "status": "passed",
+      "summary": "Doctor/verify diagnostics now explain that local polling remains usable while Telegram WebApp buttons and menu setup require public HTTPS.",
+      "artifacts": [
+        "packages/bootstrap/src/telegram-menu.ts",
+        "packages/bootstrap/src/index.ts",
+        "raw/test-bootstrap.txt"
+      ]
+    },
+    {
+      "id": "AC7",
+      "status": "passed",
+      "summary": "Configuration docs and .env.example document the local 3007 Mini App URL and separate public HTTPS Telegram launch requirement.",
+      "artifacts": [
+        ".env.example",
+        "docs/configuration.md",
+        "docs/installation.md",
+        "docs/self-hosting.md"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "raw/init-analysis.txt",
+      "kind": "analysis"
+    },
+    {
+      "path": "raw/test-bot.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/test-bootstrap.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/test-unit.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/typecheck.txt",
+      "kind": "typecheck"
+    },
+    {
+      "path": "raw/lint.txt",
+      "kind": "lint"
+    },
+    {
+      "path": "raw/test.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/build.txt",
+      "kind": "build"
+    },
+    {
+      "path": "raw/test-integration.txt",
+      "kind": "validation"
+    },
+    {
+      "path": "raw/task-validate.txt",
+      "kind": "validation"
+    }
+  ],
+  "generatedAt": "2026-04-22T23:18:06.4711957+03:00"
+}

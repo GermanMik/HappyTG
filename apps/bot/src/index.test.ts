@@ -504,7 +504,7 @@ test("caddy and docs use the public /telegram/webhook contract", async () => {
   assert.doesNotMatch(selfHosting, /\/bot\/webhook/);
 });
 
-test("ready endpoint reports disabled Mini App launch buttons for local HTTP app URLs", async () => {
+test("ready endpoint reports disabled Mini App launch buttons with the local Mini App port", async () => {
   const runtime = createBotRuntime({
     async apiFetch(pathname) {
       assert.equal(pathname, "/health");
@@ -513,8 +513,9 @@ test("ready endpoint reports disabled Mini App launch buttons for local HTTP app
   }, {
     env: {
       TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
+      HAPPYTG_MINIAPP_PORT: "3007",
       HAPPYTG_PUBLIC_URL: "http://localhost:4000",
-      HAPPYTG_APP_URL: "http://localhost:3001"
+      HAPPYTG_APP_URL: "http://localhost:3007"
     },
     port: 0,
     fetchImpl: async (input) => {
@@ -550,7 +551,8 @@ test("ready endpoint reports disabled Mini App launch buttons for local HTTP app
     assert.equal(response.status, 200);
     assert.equal(payload.ok, true);
     assert.equal(payload.miniAppLaunch?.status, "disabled");
-    assert.equal(payload.miniAppLaunch?.url, "http://localhost:4000/miniapp");
+    assert.equal(payload.miniAppLaunch?.url, "http://localhost:3007/");
+    assert.match(payload.miniAppLaunch?.detail ?? "", /Local polling can still handle Telegram bot commands/i);
     assert.match(payload.miniAppLaunch?.detail ?? "", /public HTTPS/i);
   } finally {
     await runtime.stop();

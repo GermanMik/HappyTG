@@ -129,14 +129,14 @@ function miniAppUrlSource(env: NodeJS.ProcessEnv, resolvedUrl: string | undefine
   }
   const candidates: Array<[MiniAppUrlSource, string | undefined]> = [
     ["HAPPYTG_MINIAPP_URL", env.HAPPYTG_MINIAPP_URL?.trim() || undefined],
+    ["HAPPYTG_APP_URL", env.HAPPYTG_APP_URL?.trim() || undefined],
     ["HAPPYTG_PUBLIC_URL", env.HAPPYTG_PUBLIC_URL?.trim() ? (() => {
       try {
         return new URL("/miniapp", env.HAPPYTG_PUBLIC_URL).toString();
       } catch {
         return env.HAPPYTG_PUBLIC_URL;
       }
-    })() : undefined],
-    ["HAPPYTG_APP_URL", env.HAPPYTG_APP_URL?.trim() || undefined]
+    })() : undefined]
   ];
   return candidates.find(([, candidate]) => candidate === resolvedUrl)?.[0];
 }
@@ -194,7 +194,7 @@ export function inspectTelegramMiniAppLaunch(env = process.env): TelegramMiniApp
   return {
     status: "disabled",
     ...(inspection.url ? { url: inspection.url } : {}),
-    detail: `Telegram Mini App launch buttons are disabled because ${inspection.reason} Set \`HAPPYTG_MINIAPP_URL\` or \`HAPPYTG_APP_URL\` to a public HTTPS /miniapp URL to enable them.`
+    detail: `Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because ${inspection.reason} Set \`HAPPYTG_MINIAPP_URL\` or \`HAPPYTG_APP_URL\` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.`
   };
 }
 

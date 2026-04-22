@@ -1,0 +1,46 @@
+{
+  "taskId": "HTG-2026-04-22-miniapp-local-url-diagnostics",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "HTG-2026-04-22-miniapp-local-url-diagnostics-local"
+  },
+  "checks": [
+    {
+      "name": "Bot test suite",
+      "status": "passed",
+      "artifact": "raw/test-bot.txt"
+    },
+    {
+      "name": "Bootstrap test suite",
+      "status": "passed",
+      "artifact": "raw/test-bootstrap.txt"
+    },
+    {
+      "name": "Repo typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck.txt"
+    },
+    {
+      "name": "Repo lint",
+      "status": "passed",
+      "artifact": "raw/lint.txt"
+    },
+    {
+      "name": "Repo tests",
+      "status": "passed",
+      "artifact": "raw/test.txt"
+    },
+    {
+      "name": "Repo build",
+      "status": "passed",
+      "artifact": "raw/build.txt"
+    },
+    {
+      "name": "Task bundle validate",
+      "status": "passed",
+      "artifact": "raw/test-integration.txt"
+    }
+  ],
+  "generatedAt": "2026-04-22T23:18:06.4711957+03:00"
+}

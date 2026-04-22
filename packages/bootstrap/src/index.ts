@@ -1707,7 +1707,7 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
     pushFinding(findings, {
       code: "TELEGRAM_MINIAPP_URL_UNSAFE",
       severity: "info",
-      message: `${telegramMenu.miniAppUrl.message} This is acceptable for local polling, but \`pnpm happytg telegram menu set\` requires a public HTTPS /miniapp URL.`
+      message: `${telegramMenu.miniAppUrl.message} Production menu setup stays blocked until \`pnpm happytg telegram menu set\` can use a public HTTPS /miniapp URL.`
     });
   }
 

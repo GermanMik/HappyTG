@@ -1,0 +1,7 @@
+{
+  "taskId": "HTG-2026-04-22-miniapp-local-url-diagnostics",
+  "phase": "complete",
+  "verificationState": "passed",
+  "updatedAt": "2026-04-22T23:18:06.4711957+03:00",
+  "summary": "Resolver, diagnostics, tests, docs, and proof bundle completed with passing verifier checks."
+}

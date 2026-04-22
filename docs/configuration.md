@@ -60,8 +60,8 @@ Lower layers may tighten but must not weaken higher layers.
 ## Telegram Mini App Public URL
 
 - `HAPPYTG_MINIAPP_URL` is the production Mini App URL used in Telegram `web_app` buttons and Bot API menu setup. It must be public HTTPS, for example `https://happy.example.com/miniapp`.
-- If `HAPPYTG_MINIAPP_URL` is empty and `HAPPYTG_PUBLIC_URL` is public HTTPS, HappyTG derives the Mini App URL as `HAPPYTG_PUBLIC_URL + /miniapp`.
-- `HAPPYTG_APP_URL` is a development fallback only, and Telegram `web_app` buttons still require a public HTTPS URL. Do not use `http://localhost:3001` for production Telegram `web_app` buttons.
+- If `HAPPYTG_MINIAPP_URL` is empty, HappyTG first uses a public HTTPS `HAPPYTG_APP_URL`; otherwise, when `HAPPYTG_PUBLIC_URL` is public HTTPS, it derives the Mini App URL as `HAPPYTG_PUBLIC_URL + /miniapp`.
+- `HAPPYTG_APP_URL` is also the local development Mini App URL. When both `HAPPYTG_APP_URL=http://localhost:3007` and `HAPPYTG_PUBLIC_URL=http://localhost:4000` are local HTTP, diagnostics should point at the Mini App port `3007`; Telegram `web_app` buttons still stay disabled until a public HTTPS URL is configured. Do not use `http://localhost:3001` or `http://localhost:3007` for production Telegram `web_app` buttons.
 - `HAPPYTG_BROWSER_API_URL` optionally overrides the browser-visible API origin. In production with Caddy, leave it empty so Mini App browser actions use same-origin `/api/...`.
 - The bot includes inline `web_app` buttons only when the resolved Mini App URL is public HTTPS. Local HTTP, localhost, private/internal, or malformed URLs leave normal bot replies functional without Web App buttons.
 
@@ -80,7 +80,7 @@ HappyTG uses three related Telegram surfaces:
 - Persistent bot menu button: configured through Telegram Bot API [`setChatMenuButton`](https://core.telegram.org/bots/api#setchatmenubutton) with `pnpm happytg telegram menu set`. This is the first-class repo command for opening HappyTG Mini App from the chat menu.
 - BotFather profile/Main Mini App: a separate manual Telegram profile setting when you need Telegram's bot profile or Main Mini App placement. The repo command does not change BotFather profile metadata.
 
-The persistent menu command chooses a usable public HTTPS Mini App URL from `HAPPYTG_MINIAPP_URL`, `HAPPYTG_PUBLIC_URL + /miniapp`, or the legacy `HAPPYTG_APP_URL`.
+The persistent menu command chooses a usable public HTTPS Mini App URL from `HAPPYTG_MINIAPP_URL`, `HAPPYTG_APP_URL`, or `HAPPYTG_PUBLIC_URL + /miniapp`.
 
 Telegram [`WebAppInfo`](https://core.telegram.org/bots/api#webappinfo) and [`MenuButtonWebApp`](https://core.telegram.org/bots/api#menubuttonwebapp) require a public HTTPS URL. `pnpm happytg telegram menu set` refuses plain HTTP, `localhost`, loopback, private/internal hosts, invalid URLs, and unreachable public Caddy `/miniapp` routes before it calls Telegram. Use `pnpm happytg telegram menu set --dry-run` to print the exact URL and payload without calling Telegram. Use `pnpm happytg telegram menu reset` to restore Telegram's default menu button.
 

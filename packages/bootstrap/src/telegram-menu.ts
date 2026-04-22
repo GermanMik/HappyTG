@@ -296,7 +296,9 @@ export async function inspectTelegramMenuDiagnostics(options: TelegramMenuComman
     miniAppUrl: {
       value: validation.url ?? resolvedUrl,
       ok: validation.ok,
-      message: validation.ok ? "Mini App URL is public HTTPS." : validation.reason ?? "Mini App URL is not configured."
+      message: validation.ok
+        ? "Mini App URL is public HTTPS."
+        : `${validation.reason ?? "Mini App URL is not configured."} Local polling can still use Telegram bot commands; Telegram WebApp buttons and menu setup require a public HTTPS /miniapp URL.`
     },
     caddy: caddy
       ? {

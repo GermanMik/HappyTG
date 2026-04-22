@@ -32,6 +32,11 @@ test("Mini App URL resolution chooses configured public HTTPS URLs before local 
   }), "https://mini.example/miniapp");
 
   assert.equal(resolveMiniAppBaseUrl({
+    HAPPYTG_APP_URL: "https://app.example/miniapp",
+    HAPPYTG_PUBLIC_URL: "https://public.example"
+  }), "https://app.example/miniapp");
+
+  assert.equal(resolveMiniAppBaseUrl({
     HAPPYTG_APP_URL: "http://localhost:3001",
     HAPPYTG_PUBLIC_URL: "https://public.example"
   }), "https://public.example/miniapp");
@@ -44,6 +49,14 @@ test("Mini App URL resolution chooses configured public HTTPS URLs before local 
   assert.equal(resolveMiniAppBaseUrl({
     HAPPYTG_PUBLIC_URL: "https://public.example:8443"
   }), "https://public.example:8443/miniapp");
+});
+
+test("Mini App URL resolution keeps local Mini App port diagnostics separate from the local API URL", () => {
+  assert.equal(resolveMiniAppBaseUrl({
+    HAPPYTG_MINIAPP_PORT: "3007",
+    HAPPYTG_APP_URL: "http://localhost:3007",
+    HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+  }), "http://localhost:3007");
 });
 
 test("Telegram menu setup rejects invalid, local, private, and plain HTTP Mini App URLs", () => {
@@ -214,4 +227,27 @@ test("Telegram menu diagnostics report an unavailable Caddy route without checki
   assert.equal(diagnostics.caddy.ok, false);
   assert.equal(diagnostics.menuButton.checked, false);
   assert.match(diagnostics.menuButton.message, /not checked/i);
+});
+
+test("Telegram menu diagnostics explain local polling separately from public HTTPS launch buttons", async () => {
+  let called = false;
+  const diagnostics = await inspectTelegramMenuDiagnostics({
+    env: {
+      TELEGRAM_BOT_TOKEN: TOKEN,
+      HAPPYTG_MINIAPP_PORT: "3007",
+      HAPPYTG_APP_URL: "http://localhost:3007",
+      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+    },
+    fetchImpl: async () => {
+      called = true;
+      return new Response("unexpected", { status: 500 });
+    }
+  });
+
+  assert.equal(diagnostics.miniAppUrl.ok, false);
+  assert.equal(diagnostics.miniAppUrl.value, "http://localhost:3007/");
+  assert.match(diagnostics.miniAppUrl.message, /Local polling can still use Telegram bot commands/i);
+  assert.match(diagnostics.miniAppUrl.message, /public HTTPS \/miniapp URL/i);
+  assert.equal(diagnostics.caddy.checked, false);
+  assert.equal(called, false);
 });

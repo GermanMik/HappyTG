@@ -121,7 +121,7 @@ pnpm happytg telegram menu set --dry-run
 pnpm happytg telegram menu set
 ```
 
-The command chooses a usable public HTTPS Mini App URL from `HAPPYTG_MINIAPP_URL`, `HAPPYTG_PUBLIC_URL + /miniapp`, or the legacy `HAPPYTG_APP_URL`; validates that the URL is public HTTPS; checks the public Caddy `/miniapp` route; and only then calls Telegram. BotFather/Main Mini App profile setup is still a separate manual Telegram setting if you need the Mini App shown on the bot profile.
+The command chooses a usable public HTTPS Mini App URL from `HAPPYTG_MINIAPP_URL`, `HAPPYTG_APP_URL`, or `HAPPYTG_PUBLIC_URL + /miniapp`; validates that the URL is public HTTPS; checks the public Caddy `/miniapp` route; and only then calls Telegram. BotFather/Main Mini App profile setup is still a separate manual Telegram setting if you need the Mini App shown on the bot profile.
 
 ## Backup and Upgrade
 

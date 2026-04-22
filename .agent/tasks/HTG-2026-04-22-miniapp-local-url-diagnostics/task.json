@@ -1,0 +1,21 @@
+{
+  "id": "HTG-2026-04-22-miniapp-local-url-diagnostics",
+  "sessionId": "ses_manual",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-22-miniapp-local-url-diagnostics",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Local Mini App URL resolution and Telegram HTTPS diagnostics",
+  "acceptanceCriteria": [
+    "Current Mini App URL resolution is inspected in bot, shared, and bootstrap sources.",
+    "Runtime inline /start and /menu never send unsafe HTTP/local URLs in Telegram web_app payloads.",
+    "Local dev with HAPPYTG_MINIAPP_PORT=3007, HAPPYTG_APP_URL=http://localhost:3007, and HAPPYTG_PUBLIC_URL=http://localhost:4000 resolves diagnostics to the Mini App port and explains public HTTPS launch requirements.",
+    "Public HTTPS HAPPYTG_MINIAPP_URL enables inline Mini App buttons.",
+    "telegram menu set and related bootstrap validation still reject localhost, HTTP, private, and unsafe URLs as hard failures.",
+    "Doctor/verify diagnostics classify local HTTP Mini App launch URLs as acceptable local polling info while production/menu setup remains strict.",
+    "Docs and .env.example are synchronized with local 3007 and public HTTPS guidance."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-22T23:18:06.4711957+03:00",
+  "updatedAt": "2026-04-22T23:18:06.4711957+03:00"
+}

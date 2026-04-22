@@ -196,6 +196,8 @@ HAPPYTG_APP_URL=http://localhost:3007
 HAPPYTG_DEV_CORS_ORIGINS=http://localhost:3007,http://127.0.0.1:3007
 ```
 
+With this local setup, `HAPPYTG_PUBLIC_URL=http://localhost:4000` can remain the API/bot URL. `pnpm dev`, doctor, and `/ready` may report Mini App launch buttons as disabled because Telegram requires public HTTPS, but they should reference the Mini App listener on `3007` rather than the API port `4000`; polling and pairing still work.
+
 If Caddy runs directly on the host, point it at the same listener with `HAPPYTG_MINIAPP_UPSTREAM=127.0.0.1:3007`. If Caddy runs through `infra/docker-compose.example.yml`, leave `HAPPYTG_MINIAPP_UPSTREAM` unset; compose maps the host port to the Mini App container's internal `3001`.
 
 If `4000` is already occupied:

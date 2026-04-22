@@ -19,6 +19,7 @@ import {
   readJsonFile,
   readTextFileOrEmpty,
   renderPrometheusMetrics,
+  resolveMiniAppBaseUrl,
   resolveHome,
   route,
   telegramTokenStatus,
@@ -250,6 +251,24 @@ test("normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT", 
   assert.equal(normalized.PATHEXT, ".COM;.EXE;.BAT;.CMD");
   assert.equal(normalized.PATH, undefined);
   assert.equal(normalized.HOME, "C:\\Users\\tester");
+});
+
+test("resolveMiniAppBaseUrl prefers local Mini App URL over local public API URL only when no public HTTPS URL is available", () => {
+  assert.equal(resolveMiniAppBaseUrl({
+    HAPPYTG_MINIAPP_PORT: "3007",
+    HAPPYTG_APP_URL: "http://localhost:3007",
+    HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+  }), "http://localhost:3007");
+
+  assert.equal(resolveMiniAppBaseUrl({
+    HAPPYTG_APP_URL: "http://localhost:3007",
+    HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+  }), "https://happy.example.com/miniapp");
+
+  assert.equal(resolveMiniAppBaseUrl({
+    HAPPYTG_APP_URL: "https://app.example.com/miniapp",
+    HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+  }), "https://app.example.com/miniapp");
 });
 
 test("telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values", () => {

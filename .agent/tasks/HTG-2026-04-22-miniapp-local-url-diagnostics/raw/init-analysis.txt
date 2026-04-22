@@ -1,0 +1,138 @@
+docs/self-hosting.md:37:HAPPYTG_PUBLIC_URL=https://happytg.gerta.crazedns.ru
+docs/self-hosting.md:38:HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru/miniapp
+docs/self-hosting.md:39:HAPPYTG_APP_URL=https://happytg.gerta.crazedns.ru/miniapp
+docs/self-hosting.md:47:HAPPYTG_PUBLIC_URL=https://happytg.gerta.crazedns.ru:8443
+docs/self-hosting.md:48:HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru:8443/miniapp
+docs/self-hosting.md:49:HAPPYTG_APP_URL=https://happytg.gerta.crazedns.ru:8443/miniapp
+docs/self-hosting.md:67:HAPPYTG_APP_URL=http://localhost:3007
+docs/self-hosting.md:104:- `TELEGRAM_UPDATES_MODE=auto` chooses polling for local/non-public `HAPPYTG_PUBLIC_URL` values and webhook for public HTTPS URLs.
+docs/self-hosting.md:115:`/start` and `/menu` still render inline `web_app` buttons when the resolved Mini App URL is public HTTPS. The persistent menu button is different: it is stored by Telegram through Bot API `setChatMenuButton` and survives normal chat refreshes.
+docs/self-hosting.md:124:The command chooses a usable public HTTPS Mini App URL from `HAPPYTG_MINIAPP_URL`, `HAPPYTG_PUBLIC_URL + /miniapp`, or the legacy `HAPPYTG_APP_URL`; validates that the URL is public HTTPS; checks the public Caddy `/miniapp` route; and only then calls Telegram. BotFather/Main Mini App profile setup is still a separate manual Telegram setting if you need the Mini App shown on the bot profile.
+docs/installation.md:128:By default, the local repo path uses Telegram polling when `HAPPYTG_PUBLIC_URL` is local or otherwise not webhook-capable, so `/start` and `/pair <CODE>` do not require a public domain during local development.
+docs/installation.md:155:- If the bot logs `Bot listening with degraded Telegram delivery`, inspect `http://127.0.0.1:4100/ready`. For local work, keep `TELEGRAM_UPDATES_MODE=auto` or set `TELEGRAM_UPDATES_MODE=polling`. For webhook mode, set a public HTTPS `HAPPYTG_PUBLIC_URL` and configure that webhook in Telegram.
+docs/installation.md:195:HAPPYTG_APP_URL=http://localhost:3007
+docs/installation.md:301:- public HTTPS Mini App URL for `setChatMenuButton`, usually `HAPPYTG_MINIAPP_URL`
+.env.example:17:# HAPPYTG_APP_URL plus HAPPYTG_DEV_CORS_ORIGINS on the same local port.
+.env.example:22:HAPPYTG_APP_URL=http://localhost:3001
+.env.example:24:HAPPYTG_PUBLIC_URL=http://localhost:4000
+.env.example:26:# HAPPYTG_MINIAPP_URL=https://happy.example.com/miniapp
+.env.example:27:# If empty, production derives it from HAPPYTG_PUBLIC_URL + /miniapp when HAPPYTG_PUBLIC_URL is public HTTPS.
+.env.example:28:HAPPYTG_MINIAPP_URL=
+.env.example:39:# HAPPYTG_PUBLIC_URL=https://happytg.gerta.crazedns.ru
+.env.example:40:# HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru/miniapp
+.env.example:41:# HAPPYTG_APP_URL=https://happytg.gerta.crazedns.ru/miniapp
+.env.example:44:# HAPPYTG_PUBLIC_URL=https://happytg.gerta.crazedns.ru:8443
+.env.example:45:# HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru:8443/miniapp
+.env.example:46:# HAPPYTG_APP_URL=https://happytg.gerta.crazedns.ru:8443/miniapp
+.env.example:59:# `auto` uses polling for local/non-public `HAPPYTG_PUBLIC_URL` values and webhook for public HTTPS URLs.
+packages/bootstrap/src/telegram-menu.test.ts:4:import { resolveMiniAppBaseUrl } from "../../shared/src/index.js";
+packages/bootstrap/src/telegram-menu.test.ts:28:  assert.equal(resolveMiniAppBaseUrl({
+packages/bootstrap/src/telegram-menu.test.ts:29:    HAPPYTG_MINIAPP_URL: "https://mini.example/miniapp",
+packages/bootstrap/src/telegram-menu.test.ts:30:    HAPPYTG_APP_URL: "https://app.example/miniapp",
+packages/bootstrap/src/telegram-menu.test.ts:31:    HAPPYTG_PUBLIC_URL: "https://public.example"
+packages/bootstrap/src/telegram-menu.test.ts:34:  assert.equal(resolveMiniAppBaseUrl({
+packages/bootstrap/src/telegram-menu.test.ts:35:    HAPPYTG_APP_URL: "http://localhost:3001",
+packages/bootstrap/src/telegram-menu.test.ts:36:    HAPPYTG_PUBLIC_URL: "https://public.example"
+packages/bootstrap/src/telegram-menu.test.ts:39:  assert.equal(resolveMiniAppBaseUrl({
+packages/bootstrap/src/telegram-menu.test.ts:40:    HAPPYTG_APP_URL: "https://app.example/miniapp",
+packages/bootstrap/src/telegram-menu.test.ts:41:    HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+packages/bootstrap/src/telegram-menu.test.ts:44:  assert.equal(resolveMiniAppBaseUrl({
+packages/bootstrap/src/telegram-menu.test.ts:45:    HAPPYTG_PUBLIC_URL: "https://public.example:8443"
+packages/bootstrap/src/telegram-menu.test.ts:60:        HAPPYTG_MINIAPP_URL: value
+packages/bootstrap/src/telegram-menu.test.ts:73:      HAPPYTG_MINIAPP_URL: MINIAPP_URL
+packages/bootstrap/src/telegram-menu.test.ts:91:      HAPPYTG_MINIAPP_URL: MINIAPP_URL
+packages/bootstrap/src/telegram-menu.test.ts:109:    `https://api.telegram.org/bot${TOKEN}/setChatMenuButton`
+packages/bootstrap/src/telegram-menu.test.ts:129:      HAPPYTG_MINIAPP_URL: MINIAPP_URL
+packages/bootstrap/src/telegram-menu.test.ts:147:        HAPPYTG_MINIAPP_URL: MINIAPP_URL
+packages/bootstrap/src/telegram-menu.test.ts:166:        HAPPYTG_MINIAPP_URL: MINIAPP_URL
+packages/bootstrap/src/telegram-menu.test.ts:173:    /Refusing to call Telegram setChatMenuButton/
+packages/bootstrap/src/telegram-menu.test.ts:206:      HAPPYTG_MINIAPP_URL: MINIAPP_URL
+docs/configuration.md:19:- `HAPPYTG_PUBLIC_URL`
+docs/configuration.md:20:- `HAPPYTG_MINIAPP_URL`
+docs/configuration.md:21:- `HAPPYTG_APP_URL`
+docs/configuration.md:54:- `auto` selects polling when `HAPPYTG_PUBLIC_URL` is local, private, missing, or not HTTPS.
+docs/configuration.md:55:- `auto` selects webhook when `HAPPYTG_PUBLIC_URL` is a public HTTPS URL.
+docs/configuration.md:58:- The public Telegram webhook delivery URL is `HAPPYTG_PUBLIC_URL + /telegram/webhook`.
+docs/configuration.md:62:- `HAPPYTG_MINIAPP_URL` is the production Mini App URL used in Telegram `web_app` buttons and Bot API menu setup. It must be public HTTPS, for example `https://happy.example.com/miniapp`.
+docs/configuration.md:63:- If `HAPPYTG_MINIAPP_URL` is empty and `HAPPYTG_PUBLIC_URL` is public HTTPS, HappyTG derives the Mini App URL as `HAPPYTG_PUBLIC_URL + /miniapp`.
+docs/configuration.md:64:- `HAPPYTG_APP_URL` is a development fallback only, and Telegram `web_app` buttons still require a public HTTPS URL. Do not use `http://localhost:3001` for production Telegram `web_app` buttons.
+docs/configuration.md:70:- `HAPPYTG_MINIAPP_PORT` is the local host port for `pnpm dev:miniapp`. If `3001` is occupied, use `HAPPYTG_MINIAPP_PORT=3007` and keep `HAPPYTG_APP_URL=http://localhost:3007` plus `HAPPYTG_DEV_CORS_ORIGINS=http://localhost:3007,http://127.0.0.1:3007` in sync.
+docs/configuration.md:80:- Persistent bot menu button: configured through Telegram Bot API [`setChatMenuButton`](https://core.telegram.org/bots/api#setchatmenubutton) with `pnpm happytg telegram menu set`. This is the first-class repo command for opening HappyTG Mini App from the chat menu.
+docs/configuration.md:83:The persistent menu command chooses a usable public HTTPS Mini App URL from `HAPPYTG_MINIAPP_URL`, `HAPPYTG_PUBLIC_URL + /miniapp`, or the legacy `HAPPYTG_APP_URL`.
+docs/configuration.md:91:HAPPYTG_PUBLIC_URL=https://happytg.gerta.crazedns.ru
+docs/configuration.md:92:HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru/miniapp
+docs/configuration.md:93:HAPPYTG_APP_URL=https://happytg.gerta.crazedns.ru/miniapp
+docs/configuration.md:101:HAPPYTG_PUBLIC_URL=https://happytg.gerta.crazedns.ru:8443
+docs/configuration.md:102:HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru:8443/miniapp
+docs/configuration.md:103:HAPPYTG_APP_URL=https://happytg.gerta.crazedns.ru:8443/miniapp
+apps/bot/src/index.test.ts:226:      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+apps/bot/src/index.test.ts:457:      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+apps/bot/src/index.test.ts:471:      HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+apps/bot/src/index.test.ts:486:      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+apps/bot/src/index.test.ts:494:  assert.match(resolved.detail, /HAPPYTG_PUBLIC_URL/i);
+apps/bot/src/index.test.ts:516:      HAPPYTG_PUBLIC_URL: "http://localhost:4000",
+apps/bot/src/index.test.ts:517:      HAPPYTG_APP_URL: "http://localhost:3001"
+apps/bot/src/index.test.ts:609:      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+apps/bot/src/index.test.ts:675:      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+apps/bot/src/index.test.ts:749:      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+apps/bot/src/index.test.ts:841:      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+apps/bot/src/index.test.ts:915:      HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+apps/bot/src/index.test.ts:952:      HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+apps/bot/src/index.test.ts:1009:      HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+apps/bot/src/index.test.ts:1059:      HAPPYTG_MINIAPP_URL: "http://localhost:3001"
+apps/bot/src/index.test.ts:1114:      HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+apps/bot/src/handlers.test.ts:7:import { createBotHandlers, resolveMiniAppBaseUrl } from "./handlers.js";
+apps/bot/src/handlers.test.ts:226:  const resolved = resolveMiniAppBaseUrl({
+apps/bot/src/handlers.test.ts:228:    HAPPYTG_APP_URL: "http://localhost:3001",
+apps/bot/src/handlers.test.ts:229:    HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+apps/bot/src/handlers.test.ts:234:  assert.equal(resolved.source, "HAPPYTG_PUBLIC_URL");
+apps/bot/src/handlers.test.ts:238:  const resolved = resolveMiniAppBaseUrl({
+apps/bot/src/handlers.test.ts:240:    HAPPYTG_MINIAPP_URL: "http://localhost:3001"
+packages/bootstrap/src/index.ts:1708:      code: "TELEGRAM_MINIAPP_URL_UNSAFE",
+packages/shared/src/index.ts:451:export function resolveMiniAppBaseUrl(
+packages/shared/src/index.ts:455:  const publicUrlBase = env.HAPPYTG_PUBLIC_URL?.trim();
+packages/shared/src/index.ts:466:    env.HAPPYTG_MINIAPP_URL?.trim() || undefined,
+packages/shared/src/index.ts:468:    env.HAPPYTG_APP_URL?.trim() || undefined,
+packages/shared/src/index.ts:472:  return candidates.find((candidate) => validatePublicHttpsUrl(candidate).ok) ?? candidates[0];
+packages/shared/src/index.ts:533:export function validatePublicHttpsUrl(rawValue: string | undefined, label = "URL"): PublicHttpsUrlValidationResult {
+packages/bootstrap/src/telegram-menu.ts:3:  resolveMiniAppBaseUrl,
+packages/bootstrap/src/telegram-menu.ts:5:  validatePublicHttpsUrl
+packages/bootstrap/src/telegram-menu.ts:32:    method: "setChatMenuButton";
+packages/bootstrap/src/telegram-menu.ts:100:  const resolved = resolveMiniAppBaseUrl(env);
+packages/bootstrap/src/telegram-menu.ts:101:  const validation = validatePublicHttpsUrl(resolved, "Mini App URL");
+packages/bootstrap/src/telegram-menu.ts:166:  method: "setChatMenuButton" | "getChatMenuButton",
+packages/bootstrap/src/telegram-menu.ts:213:    throw new Error(`${caddy.detail} Refusing to call Telegram setChatMenuButton for ${miniAppUrl}.`);
+packages/bootstrap/src/telegram-menu.ts:226:        method: "setChatMenuButton",
+packages/bootstrap/src/telegram-menu.ts:233:  await callTelegramBotApi<true>("setChatMenuButton", token, payload, options.fetchImpl ?? fetch);
+packages/bootstrap/src/telegram-menu.ts:243:      method: "setChatMenuButton",
+packages/bootstrap/src/telegram-menu.ts:245:      detail: "Telegram setChatMenuButton accepted the HappyTG Mini App menu button."
+packages/bootstrap/src/telegram-menu.ts:259:  await callTelegramBotApi<true>("setChatMenuButton", token, payload, options.fetchImpl ?? fetch);
+packages/bootstrap/src/telegram-menu.ts:267:      method: "setChatMenuButton",
+packages/bootstrap/src/telegram-menu.ts:269:      detail: "Telegram setChatMenuButton reset the bot menu button to the default state."
+packages/bootstrap/src/telegram-menu.ts:277:  const resolvedUrl = resolveMiniAppBaseUrl(env);
+packages/bootstrap/src/telegram-menu.ts:278:  const validation = validatePublicHttpsUrl(resolvedUrl, "Mini App URL");
+apps/bot/src/index.ts:22:import { createBotHandlers, defaultMiniAppBaseUrl, inspectTelegramMiniAppLaunch } from "./handlers.js";
+apps/bot/src/index.ts:165:      reason: "`HAPPYTG_PUBLIC_URL` is not set."
+apps/bot/src/index.ts:176:      reason: "`HAPPYTG_PUBLIC_URL` is not a valid URL."
+apps/bot/src/index.ts:205:      reason: "`HAPPYTG_PUBLIC_URL` must use HTTPS for Telegram webhook delivery."
+apps/bot/src/index.ts:214:      reason: "`HAPPYTG_PUBLIC_URL` points at a loopback, private, or otherwise non-public host."
+apps/bot/src/index.ts:222:    reason: "`HAPPYTG_PUBLIC_URL` is a public HTTPS URL."
+apps/bot/src/index.ts:233:  const publicUrl = inspectTelegramPublicUrl(env.HAPPYTG_PUBLIC_URL);
+apps/bot/src/index.ts:287:      detail: "Telegram auto mode selected webhook delivery because `HAPPYTG_PUBLIC_URL` is webhook-capable.",
+apps/bot/src/index.ts:1403:  const miniAppLaunch = inspectTelegramMiniAppLaunch(env);
+apps/bot/src/handlers.ts:12:  resolveMiniAppBaseUrl as resolveSharedMiniAppBaseUrl,
+apps/bot/src/handlers.ts:13:  validatePublicHttpsUrl
+apps/bot/src/handlers.ts:85:type MiniAppUrlSource = "HAPPYTG_MINIAPP_URL" | "HAPPYTG_PUBLIC_URL" | "HAPPYTG_APP_URL";
+apps/bot/src/handlers.ts:126:function miniAppUrlSource(env: NodeJS.ProcessEnv, resolvedUrl: string | undefined): MiniAppUrlSource | undefined {
+apps/bot/src/handlers.ts:131:    ["HAPPYTG_MINIAPP_URL", env.HAPPYTG_MINIAPP_URL?.trim() || undefined],
+apps/bot/src/handlers.ts:132:    ["HAPPYTG_PUBLIC_URL", env.HAPPYTG_PUBLIC_URL?.trim() ? (() => {
+apps/bot/src/handlers.ts:134:        return new URL("/miniapp", env.HAPPYTG_PUBLIC_URL).toString();
+apps/bot/src/handlers.ts:136:        return env.HAPPYTG_PUBLIC_URL;
+apps/bot/src/handlers.ts:139:    ["HAPPYTG_APP_URL", env.HAPPYTG_APP_URL?.trim() || undefined]
+apps/bot/src/handlers.ts:149:  const validation = validatePublicHttpsUrl(rawValue, "the resolved Mini App URL");
+apps/bot/src/handlers.ts:164:export function resolveMiniAppBaseUrl(env = process.env): MiniAppUrlResolution {
+apps/bot/src/handlers.ts:166:  const source = miniAppUrlSource(env, resolvedUrl);
+apps/bot/src/handlers.ts:184:export function inspectTelegramMiniAppLaunch(env = process.env): TelegramMiniAppLaunchSnapshot {
+apps/bot/src/handlers.ts:197:    detail: `Telegram Mini App launch buttons are disabled because ${inspection.reason} Set \`HAPPYTG_MINIAPP_URL\` or \`HAPPYTG_APP_URL\` to a public HTTPS /miniapp URL to enable them.`
+apps/bot/src/handlers.ts:241:  return "Mini App-кнопка недоступна: задайте публичный HTTPS `HAPPYTG_MINIAPP_URL` или `HAPPYTG_APP_URL`.";
+apps/bot/src/handlers.ts:527:  const miniBaseUrl = dependencies.miniAppBaseUrl ?? resolveMiniAppBaseUrl().url;

@@ -4,7 +4,7 @@ import test from "node:test";
 import type { ApprovalRequest, Host, Session, TaskBundle, Workspace } from "../../../packages/protocol/src/index.js";
 
 import type { BotDependencies } from "./handlers.js";
-import { createBotHandlers, resolveMiniAppBaseUrl } from "./handlers.js";
+import { createBotHandlers, inspectTelegramMiniAppLaunch, resolveMiniAppBaseUrl } from "./handlers.js";
 
 interface CapturedMessage {
   chatId: number;
@@ -232,6 +232,24 @@ test("mini app url resolver derives public https URL before legacy dev app URL",
   assert.equal(resolved.status, "ready");
   assert.equal(resolved.url, "https://happy.example.com/miniapp");
   assert.equal(resolved.source, "HAPPYTG_PUBLIC_URL");
+});
+
+test("mini app launch diagnostics prefer the local Mini App port over the local API URL", () => {
+  const env = {
+    NODE_ENV: "development",
+    HAPPYTG_MINIAPP_PORT: "3007",
+    HAPPYTG_APP_URL: "http://localhost:3007",
+    HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+  };
+  const resolved = resolveMiniAppBaseUrl(env);
+  const launch = inspectTelegramMiniAppLaunch(env);
+
+  assert.equal(resolved.status, "degraded");
+  assert.equal(resolved.source, "HAPPYTG_APP_URL");
+  assert.equal(launch.status, "disabled");
+  assert.equal(launch.url, "http://localhost:3007/");
+  assert.match(launch.detail, /Local polling can still handle Telegram bot commands/i);
+  assert.match(launch.detail, /public HTTPS \/miniapp URL/i);
 });
 
 test("mini app url resolver degrades invalid production URL", () => {

@@ -452,6 +452,8 @@ export function resolveMiniAppBaseUrl(
   env: NodeJS.ProcessEnv = process.env,
   options: MiniAppBaseUrlOptions = {}
 ): string | undefined {
+  const explicitMiniAppUrl = env.HAPPYTG_MINIAPP_URL?.trim() || undefined;
+  const appUrl = env.HAPPYTG_APP_URL?.trim() || undefined;
   const publicUrlBase = env.HAPPYTG_PUBLIC_URL?.trim();
   let publicUrl: string | undefined;
   if (publicUrlBase) {
@@ -463,13 +465,18 @@ export function resolveMiniAppBaseUrl(
   }
 
   const candidates = [
-    env.HAPPYTG_MINIAPP_URL?.trim() || undefined,
+    explicitMiniAppUrl,
+    appUrl,
     publicUrl,
-    env.HAPPYTG_APP_URL?.trim() || undefined,
     options.fallbackUrl
   ].filter((value): value is string => Boolean(value));
 
-  return candidates.find((candidate) => validatePublicHttpsUrl(candidate).ok) ?? candidates[0];
+  const publicHttpsCandidate = candidates.find((candidate) => validatePublicHttpsUrl(candidate).ok);
+  if (publicHttpsCandidate) {
+    return publicHttpsCandidate;
+  }
+
+  return candidates[0];
 }
 
 export interface PublicHttpsUrlValidationResult {
