@@ -1,0 +1,22 @@
+{
+  "name": "public-https-webapp",
+  "payload": {
+    "chat_id": "<redacted>",
+    "text": "HappyTG diagnostic probe: public-https-webapp",
+    "reply_markup": {
+      "inline_keyboard": [
+        {
+          "text": "Mini App",
+          "web_app": {
+            "url": "https://example.com/miniapp?screen=home"
+          }
+        }
+      ]
+    }
+  },
+  "statusCode": 200,
+  "ok": true,
+  "description": null,
+  "elapsedMs": 227.1,
+  "deletedAfterProbe": true
+}

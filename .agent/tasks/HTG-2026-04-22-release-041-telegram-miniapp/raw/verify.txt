@@ -1,0 +1,35 @@
+
+> happytg@0.4.1 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "verify"
+
+HappyTG verify [WARN]
+Summary: 1 warning, 2 info found.
+Profile: recommended
+
+Checks:
+- Env: .env found
+- Codex: codex-cli 0.118.0
+- Telegram: configured
+- Telegram Mini App URL: Mini App URL must use HTTPS.
+- Caddy /miniapp: not checked
+- Telegram menu button: Telegram menu button state is not checked during doctor/verify to avoid leaking tokens through network diagnostics. Run `pnpm happytg telegram menu set --dry-run`, then `pnpm happytg telegram menu set`.
+- Redis: running on localhost:6379
+- Ports: reuse: Mini App 3007, API 4000, Bot 4100, Worker probe 4200, Redis host port 6379, Postgres host port 5432, MinIO API host port 9000, MinIO console host port 9001
+
+Findings:
+- WARN  Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details.
+- INFO  Mini App URL must use HTTPS. This is acceptable for local polling, but `pnpm happytg telegram menu set` requires a public HTTPS /miniapp URL.
+- INFO  HappyTG services already appear to be running on 3007, 4000, 4100, 4200. Reuse the running stack or stop it before starting another copy.
+
+Requires user:
+- Request a pairing code on the execution host: `pnpm daemon:pair`.
+- Send `/pair <CODE>` to @gerta_workbot.
+- After pairing, start the daemon with `pnpm dev:daemon`.
+
+Reuse:
+- Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.
+- Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.
+
+Diagnostics:
+- Run `pnpm happytg verify --json` for machine-readable details.
+- Run `pnpm happytg doctor --json` for the full environment report.

@@ -1,0 +1,6 @@
+{
+  "taskId": "HTG-2026-04-22-release-041-telegram-miniapp",
+  "status": "passed",
+  "verdict": "ready_for_release",
+  "reason": "Release metadata is aligned at 0.4.1, included task bundles validate, required checks pass, and fresh verifier pass completed."
+}

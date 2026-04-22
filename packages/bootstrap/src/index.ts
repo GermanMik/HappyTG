@@ -19,6 +19,7 @@ import {
   writeJsonFileAtomic
 } from "../../shared/src/index.js";
 import { legacyPlanPreviewFromAutomation, pushAutomationItem, type AutomationItem } from "./finalization.js";
+import { inspectTelegramMenuDiagnostics } from "./telegram-menu.js";
 
 export type BootstrapCommand = "doctor" | "setup" | "repair" | "verify" | "status" | "config-init" | "env-snapshot";
 
@@ -1590,7 +1591,7 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
   const codexInstallCheck = codexResolution.installCheck;
   const actionableSmokeWarnings = classifyCodexSmokeStderr(codex.smokeError ?? "").actionableLines;
   const tokenState = telegramTokenStatus(env);
-  const [redis, portResults] = await Promise.all([
+  const [redis, portResults, telegramMenu] = await Promise.all([
     detectRedis(env, {
       cwd,
       platform
@@ -1599,6 +1600,11 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
       cwd,
       env,
       platform
+    }),
+    inspectTelegramMenuDiagnostics({
+      cwd,
+      env,
+      preflightTimeoutMs: 2_500
     })
   ]);
 
@@ -1611,6 +1617,9 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
       pathPending: codexResolution.pathPending
     })}`,
     `Telegram: ${tokenState.status === "configured" ? "configured" : tokenState.status.replaceAll("_", " ")}`,
+    `Telegram Mini App URL: ${telegramMenu.miniAppUrl.ok ? telegramMenu.miniAppUrl.value : telegramMenu.miniAppUrl.message}`,
+    `Caddy /miniapp: ${telegramMenu.caddy.checked ? telegramMenu.caddy.message : "not checked"}`,
+    `Telegram menu button: ${telegramMenu.menuButton.message}`,
     `Redis: ${redisSummary(redis)}`,
     `Ports: ${formatPortStateForSummary(portResults)}`
   ];
@@ -1691,6 +1700,22 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
       code: tokenState.status === "invalid" ? "TELEGRAM_TOKEN_INVALID" : "TELEGRAM_TOKEN_MISSING",
       severity: "error",
       message: buildTokenMessage(tokenState, envFilePath, platform)
+    });
+  }
+
+  if (!telegramMenu.miniAppUrl.ok) {
+    pushFinding(findings, {
+      code: "TELEGRAM_MINIAPP_URL_UNSAFE",
+      severity: "info",
+      message: `${telegramMenu.miniAppUrl.message} This is acceptable for local polling, but \`pnpm happytg telegram menu set\` requires a public HTTPS /miniapp URL.`
+    });
+  }
+
+  if (telegramMenu.caddy.checked && telegramMenu.caddy.ok === false) {
+    pushFinding(findings, {
+      code: "CADDY_MINIAPP_ROUTE_UNAVAILABLE",
+      severity: "warn",
+      message: `${telegramMenu.caddy.message} Fix the public Caddy route before running \`pnpm happytg telegram menu set\`.`
     });
   }
 
@@ -1782,6 +1807,7 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
         configured: tokenState.configured,
         message: buildTokenMessage(tokenState, envFilePath, platform)
       },
+      telegramMenu,
       redis,
       ports: portResults,
       plannedPorts: portResults,

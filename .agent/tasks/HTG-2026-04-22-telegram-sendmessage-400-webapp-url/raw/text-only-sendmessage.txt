@@ -1,0 +1,12 @@
+{
+  "name": "text-only",
+  "payload": {
+    "chat_id": "<redacted>",
+    "text": "HappyTG diagnostic probe: text-only"
+  },
+  "statusCode": 200,
+  "ok": true,
+  "description": null,
+  "elapsedMs": 448.5,
+  "deletedAfterProbe": true
+}

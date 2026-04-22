@@ -96,6 +96,25 @@ function task(overrides: Partial<TaskBundle> = {}): TaskBundle {
   };
 }
 
+function collectWebAppUrls(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectWebAppUrls(item));
+  }
+  if (!value || typeof value !== "object") {
+    return [];
+  }
+
+  const record = value as Record<string, unknown>;
+  const webApp = record.web_app;
+  const current = webApp && typeof webApp === "object" && typeof (webApp as { url?: unknown }).url === "string"
+    ? [(webApp as { url: string }).url]
+    : [];
+  return [
+    ...current,
+    ...Object.values(record).flatMap((item) => collectWebAppUrls(item))
+  ];
+}
+
 test("menu command renders a concise action-first main menu", async () => {
   const messages: CapturedMessage[] = [];
   const calls: Array<{ pathname: string; init?: RequestInit }> = [];
@@ -137,6 +156,70 @@ test("menu command renders a concise action-first main menu", async () => {
   assert.match(messages[0]?.text ?? "", /Активные сессии: 1/);
   assert.match(messages[0]?.text ?? "", /Ждут подтверждения: 1/);
   assert.deepEqual((messages[0]?.replyMarkup as { inline_keyboard: unknown[] })?.inline_keyboard.length, 3);
+  assert.deepEqual(collectWebAppUrls(messages[0]?.replyMarkup), ["https://happy.example/miniapp?screen=home"]);
+});
+
+test("menu command omits Telegram web_app buttons when Mini App URL is local HTTP", async () => {
+  const messages: CapturedMessage[] = [];
+  const apiFetch: BotDependencies["apiFetch"] = async (pathname) => {
+    if (pathname === "/api/v1/users/by-telegram/42") {
+      return { id: "usr_42" } as never;
+    }
+    if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_42") {
+      return {
+        hosts: [host()],
+        workspaces: [workspace()],
+        sessions: [session()],
+        approvals: [],
+        tasks: []
+      } as never;
+    }
+    throw new Error(`Unexpected path ${pathname}`);
+  };
+  const handlers = createBotHandlers({
+    apiFetch,
+    miniAppBaseUrl: "http://localhost:4000/miniapp",
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/menu",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+
+  assert.deepEqual(collectWebAppUrls(messages[0]?.replyMarkup), []);
+  assert.match(JSON.stringify(messages[0]?.replyMarkup), /callback_data/);
+  assert.match(JSON.stringify(messages[0]?.replyMarkup), /m:r/);
+});
+
+test("start command preserves the inline Mini App web_app button for public HTTPS URLs", async () => {
+  const messages: CapturedMessage[] = [];
+  const handlers = createBotHandlers({
+    miniAppBaseUrl: "https://happy.example/miniapp",
+    async apiFetch(pathname) {
+      if (pathname === "/api/v1/users/by-telegram/42") {
+        throw new Error("not paired");
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    },
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/start",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+
+  assert.match(messages[0]?.text ?? "", /Сначала подключите host/);
+  assert.deepEqual(collectWebAppUrls(messages[0]?.replyMarkup), ["https://happy.example/miniapp?screen=home"]);
 });
 
 test("mini app url resolver derives public https URL before legacy dev app URL", () => {
@@ -410,4 +493,73 @@ test("resume command posts resume and then renders a session card", async () => 
   assert.equal(calls[0]?.init?.method, "POST");
   assert.match(messages[0]?.text ?? "", /Сессия ses_1/);
   assert.match(messages[0]?.text ?? "", /resuming/);
+});
+
+test("session approval report and callback detail flows never emit local HTTP web_app buttons", async () => {
+  const messages: CapturedMessage[] = [];
+  const apiFetch: BotDependencies["apiFetch"] = async (pathname) => {
+    if (pathname === "/api/v1/users/by-telegram/42") {
+      return { id: "usr_42" } as never;
+    }
+    if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_42") {
+      return {
+        hosts: [host()],
+        workspaces: [workspace()],
+        sessions: [],
+        approvals: [],
+        tasks: []
+      } as never;
+    }
+    if (pathname === "/api/v1/approvals?userId=usr_42&state=waiting_human,pending") {
+      return { approvals: [] } as never;
+    }
+    if (pathname === "/api/v1/sessions/ses_1") {
+      return session({ id: "ses_1" }) as never;
+    }
+    throw new Error(`Unexpected path ${pathname}`);
+  };
+  const handlers = createBotHandlers({
+    apiFetch,
+    miniAppBaseUrl: "http://localhost:4000/miniapp",
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/sessions",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+  await handlers.handleMessage({
+    message_id: 2,
+    text: "/approve",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+  await handlers.handleMessage({
+    message_id: 3,
+    text: "/status ses_1",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+  await handlers.handleCallbackQuery({
+    id: "cb_diff",
+    data: "s:d:ses_1",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 4, chat: { id: 100 }, text: "session" }
+  });
+  await handlers.handleCallbackQuery({
+    id: "cb_reports",
+    data: "m:r",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 5, chat: { id: 100 }, text: "menu" }
+  });
+
+  assert.equal(messages.length, 5);
+  assert.deepEqual(messages.flatMap((message) => collectWebAppUrls(message.replyMarkup)), []);
+  assert.match(JSON.stringify(messages.map((message) => message.replyMarkup)), /callback_data/);
+  assert.match(messages[3]?.text ?? "", /Mini App-кнопка недоступна/);
+  assert.match(messages[4]?.text ?? "", /Mini App-кнопка недоступна/);
 });

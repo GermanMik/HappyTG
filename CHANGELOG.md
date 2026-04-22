@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## v0.4.1
+
+### Fixed
+
+- Telegram bot replies no longer fail in local development when `HAPPYTG_PUBLIC_URL` or other Mini App URL settings resolve to local HTTP, localhost, private-network, or malformed `web_app.url` values. The bot now keeps ordinary replies and callback controls working while omitting invalid Web App buttons.
+- Windows PowerShell Telegram `sendMessage` fallback errors now surface Telegram's JSON rejection description when available, instead of only the generic PowerShell `400 Bad Request` text.
+- Production Mini App routing keeps the public Caddy `/miniapp` route, public Mini App auth/session and approval-action endpoints, and the `/telegram/webhook` delivery contract aligned.
+
+### Added
+
+- Added `pnpm happytg telegram menu set`, `--dry-run`, and `reset` for explicit Telegram persistent menu-button setup with public HTTPS URL validation and Caddy `/miniapp` preflight.
+- `pnpm happytg doctor` and `pnpm happytg verify` now report Telegram Mini App URL, Caddy route, and menu-button setup guidance without mutating Telegram state.
+
+### Changed
+
+- Bot readiness reports Mini App launch-button status as diagnostic metadata without making local polling or normal bot replies unhealthy when no public HTTPS Mini App URL is configured.
+- Release metadata is aligned at `0.4.1` across the workspace for the Telegram Mini App URL, menu-button, and production routing repair release.
+
+### Verification
+
+- Release validation covers bot sendMessage/Web App URL regression tests, bootstrap Telegram menu tests, repo typecheck/lint/test/build, and canonical task validation for the included proof bundles.
+
 ## v0.4.0
 
 ### Added

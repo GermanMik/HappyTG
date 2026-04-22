@@ -18,8 +18,8 @@ import {
 } from "../../../packages/shared/src/index.js";
 import type { Logger } from "../../../packages/shared/src/index.js";
 
-import type { BotDependencies, MiniAppUrlResolution, TelegramUpdate } from "./handlers.js";
-import { createBotHandlers, resolveMiniAppBaseUrl } from "./handlers.js";
+import type { BotDependencies, TelegramMiniAppLaunchSnapshot, TelegramUpdate } from "./handlers.js";
+import { createBotHandlers, defaultMiniAppBaseUrl, inspectTelegramMiniAppLaunch } from "./handlers.js";
 
 const logger = createLogger("bot");
 
@@ -91,14 +91,6 @@ export interface TelegramDeliverySnapshot {
   actualWebhookUrl?: string;
   pendingUpdateCount?: number;
   lastErrorMessage?: string;
-}
-
-export interface TelegramMiniAppSnapshot {
-  status: "ready" | "degraded";
-  detail: string;
-  publicUrl?: string;
-  source?: MiniAppUrlResolution["source"];
-  menuButtonConfigured?: boolean;
 }
 
 interface TelegramPublicUrlInspection {
@@ -447,73 +439,6 @@ export async function inspectTelegramWebhookDelivery(options: {
   };
 }
 
-export function resolveTelegramMiniAppSnapshot(env: NodeJS.ProcessEnv = process.env): TelegramMiniAppSnapshot {
-  const resolved = resolveMiniAppBaseUrl(env);
-  return {
-    status: resolved.status,
-    detail: resolved.detail,
-    publicUrl: resolved.url,
-    source: resolved.source,
-    menuButtonConfigured: false
-  };
-}
-
-interface TelegramMenuButtonInfo {
-  type: string;
-  text?: string;
-  web_app?: {
-    url?: string;
-  };
-}
-
-export async function configureTelegramMiniAppMenuButton(options: {
-  botToken: string;
-  miniAppUrl: string;
-  fetchImpl?: typeof fetch;
-  logger?: Logger;
-  platform?: NodeJS.Platform;
-  invokeViaWindowsPowerShell?: InvokeTelegramBotApiViaWindowsPowerShell;
-}): Promise<Partial<TelegramMiniAppSnapshot>> {
-  await telegramApiCall<true>("setChatMenuButton", {
-    botToken: options.botToken,
-    fetchImpl: options.fetchImpl,
-    payload: {
-      menu_button: {
-        type: "web_app",
-        text: "HappyTG",
-        web_app: {
-          url: options.miniAppUrl
-        }
-      }
-    },
-    logger: options.logger,
-    platform: options.platform,
-    invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell
-  });
-
-  const menuButton = await telegramApiCall<TelegramMenuButtonInfo>("getChatMenuButton", {
-    botToken: options.botToken,
-    fetchImpl: options.fetchImpl,
-    logger: options.logger,
-    platform: options.platform,
-    invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell
-  });
-
-  if (menuButton.type === "web_app" && menuButton.web_app?.url === options.miniAppUrl) {
-    return {
-      status: "ready",
-      detail: "Telegram Mini App menu button is configured and verified.",
-      menuButtonConfigured: true
-    };
-  }
-
-  return {
-    status: "degraded",
-    detail: "Telegram Mini App menu button was set but could not be verified.",
-    menuButtonConfigured: false
-  };
-}
-
 function createDefaultApiFetch() {
   return async function apiFetch<T>(pathname: string, init?: RequestInit): Promise<T> {
     const response = await fetch(new URL(pathname, apiBaseUrl), {
@@ -779,6 +704,8 @@ async function sendTelegramMessageViaWindowsPowerShell(
   const script = [
     "$ErrorActionPreference = 'Stop'",
     "$ProgressPreference = 'SilentlyContinue'",
+    "Add-Type -AssemblyName System.Net.Http",
+    "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12",
     "$token = $env:HAPPYTG_TELEGRAM_BOT_TOKEN_PROBE",
     "$payloadJson = $env:HAPPYTG_TELEGRAM_SEND_MESSAGE_PAYLOAD",
     "if (-not $token) {",
@@ -790,35 +717,25 @@ async function sendTelegramMessageViaWindowsPowerShell(
     "  exit 0",
     "}",
     "$uri = \"https://api.telegram.org/bot$token/sendMessage\"",
+    "$client = [System.Net.Http.HttpClient]::new()",
+    "$client.Timeout = [TimeSpan]::FromSeconds(20)",
     "try {",
-    "  $response = Invoke-RestMethod -Uri $uri -Method Post -ContentType 'application/json' -Body $payloadJson -TimeoutSec 20",
-    "  if ($response.ok) {",
+    "  $content = [System.Net.Http.StringContent]::new($payloadJson, [System.Text.Encoding]::UTF8, 'application/json')",
+    "  $response = $client.PostAsync($uri, $content).GetAwaiter().GetResult()",
+    "  $statusCode = [int]$response.StatusCode",
+    "  $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()",
+    "  $json = $null",
+    "  try { if ($body) { $json = $body | ConvertFrom-Json } } catch { $json = $null }",
+    "  if ($response.IsSuccessStatusCode -and $json -and $json.ok) {",
     "    @{ ok = $true } | ConvertTo-Json -Compress",
     "  } else {",
-    "    @{ ok = $false; message = if ($response.description) { [string]$response.description } else { 'Telegram API rejected sendMessage.' } } | ConvertTo-Json -Compress",
+    "    $description = if ($json -and $json.description) { [string]$json.description } elseif ($body) { [string]$body } else { [string]$response.ReasonPhrase }",
+    "    @{ ok = $false; statusCode = $statusCode; message = $description } | ConvertTo-Json -Compress",
     "  }",
     "} catch {",
-    "  $response = $_.Exception.Response",
-    "  if ($response) {",
-    "    $statusCode = [int]$response.StatusCode",
-    "    $fallbackMessage = [string]$_.Exception.Message",
-    "    try {",
-    "      $stream = $response.GetResponseStream()",
-    "      $reader = [System.IO.StreamReader]::new($stream)",
-    "      $body = $reader.ReadToEnd()",
-    "      if ($body) {",
-    "        $json = $body | ConvertFrom-Json",
-    "        $description = if ($json.description) { [string]$json.description } else { $fallbackMessage }",
-    "        @{ ok = $false; statusCode = $statusCode; message = $description } | ConvertTo-Json -Compress",
-    "      } else {",
-    "        @{ ok = $false; statusCode = $statusCode; message = $fallbackMessage } | ConvertTo-Json -Compress",
-    "      }",
-    "    } catch {",
-    "      @{ ok = $false; statusCode = $statusCode; message = $fallbackMessage } | ConvertTo-Json -Compress",
-    "    }",
-    "  } else {",
-    "    @{ ok = $false; message = [string]$_.Exception.Message } | ConvertTo-Json -Compress",
-    "  }",
+    "  @{ ok = $false; message = [string]$_.Exception.Message } | ConvertTo-Json -Compress",
+    "} finally {",
+    "  if ($client) { $client.Dispose() }",
     "}"
   ].join("\n");
 
@@ -1089,7 +1006,7 @@ export function createBotServer(
   options?: {
     dispatchUpdate?(update: TelegramUpdate): Promise<void>;
     getTelegramDeliverySnapshot?(): TelegramDeliverySnapshot | undefined;
-    getTelegramMiniAppSnapshot?(): TelegramMiniAppSnapshot | undefined;
+    getMiniAppLaunchSnapshot?(): TelegramMiniAppLaunchSnapshot | undefined;
   }
 ) {
   const apiFetch = dependencies.apiFetch ?? createDefaultApiFetch();
@@ -1104,7 +1021,7 @@ export function createBotServer(
         try {
           await apiFetch<{ ok: boolean }>("/health");
           const telegram = options?.getTelegramDeliverySnapshot?.();
-          const miniApp = options?.getTelegramMiniAppSnapshot?.();
+          const miniAppLaunch = options?.getMiniAppLaunchSnapshot?.();
           if (telegram && telegram.status !== "ready") {
             json(res, 503, {
               ok: false,
@@ -1112,22 +1029,11 @@ export function createBotServer(
               apiBaseUrl,
               detail: telegram.detail,
               telegram,
-              ...(miniApp ? { miniApp } : {})
+              ...(miniAppLaunch ? { miniAppLaunch } : {})
             });
             return;
           }
-          if (miniApp && miniApp.status !== "ready") {
-            json(res, 503, {
-              ok: false,
-              service: "bot",
-              apiBaseUrl,
-              detail: miniApp.detail,
-              ...(telegram ? { telegram } : {}),
-              miniApp
-            });
-            return;
-          }
-          json(res, 200, { ok: true, service: "bot", apiBaseUrl, ...(telegram ? { telegram } : {}), ...(miniApp ? { miniApp } : {}) });
+          json(res, 200, { ok: true, service: "bot", apiBaseUrl, ...(telegram ? { telegram } : {}), ...(miniAppLaunch ? { miniAppLaunch } : {}) });
         } catch (error) {
           json(res, 503, {
             ok: false,
@@ -1353,7 +1259,7 @@ function close(server: Server): Promise<void> {
   });
 }
 
-function startupMetadata(snapshot: TelegramDeliverySnapshot, listenPort: number) {
+function startupMetadata(snapshot: TelegramDeliverySnapshot, listenPort: number, miniAppLaunch?: TelegramMiniAppLaunchSnapshot) {
   return {
     port: listenPort,
     apiBaseUrl,
@@ -1366,24 +1272,31 @@ function startupMetadata(snapshot: TelegramDeliverySnapshot, listenPort: number)
     ...(snapshot.expectedWebhookUrl ? { expectedWebhookUrl: snapshot.expectedWebhookUrl } : {}),
     ...(snapshot.actualWebhookUrl ? { actualWebhookUrl: snapshot.actualWebhookUrl } : {}),
     ...(typeof snapshot.pendingUpdateCount === "number" ? { pendingUpdateCount: snapshot.pendingUpdateCount } : {}),
-    ...(snapshot.lastErrorMessage ? { lastErrorMessage: snapshot.lastErrorMessage } : {})
+    ...(snapshot.lastErrorMessage ? { lastErrorMessage: snapshot.lastErrorMessage } : {}),
+    ...(miniAppLaunch
+      ? {
+        miniAppLaunchStatus: miniAppLaunch.status,
+        miniAppLaunchDetail: miniAppLaunch.detail,
+        ...(miniAppLaunch.url ? { miniAppLaunchUrl: miniAppLaunch.url } : {})
+      }
+      : {})
   };
 }
 
-function logBotStartup(botLogger: Logger, snapshot: TelegramDeliverySnapshot, listenPort: number): void {
+function logBotStartup(botLogger: Logger, snapshot: TelegramDeliverySnapshot, listenPort: number, miniAppLaunch?: TelegramMiniAppLaunchSnapshot): void {
   if (snapshot.status === "disabled") {
-    botLogger.warn(snapshot.detail, startupMetadata(snapshot, listenPort));
+    botLogger.warn(snapshot.detail, startupMetadata(snapshot, listenPort, miniAppLaunch));
     return;
   }
   if (snapshot.status === "degraded") {
-    botLogger.warn("Bot listening with degraded Telegram delivery", startupMetadata(snapshot, listenPort));
+    botLogger.warn("Bot listening with degraded Telegram delivery", startupMetadata(snapshot, listenPort, miniAppLaunch));
     return;
   }
   if (snapshot.activeMode === "polling") {
-    botLogger.info("Bot listening with Telegram polling active", startupMetadata(snapshot, listenPort));
+    botLogger.info("Bot listening with Telegram polling active", startupMetadata(snapshot, listenPort, miniAppLaunch));
     return;
   }
-  botLogger.info("Bot listening with Telegram webhook active", startupMetadata(snapshot, listenPort));
+  botLogger.info("Bot listening with Telegram webhook active", startupMetadata(snapshot, listenPort, miniAppLaunch));
 }
 
 export async function startBotServer(
@@ -1487,16 +1400,16 @@ export function createBotRuntime(
     env,
     configurationMessage: options?.configurationMessage ?? botConfigurationMessage(env)
   }));
-  let miniAppSnapshot = resolveTelegramMiniAppSnapshot(env);
+  const miniAppLaunch = inspectTelegramMiniAppLaunch(env);
   const runtimeDependencies: Partial<BotDependencies> = {
     ...dependencies,
-    miniAppBaseUrl: dependencies.miniAppBaseUrl ?? miniAppSnapshot.publicUrl
+    miniAppBaseUrl: dependencies.miniAppBaseUrl ?? defaultMiniAppBaseUrl(env)
   };
   const dispatcher = createTelegramUpdateDispatcher(runtimeDependencies);
-  const server = createBotServer(runtimeDependencies, {
+  const server = createBotServer(dependencies, {
     dispatchUpdate: dispatcher.dispatchUpdate,
     getTelegramDeliverySnapshot: () => deliveryState.read(),
-    getTelegramMiniAppSnapshot: () => miniAppSnapshot
+    getMiniAppLaunchSnapshot: () => miniAppLaunch
   });
   let polling: TelegramPollingController | undefined;
   let started = false;
@@ -1555,37 +1468,8 @@ export function createBotRuntime(
           }
         }
 
-        if (
-          configuredBotToken
-          && deliveryState.read().status === "ready"
-          && miniAppSnapshot.status === "ready"
-          && miniAppSnapshot.publicUrl
-          && env.HAPPYTG_MINIAPP_MENU_AUTO_SETUP !== "false"
-        ) {
-          try {
-            miniAppSnapshot = {
-              ...miniAppSnapshot,
-              ...(await configureTelegramMiniAppMenuButton({
-                botToken: configuredBotToken,
-                miniAppUrl: miniAppSnapshot.publicUrl,
-                fetchImpl: options?.fetchImpl,
-                logger: botLogger,
-                platform: options?.platform,
-                invokeViaWindowsPowerShell: options?.invokeTelegramApiViaWindowsPowerShell
-              }))
-            };
-          } catch (error) {
-            miniAppSnapshot = {
-              ...miniAppSnapshot,
-              status: "degraded",
-              detail: error instanceof Error ? error.message : String(error),
-              menuButtonConfigured: false
-            };
-          }
-        }
-
         const snapshot = deliveryState.read();
-        logBotStartup(botLogger, snapshot, listenPort);
+        logBotStartup(botLogger, snapshot, listenPort, miniAppLaunch);
         return snapshot;
       } catch (error) {
         started = false;

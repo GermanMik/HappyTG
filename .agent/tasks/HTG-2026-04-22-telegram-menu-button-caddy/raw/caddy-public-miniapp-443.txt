@@ -1,0 +1,18 @@
+
+> happytg@0.4.0 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "telegram" "menu" "set" "--dry-run"
+
+HappyTG telegram menu set [PASS]
+Mini App URL sent to Telegram: https://happytg.gerta.crazedns.ru/miniapp
+Caddy route: Public Caddy Mini App route responded with HTTP 200.
+Telegram: Dry-run completed; Telegram Bot API was not called.
+Payload:
+{
+  "menu_button": {
+    "type": "web_app",
+    "text": "HappyTG",
+    "web_app": {
+      "url": "https://happytg.gerta.crazedns.ru/miniapp"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+
+> @happytg/bot@0.4.0 typecheck C:\Develop\Projects\HappyTG\apps\bot
+> tsc -p tsconfig.json --noEmit
+
+EXIT_CODE=0

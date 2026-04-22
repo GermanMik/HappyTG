@@ -1,0 +1,21 @@
+{
+  "id": "HTG-2026-04-22-telegram-menu-button-caddy",
+  "sessionId": "manual-telegram-menu-button-caddy",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-22-telegram-menu-button-caddy",
+  "phase": "complete",
+  "mode": "proof-loop",
+  "title": "Telegram persistent Mini App menu button and Caddy route preflight",
+  "acceptanceCriteria": [
+    "CLI supports telegram menu set, dry-run, and reset",
+    "Menu setup resolves and validates public HTTPS Mini App URL safely",
+    "Menu setup blocks when public Caddy /miniapp route is unavailable",
+    "Telegram setChatMenuButton payload matches MenuButtonWebApp",
+    "Doctor or verify reports actionable diagnostics",
+    "Inline web_app buttons remain functional",
+    "Docs and Caddy/env examples cover happytg.gerta.crazedns.ru with 443 and explicit 8443"
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-22T00:00:00.000Z",
+  "updatedAt": "2026-04-22T03:49:11.655Z"
+}

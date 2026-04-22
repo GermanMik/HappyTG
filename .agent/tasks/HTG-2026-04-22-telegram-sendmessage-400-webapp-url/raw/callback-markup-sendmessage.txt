@@ -1,0 +1,20 @@
+{
+  "name": "callback-only",
+  "payload": {
+    "chat_id": "<redacted>",
+    "text": "HappyTG diagnostic probe: callback-only",
+    "reply_markup": {
+      "inline_keyboard": [
+        {
+          "text": "Callback probe",
+          "callback_data": "probe:callback"
+        }
+      ]
+    }
+  },
+  "statusCode": 200,
+  "ok": true,
+  "description": null,
+  "elapsedMs": 158.8,
+  "deletedAfterProbe": true
+}

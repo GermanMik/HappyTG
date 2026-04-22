@@ -1,0 +1,9 @@
+
+> happytg@0.4.1 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-22-release-041-telegram-miniapp"
+
+Task: HTG-2026-04-22-release-041-telegram-miniapp
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-22-release-041-telegram-miniapp
+Validation: ok
+Phase: complete
+Verification: passed

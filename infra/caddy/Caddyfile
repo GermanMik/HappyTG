@@ -5,6 +5,7 @@
 {$HAPPYTG_DOMAIN:happytg.gerta.crazedns.ru} {
 	encode zstd gzip
 
+	# Public health/API surface.
 	handle /health {
 		reverse_proxy api:4000
 	}
@@ -26,6 +27,7 @@
 		reverse_proxy bot:4100
 	}
 
+	# Public Telegram Mini App route used by inline web_app buttons and setChatMenuButton.
 	handle_path /miniapp* {
 		reverse_proxy miniapp:3001 {
 			header_up X-Forwarded-Prefix /miniapp
@@ -36,6 +38,7 @@
 		reverse_proxy miniapp:3001
 	}
 
+	# Keep the root URL inspectable by redirecting operators to the Mini App.
 	handle {
 		redir /miniapp 302
 	}

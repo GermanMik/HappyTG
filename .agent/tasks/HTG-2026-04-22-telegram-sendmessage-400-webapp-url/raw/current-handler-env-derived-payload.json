@@ -1,0 +1,47 @@
+{
+  "env": {
+    "HAPPYTG_PUBLIC_URL": "http://localhost:4000",
+    "HAPPYTG_APP_URL": "http://localhost:3001",
+    "HAPPYTG_MINIAPP_URL": "<missing>"
+  },
+  "payload": {
+    "chat_id": "<redacted>",
+    "text": "HappyTG\nСначала подключите host, на котором лежит repo.\n\nНа host выполните `pnpm daemon:pair`, затем пришлите сюда `/pair CODE`.\nПосле pairing я покажу меню с задачами, сессиями и approvals.",
+    "reply_markup": {
+      "inline_keyboard": [
+        [
+          {
+            "text": "Новая задача",
+            "callback_data": "m:t"
+          },
+          {
+            "text": "Активные сессии",
+            "callback_data": "m:s"
+          }
+        ],
+        [
+          {
+            "text": "Подтверждения",
+            "callback_data": "m:a"
+          },
+          {
+            "text": "Хосты",
+            "callback_data": "m:h"
+          }
+        ],
+        [
+          {
+            "text": "Последние отчеты",
+            "callback_data": "m:r"
+          },
+          {
+            "text": "Открыть Mini App",
+            "web_app": {
+              "url": "http://localhost:3001/?screen=home"
+            }
+          }
+        ]
+      ]
+    }
+  }
+}

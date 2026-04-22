@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-22-telegram-sendmessage-400-webapp-url",
+  "status": "complete",
+  "summary": "Sanitized live Telegram probes proved the HTTP 400 root cause is an invalid local HTTP Telegram Web App URL: Telegram returned `Only HTTPS links are allowed`. HappyTG now validates Mini App URLs before adding `web_app` buttons, omits invalid local/non-public Web App buttons while keeping callback controls, preserves valid HTTPS Web App buttons, and logs actionable Telegram 400 descriptions from the Windows sendMessage fallback. Required bot verification and a fresh verifier pass passed."
+}

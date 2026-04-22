@@ -22,6 +22,19 @@ test("parseHappyTGArgs maps config and env nested commands", () => {
   });
 });
 
+test("parseHappyTGArgs maps Telegram menu commands", () => {
+  assert.deepEqual(parseHappyTGArgs(["telegram", "menu", "set", "--dry-run", "--json"]), {
+    kind: "telegram-menu-set",
+    json: true,
+    dryRun: true
+  });
+
+  assert.deepEqual(parseHappyTGArgs(["telegram", "menu", "reset"]), {
+    kind: "telegram-menu-reset",
+    json: false
+  });
+});
+
 test("parseHappyTGArgs maps install flags into the installer request", () => {
   const parsed = parseHappyTGArgs([
     "install",
@@ -306,6 +319,40 @@ test("renderText returns a compact bootstrap summary with preflight and diagnost
   assert.match(output, /Diagnostics:/);
   assert.match(output, /pnpm happytg setup --json/);
   assert.doesNotMatch(output, /\/tmp\/codex/);
+});
+
+test("renderText includes the exact Telegram Mini App menu URL", () => {
+  const output = renderText({
+    kind: "telegram-menu",
+    action: "set",
+    status: "pass",
+    dryRun: true,
+    miniAppUrl: "https://happytg.gerta.crazedns.ru:8443/miniapp",
+    payload: {
+      menu_button: {
+        type: "web_app",
+        text: "HappyTG",
+        web_app: {
+          url: "https://happytg.gerta.crazedns.ru:8443/miniapp"
+        }
+      }
+    },
+    caddy: {
+      ok: true,
+      url: "https://happytg.gerta.crazedns.ru:8443/miniapp",
+      status: 200,
+      detail: "Public Caddy Mini App route responded with HTTP 200."
+    },
+    telegram: {
+      method: "setChatMenuButton",
+      called: false,
+      detail: "Dry-run completed; Telegram Bot API was not called."
+    }
+  });
+
+  assert.match(output, /Mini App URL sent to Telegram: https:\/\/happytg\.gerta\.crazedns\.ru:8443\/miniapp/);
+  assert.match(output, /Dry-run completed/);
+  assert.match(output, /"type": "web_app"/);
 });
 
 test("renderText returns a compact install summary with structured finalization sections", () => {

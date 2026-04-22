@@ -16,6 +16,7 @@ import {
 import { createInstallFailureResult, runHappyTGInstall } from "./install/index.js";
 import type { InstallCommandOptions, InstallResult } from "./install/types.js";
 import { runBootstrapCommand, type BootstrapCommand } from "./index.js";
+import { runTelegramMenuReset, runTelegramMenuSet, type TelegramMenuCommandResult } from "./telegram-menu.js";
 
 export class CliUsageError extends Error {
   constructor(message: string) {
@@ -27,6 +28,8 @@ export class CliUsageError extends Error {
 type CliRequest =
   | { kind: "bootstrap"; command: BootstrapCommand; json: boolean }
   | { kind: "install"; json: boolean; options: InstallCommandOptions }
+  | { kind: "telegram-menu-set"; json: boolean; dryRun: boolean }
+  | { kind: "telegram-menu-reset"; json: boolean }
   | { kind: "task-init"; json: boolean; repoRoot: string; taskId: string; sessionId: string; workspaceId: string; title: string; mode: "quick" | "proof"; acceptanceCriteria: string[] }
   | { kind: "task-validate"; json: boolean; repoRoot: string; taskId: string }
   | { kind: "task-status"; json: boolean; repoRoot: string; taskId: string };
@@ -204,6 +207,8 @@ function usage(): string {
   return [
     "Usage:",
     "  happytg doctor|setup|repair|verify|status [--json]",
+    "  happytg telegram menu set [--dry-run] [--json]",
+    "  happytg telegram menu reset [--json]",
     "  happytg install [--repo-mode clone|update|current] [--repo-dir <path>] [--repo-url <url>] [--branch <name>] [--telegram-bot-token <token>] [--allowed-user <id>]... [--home-channel <value>] [--background launchagent|scheduled-task|startup|systemd-user|manual|skip] [--post-check setup|doctor|verify]... [--non-interactive] [--json]",
     "  happytg config init [--json]",
     "  happytg env snapshot [--json]",
@@ -307,6 +312,26 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
     return { kind: "bootstrap", command: "config-init", json };
   }
 
+  if (scope === "telegram" && action === "menu") {
+    const [menuAction, ...menuRest] = rest;
+    const options = parseOptions(menuRest);
+    if (menuAction === "set") {
+      return {
+        kind: "telegram-menu-set",
+        json: options.json || json,
+        dryRun: takeOption(options, "dry-run") === "true"
+      };
+    }
+    if (menuAction === "reset") {
+      return {
+        kind: "telegram-menu-reset",
+        json: options.json || json
+      };
+    }
+
+    throw new CliUsageError(`Unsupported telegram menu action: ${menuAction ?? "missing"}`);
+  }
+
   if (scope === "env" && action === "snapshot") {
     return { kind: "bootstrap", command: "env-snapshot", json };
   }
@@ -372,7 +397,7 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
   throw new CliUsageError(`Unsupported command: ${scope}`);
 }
 
-export function renderText(result: BootstrapReport | InstallResult | TaskBundle | TaskStatusResponse): string {
+export function renderText(result: BootstrapReport | InstallResult | TelegramMenuCommandResult | TaskBundle | TaskStatusResponse): string {
   if ("kind" in result && result.kind === "install") {
     const finalizationItems = result.finalization?.items ?? [];
     const groupedFinalization = groupAutomationItems(finalizationItems);
@@ -404,6 +429,24 @@ export function renderText(result: BootstrapReport | InstallResult | TaskBundle 
       lines.push(...result.nextSteps.map((step) => `- ${step}`));
     }
 
+    return lines.join("\n");
+  }
+
+  if ("kind" in result && result.kind === "telegram-menu") {
+    const lines = [
+      `HappyTG telegram menu ${result.action} [PASS]`
+    ];
+    if (result.miniAppUrl) {
+      lines.push(`Mini App URL sent to Telegram: ${result.miniAppUrl}`);
+    }
+    if (result.caddy) {
+      lines.push(`Caddy route: ${result.caddy.detail}`);
+    }
+    lines.push(`Telegram: ${result.telegram.detail}`);
+    if (result.dryRun && result.payload) {
+      lines.push("Payload:");
+      lines.push(JSON.stringify(result.payload, null, 2));
+    }
     return lines.join("\n");
   }
 
@@ -480,11 +523,15 @@ export async function executeHappyTG(
   runtime?: {
     runBootstrapCommandImpl?: typeof runBootstrapCommand;
     runHappyTGInstallImpl?: typeof runHappyTGInstall;
+    runTelegramMenuSetImpl?: typeof runTelegramMenuSet;
+    runTelegramMenuResetImpl?: typeof runTelegramMenuReset;
   }
-): Promise<BootstrapReport | InstallResult | TaskBundle | TaskStatusResponse> {
+): Promise<BootstrapReport | InstallResult | TelegramMenuCommandResult | TaskBundle | TaskStatusResponse> {
   const request = parseHappyTGArgs(argv, cwd);
   const runBootstrapCommandImpl = runtime?.runBootstrapCommandImpl ?? runBootstrapCommand;
   const runHappyTGInstallImpl = runtime?.runHappyTGInstallImpl ?? runHappyTGInstall;
+  const runTelegramMenuSetImpl = runtime?.runTelegramMenuSetImpl ?? runTelegramMenuSet;
+  const runTelegramMenuResetImpl = runtime?.runTelegramMenuResetImpl ?? runTelegramMenuReset;
 
   switch (request.kind) {
     case "bootstrap":
@@ -500,6 +547,15 @@ export async function executeHappyTG(
           error
         });
       }
+    case "telegram-menu-set":
+      return runTelegramMenuSetImpl({
+        cwd,
+        dryRun: request.dryRun
+      });
+    case "telegram-menu-reset":
+      return runTelegramMenuResetImpl({
+        cwd
+      });
     case "task-init":
       return initTaskBundle({
         repoRoot: request.repoRoot,

@@ -1,0 +1,5 @@
+
+> @happytg/bot@0.4.0 build C:\Develop\Projects\HappyTG\apps\bot
+> tsc -p tsconfig.json
+
+EXIT_CODE=0

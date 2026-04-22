@@ -127,6 +127,19 @@ pnpm dev
 
 By default, the local repo path uses Telegram polling when `HAPPYTG_PUBLIC_URL` is local or otherwise not webhook-capable, so `/start` and `/pair <CODE>` do not require a public domain during local development.
 
+Inline Mini App buttons in `/start` and `/menu` require a public HTTPS Mini App URL before Telegram will open them, but local polling and pairing do not. The persistent Telegram chat menu button is configured only when you explicitly run the menu command against a public deployment:
+
+```bash
+pnpm happytg telegram menu set --dry-run
+pnpm happytg telegram menu set
+```
+
+The command prints the exact Mini App URL sent to Telegram and refuses unsafe URLs or an unreachable public Caddy `/miniapp` route. To reset Telegram's chat menu button:
+
+```bash
+pnpm happytg telegram menu reset
+```
+
 ### Terminal 3: pairing and daemon
 
 ```bash
@@ -243,21 +256,29 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
    ```
 
 4. Put a reverse proxy with TLS in front of the API and Mini App.
-5. On each execution host, install Codex CLI and run `pnpm happytg setup`.
-6. Request pairing on the execution host:
+5. For `happytg.gerta.crazedns.ru`, expose `/miniapp`, the allowed public Mini App API routes, and `/telegram/webhook` through Caddy, then verify the public URL you will send to Telegram.
+6. Configure the persistent Telegram menu button:
+
+   ```bash
+   pnpm happytg telegram menu set --dry-run
+   pnpm happytg telegram menu set
+   ```
+
+7. On each execution host, install Codex CLI and run `pnpm happytg setup`.
+8. Request pairing on the execution host:
 
    ```bash
    pnpm daemon:pair
    ```
 
-7. Pair execution hosts through Telegram with `/pair <CODE>`.
-8. Start the host daemon outside the Compose stack on the execution host:
+9. Pair execution hosts through Telegram with `/pair <CODE>`.
+10. Start the host daemon outside the Compose stack on the execution host:
 
    ```bash
    pnpm --filter @happytg/host-daemon run
    ```
 
-9. Run `pnpm happytg verify` and then execute a Codex smoke session.
+11. Run `pnpm happytg verify` and then execute a Codex smoke session.
 
 ## Required Config
 
@@ -267,6 +288,7 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
 - JWT signing key
 - Codex binary path and config path
 - public API and Mini App URLs for Telegram callbacks
+- public HTTPS Mini App URL for `setChatMenuButton`, usually `HAPPYTG_MINIAPP_URL`
 - service-specific port overrides such as `HAPPYTG_MINIAPP_PORT`, `HAPPYTG_API_PORT`, `HAPPYTG_BOT_PORT`, `HAPPYTG_WORKER_PORT`, and `HAPPYTG_REDIS_HOST_PORT` when defaults conflict
 
 ## Notes

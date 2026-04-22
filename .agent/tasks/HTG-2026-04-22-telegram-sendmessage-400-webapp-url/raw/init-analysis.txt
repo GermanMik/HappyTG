@@ -1,0 +1,16 @@
+Task initialized on branch codex/telegram-sendmessage-400-webapp-url.
+
+EchoVault context retrieved before work:
+- HappyTG Telegram sendMessage 400 repair prompt.
+- HappyTG 0.4.0 Mini App visibility prompt supplement.
+- Windows sendMessage now falls back after 1.5s.
+
+Pre-existing workspace state:
+- pnpm-lock.yaml modified before this task.
+- .agent/prompts/telegram-sendmessage-400-webapp-url-repair.md untracked before this task.
+
+Initial code inspection:
+- apps/bot/src/handlers.ts unconditionally emits web_app buttons in main menu, session cards, session detail callbacks, approvals, and reports.
+- defaultMiniAppBaseUrl() can resolve local HTTP values from HAPPYTG_MINIAPP_URL, HAPPYTG_APP_URL, or HAPPYTG_PUBLIC_URL + /miniapp.
+- apps/bot/src/index.ts already has the Windows sendMessage timeout fallback behavior; preserve it.
+- sendTelegramMessageViaWindowsPowerShell appears intended to parse Telegram error body descriptions, but the observed log still contains generic Bad Request, so diagnostics need focused tests.

@@ -1,0 +1,63 @@
+{
+  "taskId": "HTG-2026-04-22-telegram-menu-button-caddy",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "verify-2026-04-22-telegram-menu-button-caddy"
+  },
+  "checks": [
+    {
+      "name": "pnpm --filter @happytg/bot test",
+      "status": "passed",
+      "artifact": "raw/test-unit.txt"
+    },
+    {
+      "name": "pnpm --filter @happytg/bootstrap test",
+      "status": "passed",
+      "artifact": "raw/test-unit.txt"
+    },
+    {
+      "name": "pnpm typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck.txt"
+    },
+    {
+      "name": "pnpm lint",
+      "status": "passed",
+      "artifact": "raw/lint.txt"
+    },
+    {
+      "name": "pnpm test",
+      "status": "passed",
+      "artifact": "raw/test-integration.txt"
+    },
+    {
+      "name": "pnpm build",
+      "status": "passed",
+      "artifact": "raw/build.txt"
+    },
+    {
+      "name": "pnpm happytg telegram menu set --dry-run",
+      "status": "passed",
+      "artifact": "raw/caddy-public-miniapp-443.txt"
+    },
+    {
+      "name": "pnpm happytg doctor --json",
+      "status": "warn",
+      "artifact": "raw/doctor-json.txt",
+      "detail": "Warn status from existing Codex websocket 403 fallback and already-running services; Telegram/Caddy diagnostics passed for public 443."
+    },
+    {
+      "name": "pnpm happytg verify --json",
+      "status": "warn",
+      "artifact": "raw/verify-json.txt",
+      "detail": "Warn status from existing Codex websocket 403 fallback and already-running services; Telegram/Caddy diagnostics passed for public 443."
+    },
+    {
+      "name": "pnpm happytg task validate --repo . --task HTG-2026-04-22-telegram-menu-button-caddy",
+      "status": "passed",
+      "artifact": "raw/task-validate.txt"
+    }
+  ],
+  "generatedAt": "2026-04-22T03:49:11.655Z"
+}

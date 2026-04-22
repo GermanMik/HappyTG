@@ -1,0 +1,15 @@
+{
+  "id": "HTG-2026-04-22-release-041-telegram-miniapp",
+  "title": "Release HappyTG 0.4.1 Telegram Mini App repairs",
+  "phase": "complete",
+  "mode": "proof",
+  "verificationState": "passed",
+  "createdAt": "2026-04-22T00:00:00.000Z",
+  "updatedAt": "2026-04-22T00:00:00.000Z",
+  "acceptanceCriteria": [
+    "workspace release metadata is aligned to 0.4.1",
+    "Telegram sendMessage Web App URL repair and menu/Caddy repair are included",
+    "release checks and task validation pass",
+    "release commit is pushed, merged to main, and tagged v0.4.1"
+  ]
+}

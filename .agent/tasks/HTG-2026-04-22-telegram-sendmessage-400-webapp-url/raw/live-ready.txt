@@ -1,0 +1,14 @@
+STATUS 200
+{
+  "ok": true,
+  "service": "bot",
+  "apiBaseUrl": "http://localhost:4000",
+  "telegram": {
+    "configuredMode": "auto",
+    "activeMode": "polling",
+    "status": "ready",
+    "detail": "Telegram polling is active; webhook delivery was disabled at the Telegram API.",
+    "publicUrl": "http://localhost:4000/",
+    "expectedWebhookUrl": "http://localhost:4000/telegram/webhook"
+  }
+}

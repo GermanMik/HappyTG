@@ -1,0 +1,6 @@
+
+> happytg@0.4.0 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "telegram" "menu" "set" "--dry-run"
+
+Public Caddy Mini App route is unavailable: fetch failed Refusing to call Telegram setChatMenuButton for https://happytg.gerta.crazedns.ru:8443/miniapp.
+ ELIFECYCLE  Command failed with exit code 1.

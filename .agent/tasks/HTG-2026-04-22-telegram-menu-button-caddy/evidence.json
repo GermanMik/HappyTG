@@ -1,0 +1,62 @@
+{
+  "taskId": "HTG-2026-04-22-telegram-menu-button-caddy",
+  "criteria": [
+    {
+      "id": "cli-menu-set-reset",
+      "status": "passed",
+      "evidence": [
+        "packages/bootstrap/src/cli.ts",
+        "packages/bootstrap/src/telegram-menu.ts",
+        "packages/bootstrap/src/telegram-menu.test.ts"
+      ]
+    },
+    {
+      "id": "safe-url-validation",
+      "status": "passed",
+      "evidence": [
+        "packages/shared/src/index.ts",
+        "packages/bootstrap/src/telegram-menu.test.ts"
+      ]
+    },
+    {
+      "id": "caddy-preflight",
+      "status": "passed",
+      "evidence": [
+        ".agent/tasks/HTG-2026-04-22-telegram-menu-button-caddy/raw/caddy-public-miniapp-443.txt",
+        ".agent/tasks/HTG-2026-04-22-telegram-menu-button-caddy/raw/caddy-public-miniapp.txt"
+      ]
+    },
+    {
+      "id": "inline-buttons-preserved",
+      "status": "passed",
+      "evidence": [
+        "apps/bot/src/handlers.test.ts",
+        ".agent/tasks/HTG-2026-04-22-telegram-menu-button-caddy/raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "docs-env-caddy",
+      "status": "passed",
+      "evidence": [
+        ".env.example",
+        "docs/configuration.md",
+        "docs/installation.md",
+        "docs/self-hosting.md",
+        "infra/caddy/Caddyfile"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/test-unit.txt",
+    "raw/typecheck.txt",
+    "raw/lint.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt",
+    "raw/caddy-public-miniapp-443.txt",
+    "raw/caddy-public-miniapp.txt",
+    "raw/doctor-json.txt",
+    "raw/verify-json.txt",
+    "raw/task-validate.txt"
+  ],
+  "generatedAt": "2026-04-22T03:49:11.655Z"
+}

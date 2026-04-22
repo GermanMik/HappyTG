@@ -1,0 +1,22 @@
+{
+  "name": "local-http-webapp",
+  "payload": {
+    "chat_id": "<redacted>",
+    "text": "HappyTG diagnostic probe: local-http-webapp",
+    "reply_markup": {
+      "inline_keyboard": [
+        {
+          "text": "Mini App",
+          "web_app": {
+            "url": "http://localhost:4000/miniapp?screen=home"
+          }
+        }
+      ]
+    }
+  },
+  "statusCode": 400,
+  "ok": false,
+  "description": "Bad Request: inline keyboard button Web App URL 'http://localhost:4000/miniapp?screen=home' is invalid: Only HTTPS links are allowed",
+  "elapsedMs": 135.9,
+  "deletedAfterProbe": false
+}

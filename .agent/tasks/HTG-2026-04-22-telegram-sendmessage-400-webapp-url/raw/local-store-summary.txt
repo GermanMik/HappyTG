@@ -1,0 +1,2 @@
+apps/api/.happytg-dev/control-plane.json users=1 identities=1 activeIdentities=1 chatIdConfigured=True
+apps/worker/.happytg-dev/control-plane.json users=0 identities=0 activeIdentities=0 chatIdConfigured=False

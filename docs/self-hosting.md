@@ -26,8 +26,30 @@ For `happytg.gerta.crazedns.ru`, use one HTTPS origin and path-based routing:
 - `/health` -> fast API health
 - `/telegram/webhook` -> public Telegram webhook delivery endpoint
 - `/static/*` -> Mini App static assets
+- `/` -> redirect to `/miniapp`
 
 The starter Caddy config is `infra/caddy/Caddyfile`.
+
+If upstream public `443` maps to Caddy:
+
+```env
+HAPPYTG_DOMAIN=happytg.gerta.crazedns.ru
+HAPPYTG_PUBLIC_URL=https://happytg.gerta.crazedns.ru
+HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru/miniapp
+HAPPYTG_APP_URL=https://happytg.gerta.crazedns.ru/miniapp
+```
+
+If public HTTPS TCP `8443` maps to Caddy, keep the port in every public URL:
+
+```env
+HAPPYTG_DOMAIN=happytg.gerta.crazedns.ru
+HAPPYTG_HTTPS_PORT=8443
+HAPPYTG_PUBLIC_URL=https://happytg.gerta.crazedns.ru:8443
+HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru:8443/miniapp
+HAPPYTG_APP_URL=https://happytg.gerta.crazedns.ru:8443/miniapp
+```
+
+The Compose file maps `${HAPPYTG_HTTPS_PORT:-443}:443`; this supports external `8443` without assuming public `443`. If only non-standard HTTPS is externally reachable, automatic Caddy ACME issuance may require DNS challenge, an external certificate, or an upstream TLS proxy. Verify TLS with the exact public URL before configuring Telegram.
 
 ## Control Plane Bring-Up
 
@@ -42,7 +64,12 @@ The starter Caddy config is `infra/caddy/Caddyfile`.
 4. Confirm API, bot, worker, and Mini App logs are healthy.
 5. Confirm Prometheus can scrape API `/metrics` and Grafana can see the Prometheus datasource.
 6. Configure Telegram webhook delivery against `https://<domain>/telegram/webhook`.
-7. Configure the Telegram Mini App entry point with `https://<domain>/miniapp`; HappyTG also attempts Bot API `setChatMenuButton` automatically when the URL is valid public HTTPS.
+7. Configure the persistent Telegram menu button after the public route passes preflight:
+
+   ```bash
+   pnpm happytg telegram menu set --dry-run
+   pnpm happytg telegram menu set
+   ```
 
 ## Execution Host Bring-Up
 
@@ -62,8 +89,21 @@ The starter Caddy config is `infra/caddy/Caddyfile`.
 - Webhook delivery and Mini App launch are separate URLs:
   - webhook delivery: `https://<domain>/telegram/webhook`
   - Mini App public URL: `https://<domain>/miniapp`
-- In BotFather, set the bot Menu Button/Main Mini App to the Mini App public URL. If you rely on automatic setup, confirm `/ready` reports `miniApp.status=ready` and `menuButtonConfigured=true`.
+- Configure the persistent bot menu with `pnpm happytg telegram menu set` after the public `/miniapp` route passes preflight. BotFather Main Mini App/profile setup is still a separate manual Telegram setting when you need it.
 - Do not use `http://localhost:3001` or any non-HTTPS/private URL for production Telegram `web_app` buttons.
+
+## Telegram Mini App Menu
+
+`/start` and `/menu` still render inline `web_app` buttons when the resolved Mini App URL is public HTTPS. The persistent menu button is different: it is stored by Telegram through Bot API `setChatMenuButton` and survives normal chat refreshes.
+
+Run:
+
+```bash
+pnpm happytg telegram menu set --dry-run
+pnpm happytg telegram menu set
+```
+
+The command chooses a usable public HTTPS Mini App URL from `HAPPYTG_MINIAPP_URL`, `HAPPYTG_PUBLIC_URL + /miniapp`, or the legacy `HAPPYTG_APP_URL`; validates that the URL is public HTTPS; checks the public Caddy `/miniapp` route; and only then calls Telegram. BotFather/Main Mini App profile setup is still a separate manual Telegram setting if you need the Mini App shown on the bot profile.
 
 ## Backup and Upgrade
 

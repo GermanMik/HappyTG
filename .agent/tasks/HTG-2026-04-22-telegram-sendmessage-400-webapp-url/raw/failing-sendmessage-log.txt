@@ -1,0 +1,8 @@
+Live Windows PowerShell Telegram Bot API probe result:
+- text-only sendMessage: HTTP 200, ok=true, deletedAfterProbe=true
+- callback-only inline keyboard: HTTP 200, ok=true, deletedAfterProbe=true
+- local HTTP web_app.url: HTTP 400, ok=false
+- exact Telegram description: Bad Request: inline keyboard button Web App URL 'http://localhost:4000/miniapp?screen=home' is invalid: Only HTTPS links are allowed
+- public HTTPS web_app.url: HTTP 200, ok=true, deletedAfterProbe=true
+
+No token, chat id, message id, username, or private user data was recorded.

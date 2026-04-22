@@ -1,0 +1,153 @@
+{
+  "taskId": "HTG-2026-04-22-telegram-sendmessage-400-webapp-url",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "passed",
+      "summary": "Canonical proof bundle created, scope frozen before production edits, and state metadata added.",
+      "artifacts": [
+        "spec.md",
+        "task.json",
+        "state.json",
+        "raw/init-analysis.txt"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "passed",
+      "summary": "Live sanitized Windows PowerShell Telegram probes prove text-only and callback-only sendMessage succeed, local HTTP web_app.url fails with Telegram's HTTPS-only rule, and public HTTPS web_app.url succeeds.",
+      "artifacts": [
+        "raw/telegram-powershell-probes-sanitized.json",
+        "raw/text-only-sendmessage.txt",
+        "raw/callback-markup-sendmessage.txt",
+        "raw/local-webapp-markup-sendmessage.txt",
+        "raw/https-webapp-markup-sendmessage.txt",
+        "raw/failing-payload-sanitized.json",
+        "raw/failing-sendmessage-log.txt"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "passed",
+      "summary": "Local/non-public Mini App URLs no longer emit web_app buttons; ordinary callback controls remain.",
+      "artifacts": [
+        "apps/bot/src/handlers.ts",
+        "apps/bot/src/handlers.test.ts",
+        "raw/postfix-handler-webapp-payloads.json"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "passed",
+      "summary": "Valid public HTTPS Mini App URLs still render Telegram web_app buttons.",
+      "artifacts": [
+        "apps/bot/src/handlers.test.ts",
+        "raw/https-webapp-markup-sendmessage.txt",
+        "raw/postfix-handler-webapp-payloads.json"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "passed",
+      "summary": "Windows sendMessage fallback uses HttpClient and createDefaultSendTelegramMessage logs Telegram 400 descriptions when available.",
+      "artifacts": [
+        "apps/bot/src/index.ts",
+        "apps/bot/src/index.test.ts",
+        "raw/failing-sendmessage-log.txt"
+      ]
+    },
+    {
+      "id": "AC6",
+      "status": "passed",
+      "summary": "Pairing, auth, approval, policy, delivery-mode, and the existing Windows Node timeout/fallback behavior were left intact and covered by existing and new bot tests.",
+      "artifacts": [
+        "raw/test-unit.txt",
+        "raw/fresh-verifier.txt"
+      ]
+    },
+    {
+      "id": "AC7",
+      "status": "passed",
+      "summary": "Required bot verification and fresh verifier pass are green; task validation is recorded separately.",
+      "artifacts": [
+        "raw/test-unit.txt",
+        "raw/typecheck.txt",
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/fresh-verifier.txt",
+        "raw/task-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "raw/init-analysis.txt",
+      "kind": "analysis"
+    },
+    {
+      "path": "raw/env-url-summary.txt",
+      "kind": "environment"
+    },
+    {
+      "path": "raw/live-ready.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/local-store-summary.txt",
+      "kind": "runtime"
+    },
+    {
+      "path": "raw/docs-url-guidance.txt",
+      "kind": "analysis"
+    },
+    {
+      "path": "raw/current-handler-env-derived-payload.json",
+      "kind": "payload"
+    },
+    {
+      "path": "raw/current-handler-local-webapp-payload.json",
+      "kind": "payload"
+    },
+    {
+      "path": "raw/failing-payload-sanitized.json",
+      "kind": "payload"
+    },
+    {
+      "path": "raw/telegram-powershell-probes-sanitized.json",
+      "kind": "telegram-probe"
+    },
+    {
+      "path": "raw/postfix-handler-webapp-payloads.json",
+      "kind": "payload"
+    },
+    {
+      "path": "raw/test-unit.txt",
+      "kind": "test"
+    },
+    {
+      "path": "raw/test-integration.txt",
+      "kind": "integration"
+    },
+    {
+      "path": "raw/typecheck.txt",
+      "kind": "typecheck"
+    },
+    {
+      "path": "raw/build.txt",
+      "kind": "build"
+    },
+    {
+      "path": "raw/lint.txt",
+      "kind": "lint"
+    },
+    {
+      "path": "raw/fresh-verifier.txt",
+      "kind": "verification"
+    },
+    {
+      "path": "raw/task-validate.txt",
+      "kind": "validation"
+    }
+  ],
+  "generatedAt": "2026-04-22T03:45:00.000Z"
+}

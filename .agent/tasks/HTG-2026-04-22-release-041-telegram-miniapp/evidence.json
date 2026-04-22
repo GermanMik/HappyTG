@@ -1,0 +1,90 @@
+{
+  "taskId": "HTG-2026-04-22-release-041-telegram-miniapp",
+  "version": "0.4.1",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "pnpm --filter @happytg/bot run test",
+      "status": "passed",
+      "artifact": "raw/test-unit.txt"
+    },
+    {
+      "name": "pnpm --filter @happytg/bot run typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck-bot.txt"
+    },
+    {
+      "name": "pnpm --filter @happytg/bot run build",
+      "status": "passed",
+      "artifact": "raw/build-bot.txt"
+    },
+    {
+      "name": "pnpm --filter @happytg/bot run lint",
+      "status": "passed",
+      "artifact": "raw/lint-bot.txt"
+    },
+    {
+      "name": "pnpm --filter @happytg/bootstrap run test",
+      "status": "passed",
+      "artifact": "raw/test-integration.txt"
+    },
+    {
+      "name": "pnpm release:check --version 0.4.1",
+      "status": "passed",
+      "artifact": "raw/release-check.txt"
+    },
+    {
+      "name": "pnpm typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck.txt"
+    },
+    {
+      "name": "pnpm lint",
+      "status": "passed",
+      "artifact": "raw/lint.txt"
+    },
+    {
+      "name": "pnpm test",
+      "status": "passed",
+      "artifact": "raw/test-repo.txt"
+    },
+    {
+      "name": "pnpm build",
+      "status": "passed",
+      "artifact": "raw/build.txt"
+    },
+    {
+      "name": "pnpm happytg doctor",
+      "status": "warn",
+      "artifact": "raw/doctor.txt",
+      "detail": "Exit code 0 with expected local environment warnings."
+    },
+    {
+      "name": "pnpm happytg verify",
+      "status": "warn",
+      "artifact": "raw/verify.txt",
+      "detail": "Exit code 0 with expected local environment warnings."
+    },
+    {
+      "name": "fresh verifier pass",
+      "status": "passed",
+      "artifact": "raw/fresh-verifier.txt"
+    },
+    {
+      "name": "task validate sendMessage repair",
+      "status": "passed",
+      "artifact": "raw/task-validate-sendmessage.txt"
+    },
+    {
+      "name": "task validate menu/Caddy repair",
+      "status": "passed",
+      "artifact": "raw/task-validate-menu-caddy.txt"
+    },
+    {
+      "name": "pnpm happytg task validate --repo . --task HTG-2026-04-22-release-041-telegram-miniapp",
+      "status": "passed",
+      "artifact": "raw/task-validate.txt"
+    }
+  ],
+  "generatedAt": "2026-04-22T00:00:00.000Z"
+}

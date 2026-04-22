@@ -1,0 +1,10 @@
+Integration evidence for this bounded bot task:
+
+- raw/live-ready.txt captured the running bot /ready response before the fix: Telegram polling ready with local http://localhost:4000 public URL.
+- raw/telegram-powershell-probes-sanitized.json captured live Windows PowerShell Bot API behavior without recording token, chat id, message id, username, or private user data.
+- raw/current-handler-env-derived-payload.json captured the pre-fix handler payload derived from the local .env values.
+- raw/postfix-handler-webapp-payloads.json captured post-fix handler behavior: local HTTP omits web_app while HTTPS preserves web_app.
+- apps/bot/src/index.test.ts includes runtime-level readiness diagnostics and existing polling/fallback integration tests.
+
+No separate external integration command was required beyond the recorded live Telegram probes and bot package verification commands.
+EXIT_CODE=0

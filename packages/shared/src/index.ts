@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { constants as fsConstants, existsSync, promises as fs, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { isIP } from "node:net";
 import os from "node:os";
 import path from "node:path";
 
@@ -440,6 +441,143 @@ export function telegramTokenStatus(
   return {
     status: "configured",
     configured: true
+  };
+}
+
+export interface MiniAppBaseUrlOptions {
+  fallbackUrl?: string;
+}
+
+export function resolveMiniAppBaseUrl(
+  env: NodeJS.ProcessEnv = process.env,
+  options: MiniAppBaseUrlOptions = {}
+): string | undefined {
+  const publicUrlBase = env.HAPPYTG_PUBLIC_URL?.trim();
+  let publicUrl: string | undefined;
+  if (publicUrlBase) {
+    try {
+      publicUrl = new URL("/miniapp", publicUrlBase).toString();
+    } catch {
+      publicUrl = publicUrlBase;
+    }
+  }
+
+  const candidates = [
+    env.HAPPYTG_MINIAPP_URL?.trim() || undefined,
+    publicUrl,
+    env.HAPPYTG_APP_URL?.trim() || undefined,
+    options.fallbackUrl
+  ].filter((value): value is string => Boolean(value));
+
+  return candidates.find((candidate) => validatePublicHttpsUrl(candidate).ok) ?? candidates[0];
+}
+
+export interface PublicHttpsUrlValidationResult {
+  ok: boolean;
+  url?: string;
+  reason?: string;
+}
+
+function ipv4Octets(hostname: string): number[] | undefined {
+  if (!/^\d{1,3}(?:\.\d{1,3}){3}$/u.test(hostname)) {
+    return undefined;
+  }
+
+  const octets = hostname.split(".").map((item) => Number.parseInt(item, 10));
+  return octets.every((item) => Number.isInteger(item) && item >= 0 && item <= 255) ? octets : undefined;
+}
+
+function isPrivateIpv4(hostname: string): boolean {
+  const octets = ipv4Octets(hostname);
+  if (!octets) {
+    return false;
+  }
+
+  const [a = 0, b = 0] = octets;
+  return a === 0
+    || a === 10
+    || a === 127
+    || (a === 100 && b >= 64 && b <= 127)
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168)
+    || (a === 198 && (b === 18 || b === 19));
+}
+
+function isPrivateIpv6(hostname: string): boolean {
+  const normalized = hostname.replace(/^\[|\]$/gu, "").toLowerCase();
+  return normalized === "::"
+    || normalized === "::1"
+    || normalized.startsWith("fc")
+    || normalized.startsWith("fd")
+    || normalized.startsWith("fe80:");
+}
+
+function isInternalHostname(hostname: string): boolean {
+  const normalized = hostname.replace(/^\[|\]$/gu, "").toLowerCase();
+  const ipVersion = isIP(normalized);
+  if (ipVersion !== 0) {
+    return false;
+  }
+
+  return normalized === "localhost"
+    || normalized === "0.0.0.0"
+    || normalized.endsWith(".localhost")
+    || normalized.endsWith(".local")
+    || normalized.endsWith(".internal")
+    || normalized.endsWith(".lan")
+    || normalized.endsWith(".home")
+    || !normalized.includes(".");
+}
+
+export function validatePublicHttpsUrl(rawValue: string | undefined, label = "URL"): PublicHttpsUrlValidationResult {
+  const trimmed = rawValue?.trim();
+  if (!trimmed) {
+    return {
+      ok: false,
+      reason: `${label} is missing.`
+    };
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return {
+      ok: false,
+      reason: `${label} is not a valid URL.`
+    };
+  }
+
+  if (parsed.protocol !== "https:") {
+    return {
+      ok: false,
+      url: parsed.toString(),
+      reason: `${label} must use HTTPS.`
+    };
+  }
+
+  if (parsed.username || parsed.password) {
+    return {
+      ok: false,
+      url: parsed.toString(),
+      reason: `${label} must not include username or password credentials.`
+    };
+  }
+
+  const hostname = parsed.hostname.replace(/^\[|\]$/gu, "").toLowerCase();
+  const ipVersion = isIP(hostname);
+  if (isInternalHostname(hostname) || (ipVersion === 4 && isPrivateIpv4(hostname)) || (ipVersion === 6 && isPrivateIpv6(hostname))) {
+    return {
+      ok: false,
+      url: parsed.toString(),
+      reason: `${label} points at a loopback, private, or internal host.`
+    };
+  }
+
+  return {
+    ok: true,
+    url: parsed.toString()
   };
 }
 

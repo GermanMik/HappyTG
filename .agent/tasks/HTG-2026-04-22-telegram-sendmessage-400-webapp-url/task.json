@@ -1,0 +1,21 @@
+{
+  "id": "HTG-2026-04-22-telegram-sendmessage-400-webapp-url",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-22-telegram-sendmessage-400-webapp-url",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Telegram sendMessage 400 repair for local Web App URLs",
+  "acceptanceCriteria": [
+    "The proof bundle exists with spec, evidence, verdict, task, problems, and raw artifacts.",
+    "Evidence proves the Telegram 400 root cause or an equally strong local reproduction without recording secrets.",
+    "Local/non-public Mini App URLs no longer break ordinary bot replies.",
+    "Valid public HTTPS Mini App URLs still render Telegram web_app buttons.",
+    "Telegram rejection logs include actionable Telegram descriptions when available.",
+    "Pairing, auth, approval, policy, delivery-mode, and previous Windows fallback semantics are preserved.",
+    "Required bot verification, task validation, and a fresh verifier pass are green."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-22T00:00:00.000Z",
+  "updatedAt": "2026-04-22T03:45:00.000Z"
+}
