@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## v0.4.3
+
+### Fixed
+
+- Local Mini App launch diagnostics now prefer the local Mini App URL/port over the local API URL, so `pnpm happytg doctor` and runtime guidance stop pointing operators at the wrong local launch surface.
+- Telegram Mini App launch/menu setup now routes through the public HTTPS `/miniapp` URL and keeps a Windows PowerShell fallback when Node fetch cannot reach `api.telegram.org`.
+- Windows polling fallback moves from the timed-out Node transport to PowerShell `getUpdates` faster, reducing delayed startup when the primary transport stalls.
+- Docker Compose startup guidance now uses `--env-file .env`, so installer-saved `HAPPYTG_*_PORT` overrides reach published host ports consistently.
+
+### Added
+
+- `pnpm happytg install` now exposes explicit launch modes for local development, Docker Compose startup, manual command output, and skip.
+- Installer Docker startup validates Compose configuration, starts the packaged control-plane stack, reports Compose/HTTP health, and keeps host-daemon pairing/startup outside containers.
+
+### Changed
+
+- Release metadata is aligned at `0.4.3` across the workspace for the installer Docker launch mode and Telegram launch/polling repair release.
+
+### Verification
+
+- Release validation covers release metadata, installer Docker launch guidance, Telegram Mini App menu launch, Windows polling fallback, repo checks, and canonical task validation for the included proof bundles.
+
 ## v0.4.2
 
 ### Fixed

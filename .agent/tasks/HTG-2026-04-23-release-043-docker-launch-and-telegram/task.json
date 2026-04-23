@@ -1,0 +1,22 @@
+{
+  "id": "HTG-2026-04-23-release-043-docker-launch-and-telegram",
+  "sessionId": "codex-release-043-docker-launch-and-telegram",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-release-043-docker-launch-and-telegram",
+  "mode": "proof",
+  "title": "Release 0.4.3 Docker launch and Telegram fixes",
+  "acceptanceCriteria": [
+    "Workspace release metadata is aligned at 0.4.3 across root/apps/packages.",
+    "CHANGELOG.md includes a v0.4.3 section grounded in the merged v0.4.2..main changes.",
+    "docs/releases/0.4.3.md exists and explains Docker installer startup plus Telegram launch/polling fixes.",
+    "README points to the current release notes instead of a stale older release.",
+    "pnpm release:check --version 0.4.3 passes on the release-ready diff.",
+    "Fresh repo verification passes: pnpm typecheck, pnpm lint, pnpm test, and pnpm build.",
+    "The canonical release proof bundle is complete and validates the release task.",
+    "Publish is unblocked for merge-to-main and the GitHub Release workflow."
+  ],
+  "phase": "complete",
+  "verificationState": "passed",
+  "createdAt": "2026-04-23T00:00:00.000Z",
+  "updatedAt": "2026-04-23T22:51:00.7510730+03:00"
+}

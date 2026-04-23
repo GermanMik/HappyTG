@@ -1,0 +1,23 @@
+{
+  "taskId": "HTG-2026-04-23-release-043-docker-launch-and-telegram",
+  "status": "passed",
+  "checks": {
+    "initAnalysis": "passed",
+    "specFreeze": "passed",
+    "releaseCheck": "passed",
+    "fullTypecheck": "passed",
+    "fullLint": "passed",
+    "fullTest": "passed",
+    "fullBuild": "passed"
+  },
+  "artifacts": [
+    "raw/init-analysis.txt",
+    "raw/spec-freeze.txt",
+    "raw/release-check.txt",
+    "raw/typecheck.txt",
+    "raw/lint.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt"
+  ]
+}
