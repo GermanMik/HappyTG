@@ -1,0 +1,25 @@
+Local listener summary
+Generated: 2026-04-23T03:35:48.6630477Z
+
+Port 3007
+pid=23492 process=node.exe
+cmd=
+
+Port 4000
+pid=40308 process=node.exe
+cmd=
+
+Port 4100
+pid=44500 process=node.exe
+cmd=
+
+Port 4200
+pid=44400 process=node.exe
+cmd=
+
+Port 443
+pid=24480 process=caddy_windows_amd64.exe
+cmd=
+
+Port 8443
+listen: none

@@ -1,0 +1,6 @@
+Bot restart after env change
+Generated: 2026-04-23T03:48:01.0466701Z
+stopping existing bot listener pid=44500
+starting bot with pnpm --filter @happytg/bot run start
+started pid=40896
+ready HTTP 200 after 1s

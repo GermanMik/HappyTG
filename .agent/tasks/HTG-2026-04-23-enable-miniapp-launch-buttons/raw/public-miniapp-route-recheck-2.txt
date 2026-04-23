@@ -1,0 +1,32 @@
+Public Mini App route recheck 2
+Generated: 2026-04-23T07:27:03.4320343+03:00
+
+URL: https://happytg.gerta.crazedns.ru/miniapp
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+  0   4523   0      0   0      0      0      0                              0
+  0   4523   0      0   0      0      0      0                              0
+  0   4523   0      0   0      0      0      0                              0
+HTTP/1.1 200 OK
+Server: Web server
+Date: Thu, 23 Apr 2026 04:27:01 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 4523
+Connection: keep-alive
+Accept-Ranges: bytes
+Alt-Svc: h3=":8443"; ma=2592000
+Etag: "di081e7r6qms3hn"
+Last-Modified: Thu, 23 Apr 2026 03:41:20 GMT
+Vary: Accept-Encoding
+
+
+URL: https://happytg.gerta.crazedns.ru:8443/miniapp
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0           00:01              0
+  0      0   0      0   0      0      0      0           00:02              0
+curl: (7) Failed to connect to happytg.gerta.crazedns.ru port 8443 after 2050 ms: Could not connect to server

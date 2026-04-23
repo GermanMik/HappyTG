@@ -1,0 +1,91 @@
+
+> happytg@0.4.2 typecheck C:\Develop\Projects\HappyTG
+> turbo typecheck
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running typecheck in 15 packages
+   • Remote caching disabled
+
+@happytg/worker:typecheck: cache hit, replaying logs c4b9cc045d5e43a6
+@happytg/miniapp:typecheck: cache hit, replaying logs 961ae8794d5676ab
+@happytg/telegram-kit:typecheck: cache hit, replaying logs 528e66876fd47192
+@happytg/approval-engine:typecheck: cache hit, replaying logs ea74955e88f37ccc
+@happytg/session-engine:typecheck: cache hit, replaying logs f4d1615d9ef68a09
+@happytg/host-daemon:typecheck: cache hit, replaying logs 4b06dcb34f561514
+@happytg/policy-engine:typecheck: cache hit, replaying logs 21ae1949a28abb9c
+@happytg/session-engine:typecheck: 
+@happytg/session-engine:typecheck: > @happytg/session-engine@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\session-engine
+@happytg/session-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/session-engine:typecheck: 
+@happytg/worker:typecheck: 
+@happytg/worker:typecheck: > @happytg/worker@0.4.2 typecheck C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/worker:typecheck: 
+@happytg/host-daemon:typecheck: 
+@happytg/miniapp:typecheck: 
+@happytg/approval-engine:typecheck: 
+@happytg/miniapp:typecheck: > @happytg/miniapp@0.4.2 typecheck C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/approval-engine:typecheck: > @happytg/approval-engine@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:typecheck: 
+@happytg/telegram-kit:typecheck: 
+@happytg/miniapp:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/telegram-kit:typecheck: > @happytg/telegram-kit@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\telegram-kit
+@happytg/telegram-kit:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/telegram-kit:typecheck: 
+@happytg/miniapp:typecheck: 
+@happytg/bootstrap:typecheck: cache miss, executing bd24045bbb6c2b82
+@happytg/policy-engine:typecheck: 
+@happytg/policy-engine:typecheck: > @happytg/policy-engine@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/host-daemon:typecheck: > @happytg/host-daemon@0.4.2 typecheck C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:typecheck: 
+@happytg/policy-engine:typecheck: 
+@happytg/runtime-adapters:typecheck: cache hit, replaying logs f4a5fc065ca6aae1
+@happytg/runtime-adapters:typecheck: 
+@happytg/runtime-adapters:typecheck: > @happytg/runtime-adapters@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:typecheck: 
+@happytg/hooks:typecheck: cache hit, replaying logs b1a3e4d30fb6075b
+@happytg/hooks:typecheck: 
+@happytg/hooks:typecheck: > @happytg/hooks@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:typecheck: 
+@happytg/bot:typecheck: cache hit, replaying logs a8b86b48d77985e7
+@happytg/bot:typecheck: 
+@happytg/bot:typecheck: > @happytg/bot@0.4.2 typecheck C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bot:typecheck: 
+@happytg/repo-proof:typecheck: cache hit, replaying logs 955cb60b50c96f4b
+@happytg/repo-proof:typecheck: 
+@happytg/repo-proof:typecheck: > @happytg/repo-proof@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:typecheck: 
+@happytg/api:typecheck: cache hit, replaying logs 9387e0e7f56bddc7
+@happytg/api:typecheck: 
+@happytg/api:typecheck: > @happytg/api@0.4.2 typecheck C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/api:typecheck: 
+@happytg/protocol:typecheck: cache hit, replaying logs b4f7d770e044a34e
+@happytg/protocol:typecheck: 
+@happytg/protocol:typecheck: > @happytg/protocol@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:typecheck: 
+@happytg/shared:typecheck: cache hit, replaying logs e5d8c30870b7ed3e
+@happytg/shared:typecheck: 
+@happytg/shared:typecheck: > @happytg/shared@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/shared:typecheck: 
+@happytg/bootstrap:typecheck: 
+@happytg/bootstrap:typecheck: > @happytg/bootstrap@0.4.2 typecheck C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:typecheck: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:typecheck: 
+
+ Tasks:    15 successful, 15 total
+Cached:    14 cached, 15 total
+  Time:    2.343s 
+
+ExitCode: 0

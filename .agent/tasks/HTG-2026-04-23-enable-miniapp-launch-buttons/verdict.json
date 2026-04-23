@@ -1,0 +1,57 @@
+{
+  "taskId": "HTG-2026-04-23-enable-miniapp-launch-buttons",
+  "status": "pass",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "local-fresh-verifier-2026-04-23"
+  },
+  "checks": [
+    {
+      "name": "selected Mini App URL is public HTTPS /miniapp",
+      "status": "pass",
+      "artifact": "raw/env-change.txt"
+    },
+    {
+      "name": "local HTTP URLs are not sent to Telegram web_app payloads",
+      "status": "pass",
+      "artifact": "raw/start-menu-inline-button.txt"
+    },
+    {
+      "name": "bot readiness reports Mini App launch ready",
+      "status": "pass",
+      "artifact": "raw/bot-ready-after.json"
+    },
+    {
+      "name": "public /miniapp route answers 2xx/3xx",
+      "status": "pass",
+      "artifact": "raw/public-miniapp-route-recheck-2.txt",
+      "detail": "Selected URL returned HTTP 200. Port 8443 remains unavailable and was not selected."
+    },
+    {
+      "name": "telegram menu dry-run",
+      "status": "pass",
+      "artifact": "raw/telegram-menu-dry-run-final-2.txt",
+      "detail": "Dry-run passed with Caddy HTTP 200 and public HTTPS payload."
+    },
+    {
+      "name": "telegram menu set",
+      "status": "pass",
+      "artifact": "raw/telegram-menu-set-final-2.txt",
+      "detail": "Telegram accepted setChatMenuButton for the HappyTG Mini App URL."
+    },
+    {
+      "name": "repo verification",
+      "status": "pass",
+      "artifact": "raw/build-final.txt",
+      "detail": "Bot/bootstrap tests, typecheck, lint, full test, and build passed after the code change."
+    },
+    {
+      "name": "task validation and fresh verifier pass",
+      "status": "pass",
+      "artifact": "raw/fresh-verifier.txt",
+      "detail": "Task bundle validates and fresh verifier confirms task completion."
+    }
+  ],
+  "summary": "HappyTG Mini App launch buttons are enabled through the public HTTPS /miniapp URL. Runtime readiness, inline web_app payloads, public Caddy route, dry-run, and actual Telegram MenuButtonWebApp setup are verified. URL validation and preflight remain strict.",
+  "generatedAt": "2026-04-23T07:37:14.7152663+03:00"
+}

@@ -1,0 +1,12 @@
+Sanitized .env change summary
+Generated: 2026-04-23T03:42:30.6727795Z
+Changed values: HAPPYTG_MINIAPP_URL set to public HTTPS /miniapp; HAPPYTG_APP_URL aligned to local diagnostic port 3007; HAPPYTG_MINIAPP_UPSTREAM set for host-run Caddy diagnostics. TELEGRAM_UPDATES_MODE unchanged.
+
+HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru/miniapp
+HAPPYTG_APP_URL=http://localhost:3007
+HAPPYTG_PUBLIC_URL=http://localhost:4000
+HAPPYTG_MINIAPP_PORT=3007
+TELEGRAM_UPDATES_MODE=auto
+HAPPYTG_MINIAPP_UPSTREAM=127.0.0.1:3007
+HAPPYTG_HTTPS_PORT=443
+HAPPYTG_DOMAIN=happytg.gerta.crazedns.ru

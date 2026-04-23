@@ -1,0 +1,39 @@
+{
+  "command": "pnpm happytg verify --json",
+  "telegramMenu": {
+    "menuButton": {
+      "message": "Not checked during doctor/verify; telegram menu set was run separately.",
+      "checked": false
+    },
+    "miniAppUrl": {
+      "ok": true,
+      "message": "Mini App URL is public HTTPS.",
+      "value": "https://happytg.gerta.crazedns.ru/miniapp"
+    },
+    "caddy": {
+      "status": 200,
+      "ok": true,
+      "message": "Public Caddy Mini App route responded with HTTP 200.",
+      "checked": true
+    },
+    "token": {
+      "configured": true,
+      "status": "configured"
+    }
+  },
+  "taskRelevantStatus": "pass",
+  "status": "warn",
+  "findings": [
+    {
+      "severity": "warn",
+      "message": "Codex Responses websocket returned 403 Forbidden, then CLI fell back to HTTP. Unrelated to Mini App launch.",
+      "code": "CODEX_SMOKE_WARNINGS"
+    },
+    {
+      "severity": "info",
+      "message": "HappyTG services already appear to be running on 3007, 4000, 4100, 4200.",
+      "code": "SERVICES_ALREADY_RUNNING"
+    }
+  ],
+  "exitCode": 0
+}

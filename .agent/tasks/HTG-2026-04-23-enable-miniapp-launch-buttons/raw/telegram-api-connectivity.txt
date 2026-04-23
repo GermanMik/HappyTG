@@ -1,0 +1,57 @@
+Telegram API connectivity diagnostics
+Generated: 2026-04-23T07:30:15.2344711+03:00
+
+curl default: https://api.telegram.org
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0           00:01              0
+  0      0   0      0   0      0      0      0           00:02              0
+  0      0   0      0   0      0      0      0           00:03              0
+  0      0   0      0   0      0      0      0           00:04              0
+  0      0   0      0   0      0      0      0           00:05              0
+  0      0   0      0   0      0      0      0           00:06              0
+  0      0   0      0   0      0      0      0           00:07              0
+  0      0   0      0   0      0      0      0           00:08              0
+  0      0   0      0   0      0      0      0           00:09              0
+  0      0   0      0   0      0      0      0           00:10              0
+  0      0   0      0   0      0      0      0           00:11              0
+  0      0   0      0   0      0      0      0           00:12              0
+  0      0   0      0   0      0      0      0           00:13              0
+  0      0   0      0   0      0      0      0           00:14              0
+  0      0   0      0   0      0      0      0           00:15              0
+  0      0   0      0   0      0      0      0           00:16              0
+  0      0   0      0   0      0      0      0           00:17              0
+  0      0   0      0   0      0      0      0           00:18              0
+  0      0   0      0   0      0      0      0           00:19              0
+curl: (28) Connection timed out after 20009 milliseconds
+
+curl IPv4: https://api.telegram.org
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0           00:01              0
+  0      0   0      0   0      0      0      0           00:02              0
+  0      0   0      0   0      0      0      0           00:03              0
+  0      0   0      0   0      0      0      0           00:04              0
+  0      0   0      0   0      0      0      0           00:05              0
+  0      0   0      0   0      0      0      0           00:06              0
+  0      0   0      0   0      0      0      0           00:07              0
+  0      0   0      0   0      0      0      0           00:08              0
+  0      0   0      0   0      0      0      0           00:09              0
+  0      0   0      0   0      0      0      0           00:10              0
+  0      0   0      0   0      0      0      0           00:11              0
+  0      0   0      0   0      0      0      0           00:12              0
+  0      0   0      0   0      0      0      0           00:13              0
+  0      0   0      0   0      0      0      0           00:14              0
+  0      0   0      0   0      0      0      0           00:15              0
+  0      0   0      0   0      0      0      0           00:16              0
+  0      0   0      0   0      0      0      0           00:17              0
+  0      0   0      0   0      0      0      0           00:18              0
+  0      0   0      0   0      0      0      0           00:19              0
+curl: (28) Connection timed out after 20010 milliseconds
+
+PowerShell Invoke-WebRequest: https://api.telegram.org
+HTTP 200

@@ -1,0 +1,15 @@
+Mini App local route probes
+Generated: 2026-04-23T03:37:24.5813246Z
+
+URL: http://127.0.0.1:3007/ready
+status: HTTP 200
+content-type: application/json; charset=utf-8
+
+URL: http://127.0.0.1:3007/
+status: HTTP 200
+content-type: text/html; charset=utf-8
+
+URL: http://127.0.0.1:3007/miniapp
+status: failed
+error: Response status code does not indicate success: 404 (Not Found).
+response-status: 404

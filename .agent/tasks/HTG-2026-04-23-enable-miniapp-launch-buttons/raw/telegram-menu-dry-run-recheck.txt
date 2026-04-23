@@ -1,0 +1,7 @@
+
+> happytg@0.4.2 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "telegram" "menu" "set" "--dry-run"
+
+Public Caddy Mini App route is unavailable: The operation was aborted due to timeout Refusing to call Telegram setChatMenuButton for https://happytg.gerta.crazedns.ru/miniapp.
+ ELIFECYCLE  Command failed with exit code 1.
+ExitCode: 1

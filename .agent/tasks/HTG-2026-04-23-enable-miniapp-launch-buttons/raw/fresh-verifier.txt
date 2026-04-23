@@ -1,0 +1,28 @@
+Fresh verifier pass
+Generated: 2026-04-23T07:39:22.0295186+03:00
+Role: task-verifier
+
+PASS task status complete
+PASS verdict pass
+PASS ready payload includes miniAppLaunch object
+PASS ready payload has ready status
+PASS ready uses selected public Mini App URL
+PASS start/menu contains web_app buttons
+PASS start/menu web_app evidence has no local HTTP URL
+PASS session/detail evidence has no local HTTP URL
+PASS public route recheck returns HTTP 200
+PASS dry-run pass
+PASS dry-run uses public URL
+PASS actual menu set pass
+PASS Telegram API accepted menu button
+PASS bot tests pass
+PASS bootstrap tests pass
+PASS typecheck pass
+PASS lint pass
+PASS full test pass
+PASS build pass
+PASS task validate passed
+PASS no token-like secret pattern found in proof bundle
+
+Verdict: complete. Public HTTPS Mini App route, inline payloads, dry-run, actual Telegram menu set, and repo checks passed.
+ExitCode: 0

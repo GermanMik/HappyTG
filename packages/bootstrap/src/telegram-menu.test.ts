@@ -133,6 +133,60 @@ test("Telegram menu setup sends the MenuButtonWebApp payload after Caddy preflig
   assert.doesNotMatch(JSON.stringify(result), new RegExp(TOKEN));
 });
 
+test("Telegram menu setup falls back to Windows PowerShell when Node fetch cannot reach Telegram", async () => {
+  const calls: Array<{ url: string; body?: unknown }> = [];
+  const fallbackCalls: Array<{ method: string; token: string; payload: Record<string, unknown> }> = [];
+  const result = await runTelegramMenuSet({
+    env: {
+      TELEGRAM_BOT_TOKEN: TOKEN,
+      HAPPYTG_MINIAPP_URL: MINIAPP_URL
+    },
+    platform: "win32",
+    fetchImpl: async (input, init) => {
+      const url = String(input);
+      calls.push({
+        url,
+        body: init?.body ? JSON.parse(String(init.body)) : undefined
+      });
+      if (url.includes("api.telegram.org")) {
+        throw new TypeError("fetch failed");
+      }
+      return new Response("ok", { status: 200 });
+    },
+    telegramApiPowerShellFallback: async (method, token, payload) => {
+      fallbackCalls.push({
+        method,
+        token,
+        payload
+      });
+      return {
+        ok: true,
+        result: true
+      };
+    }
+  });
+
+  assert.equal(result.telegram.called, true);
+  assert.deepEqual(calls.map((call) => call.url), [
+    MINIAPP_URL,
+    `https://api.telegram.org/bot${TOKEN}/setChatMenuButton`
+  ]);
+  assert.deepEqual(fallbackCalls, [{
+    method: "setChatMenuButton",
+    token: TOKEN,
+    payload: {
+      menu_button: {
+        type: "web_app",
+        text: "HappyTG",
+        web_app: {
+          url: MINIAPP_URL
+        }
+      }
+    }
+  }]);
+  assert.doesNotMatch(JSON.stringify(result), new RegExp(TOKEN));
+});
+
 test("Telegram menu dry-run does not call Telegram Bot API", async () => {
   const calls: string[] = [];
   await runTelegramMenuSet({

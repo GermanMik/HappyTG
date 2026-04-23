@@ -1,0 +1,10 @@
+Public Mini App route probes
+Generated: 2026-04-23T03:34:31.3058338Z
+
+URL: https://happytg.gerta.crazedns.ru/miniapp
+status: failed
+error: The SSL connection could not be established, see inner exception.
+
+URL: https://happytg.gerta.crazedns.ru:8443/miniapp
+status: failed
+error: The request was canceled due to the configured HttpClient.Timeout of 20 seconds elapsing.

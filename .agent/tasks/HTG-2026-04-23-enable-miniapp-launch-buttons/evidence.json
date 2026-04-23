@@ -1,0 +1,76 @@
+{
+  "taskId": "HTG-2026-04-23-enable-miniapp-launch-buttons",
+  "status": "complete",
+  "criteria": [
+    {
+      "id": "before-url",
+      "status": "pass",
+      "summary": "Before the change, the resolved Mini App URL was local HTTP (`http://localhost:3001/`) and Telegram launch was disabled/unsafe.",
+      "artifacts": ["raw/init-env-summary.txt", "raw/doctor-before.json", "raw/bot-ready-before.json"]
+    },
+    {
+      "id": "selected-public-url",
+      "status": "pass",
+      "summary": "Selected `https://happytg.gerta.crazedns.ru/miniapp` via `HAPPYTG_MINIAPP_URL`; local Mini App URL remains diagnostics-only.",
+      "artifacts": ["raw/env-change.txt"]
+    },
+    {
+      "id": "public-route",
+      "status": "pass",
+      "summary": "After the external edge/TLS route was fixed, `https://happytg.gerta.crazedns.ru/miniapp` returned HTTP 200. Port 8443 remains unselected and unavailable.",
+      "artifacts": ["raw/public-miniapp-route-recheck-2.txt"]
+    },
+    {
+      "id": "caddy-route",
+      "status": "pass",
+      "summary": "Repo Caddy route is recorded; host-run BaseDeploy Caddy route was added and reloaded with upstream `127.0.0.1:3007`.",
+      "artifacts": ["raw/caddy-miniapp-route.txt", "raw/caddy-active-config-after.json", "raw/basedeploy-caddy-reload.txt"]
+    },
+    {
+      "id": "ready",
+      "status": "pass",
+      "summary": "`/ready` reports `miniAppLaunch.status=ready` and the selected public HTTPS URL after bot restart.",
+      "artifacts": ["raw/bot-ready-final.json", "raw/bot-restart-stdout.txt"]
+    },
+    {
+      "id": "inline-buttons",
+      "status": "pass",
+      "summary": "`/start`, `/menu`, session, detail, and diff surfaces include Telegram `web_app` buttons using the selected public HTTPS URL; no localhost URL is present.",
+      "artifacts": ["raw/start-menu-inline-button.txt", "raw/session-detail-inline-button.txt"]
+    },
+    {
+      "id": "telegram-menu-dry-run",
+      "status": "pass",
+      "summary": "Dry-run passed with Caddy HTTP 200 and the public HTTPS MenuButtonWebApp payload.",
+      "artifacts": ["raw/telegram-menu-dry-run-final-2.txt"]
+    },
+    {
+      "id": "telegram-menu-set",
+      "status": "pass",
+      "summary": "Actual menu set passed and Telegram accepted the HappyTG Mini App menu button.",
+      "artifacts": ["raw/telegram-menu-set-final-2.txt"]
+    },
+    {
+      "id": "repo-checks",
+      "status": "pass",
+      "summary": "Bot/bootstrap tests, typecheck, lint, full test, and build passed after the Windows Telegram API fallback code change.",
+      "artifacts": ["raw/test-bot-final.txt", "raw/test-bootstrap-final.txt", "raw/typecheck-final.txt", "raw/lint-final.txt", "raw/test-final.txt", "raw/build-final.txt"]
+    },
+    {
+      "id": "task-validation",
+      "status": "pass",
+      "summary": "`pnpm happytg task validate --repo . --task HTG-2026-04-23-enable-miniapp-launch-buttons` passed, and the fresh verifier pass confirms completion.",
+      "artifacts": ["raw/task-validate.txt", "raw/fresh-verifier.txt"]
+    }
+  ],
+  "artifacts": [
+    "spec.md",
+    "task.json",
+    "evidence.md",
+    "evidence.json",
+    "problems.md",
+    "verdict.json",
+    "raw/"
+  ],
+  "generatedAt": "2026-04-23T07:37:14.7152663+03:00"
+}

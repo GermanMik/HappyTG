@@ -1,0 +1,10 @@
+
+> happytg@0.4.2 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-23-enable-miniapp-launch-buttons"
+
+Task: HTG-2026-04-23-enable-miniapp-launch-buttons
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-23-enable-miniapp-launch-buttons
+Validation: ok
+Phase: complete
+Verification: unknown
+ExitCode: 0

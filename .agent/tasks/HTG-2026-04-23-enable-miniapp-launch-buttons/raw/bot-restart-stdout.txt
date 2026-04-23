@@ -1,0 +1,80 @@
+
+> @happytg/bot@0.4.2 start C:\Develop\Projects\HappyTG\apps\bot
+> tsx src/index.ts
+
+{"at":"2026-04-23T03:48:17.359Z","level":"INFO","scope":"bot","message":"Telegram deleteWebhook delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:48:17.360Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-23T03:48:17.361Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":4100,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook","miniAppLaunchStatus":"ready","miniAppLaunchDetail":"Telegram Mini App launch buttons are enabled with a public HTTPS URL.","miniAppLaunchUrl":"https://happytg.gerta.crazedns.ru/miniapp"}}
+{"at":"2026-04-23T03:48:59.191Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:49:45.963Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:50:27.850Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:51:09.994Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:51:51.773Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:52:38.567Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:53:20.313Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:54:02.101Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:54:43.891Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:55:34.925Z","level":"WARN","scope":"bot","message":"Telegram polling degraded","metadata":{"detail":"Telegram getUpdates could not be confirmed through Node HTTPS (Connection to api.telegram.org timed out.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Время ожидания операции истекло. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine."}}
+{"at":"2026-04-23T03:56:18.766Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:57:00.493Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:57:42.210Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:58:24.028Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:59:10.757Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:59:52.463Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:00:34.279Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:01:16.045Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:01:57.822Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:02:44.580Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:03:26.302Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:04:08.078Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:04:49.779Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:05:36.569Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:06:18.341Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:07:03.865Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:07:45.747Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:08:27.560Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:09:09.263Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:09:50.888Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:10:32.882Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:11:14.615Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:11:56.382Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:12:38.085Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:13:19.773Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:14:01.496Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:14:48.295Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:15:30.108Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:16:11.967Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:16:53.980Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:17:35.781Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:18:17.588Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:18:59.378Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:19:41.072Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:20:22.812Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:21:04.638Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:21:46.372Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:22:28.144Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:23:09.867Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:23:51.684Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:24:33.499Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:24:46.360Z","level":"WARN","scope":"bot","message":"Telegram polling degraded","metadata":{"detail":"Telegram getUpdates could not be confirmed through Node HTTPS (Connection to api.telegram.org timed out.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: The underlying connection was closed: The connection was closed unexpectedly.. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine."}}
+{"at":"2026-04-23T04:25:20.454Z","level":"WARN","scope":"bot","message":"Telegram polling degraded","metadata":{"detail":"Telegram getUpdates could not be confirmed through Node HTTPS (Connection to api.telegram.org timed out.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Unable to connect to the remote server. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine."}}
+{"at":"2026-04-23T04:26:04.253Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:26:45.980Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:27:27.707Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:28:09.488Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:28:51.340Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:29:33.141Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:30:15.279Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:30:57.081Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:31:38.830Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:32:20.613Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:33:02.420Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:33:44.305Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:34:26.021Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:35:07.805Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:35:49.593Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:36:31.371Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:37:13.142Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:37:54.921Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:38:37.101Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T04:39:18.985Z","level":"INFO","scope":"bot","message":"Telegram getUpdates delivered via Windows PowerShell fallback"}
