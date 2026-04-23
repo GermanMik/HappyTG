@@ -1,0 +1,104 @@
+{
+  "taskId": "HTG-2026-04-23-telegram-polling-transport-speed",
+  "measurements": [
+    {
+      "name": "node_getUpdates_live",
+      "transport": "node",
+      "method": "getUpdates",
+      "ok": false,
+      "elapsedMs": 10744.1,
+      "error": "UND_ERR_CONNECT_TIMEOUT",
+      "artifact": "raw/node-telegram-control-plane-timing.txt"
+    },
+    {
+      "name": "powershell_getUpdates_live",
+      "transport": "powershell",
+      "method": "getUpdates",
+      "ok": true,
+      "elapsedMs": 31813.3,
+      "telegramTimeoutSeconds": 30,
+      "powerShellTimeoutSec": 40,
+      "artifact": "raw/powershell-telegram-control-plane-timing.txt"
+    },
+    {
+      "name": "polling_before_synthetic",
+      "elapsedMs": 402,
+      "nodeFetchCalls": ["deleteWebhook", "getUpdates", "getUpdates"],
+      "artifact": "raw/polling-before-latency.txt"
+    },
+    {
+      "name": "polling_after_synthetic",
+      "elapsedMs": 114,
+      "nodeFetchCalls": ["deleteWebhook"],
+      "artifact": "raw/polling-after-latency.txt"
+    },
+    {
+      "name": "start_update_to_reply_synthetic",
+      "beforeFixModelMs": 150,
+      "afterFixMeasuredMs": 60,
+      "artifact": "raw/start-command-before-after.txt"
+    }
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "answer": "Node getUpdates failed after 10744.1 ms with UND_ERR_CONNECT_TIMEOUT."
+    },
+    {
+      "id": 2,
+      "answer": "PowerShell getUpdates succeeded in 31813.3 ms with Telegram timeout=30 and TimeoutSec=40."
+    },
+    {
+      "id": 3,
+      "answer": "Before the fix, yes; after the fix, cached PowerShell preference skips Node on subsequent polling cycles."
+    },
+    {
+      "id": 4,
+      "answer": "The 40-50 second gaps are Node timeout overhead plus PowerShell long polling, not retry delay."
+    },
+    {
+      "id": 5,
+      "answer": "Yes if budgets are too close; getUpdates now uses pollTimeoutSeconds + 10 for PowerShell TimeoutSec."
+    },
+    {
+      "id": 6,
+      "answer": "Yes; a 1500 ms control-plane Node budget and transport preference reduce latency without hiding Telegram HTTP/API rejections or breaking healthy Node long polling."
+    },
+    {
+      "id": 7,
+      "answer": "Synthetic /start update-to-reply changed from 150 ms model to 60 ms measured; live projected improvement removes the 10744.1 ms Node getUpdates timeout from cached cycles."
+    },
+    {
+      "id": 8,
+      "answer": "Both-transports-fail remains degraded and truthful with actionable Node and PowerShell details."
+    }
+  ],
+  "verification": [
+    {
+      "command": "pnpm --filter @happytg/bot run test",
+      "status": "passed",
+      "tests": 43,
+      "artifact": "raw/test-unit.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bot run typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bot run build",
+      "status": "passed",
+      "artifact": "raw/build.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bot run lint",
+      "status": "passed",
+      "artifact": "raw/lint.txt"
+    },
+    {
+      "command": "fresh verifier pass",
+      "status": "passed",
+      "artifact": "raw/fresh-verifier.txt"
+    }
+  ]
+}

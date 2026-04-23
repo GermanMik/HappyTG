@@ -1,0 +1,14 @@
+{
+  "taskId": "HTG-2026-04-23-telegram-polling-transport-speed",
+  "title": "Telegram polling transport speed optimization",
+  "status": "complete",
+  "phase": "complete",
+  "branch": "codex/telegram-polling-transport-speed",
+  "worktree": "C:\\Develop\\Projects\\HappyTG-telegram-polling-transport-speed",
+  "verificationState": "passed",
+  "scope": [
+    "apps/bot/src/index.ts",
+    "apps/bot/src/index.test.ts",
+    ".agent/tasks/HTG-2026-04-23-telegram-polling-transport-speed"
+  ]
+}

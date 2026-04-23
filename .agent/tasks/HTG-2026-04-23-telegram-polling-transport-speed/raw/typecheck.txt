@@ -1,0 +1,4 @@
+
+> @happytg/bot@0.4.2 typecheck C:\Develop\Projects\HappyTG-telegram-polling-transport-speed\apps\bot
+> tsc -p tsconfig.json --noEmit
+

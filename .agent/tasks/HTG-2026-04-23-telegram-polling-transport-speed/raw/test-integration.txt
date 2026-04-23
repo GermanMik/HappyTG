@@ -1,0 +1,1 @@
+Not run. The change is scoped to apps/bot Telegram transport timing and is covered by bot unit/regression tests plus live sanitized transport probes. No cross-package integration behavior was changed.

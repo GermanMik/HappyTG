@@ -1,0 +1,12 @@
+Regression covered by `polling mode stays degraded with actionable detail when both Telegram transports fail on Windows`.
+
+Expected detail includes:
+- Node HTTPS
+- Windows Node pre-fallback timeout
+- Windows PowerShell Bot API fallback also failed
+- fallback failure message
+
+The recorded unit output is in raw/test-unit.txt.
+
+Additional verifier-requested regression:
+- `polling preserves healthy Node long polling instead of applying the control-plane timeout to getUpdates`

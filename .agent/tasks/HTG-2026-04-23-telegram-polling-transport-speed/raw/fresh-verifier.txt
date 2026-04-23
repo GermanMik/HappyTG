@@ -1,0 +1,13 @@
+Fresh verifier pass after minimal fix: PASS.
+
+Commands reported by verifier:
+- pnpm --filter @happytg/bot run test: PASS, 43/43
+- pnpm --filter @happytg/bot run typecheck: PASS
+- pnpm --filter @happytg/bot run build: PASS
+- pnpm --filter @happytg/bot run lint: PASS
+- pnpm happytg task validate --repo . --task HTG-2026-04-23-telegram-polling-transport-speed: PASS, Validation: ok
+
+Verifier notes:
+- The previous blocking defect is closed. `telegramApiNodeTransportTimeoutMs()` returns `undefined` for `getUpdates`, so the short control-plane timeout is not applied to healthy Node long polling.
+- Regression coverage exists in `polling preserves healthy Node long polling instead of applying the control-plane timeout to getUpdates`.
+- Timing evidence, truthful HTTP/API failure handling, explicit webhook separation, existing sendMessage fallback coverage, both-transports-fail degraded readiness, and task validation are covered.

@@ -1,0 +1,38 @@
+{
+  "scenario": "before-fix synthetic current code",
+  "elapsedMs": 402,
+  "fetchCalls": [
+    "deleteWebhook",
+    "getUpdates",
+    "getUpdates"
+  ],
+  "fallbackCalls": [
+    {
+      "method": "deleteWebhook"
+    },
+    {
+      "method": "getUpdates"
+    },
+    {
+      "method": "getUpdates"
+    }
+  ],
+  "infoLogs": [
+    {
+      "message": "Telegram deleteWebhook delivered via Windows PowerShell fallback",
+      "atMs": 123
+    },
+    {
+      "message": "Telegram polling active",
+      "atMs": 123
+    },
+    {
+      "message": "Telegram getUpdates delivered via Windows PowerShell fallback",
+      "atMs": 262
+    },
+    {
+      "message": "Telegram getUpdates delivered via Windows PowerShell fallback",
+      "atMs": 402
+    }
+  ]
+}

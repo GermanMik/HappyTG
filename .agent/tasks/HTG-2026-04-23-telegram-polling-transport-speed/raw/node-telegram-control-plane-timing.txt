@@ -1,0 +1,2 @@
+{"transport":"node","method":"getUpdates","ok":false,"elapsedMs":10744.1,"error":{"message":"fetch failed","causeCode":"UND_ERR_CONNECT_TIMEOUT","causeMessage":"Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"}}
+{"transport":"node","method":"getWebhookInfo","ok":false,"elapsedMs":10667.8,"error":{"message":"fetch failed","causeCode":"UND_ERR_CONNECT_TIMEOUT","causeMessage":"Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"}}

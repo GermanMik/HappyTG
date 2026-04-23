@@ -14,8 +14,10 @@ import {
   formatBotPortConflictMessageDetailed,
   formatBotPortReuseMessage,
   initializeBotEnvironment,
+  inspectTelegramWebhookDelivery,
   resolveTelegramDeliveryMode,
-  startBotServer
+  startBotServer,
+  startTelegramPolling
 } from "./index.js";
 
 const VALID_BOT_TOKEN = "123456:abcdefghijklmnopqrstuvwx";
@@ -902,15 +904,149 @@ test("local polling mode falls back to Windows PowerShell Bot API calls after a 
   }
 });
 
-test("polling mode stays degraded with actionable detail when both Telegram transports fail on Windows", async () => {
-  const timeoutFailure = new TypeError("fetch failed");
-  Object.assign(timeoutFailure, {
-    cause: {
-      code: "UND_ERR_CONNECT_TIMEOUT",
-      message: "Connect Timeout Error (attempted address: api.telegram.org:443, timeout: 10000ms)"
+test("polling control-plane bounds a hanging Node attempt and prefers PowerShell on the next polls", async () => {
+  const fetchCalls: string[] = [];
+  const fallbackCalls: Array<{ method: string; timeoutSec?: number }> = [];
+  const infoLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const methodFromInput = (input: unknown) => String(input).match(/\/bot[^/]+\/([^/?]+)/u)?.[1] ?? "unknown";
+  const startedAt = Date.now();
+  const controller = startTelegramPolling({
+    botToken: VALID_BOT_TOKEN,
+    platform: "win32",
+    pollTimeoutSeconds: 30,
+    nodeTransportTimeoutMs: 25,
+    retryDelayMs: 25,
+    fetchImpl: async (input) => {
+      fetchCalls.push(methodFromInput(input));
+      return await new Promise<Response>(() => {});
+    },
+    invokeViaWindowsPowerShell: async (method, _token, _payload, options) => {
+      fallbackCalls.push({ method, timeoutSec: options?.timeoutSec });
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      return { ok: true, result: method === "deleteWebhook" ? true : [] };
+    },
+    async dispatchUpdate() {},
+    logger: {
+      info(message, metadata) {
+        infoLogs.push({ message, metadata });
+      },
+      warn() {},
+      error() {}
     }
   });
 
+  try {
+    const snapshot = await controller.ready;
+    await waitForCondition(() => fallbackCalls.filter((call) => call.method === "getUpdates").length >= 2);
+    const elapsedMs = Date.now() - startedAt;
+
+    assert.equal(snapshot.status, "ready");
+    assert.deepEqual(fetchCalls, ["deleteWebhook"]);
+    assert.deepEqual(fallbackCalls.slice(0, 3), [
+      { method: "deleteWebhook", timeoutSec: 10 },
+      { method: "getUpdates", timeoutSec: 40 },
+      { method: "getUpdates", timeoutSec: 40 }
+    ]);
+    assert.ok(elapsedMs < 500, `Expected bounded control-plane fallback before the full Node timeout, got ${elapsedMs}ms.`);
+    assert.match(infoLogs.map((log) => log.message).join("\n"), /getUpdates delivered via Windows PowerShell fallback/i);
+    assert.match(JSON.stringify(infoLogs), /transportPreference/);
+  } finally {
+    await controller.stop();
+  }
+});
+
+test("polling preserves healthy Node long polling instead of applying the control-plane timeout to getUpdates", async () => {
+  const fetchCalls: string[] = [];
+  let fallbackCalls = 0;
+  let getUpdatesCalls = 0;
+  const methodFromInput = (input: unknown) => String(input).match(/\/bot[^/]+\/([^/?]+)/u)?.[1] ?? "unknown";
+  const controller = startTelegramPolling({
+    botToken: VALID_BOT_TOKEN,
+    platform: "win32",
+    pollTimeoutSeconds: 30,
+    nodeTransportTimeoutMs: 25,
+    retryDelayMs: 25,
+    fetchImpl: async (input) => {
+      const method = methodFromInput(input);
+      fetchCalls.push(method);
+      if (method === "deleteWebhook") {
+        return telegramOk(true);
+      }
+      if (method === "getUpdates") {
+        getUpdatesCalls += 1;
+        await new Promise((resolve) => setTimeout(resolve, getUpdatesCalls === 1 ? 50 : 5));
+        return telegramOk([]);
+      }
+      throw new Error(`Unexpected Telegram method ${method}`);
+    },
+    invokeViaWindowsPowerShell: async () => {
+      fallbackCalls += 1;
+      return { ok: true, result: [] };
+    },
+    async dispatchUpdate() {},
+    logger: {
+      info() {},
+      warn() {},
+      error() {}
+    }
+  });
+
+  try {
+    const snapshot = await controller.ready;
+    await waitForCondition(() => getUpdatesCalls >= 1);
+
+    assert.equal(snapshot.status, "ready");
+    assert.deepEqual(fetchCalls.slice(0, 2), ["deleteWebhook", "getUpdates"]);
+    assert.equal(fallbackCalls, 0);
+  } finally {
+    await controller.stop();
+  }
+});
+
+test("polling control-plane keeps Telegram HTTP failures truthful without PowerShell fallback", async () => {
+  let fallbackCalls = 0;
+  const warnLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const controller = startTelegramPolling({
+    botToken: VALID_BOT_TOKEN,
+    platform: "win32",
+    retryDelayMs: 25,
+    fetchImpl: async () => new Response(JSON.stringify({
+      ok: false,
+      description: "Unauthorized"
+    }), {
+      status: 401,
+      headers: {
+        "content-type": "application/json"
+      }
+    }),
+    invokeViaWindowsPowerShell: async () => {
+      fallbackCalls += 1;
+      return { ok: true, result: true };
+    },
+    async dispatchUpdate() {},
+    logger: {
+      info() {},
+      warn(message, metadata) {
+        warnLogs.push({ message, metadata });
+      },
+      error() {}
+    }
+  });
+
+  try {
+    const snapshot = await controller.ready;
+
+    assert.equal(snapshot.status, "degraded");
+    assert.equal(fallbackCalls, 0);
+    assert.match(snapshot.detail ?? "", /Telegram deleteWebhook failed with 401/i);
+    assert.match(snapshot.detail ?? "", /Unauthorized/i);
+    assert.equal(warnLogs.length, 1);
+  } finally {
+    await controller.stop();
+  }
+});
+
+test("polling mode stays degraded with actionable detail when both Telegram transports fail on Windows", async () => {
   const runtime = createBotRuntime({}, {
     env: {
       TELEGRAM_BOT_TOKEN: VALID_BOT_TOKEN,
@@ -918,9 +1054,8 @@ test("polling mode stays degraded with actionable detail when both Telegram tran
     },
     port: 0,
     platform: "win32",
-    fetchImpl: async () => {
-      throw timeoutFailure;
-    },
+    telegramApiNodeTransportTimeoutMs: 25,
+    fetchImpl: async () => await new Promise<Response>(() => {}),
     invokeTelegramApiViaWindowsPowerShell: async () => ({
       ok: false,
       message: "Proxy authentication required."
@@ -933,6 +1068,7 @@ test("polling mode stays degraded with actionable detail when both Telegram tran
     assert.equal(snapshot.activeMode, "polling");
     assert.equal(snapshot.status, "degraded");
     assert.match(snapshot.detail, /Node HTTPS/i);
+    assert.match(snapshot.detail, /pre-fallback timeout/i);
     assert.match(snapshot.detail, /Windows PowerShell Bot API fallback also failed/i);
     assert.match(snapshot.detail, /Proxy authentication required/i);
   } finally {
@@ -1155,4 +1291,41 @@ test("webhook inspection falls back to Windows PowerShell Bot API calls after a 
   } finally {
     await runtime.stop();
   }
+});
+
+test("webhook inspection bounds a hanging Node attempt before PowerShell fallback", async () => {
+  const fallbackCalls: Array<{ method: string; timeoutSec?: number }> = [];
+  const infoLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const startedAt = Date.now();
+
+  const snapshot = await inspectTelegramWebhookDelivery({
+    botToken: VALID_BOT_TOKEN,
+    expectedWebhookUrl: "https://happy.example.com/telegram/webhook",
+    platform: "win32",
+    nodeTransportTimeoutMs: 25,
+    fetchImpl: async () => await new Promise<Response>(() => {}),
+    invokeViaWindowsPowerShell: async (method, _token, _payload, options) => {
+      fallbackCalls.push({ method, timeoutSec: options?.timeoutSec });
+      return {
+        ok: true,
+        result: {
+          url: "https://happy.example.com/telegram/webhook",
+          pending_update_count: 0
+        }
+      };
+    },
+    logger: {
+      info(message, metadata) {
+        infoLogs.push({ message, metadata });
+      },
+      warn() {},
+      error() {}
+    }
+  });
+
+  const elapsedMs = Date.now() - startedAt;
+  assert.equal(snapshot.status, "ready");
+  assert.deepEqual(fallbackCalls, [{ method: "getWebhookInfo", timeoutSec: 10 }]);
+  assert.ok(elapsedMs < 500, `Expected webhook inspection fallback before the full Node timeout, got ${elapsedMs}ms.`);
+  assert.match(infoLogs[0]?.message ?? "", /getWebhookInfo delivered via Windows PowerShell fallback/i);
 });

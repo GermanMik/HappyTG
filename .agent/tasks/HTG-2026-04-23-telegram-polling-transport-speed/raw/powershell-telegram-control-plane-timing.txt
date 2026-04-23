@@ -1,0 +1,24 @@
+[
+  {
+    "transport": "powershell",
+    "method": "getUpdates",
+    "ok": true,
+    "elapsedMs": 31813.3,
+    "timeoutSec": 40,
+    "resultType": "array",
+    "resultCount": 0,
+    "pendingUpdateCount": null,
+    "hasWebhookUrl": null
+  },
+  {
+    "transport": "powershell",
+    "method": "getWebhookInfo",
+    "ok": true,
+    "elapsedMs": 4392.7,
+    "timeoutSec": 40,
+    "resultType": "PSCustomObject",
+    "resultCount": null,
+    "pendingUpdateCount": 0,
+    "hasWebhookUrl": false
+  }
+]

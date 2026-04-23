@@ -1,0 +1,8 @@
+Windows PowerShell getUpdates live timing:
+
+elapsedMs: 31813.3
+result: success
+telegram timeout: 30 seconds
+Invoke-RestMethod TimeoutSec: 40
+update count: 0
+source: raw/powershell-telegram-control-plane-timing.txt

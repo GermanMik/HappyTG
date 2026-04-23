@@ -1,0 +1,65 @@
+{
+  "task_id": "HTG-2026-04-23-telegram-polling-transport-speed",
+  "session_id": "codex-2026-04-23-telegram-polling-transport-speed",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "init",
+      "status": "complete",
+      "at": "2026-04-23T00:00:00Z"
+    },
+    {
+      "phase": "freeze/spec",
+      "status": "complete",
+      "at": "2026-04-23T00:00:00Z"
+    },
+    {
+      "phase": "build",
+      "status": "complete",
+      "at": "2026-04-23T16:35:00Z"
+    },
+    {
+      "phase": "evidence",
+      "status": "complete",
+      "at": "2026-04-23T16:36:00Z"
+    },
+    {
+      "phase": "fresh verify",
+      "status": "complete",
+      "at": "2026-04-23T16:40:00Z"
+    },
+    {
+      "phase": "minimal fix",
+      "status": "complete",
+      "at": "2026-04-23T16:34:00Z"
+    },
+    {
+      "phase": "fresh verify",
+      "status": "complete",
+      "at": "2026-04-23T16:41:00Z"
+    },
+    {
+      "phase": "complete",
+      "status": "complete",
+      "at": "2026-04-23T16:42:00Z"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "spec.md",
+    "state.json",
+    "task.json",
+    "evidence.md",
+    "evidence.json",
+    "verdict.json",
+    "problems.md",
+    "raw/"
+  ],
+  "unresolved_issues": [],
+  "last_event_cursor": "fresh-verifier-passed",
+  "timestamps": {
+    "created_at": "2026-04-23T00:00:00Z",
+    "updated_at": "2026-04-23T16:42:00Z"
+  }
+}

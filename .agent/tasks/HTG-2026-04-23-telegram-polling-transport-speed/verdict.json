@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-23-telegram-polling-transport-speed",
+  "status": "complete",
+  "summary": "Live timing proved Node HTTPS control-plane calls to Telegram Bot API time out on this Windows host after about 10.7s, while PowerShell reaches Telegram and getUpdates long polling succeeds in about 31.8s with a 30s Telegram timeout. apps/bot now bounds short Windows control-plane Node attempts at 1500ms, keeps healthy Node getUpdates long polling unshortened, uses explicit PowerShell budgets, and caches a short PowerShell transport preference after fallback success. Bot tests, typecheck, build, lint, task validation, and a fresh verifier pass all succeeded."
+}

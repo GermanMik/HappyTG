@@ -1,0 +1,56 @@
+{
+  "scenario": "after-fix synthetic bounded control-plane node plus PowerShell preference",
+  "elapsedMs": 114,
+  "fetchCalls": [
+    "deleteWebhook"
+  ],
+  "fallbackCalls": [
+    {
+      "method": "deleteWebhook",
+      "timeoutSec": 10
+    },
+    {
+      "method": "getUpdates",
+      "timeoutSec": 40
+    },
+    {
+      "method": "getUpdates",
+      "timeoutSec": 40
+    }
+  ],
+  "infoLogs": [
+    {
+      "message": "Telegram deleteWebhook delivered via Windows PowerShell fallback",
+      "metadata": {
+        "transportPreference": "updated",
+        "nodeElapsedMs": 35,
+        "fallbackElapsedMs": 15,
+        "powerShellTimeoutSec": 10
+      },
+      "atMs": 51
+    },
+    {
+      "message": "Telegram polling active",
+      "atMs": 51
+    },
+    {
+      "message": "Telegram getUpdates delivered via Windows PowerShell fallback",
+      "metadata": {
+        "transportPreference": "cached",
+        "fallbackElapsedMs": 31,
+        "powerShellTimeoutSec": 40
+      },
+      "atMs": 82
+    },
+    {
+      "message": "Telegram getUpdates delivered via Windows PowerShell fallback",
+      "metadata": {
+        "transportPreference": "cached",
+        "fallbackElapsedMs": 32,
+        "powerShellTimeoutSec": 40
+      },
+      "atMs": 114
+    }
+  ],
+  "note": "getUpdates is not directly short-aborted; cached PowerShell preference comes from the preceding deleteWebhook transport failure."
+}

@@ -1,0 +1,9 @@
+
+> happytg@0.4.2 happytg C:\Develop\Projects\HappyTG-telegram-polling-transport-speed
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-23-telegram-polling-transport-speed"
+
+Task: HTG-2026-04-23-telegram-polling-transport-speed
+Bundle: C:\Develop\Projects\HappyTG-telegram-polling-transport-speed\.agent\tasks\HTG-2026-04-23-telegram-polling-transport-speed
+Validation: ok
+Phase: complete
+Verification: passed

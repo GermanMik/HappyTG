@@ -1,0 +1,6 @@
+Node HTTPS getUpdates live timing:
+
+elapsedMs: 10744.1
+result: failed
+error: UND_ERR_CONNECT_TIMEOUT
+source: raw/node-telegram-control-plane-timing.txt

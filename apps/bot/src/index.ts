@@ -119,6 +119,10 @@ interface WindowsPowerShellTelegramApiResult {
   result?: unknown;
 }
 
+interface TelegramApiTransportPreference {
+  preferWindowsPowerShellUntilMs: number;
+}
+
 type InvokeTelegramBotApiViaWindowsPowerShell = (
   method: string,
   botToken: string,
@@ -138,6 +142,8 @@ interface StartTelegramPollingOptions {
   invokeViaWindowsPowerShell?: InvokeTelegramBotApiViaWindowsPowerShell;
   onStatus?(patch: Partial<TelegramDeliverySnapshot>): void;
   pollTimeoutSeconds?: number;
+  nodeTransportTimeoutMs?: number;
+  powerShellPreferenceTtlMs?: number;
   retryDelayMs?: number;
 }
 
@@ -310,30 +316,93 @@ async function telegramApiCall<T>(
     logger?: Logger;
     platform?: NodeJS.Platform;
     invokeViaWindowsPowerShell?: InvokeTelegramBotApiViaWindowsPowerShell;
+    nodeTransportTimeoutMs?: number;
+    powerShellTimeoutSec?: number;
+    transportPreference?: TelegramApiTransportPreference;
+    powerShellPreferenceTtlMs?: number;
   }
 ): Promise<T> {
-  let response: Response;
-  try {
-    response = await (options.fetchImpl ?? fetch)(`https://api.telegram.org/bot${options.botToken}/${method}`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json"
-      },
-      body: JSON.stringify(options.payload ?? {}),
-      signal: options.signal
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const platform = options.platform ?? process.platform;
+  const fallbackImpl = options.invokeViaWindowsPowerShell
+    ?? (fetchImpl === fetch ? invokeTelegramBotApiViaWindowsPowerShell : undefined);
+  const nodeTransportTimeoutMs = telegramApiNodeTransportTimeoutMs(method, {
+    fallbackAvailable: !!fallbackImpl,
+    platform,
+    configuredTimeoutMs: options.nodeTransportTimeoutMs
+  });
+  const powerShellTimeoutSec = options.powerShellTimeoutSec ?? telegramApiPowerShellTimeoutSec(method, options.payload);
+  const powerShellPreferenceTtlMs = options.powerShellPreferenceTtlMs ?? WINDOWS_TELEGRAM_API_POWERSHELL_PREFERENCE_TTL_MS;
+  const url = `https://api.telegram.org/bot${options.botToken}/${method}`;
+  const init: RequestInit = {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(options.payload ?? {}),
+    signal: options.signal
+  };
+  let preferredFallbackFailure: WindowsPowerShellTelegramApiResult | undefined;
+
+  if (fallbackImpl && shouldPreferWindowsPowerShellTelegramApi(options.transportPreference, platform)) {
+    const fallbackStartedAt = Date.now();
+    const fallback = await fallbackImpl(method, options.botToken, options.payload, {
+      platform,
+      timeoutSec: powerShellTimeoutSec
     });
-  } catch (error) {
-    const fallbackImpl = options.invokeViaWindowsPowerShell
-      ?? ((options.fetchImpl ?? fetch) === fetch ? invokeTelegramBotApiViaWindowsPowerShell : undefined);
-    if (fallbackImpl && shouldTryWindowsPowerShellTelegramApiFallback(error, options.platform ?? process.platform)) {
-      const fallback = await fallbackImpl(method, options.botToken, options.payload, {
-        platform: options.platform
+    const fallbackElapsedMs = Date.now() - fallbackStartedAt;
+    if (fallback?.ok) {
+      markWindowsPowerShellTelegramApiPreference(options.transportPreference, powerShellPreferenceTtlMs);
+      options.logger?.info(`Telegram ${method} delivered via Windows PowerShell fallback`, {
+        transportPreference: "cached",
+        fallbackElapsedMs,
+        powerShellTimeoutSec
       });
+      return fallback.result as T;
+    }
+
+    clearWindowsPowerShellTelegramApiPreference(options.transportPreference);
+    if (fallback?.statusCode) {
+      throw new Error(`Telegram ${method} failed with ${fallback.statusCode}: ${fallback.message ?? "Telegram API rejected the request."}`);
+    }
+    preferredFallbackFailure = fallback;
+  }
+
+  let response: Response;
+  let nodeElapsedMs: number | undefined;
+  const nodeStartedAt = Date.now();
+  try {
+    response = await fetchTelegramWithTimeout(url, init, {
+      fetchImpl,
+      timeoutMs: nodeTransportTimeoutMs,
+      method
+    });
+    nodeElapsedMs = Date.now() - nodeStartedAt;
+  } catch (error) {
+    nodeElapsedMs = Date.now() - nodeStartedAt;
+    if (fallbackImpl && shouldTryWindowsPowerShellTelegramApiFallback(error, platform)) {
+      if (preferredFallbackFailure) {
+        throw new Error(formatTelegramApiFallbackFailure(method, error, preferredFallbackFailure));
+      }
+
+      const fallbackStartedAt = Date.now();
+      const fallback = await fallbackImpl(method, options.botToken, options.payload, {
+        platform,
+        timeoutSec: powerShellTimeoutSec
+      });
+      const fallbackElapsedMs = Date.now() - fallbackStartedAt;
       if (fallback?.ok) {
-        options.logger?.info(`Telegram ${method} delivered via Windows PowerShell fallback`);
+        markWindowsPowerShellTelegramApiPreference(options.transportPreference, powerShellPreferenceTtlMs);
+        options.logger?.info(`Telegram ${method} delivered via Windows PowerShell fallback`, {
+          transportPreference: "updated",
+          nodeElapsedMs,
+          fallbackElapsedMs,
+          powerShellTimeoutSec
+        });
         return fallback.result as T;
       }
 
+      clearWindowsPowerShellTelegramApiPreference(options.transportPreference);
       throw new Error(formatTelegramApiFallbackFailure(method, error, fallback));
     }
 
@@ -392,13 +461,15 @@ export async function inspectTelegramWebhookDelivery(options: {
   logger?: Logger;
   platform?: NodeJS.Platform;
   invokeViaWindowsPowerShell?: InvokeTelegramBotApiViaWindowsPowerShell;
+  nodeTransportTimeoutMs?: number;
 }): Promise<Partial<TelegramDeliverySnapshot>> {
   const info = await telegramApiCall<TelegramWebhookInfo>("getWebhookInfo", {
     botToken: options.botToken,
     fetchImpl: options.fetchImpl,
     logger: options.logger,
     platform: options.platform,
-    invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell
+    invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell,
+    nodeTransportTimeoutMs: options.nodeTransportTimeoutMs
   });
   const actualWebhookUrl = info.url.trim() || undefined;
   const actualDescription = actualWebhookUrl ? `current webhook URL is ${actualWebhookUrl}` : "current webhook URL is empty";
@@ -490,13 +561,18 @@ function windowsPowerShellPath(): string {
 
 const NODE_TRANSPORT_ADVICE = "Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine.";
 const WINDOWS_NODE_SENDMESSAGE_TIMEOUT_MS = 1_500;
+const WINDOWS_TELEGRAM_API_NODE_TIMEOUT_MS = 1_500;
+const WINDOWS_TELEGRAM_API_CONTROL_PLANE_TIMEOUT_SEC = 10;
+const WINDOWS_TELEGRAM_API_LONG_POLL_TIMEOUT_PADDING_SEC = 10;
+const WINDOWS_TELEGRAM_API_POWERSHELL_PREFERENCE_TTL_MS = 120_000;
+const TELEGRAM_NODE_TIMEOUT_CODE = "HAPPYTG_TELEGRAM_NODE_TIMEOUT";
 
-function createTelegramNodeSendTimeoutError(timeoutMs: number, cause?: unknown): Error & { code: string; cause?: unknown } {
-  const error = new Error(`Node HTTPS sendMessage exceeded ${timeoutMs}ms before Windows fallback.`) as Error & {
+function createTelegramNodeTransportTimeoutError(method: string, timeoutMs: number, cause?: unknown): Error & { code: string; cause?: unknown } {
+  const error = new Error(`Node HTTPS ${method} exceeded ${timeoutMs}ms before Windows fallback.`) as Error & {
     code: string;
     cause?: unknown;
   };
-  error.code = "HAPPYTG_TELEGRAM_NODE_TIMEOUT";
+  error.code = TELEGRAM_NODE_TIMEOUT_CODE;
   if (cause !== undefined) {
     error.cause = cause;
   }
@@ -509,6 +585,7 @@ async function fetchTelegramWithTimeout(
   options: {
     fetchImpl: typeof fetch;
     timeoutMs?: number;
+    method: string;
   }
 ): Promise<Response> {
   const timeoutMs = options.timeoutMs;
@@ -517,9 +594,19 @@ async function fetchTelegramWithTimeout(
   }
 
   const controller = new AbortController();
+  const parentSignal = init.signal;
   let timedOut = false;
   let timeoutError: Error & { code: string; cause?: unknown } | undefined;
   let timer: NodeJS.Timeout | undefined;
+  const abortFromParent = () => {
+    controller.abort(parentSignal?.reason);
+  };
+  if (parentSignal?.aborted) {
+    abortFromParent();
+  } else {
+    parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+  }
+
   const request = options.fetchImpl(input, {
     ...init,
     signal: controller.signal
@@ -528,7 +615,7 @@ async function fetchTelegramWithTimeout(
     timer = setTimeout(() => {
       timedOut = true;
       controller.abort();
-      timeoutError = createTelegramNodeSendTimeoutError(timeoutMs);
+      timeoutError = createTelegramNodeTransportTimeoutError(options.method, timeoutMs);
       reject(timeoutError);
     }, timeoutMs);
   });
@@ -537,10 +624,11 @@ async function fetchTelegramWithTimeout(
     return await Promise.race([request, timeout]);
   } catch (error) {
     if (timedOut) {
-      throw timeoutError ?? createTelegramNodeSendTimeoutError(timeoutMs, error);
+      throw timeoutError ?? createTelegramNodeTransportTimeoutError(options.method, timeoutMs, error);
     }
     throw error;
   } finally {
+    parentSignal?.removeEventListener("abort", abortFromParent);
     if (timer) {
       clearTimeout(timer);
     }
@@ -559,6 +647,7 @@ async function invokeTelegramBotApiViaWindowsPowerShell(
   if ((options?.platform ?? process.platform) !== "win32") {
     return undefined;
   }
+  const timeoutSec = Math.max(1, Math.ceil(options?.timeoutSec ?? 40));
 
   const script = [
     "$ErrorActionPreference = 'Stop'",
@@ -622,7 +711,7 @@ async function invokeTelegramBotApiViaWindowsPowerShell(
         HAPPYTG_TELEGRAM_BOT_TOKEN_PROBE: token,
         HAPPYTG_TELEGRAM_BOT_API_METHOD: method,
         HAPPYTG_TELEGRAM_BOT_API_PAYLOAD: JSON.stringify(payload ?? {}),
-        HAPPYTG_TELEGRAM_BOT_API_TIMEOUT_SEC: String(options?.timeoutSec ?? 40)
+        HAPPYTG_TELEGRAM_BOT_API_TIMEOUT_SEC: String(timeoutSec)
       },
       shell: false,
       stdio: ["ignore", "pipe", "pipe"]
@@ -640,7 +729,7 @@ async function invokeTelegramBotApiViaWindowsPowerShell(
         ok: false,
         message: "Windows PowerShell Telegram Bot API fallback timed out."
       });
-    }, 45_000);
+    }, (timeoutSec + 5) * 1_000);
 
     child.stdout.on("data", (chunk) => {
       stdout += chunk.toString();
@@ -855,6 +944,9 @@ function describeTelegramTransportFailure(error: unknown): string {
   if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
     return "DNS lookup for api.telegram.org failed.";
   }
+  if (code === TELEGRAM_NODE_TIMEOUT_CODE) {
+    return "Connection to api.telegram.org exceeded the Windows Node pre-fallback timeout.";
+  }
   if (code === "ETIMEDOUT" || code === "UND_ERR_CONNECT_TIMEOUT") {
     return "Connection to api.telegram.org timed out.";
   }
@@ -890,6 +982,7 @@ function shouldTryWindowsPowerShellTelegramApiFallback(error: unknown, platform:
     || code === "EAI_AGAIN"
     || code === "ETIMEDOUT"
     || code === "UND_ERR_CONNECT_TIMEOUT"
+    || code === TELEGRAM_NODE_TIMEOUT_CODE
     || code === "ECONNREFUSED"
     || code === "ECONNRESET"
     || code === "UND_ERR_SOCKET"
@@ -901,6 +994,57 @@ function shouldTryWindowsPowerShellTelegramApiFallback(error: unknown, platform:
     || message.includes("certificate")
     || message.includes("tls")
     || message.includes("ssl");
+}
+
+function telegramApiPowerShellTimeoutSec(method: string, payload?: Record<string, unknown>): number {
+  if (method === "getUpdates") {
+    const pollTimeout = typeof payload?.timeout === "number" && Number.isFinite(payload.timeout)
+      ? Math.max(0, Math.ceil(payload.timeout))
+      : 0;
+    return Math.max(WINDOWS_TELEGRAM_API_CONTROL_PLANE_TIMEOUT_SEC, pollTimeout + WINDOWS_TELEGRAM_API_LONG_POLL_TIMEOUT_PADDING_SEC);
+  }
+
+  return WINDOWS_TELEGRAM_API_CONTROL_PLANE_TIMEOUT_SEC;
+}
+
+function telegramApiNodeTransportTimeoutMs(
+  method: string,
+  options: {
+    fallbackAvailable: boolean;
+    platform: NodeJS.Platform;
+    configuredTimeoutMs?: number;
+  }
+): number | undefined {
+  if (method === "getUpdates") {
+    return undefined;
+  }
+
+  return options.configuredTimeoutMs
+    ?? (options.platform === "win32" && options.fallbackAvailable ? WINDOWS_TELEGRAM_API_NODE_TIMEOUT_MS : undefined);
+}
+
+function shouldPreferWindowsPowerShellTelegramApi(
+  preference: TelegramApiTransportPreference | undefined,
+  platform: NodeJS.Platform
+): boolean {
+  return platform === "win32" && !!preference && Date.now() < preference.preferWindowsPowerShellUntilMs;
+}
+
+function markWindowsPowerShellTelegramApiPreference(
+  preference: TelegramApiTransportPreference | undefined,
+  ttlMs: number
+): void {
+  if (!preference || ttlMs <= 0) {
+    return;
+  }
+  preference.preferWindowsPowerShellUntilMs = Date.now() + ttlMs;
+}
+
+function clearWindowsPowerShellTelegramApiPreference(preference: TelegramApiTransportPreference | undefined): void {
+  if (!preference) {
+    return;
+  }
+  preference.preferWindowsPowerShellUntilMs = 0;
 }
 
 function formatTelegramApiFallbackFailure(
@@ -949,7 +1093,8 @@ export function createDefaultSendTelegramMessage(options: CreateDefaultSendTeleg
         },
         {
           fetchImpl,
-          timeoutMs: nodeTransportTimeoutMs
+          timeoutMs: nodeTransportTimeoutMs,
+          method: "sendMessage"
         }
       );
 
@@ -1059,6 +1204,9 @@ export function startTelegramPolling(options: StartTelegramPollingOptions): Tele
   const abortController = new AbortController();
   const pollTimeoutSeconds = options.pollTimeoutSeconds ?? 30;
   const retryDelayMs = options.retryDelayMs ?? 2_000;
+  const transportPreference: TelegramApiTransportPreference = {
+    preferWindowsPowerShellUntilMs: 0
+  };
   let offset = 0;
   let initialized = false;
   let readyResolved = false;
@@ -1086,7 +1234,10 @@ export function startTelegramPolling(options: StartTelegramPollingOptions): Tele
             signal: abortController.signal,
             logger: botLogger,
             platform: options.platform,
-            invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell
+            invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell,
+            nodeTransportTimeoutMs: options.nodeTransportTimeoutMs,
+            transportPreference,
+            powerShellPreferenceTtlMs: options.powerShellPreferenceTtlMs
           });
           initialized = true;
           const readySnapshot: Partial<TelegramDeliverySnapshot> = {
@@ -1110,7 +1261,10 @@ export function startTelegramPolling(options: StartTelegramPollingOptions): Tele
           signal: abortController.signal,
           logger: botLogger,
           platform: options.platform,
-          invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell
+          invokeViaWindowsPowerShell: options.invokeViaWindowsPowerShell,
+          nodeTransportTimeoutMs: options.nodeTransportTimeoutMs,
+          transportPreference,
+          powerShellPreferenceTtlMs: options.powerShellPreferenceTtlMs
         });
         options.onStatus?.({
           activeMode: "polling",
@@ -1387,6 +1541,8 @@ export function createBotRuntime(
     logger?: Logger;
     platform?: NodeJS.Platform;
     invokeTelegramApiViaWindowsPowerShell?: InvokeTelegramBotApiViaWindowsPowerShell;
+    telegramApiNodeTransportTimeoutMs?: number;
+    telegramApiPowerShellPreferenceTtlMs?: number;
     configurationMessage?: string;
     reuseProbeWindowMs?: number;
     reuseProbeIntervalMs?: number;
@@ -1444,6 +1600,8 @@ export function createBotRuntime(
             logger: botLogger,
             platform: options?.platform,
             invokeViaWindowsPowerShell: options?.invokeTelegramApiViaWindowsPowerShell,
+            nodeTransportTimeoutMs: options?.telegramApiNodeTransportTimeoutMs,
+            powerShellPreferenceTtlMs: options?.telegramApiPowerShellPreferenceTtlMs,
             onStatus: (patch) => {
               deliveryState.update(patch);
             }
@@ -1457,7 +1615,8 @@ export function createBotRuntime(
               fetchImpl: options?.fetchImpl,
               logger: botLogger,
               platform: options?.platform,
-              invokeViaWindowsPowerShell: options?.invokeTelegramApiViaWindowsPowerShell
+              invokeViaWindowsPowerShell: options?.invokeTelegramApiViaWindowsPowerShell,
+              nodeTransportTimeoutMs: options?.telegramApiNodeTransportTimeoutMs
             }));
           } catch (error) {
             deliveryState.update({

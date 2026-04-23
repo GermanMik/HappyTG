@@ -1,0 +1,15 @@
+{
+  "scenario": "synthetic /start update available to sent reply",
+  "beforeFixModelMs": 150,
+  "beforeFixModel": "100ms Node getUpdates transport delay + 20ms PowerShell getUpdates + 30ms send path",
+  "afterFixMeasuredMs": 60,
+  "liveProjection": "On this host, replace the 100ms synthetic Node delay with measured 10744.1ms before fix and 0ms on cached PowerShell polling after fix; sendMessage fallback remains separately bounded at 1500ms.",
+  "fetchCalls": [
+    "deleteWebhook"
+  ],
+  "fallbackCalls": [
+    "deleteWebhook",
+    "getUpdates",
+    "getUpdates"
+  ]
+}
