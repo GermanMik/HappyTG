@@ -1745,7 +1745,7 @@ Fill at least:
 ### Start the Backend
 
 ```bash
-docker compose -f infra/docker-compose.example.yml up -d postgres redis minio
+docker compose --env-file .env -f infra/docker-compose.example.yml up -d postgres redis minio
 pnpm dev
 ```
 

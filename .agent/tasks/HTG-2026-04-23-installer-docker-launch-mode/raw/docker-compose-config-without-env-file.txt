@@ -1,0 +1,578 @@
+name: infra
+services:
+  api:
+    build:
+      context: C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+      dockerfile: ./infra/Dockerfile.app
+      args:
+        APP_PACKAGE: '@happytg/api'
+    depends_on:
+      minio:
+        condition: service_started
+        required: true
+      postgres:
+        condition: service_started
+        required: true
+      redis:
+        condition: service_started
+        required: true
+    environment:
+      CADDY_ACME_EMAIL: ""
+      CODEX_CLI_BIN: codex
+      CODEX_CONFIG_PATH: ~/.codex/config.toml
+      CODEX_SMOKE_PROMPT: Print exactly OK and exit.
+      COMPOSE_PROJECT_NAME: htg_installer_verify
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/happytg
+      DEFAULT_RUNTIME: codex-cli
+      GRAFANA_ADMIN_PASSWORD: change-me
+      GRAFANA_ADMIN_USER: admin
+      HAPPYTG_API_PORT: "56460"
+      HAPPYTG_API_URL: http://localhost:56460
+      HAPPYTG_APP_URL: http://localhost:56462
+      HAPPYTG_BOT_PORT: "56461"
+      HAPPYTG_BROWSER_API_URL: http://localhost:56460
+      HAPPYTG_DEV_CORS_ORIGINS: http://localhost:56462,http://127.0.0.1:56462
+      HAPPYTG_DOMAIN: localhost
+      HAPPYTG_GRAFANA_PORT: "56471"
+      HAPPYTG_HTTP_PORT: "56468"
+      HAPPYTG_HTTPS_PORT: "56469"
+      HAPPYTG_MINIAPP_LAUNCH_SECRET: ""
+      HAPPYTG_MINIAPP_PORT: "56462"
+      HAPPYTG_MINIAPP_UPSTREAM: ""
+      HAPPYTG_MINIAPP_URL: ""
+      HAPPYTG_MINIO_CONSOLE_PORT: "56467"
+      HAPPYTG_MINIO_PORT: "56466"
+      HAPPYTG_POSTGRES_HOST_PORT: "56464"
+      HAPPYTG_PROMETHEUS_PORT: "56470"
+      HAPPYTG_PUBLIC_URL: http://localhost:56460
+      HAPPYTG_REDIS_HOST_PORT: "56465"
+      HAPPYTG_WORKER_PORT: "56463"
+      HOST_ACCESS_TOKEN_TTL_SECONDS: "900"
+      HOST_DAEMON_DEFAULT_POLL_MS: "2000"
+      HOST_DAEMON_MAX_PARALLEL_READS: "8"
+      HOST_DAEMON_MUTATION_QUEUE_CONCURRENCY: "1"
+      HOST_REFRESH_TOKEN_TTL_SECONDS: "2592000"
+      JWT_AUDIENCE: happytg-clients
+      JWT_ISSUER: happytg
+      JWT_SIGNING_KEY: replace-me
+      LOG_LEVEL: info
+      MINIAPP_INITDATA_MAX_AGE_SECONDS: "86400"
+      MINIAPP_LAUNCH_GRANT_TTL_SECONDS: "600"
+      MINIAPP_SESSION_TTL_SECONDS: "3600"
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_APP_NAME: HappyTG
+      NODE_ENV: development
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+      PAIRING_TOKEN_TTL_SECONDS: "900"
+      PORT: "4000"
+      REDIS_URL: redis://redis:6379
+      S3_ACCESS_KEY: minio
+      S3_BUCKET: happytg-artifacts
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_SECRET_KEY: miniosecret
+      SENTRY_DSN: ""
+      TELEGRAM_ALLOWED_USER_IDS: ""
+      TELEGRAM_BOT_TOKEN: 123456:abcdefghijklmnopqrstuvwx
+      TELEGRAM_BOT_USERNAME: verify_happytg_bot
+      TELEGRAM_HOME_CHANNEL: ""
+      TELEGRAM_UPDATES_MODE: polling
+      TELEGRAM_WEBHOOK_SECRET: replace-me
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - 'fetch(''http://127.0.0.1:4000/ready'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))'
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 4000
+        published: "4000"
+        protocol: tcp
+  bot:
+    build:
+      context: C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+      dockerfile: ./infra/Dockerfile.app
+      args:
+        APP_PACKAGE: '@happytg/bot'
+    depends_on:
+      api:
+        condition: service_started
+        required: true
+    environment:
+      CADDY_ACME_EMAIL: ""
+      CODEX_CLI_BIN: codex
+      CODEX_CONFIG_PATH: ~/.codex/config.toml
+      CODEX_SMOKE_PROMPT: Print exactly OK and exit.
+      COMPOSE_PROJECT_NAME: htg_installer_verify
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/happytg
+      DEFAULT_RUNTIME: codex-cli
+      GRAFANA_ADMIN_PASSWORD: change-me
+      GRAFANA_ADMIN_USER: admin
+      HAPPYTG_API_PORT: "56460"
+      HAPPYTG_API_URL: http://api:4000
+      HAPPYTG_APP_URL: http://localhost:56462
+      HAPPYTG_BOT_PORT: "56461"
+      HAPPYTG_BROWSER_API_URL: http://localhost:56460
+      HAPPYTG_DEV_CORS_ORIGINS: http://localhost:56462,http://127.0.0.1:56462
+      HAPPYTG_DOMAIN: localhost
+      HAPPYTG_GRAFANA_PORT: "56471"
+      HAPPYTG_HTTP_PORT: "56468"
+      HAPPYTG_HTTPS_PORT: "56469"
+      HAPPYTG_MINIAPP_LAUNCH_SECRET: ""
+      HAPPYTG_MINIAPP_PORT: "56462"
+      HAPPYTG_MINIAPP_UPSTREAM: ""
+      HAPPYTG_MINIAPP_URL: ""
+      HAPPYTG_MINIO_CONSOLE_PORT: "56467"
+      HAPPYTG_MINIO_PORT: "56466"
+      HAPPYTG_POSTGRES_HOST_PORT: "56464"
+      HAPPYTG_PROMETHEUS_PORT: "56470"
+      HAPPYTG_PUBLIC_URL: http://localhost:56460
+      HAPPYTG_REDIS_HOST_PORT: "56465"
+      HAPPYTG_WORKER_PORT: "56463"
+      HOST_ACCESS_TOKEN_TTL_SECONDS: "900"
+      HOST_DAEMON_DEFAULT_POLL_MS: "2000"
+      HOST_DAEMON_MAX_PARALLEL_READS: "8"
+      HOST_DAEMON_MUTATION_QUEUE_CONCURRENCY: "1"
+      HOST_REFRESH_TOKEN_TTL_SECONDS: "2592000"
+      JWT_AUDIENCE: happytg-clients
+      JWT_ISSUER: happytg
+      JWT_SIGNING_KEY: replace-me
+      LOG_LEVEL: info
+      MINIAPP_INITDATA_MAX_AGE_SECONDS: "86400"
+      MINIAPP_LAUNCH_GRANT_TTL_SECONDS: "600"
+      MINIAPP_SESSION_TTL_SECONDS: "3600"
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_APP_NAME: HappyTG
+      NODE_ENV: development
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+      PAIRING_TOKEN_TTL_SECONDS: "900"
+      PORT: "4100"
+      REDIS_URL: redis://localhost:6379
+      S3_ACCESS_KEY: minio
+      S3_BUCKET: happytg-artifacts
+      S3_ENDPOINT: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_SECRET_KEY: miniosecret
+      SENTRY_DSN: ""
+      TELEGRAM_ALLOWED_USER_IDS: ""
+      TELEGRAM_BOT_TOKEN: 123456:abcdefghijklmnopqrstuvwx
+      TELEGRAM_BOT_USERNAME: verify_happytg_bot
+      TELEGRAM_HOME_CHANNEL: ""
+      TELEGRAM_UPDATES_MODE: polling
+      TELEGRAM_WEBHOOK_SECRET: replace-me
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - 'fetch(''http://127.0.0.1:4100/ready'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))'
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 4100
+        published: "4100"
+        protocol: tcp
+  caddy:
+    depends_on:
+      api:
+        condition: service_started
+        required: true
+      bot:
+        condition: service_started
+        required: true
+      miniapp:
+        condition: service_started
+        required: true
+    environment:
+      CADDY_ACME_EMAIL: ""
+      CODEX_CLI_BIN: codex
+      CODEX_CONFIG_PATH: ~/.codex/config.toml
+      CODEX_SMOKE_PROMPT: Print exactly OK and exit.
+      COMPOSE_PROJECT_NAME: htg_installer_verify
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/happytg
+      DEFAULT_RUNTIME: codex-cli
+      GRAFANA_ADMIN_PASSWORD: change-me
+      GRAFANA_ADMIN_USER: admin
+      HAPPYTG_API_PORT: "56460"
+      HAPPYTG_API_URL: http://localhost:56460
+      HAPPYTG_APP_URL: http://localhost:56462
+      HAPPYTG_BOT_PORT: "56461"
+      HAPPYTG_BROWSER_API_URL: http://localhost:56460
+      HAPPYTG_DEV_CORS_ORIGINS: http://localhost:56462,http://127.0.0.1:56462
+      HAPPYTG_DOMAIN: localhost
+      HAPPYTG_GRAFANA_PORT: "56471"
+      HAPPYTG_HTTP_PORT: "56468"
+      HAPPYTG_HTTPS_PORT: "56469"
+      HAPPYTG_MINIAPP_LAUNCH_SECRET: ""
+      HAPPYTG_MINIAPP_PORT: "56462"
+      HAPPYTG_MINIAPP_UPSTREAM: ""
+      HAPPYTG_MINIAPP_URL: ""
+      HAPPYTG_MINIO_CONSOLE_PORT: "56467"
+      HAPPYTG_MINIO_PORT: "56466"
+      HAPPYTG_POSTGRES_HOST_PORT: "56464"
+      HAPPYTG_PROMETHEUS_PORT: "56470"
+      HAPPYTG_PUBLIC_URL: http://localhost:56460
+      HAPPYTG_REDIS_HOST_PORT: "56465"
+      HAPPYTG_WORKER_PORT: "56463"
+      HOST_ACCESS_TOKEN_TTL_SECONDS: "900"
+      HOST_DAEMON_DEFAULT_POLL_MS: "2000"
+      HOST_DAEMON_MAX_PARALLEL_READS: "8"
+      HOST_DAEMON_MUTATION_QUEUE_CONCURRENCY: "1"
+      HOST_REFRESH_TOKEN_TTL_SECONDS: "2592000"
+      JWT_AUDIENCE: happytg-clients
+      JWT_ISSUER: happytg
+      JWT_SIGNING_KEY: replace-me
+      LOG_LEVEL: info
+      MINIAPP_INITDATA_MAX_AGE_SECONDS: "86400"
+      MINIAPP_LAUNCH_GRANT_TTL_SECONDS: "600"
+      MINIAPP_SESSION_TTL_SECONDS: "3600"
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_APP_NAME: HappyTG
+      NODE_ENV: development
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+      PAIRING_TOKEN_TTL_SECONDS: "900"
+      REDIS_URL: redis://localhost:6379
+      S3_ACCESS_KEY: minio
+      S3_BUCKET: happytg-artifacts
+      S3_ENDPOINT: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_SECRET_KEY: miniosecret
+      SENTRY_DSN: ""
+      TELEGRAM_ALLOWED_USER_IDS: ""
+      TELEGRAM_BOT_TOKEN: 123456:abcdefghijklmnopqrstuvwx
+      TELEGRAM_BOT_USERNAME: verify_happytg_bot
+      TELEGRAM_HOME_CHANNEL: ""
+      TELEGRAM_UPDATES_MODE: polling
+      TELEGRAM_WEBHOOK_SECRET: replace-me
+    image: caddy:2
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 80
+        published: "80"
+        protocol: tcp
+      - mode: ingress
+        target: 443
+        published: "443"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Develop\Projects\HappyTG-installer-docker-launch-mode\infra\caddy\Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind: {}
+      - type: volume
+        source: caddy_data
+        target: /data
+        volume: {}
+      - type: volume
+        source: caddy_config
+        target: /config
+        volume: {}
+  grafana:
+    depends_on:
+      prometheus:
+        condition: service_started
+        required: true
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: change-me
+      GF_SECURITY_ADMIN_USER: admin
+    image: grafana/grafana:11.3.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3000
+        published: "3000"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: grafana_data
+        target: /var/lib/grafana
+        volume: {}
+      - type: bind
+        source: C:\Develop\Projects\HappyTG-installer-docker-launch-mode\infra\grafana\provisioning
+        target: /etc/grafana/provisioning
+        read_only: true
+        bind: {}
+  miniapp:
+    build:
+      context: C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+      dockerfile: ./infra/Dockerfile.app
+      args:
+        APP_PACKAGE: '@happytg/miniapp'
+    depends_on:
+      api:
+        condition: service_started
+        required: true
+    environment:
+      CADDY_ACME_EMAIL: ""
+      CODEX_CLI_BIN: codex
+      CODEX_CONFIG_PATH: ~/.codex/config.toml
+      CODEX_SMOKE_PROMPT: Print exactly OK and exit.
+      COMPOSE_PROJECT_NAME: htg_installer_verify
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/happytg
+      DEFAULT_RUNTIME: codex-cli
+      GRAFANA_ADMIN_PASSWORD: change-me
+      GRAFANA_ADMIN_USER: admin
+      HAPPYTG_API_PORT: "56460"
+      HAPPYTG_API_URL: http://api:4000
+      HAPPYTG_APP_URL: http://localhost:56462
+      HAPPYTG_BOT_PORT: "56461"
+      HAPPYTG_BROWSER_API_URL: ""
+      HAPPYTG_DEV_CORS_ORIGINS: http://localhost:56462,http://127.0.0.1:56462
+      HAPPYTG_DOMAIN: localhost
+      HAPPYTG_GRAFANA_PORT: "56471"
+      HAPPYTG_HTTP_PORT: "56468"
+      HAPPYTG_HTTPS_PORT: "56469"
+      HAPPYTG_MINIAPP_LAUNCH_SECRET: ""
+      HAPPYTG_MINIAPP_PORT: "3001"
+      HAPPYTG_MINIAPP_UPSTREAM: ""
+      HAPPYTG_MINIAPP_URL: ""
+      HAPPYTG_MINIO_CONSOLE_PORT: "56467"
+      HAPPYTG_MINIO_PORT: "56466"
+      HAPPYTG_POSTGRES_HOST_PORT: "56464"
+      HAPPYTG_PROMETHEUS_PORT: "56470"
+      HAPPYTG_PUBLIC_URL: http://localhost:56460
+      HAPPYTG_REDIS_HOST_PORT: "56465"
+      HAPPYTG_WORKER_PORT: "56463"
+      HOST_ACCESS_TOKEN_TTL_SECONDS: "900"
+      HOST_DAEMON_DEFAULT_POLL_MS: "2000"
+      HOST_DAEMON_MAX_PARALLEL_READS: "8"
+      HOST_DAEMON_MUTATION_QUEUE_CONCURRENCY: "1"
+      HOST_REFRESH_TOKEN_TTL_SECONDS: "2592000"
+      JWT_AUDIENCE: happytg-clients
+      JWT_ISSUER: happytg
+      JWT_SIGNING_KEY: replace-me
+      LOG_LEVEL: info
+      MINIAPP_INITDATA_MAX_AGE_SECONDS: "86400"
+      MINIAPP_LAUNCH_GRANT_TTL_SECONDS: "600"
+      MINIAPP_SESSION_TTL_SECONDS: "3600"
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_APP_NAME: HappyTG
+      NODE_ENV: development
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+      PAIRING_TOKEN_TTL_SECONDS: "900"
+      PORT: "3001"
+      REDIS_URL: redis://localhost:6379
+      S3_ACCESS_KEY: minio
+      S3_BUCKET: happytg-artifacts
+      S3_ENDPOINT: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_SECRET_KEY: miniosecret
+      SENTRY_DSN: ""
+      TELEGRAM_ALLOWED_USER_IDS: ""
+      TELEGRAM_BOT_TOKEN: 123456:abcdefghijklmnopqrstuvwx
+      TELEGRAM_BOT_USERNAME: verify_happytg_bot
+      TELEGRAM_HOME_CHANNEL: ""
+      TELEGRAM_UPDATES_MODE: polling
+      TELEGRAM_WEBHOOK_SECRET: replace-me
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - 'fetch(''http://127.0.0.1:3001/ready'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))'
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3001
+        published: "3001"
+        protocol: tcp
+  minio:
+    command:
+      - server
+      - /data
+      - --console-address
+      - :9001
+    environment:
+      MINIO_ROOT_PASSWORD: miniosecret
+      MINIO_ROOT_USER: minio
+    image: minio/minio:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 9000
+        published: "9000"
+        protocol: tcp
+      - mode: ingress
+        target: 9001
+        published: "9001"
+        protocol: tcp
+  postgres:
+    environment:
+      POSTGRES_DB: happytg
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U postgres -d happytg
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    image: postgres:16
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "5432"
+        protocol: tcp
+  prometheus:
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    depends_on:
+      api:
+        condition: service_started
+        required: true
+    image: prom/prometheus:v2.55.1
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 9090
+        published: "9090"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Develop\Projects\HappyTG-installer-docker-launch-mode\infra\prometheus\prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+        read_only: true
+        bind: {}
+      - type: volume
+        source: prometheus_data
+        target: /prometheus
+        volume: {}
+  redis:
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    image: redis:7
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 6379
+        published: "6379"
+        protocol: tcp
+  worker:
+    build:
+      context: C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+      dockerfile: ./infra/Dockerfile.app
+      args:
+        APP_PACKAGE: '@happytg/worker'
+    depends_on:
+      api:
+        condition: service_started
+        required: true
+      redis:
+        condition: service_started
+        required: true
+    environment:
+      CADDY_ACME_EMAIL: ""
+      CODEX_CLI_BIN: codex
+      CODEX_CONFIG_PATH: ~/.codex/config.toml
+      CODEX_SMOKE_PROMPT: Print exactly OK and exit.
+      COMPOSE_PROJECT_NAME: htg_installer_verify
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/happytg
+      DEFAULT_RUNTIME: codex-cli
+      GRAFANA_ADMIN_PASSWORD: change-me
+      GRAFANA_ADMIN_USER: admin
+      HAPPYTG_API_PORT: "56460"
+      HAPPYTG_API_URL: http://localhost:56460
+      HAPPYTG_APP_URL: http://localhost:56462
+      HAPPYTG_BOT_PORT: "56461"
+      HAPPYTG_BROWSER_API_URL: http://localhost:56460
+      HAPPYTG_DEV_CORS_ORIGINS: http://localhost:56462,http://127.0.0.1:56462
+      HAPPYTG_DOMAIN: localhost
+      HAPPYTG_GRAFANA_PORT: "56471"
+      HAPPYTG_HTTP_PORT: "56468"
+      HAPPYTG_HTTPS_PORT: "56469"
+      HAPPYTG_MINIAPP_LAUNCH_SECRET: ""
+      HAPPYTG_MINIAPP_PORT: "56462"
+      HAPPYTG_MINIAPP_UPSTREAM: ""
+      HAPPYTG_MINIAPP_URL: ""
+      HAPPYTG_MINIO_CONSOLE_PORT: "56467"
+      HAPPYTG_MINIO_PORT: "56466"
+      HAPPYTG_POSTGRES_HOST_PORT: "56464"
+      HAPPYTG_PROMETHEUS_PORT: "56470"
+      HAPPYTG_PUBLIC_URL: http://localhost:56460
+      HAPPYTG_REDIS_HOST_PORT: "56465"
+      HAPPYTG_WORKER_PORT: "56463"
+      HOST_ACCESS_TOKEN_TTL_SECONDS: "900"
+      HOST_DAEMON_DEFAULT_POLL_MS: "2000"
+      HOST_DAEMON_MAX_PARALLEL_READS: "8"
+      HOST_DAEMON_MUTATION_QUEUE_CONCURRENCY: "1"
+      HOST_REFRESH_TOKEN_TTL_SECONDS: "2592000"
+      JWT_AUDIENCE: happytg-clients
+      JWT_ISSUER: happytg
+      JWT_SIGNING_KEY: replace-me
+      LOG_LEVEL: info
+      MINIAPP_INITDATA_MAX_AGE_SECONDS: "86400"
+      MINIAPP_LAUNCH_GRANT_TTL_SECONDS: "600"
+      MINIAPP_SESSION_TTL_SECONDS: "3600"
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_APP_NAME: HappyTG
+      NODE_ENV: development
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+      PAIRING_TOKEN_TTL_SECONDS: "900"
+      PORT: "4200"
+      REDIS_URL: redis://redis:6379
+      S3_ACCESS_KEY: minio
+      S3_BUCKET: happytg-artifacts
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_SECRET_KEY: miniosecret
+      SENTRY_DSN: ""
+      TELEGRAM_ALLOWED_USER_IDS: ""
+      TELEGRAM_BOT_TOKEN: 123456:abcdefghijklmnopqrstuvwx
+      TELEGRAM_BOT_USERNAME: verify_happytg_bot
+      TELEGRAM_HOME_CHANNEL: ""
+      TELEGRAM_UPDATES_MODE: polling
+      TELEGRAM_WEBHOOK_SECRET: replace-me
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - 'fetch(''http://127.0.0.1:4200/ready'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))'
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    networks:
+      default: null
+networks:
+  default:
+    name: infra_default
+volumes:
+  caddy_config:
+    name: infra_caddy_config
+  caddy_data:
+    name: infra_caddy_data
+  grafana_data:
+    name: infra_grafana_data
+  prometheus_data:
+    name: infra_prometheus_data

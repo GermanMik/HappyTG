@@ -38,13 +38,13 @@ Use [Installation](./installation.md) if you need the fuller local/self-hosted s
    If Redis is already running locally:
 
    ```bash
-   docker compose -f infra/docker-compose.example.yml up postgres minio
+   docker compose --env-file .env -f infra/docker-compose.example.yml up postgres minio
    ```
 
    If Redis is missing or stopped:
 
    ```bash
-   docker compose -f infra/docker-compose.example.yml up postgres redis minio
+   docker compose --env-file .env -f infra/docker-compose.example.yml up postgres redis minio
    ```
 
 4. Start the repo services.
@@ -105,7 +105,7 @@ The host daemon is separate from `pnpm dev`; start it with `pnpm dev:daemon` aft
 | API | `4000` | `HAPPYTG_API_PORT=4001` | `HAPPYTG_API_PORT=4001 pnpm dev:api` | `$env:HAPPYTG_API_PORT=4001; pnpm dev:api` |
 | Bot | `4100` | `HAPPYTG_BOT_PORT=4101` | `HAPPYTG_BOT_PORT=4101 pnpm dev:bot` | `$env:HAPPYTG_BOT_PORT=4101; pnpm dev:bot` |
 | Worker probe | `4200` | `HAPPYTG_WORKER_PORT=4201` | `HAPPYTG_WORKER_PORT=4201 pnpm dev:worker` | `$env:HAPPYTG_WORKER_PORT=4201; pnpm dev:worker` |
-| Compose Redis host port | `6379` | `HAPPYTG_REDIS_HOST_PORT=6380` | `HAPPYTG_REDIS_HOST_PORT=6380 docker compose -f infra/docker-compose.example.yml up redis` | `$env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.example.yml up redis` |
+| Compose Redis host port | `6379` | `HAPPYTG_REDIS_HOST_PORT=6380` | `HAPPYTG_REDIS_HOST_PORT=6380 docker compose --env-file .env -f infra/docker-compose.example.yml up redis` | `$env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose --env-file .env -f infra/docker-compose.example.yml up redis` |
 
 If `3001` is already in use, run `pnpm happytg setup --json` first: if it reports an existing HappyTG Mini App, reuse it; if it names another listener, treat that as a conflict and choose `HAPPYTG_MINIAPP_PORT` or `PORT`.
 

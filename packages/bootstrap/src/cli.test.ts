@@ -8,6 +8,18 @@ import { codexCliMissingMessage } from "../../runtime-adapters/src/index.js";
 import { CliUsageError, executeHappyTG, parseHappyTGArgs, renderText } from "./cli.js";
 import type { InstallResult } from "./install/types.js";
 
+function localLaunchResult(): InstallResult["launch"] {
+  return {
+    mode: "local",
+    status: "not-started",
+    detail: "Local dev launch mode selected; installer did not start containers.",
+    commands: [],
+    health: [],
+    warnings: [],
+    nextSteps: ["Start local repo services with `pnpm dev`."]
+  };
+}
+
 test("parseHappyTGArgs maps config and env nested commands", () => {
   assert.deepEqual(parseHappyTGArgs(["config", "init", "--json"]), {
     kind: "bootstrap",
@@ -53,6 +65,8 @@ test("parseHappyTGArgs maps install flags into the installer request", () => {
     "@home",
     "--background",
     "manual",
+    "--launch-mode",
+    "docker",
     "--post-check",
     "setup",
     "--post-check",
@@ -73,7 +87,23 @@ test("parseHappyTGArgs maps install flags into the installer request", () => {
   assert.deepEqual(parsed.options.telegramAllowedUserIds, ["1001", "1002"]);
   assert.equal(parsed.options.telegramHomeChannel, "@home");
   assert.equal(parsed.options.backgroundMode, "manual");
+  assert.equal(parsed.options.launchMode, "docker");
   assert.deepEqual(parsed.options.postChecks, ["setup", "doctor"]);
+});
+
+test("parseHappyTGArgs ignores invalid launch mode consistently with other install option enums", () => {
+  const parsed = parseHappyTGArgs([
+    "install",
+    "--launch-mode",
+    "containers"
+  ], "/tmp/happytg-cli");
+
+  assert.equal(parsed.kind, "install");
+  if (parsed.kind !== "install") {
+    return;
+  }
+
+  assert.equal(parsed.options.launchMode, undefined);
 });
 
 test("parseHappyTGArgs uses CliUsageError for invalid CLI surfaces", () => {
@@ -196,6 +226,7 @@ test("executeHappyTG delegates install requests through the CLI wrapper without 
         status: "manual",
         detail: "After pairing, start the daemon with `pnpm dev:daemon`."
       },
+      launch: localLaunchResult(),
       finalization: {
         items: [
           {
@@ -248,6 +279,7 @@ test("executeHappyTG delegates install requests through the CLI wrapper without 
           repoMode: options.repoMode,
           repoDir: options.repoDir,
           backgroundMode: options.backgroundMode,
+          launchMode: options.launchMode,
           postChecks: options.postChecks,
           telegramAllowedUserIds: options.telegramAllowedUserIds
         };
@@ -265,6 +297,7 @@ test("executeHappyTG delegates install requests through the CLI wrapper without 
       repoMode: "current",
       repoDir: path.resolve(tempDir, "HappyTG"),
       backgroundMode: "manual",
+      launchMode: undefined,
       postChecks: ["setup"],
       telegramAllowedUserIds: ["1001"]
     });
@@ -397,6 +430,7 @@ test("renderText returns a compact install summary with structured finalization 
       status: "manual",
       detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
     },
+    launch: localLaunchResult(),
     finalization: {
       items: [
         {
@@ -436,6 +470,7 @@ test("renderText returns a compact install summary with structured finalization 
 
   assert.match(output, /HappyTG install \[WARN\]/);
   assert.match(output, /Result: install flow is complete with warnings\./);
+  assert.match(output, /Launch: Local dev launch mode selected/);
   assert.match(output, /@happytg_bot/);
   assert.match(output, /Requires user:/);
   assert.match(output, /Docker Desktop was skipped/);
@@ -493,6 +528,7 @@ test("renderText keeps warning-only follow-up separate from manual actions in in
       status: "manual",
       detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
     },
+    launch: localLaunchResult(),
     finalization: {
       items: [
         {
@@ -565,6 +601,7 @@ test("renderText explains recoverable installer failures without claiming comple
       status: "manual",
       detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
     },
+    launch: localLaunchResult(),
     postChecks: [],
     steps: [],
     nextSteps: [

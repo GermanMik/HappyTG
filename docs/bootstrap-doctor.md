@@ -6,7 +6,7 @@ Use [Quickstart](./quickstart.md) for the shortest first run, [Installation](./i
 
 | Command | Purpose | When to use it |
 | --- | --- | --- |
-| `pnpm happytg install` | Full one-command onboarding | You want repo sync, Telegram setup, env merge, and optional post-checks in one flow. |
+| `pnpm happytg install` | Full one-command onboarding | You want repo sync, Telegram setup, env merge, launch-mode selection, and optional post-checks in one flow. |
 | `pnpm happytg setup` | Compact guided first start | You want the shortest actionable checklist. |
 | `pnpm happytg doctor` | Readiness inspection | You want the plain-text diagnostic summary. |
 | `pnpm happytg doctor --json` | Full diagnostic payload | You need raw paths, classifications, and detailed stderr. |
@@ -41,6 +41,15 @@ Use [Quickstart](./quickstart.md) for the shortest first run, [Installation](./i
 `pnpm happytg setup` remains the compact onboarding path after install or for an already-synced checkout.
 
 For the local `pnpm dev` path, Docker Compose is a convenience for shared infra, not the only supported shape. If `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` already point at reachable services, `setup` guidance can reuse them instead of assuming local Docker.
+
+`pnpm happytg install` now keeps launch mode explicit:
+
+- `local` preserves the `pnpm dev` workflow and does not start Docker;
+- `docker` validates and starts the packaged Compose stack;
+- `manual` prints exact commands without starting anything;
+- `skip` stops after install plus any selected post-checks.
+
+The Docker launch path never includes `apps/host-daemon`; pairing and host-daemon startup remain host-side follow-up steps.
 
 It checks:
 

@@ -3,6 +3,7 @@ import readline from "node:readline";
 import { automationItemRenderLines, groupAutomationItems, type AutomationItem } from "../finalization.js";
 import type {
   BackgroundMode,
+  InstallLaunchMode,
   InstallOutcome,
   InstallRuntimeErrorDetail,
   InstallStepRecord,
@@ -320,6 +321,22 @@ export function renderBackgroundModeScreen(input: {
 }): string {
   return renderFrame([
     ...header("Background Run Mode", `${input.platformLabel} background daemon preference`),
+    ...renderOptions(input.modes.map((mode) => ({
+      label: mode.label,
+      detail: mode.detail,
+      active: mode.mode === input.activeMode
+    }))),
+    "",
+    keyboardHints()
+  ]);
+}
+
+export function renderLaunchModeScreen(input: {
+  activeMode: InstallLaunchMode;
+  modes: Array<{ mode: InstallLaunchMode; label: string; detail: string }>;
+}): string {
+  return renderFrame([
+    ...header("Launch Mode", "Choose how the control-plane stack should be started after install."),
     ...renderOptions(input.modes.map((mode) => ({
       label: mode.label,
       detail: mode.detail,

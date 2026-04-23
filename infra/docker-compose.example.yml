@@ -93,6 +93,8 @@ services:
       HAPPYTG_API_URL: ${COMPOSE_HAPPYTG_API_URL:-http://api:4000}
     depends_on:
       - api
+    ports:
+      - "${HAPPYTG_BOT_PORT:-4100}:4100"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4100/ready').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 10s

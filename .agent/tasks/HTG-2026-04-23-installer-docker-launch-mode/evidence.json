@@ -1,0 +1,164 @@
+{
+  "taskId": "HTG-2026-04-23-installer-docker-launch-mode",
+  "phase": "fresh verify passed",
+  "artifacts": [
+    "raw/init-analysis.txt",
+    "raw/spec-freeze.txt",
+    "raw/test-unit.txt",
+    "raw/typecheck.txt",
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/test-integration.txt",
+    "raw/root-typecheck.txt",
+    "raw/root-build.txt",
+    "raw/root-lint.txt",
+    "raw/doctor-json.txt",
+    "raw/verify-json.txt",
+    "raw/docker-compose-ports.txt",
+    "raw/docker-compose-config-without-env-file.txt",
+    "raw/docker-compose-up-without-env-file.txt",
+    "raw/docker-compose-ps-without-env-file.txt",
+    "raw/docker-compose-config.txt",
+    "raw/docker-compose-up.txt",
+    "raw/docker-compose-ps.txt",
+    "raw/health-api.txt",
+    "raw/health-bot.txt",
+    "raw/health-miniapp.txt",
+    "raw/docker-compose-down.txt",
+    "raw/fresh-verifier.txt",
+    "raw/task-validate.txt",
+    "spec.md",
+    "evidence.md",
+    "evidence.json",
+    "problems.md",
+    "verdict.json",
+    "task.json"
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "explicit-launch-choice",
+      "status": "satisfied",
+      "evidence": [
+        "packages/bootstrap/src/install/types.ts",
+        "packages/bootstrap/src/install/tui.ts",
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install.test.ts",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "non-interactive-launch-flag",
+      "status": "satisfied",
+      "evidence": [
+        "packages/bootstrap/src/cli.ts",
+        "packages/bootstrap/src/cli.test.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "README.md",
+        "docs/installation.md"
+      ]
+    },
+    {
+      "id": "docker-optional-local-path",
+      "status": "satisfied",
+      "evidence": [
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install/launch.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "packages/bootstrap/src/index.ts",
+        "docs/installation.md",
+        "docs/self-hosting.md"
+      ]
+    },
+    {
+      "id": "host-daemon-outside-compose",
+      "status": "satisfied",
+      "evidence": [
+        "infra/docker-compose.example.yml",
+        "packages/bootstrap/src/install/launch.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "docs/self-hosting.md"
+      ]
+    },
+    {
+      "id": "final-output-separates-compose-and-host-daemon",
+      "status": "satisfied",
+      "evidence": [
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install/launch.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "README.md",
+        "docs/installation.md",
+        "docs/self-hosting.md"
+      ]
+    },
+    {
+      "id": "port-preflight-and-miniapp-semantics",
+      "status": "satisfied",
+      "evidence": [
+        "packages/bootstrap/src/install/index.ts",
+        "packages/bootstrap/src/install.runtime.test.ts",
+        "packages/bootstrap/src/infra-config.test.ts",
+        "infra/docker-compose.example.yml",
+        "raw/docker-compose-config-without-env-file.txt",
+        "raw/docker-compose-config.txt"
+      ]
+    },
+    {
+      "id": "verification-and-fresh-verifier",
+      "status": "satisfied_with_unrelated_environment_warnings",
+      "evidence": [
+        "raw/test-unit.txt",
+        "raw/typecheck.txt",
+        "raw/build.txt",
+        "raw/lint.txt",
+        "raw/test-integration.txt",
+        "raw/root-typecheck.txt",
+        "raw/root-build.txt",
+        "raw/root-lint.txt",
+        "raw/doctor-json.txt",
+        "raw/verify-json.txt",
+        "raw/fresh-verifier.txt",
+        "raw/task-validate.txt",
+        "verdict.json"
+      ]
+    },
+    {
+      "id": "docs-cover-local-docker-manual",
+      "status": "satisfied",
+      "evidence": [
+        "README.md",
+        "docs/installation.md",
+        "docs/self-hosting.md",
+        "docs/bootstrap-doctor.md",
+        "docs/quickstart.md",
+        "docs/troubleshooting.md"
+      ]
+    }
+  ],
+  "classifications": [
+    {
+      "area": "installer-launch-mode",
+      "kind": "missing-first-class-installer-path",
+      "summary": "The installer exposed local setup and shared-infra guidance but had no explicit launch-mode decision for packaged Docker startup."
+    },
+    {
+      "area": "docker-compose-runtime-proof",
+      "kind": "runtime-command-gap",
+      "summary": "Real Compose verification proved that `docker compose -f infra/docker-compose.example.yml ...` did not apply root `.env` values to host-port interpolation; explicit `--env-file .env` was required."
+    },
+    {
+      "area": "finalization-guidance",
+      "kind": "truthfulness-gap",
+      "summary": "Docker startup guidance had to remain explicit that the host daemon stays host-run and is paired/started separately from Compose."
+    }
+  ],
+  "freshVerifier": {
+    "role": "manual-fresh-verify",
+    "status": "passed_with_unrelated_environment_warnings",
+    "residualRisks": [
+      "Builder-machine `doctor` and `verify` still report missing local `.env` / Telegram token plus pre-existing local running services.",
+      "Controlled Docker Compose verification proves the `--env-file .env` fix and the installer's recoverable failure classification, but the sanitized local stack remains unhealthy under dummy verification settings."
+    ]
+  },
+  "generatedAt": "2026-04-23T20:48:07.5967347+03:00"
+}

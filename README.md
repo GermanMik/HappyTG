@@ -100,19 +100,20 @@ flowchart LR
    - detect platform, shell, package manager, and repo mode
    - ask for the Telegram bot token and save it into `.env`
    - resolve or explain Git, Node.js 22+, `pnpm`, Codex CLI, and optional Docker
+   - ask whether to keep the local `pnpm dev` path, start packaged Docker Compose, print commands only, or skip startup
    - run `pnpm install`, merge `.env`, and offer `setup`, `doctor`, and `verify`
    - save the bot username when it can validate the token so later pairing tells you exactly which bot to message
 
-3. Start shared infra. If Redis is already running on `localhost:6379`, reuse it and skip compose `redis`:
+3. For the default local path, start shared infra. If Redis is already running on `localhost:6379`, reuse it and skip compose `redis`:
 
    ```bash
-   docker compose -f infra/docker-compose.example.yml up postgres minio
+   docker compose --env-file .env -f infra/docker-compose.example.yml up postgres minio
    ```
 
    If Redis is not running yet:
 
    ```bash
-   docker compose -f infra/docker-compose.example.yml up postgres redis minio
+   docker compose --env-file .env -f infra/docker-compose.example.yml up postgres redis minio
    ```
 
 4. In a second shell, start the development stack:
@@ -128,6 +129,14 @@ flowchart LR
    # send /pair <CODE> to the configured Telegram bot
    pnpm dev:daemon
    ```
+
+   If you selected installer launch mode `Docker Compose` instead, the installer runs:
+
+   ```bash
+   docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
+   ```
+
+   and still leaves `pnpm daemon:pair` plus the host daemon outside Compose.
 
 6. If a port is already in use, override it explicitly. Example for the Mini App:
 
@@ -155,6 +164,7 @@ pnpm test
 pnpm build
 pnpm dev
 pnpm happytg install
+pnpm happytg install --launch-mode docker
 pnpm happytg doctor
 pnpm happytg verify
 pnpm happytg task status --repo . --task HTG-0001

@@ -1,0 +1,141 @@
+ Image infra-miniapp Building 
+ Image infra-bot Building 
+ Image infra-worker Building 
+ Image infra-api Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 2.29kB 0.0s done
+#1 DONE 0.0s
+
+#2 [api internal] load build definition from Dockerfile.app
+#2 transferring dockerfile: 445B done
+#2 DONE 0.0s
+
+#3 [api internal] load metadata for docker.io/library/node:22-bookworm-slim
+#3 DONE 2.6s
+
+#4 [worker internal] load .dockerignore
+#4 transferring context: 164B done
+#4 DONE 0.0s
+
+#5 [worker 1/7] FROM docker.io/library/node:22-bookworm-slim@sha256:d415caac2f1f77b98caaf9415c5f807e14bc8d7bdea62561ea2fef4fbd08a73c
+#5 resolve docker.io/library/node:22-bookworm-slim@sha256:d415caac2f1f77b98caaf9415c5f807e14bc8d7bdea62561ea2fef4fbd08a73c 0.0s done
+#5 DONE 0.1s
+
+#6 [bot internal] load build context
+#6 transferring context: 38.81kB 0.0s done
+#6 DONE 0.1s
+
+#7 [worker 7/7] RUN pnpm install --frozen-lockfile
+#7 CACHED
+
+#8 [bot 7/7] RUN pnpm install --frozen-lockfile
+#8 CACHED
+
+#9 [api 5/7] COPY apps ./apps
+#9 CACHED
+
+#10 [api 3/7] RUN corepack enable
+#10 CACHED
+
+#11 [api 4/7] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+#11 CACHED
+
+#12 [api 6/7] COPY packages ./packages
+#12 CACHED
+
+#13 [api 2/7] WORKDIR /app
+#13 CACHED
+
+#14 [api 7/7] RUN pnpm install --frozen-lockfile
+#14 CACHED
+
+#15 [miniapp 7/7] RUN pnpm install --frozen-lockfile
+#15 CACHED
+
+#16 [bot] exporting to image
+#16 exporting layers done
+#16 exporting manifest sha256:2dfe620b61cb8bec945df000670d56aabe497c37132b991136ecfec7dd19e7e7 done
+#16 exporting config sha256:c8b77789f43f95ffa8cea1582ceb41e6c87fe2784cb493fed9bc7dd38f06f875
+#16 exporting config sha256:c8b77789f43f95ffa8cea1582ceb41e6c87fe2784cb493fed9bc7dd38f06f875 0.0s done
+#16 exporting attestation manifest sha256:d2d91db411bd7b69fcb45104ad1a4df7b6d47b70868187e9619e7f5c9f61f14c
+#16 exporting attestation manifest sha256:d2d91db411bd7b69fcb45104ad1a4df7b6d47b70868187e9619e7f5c9f61f14c 0.3s done
+#16 exporting manifest list sha256:ebab7055e2f44a1ea91aa5ce126f00ff212b80b458430289504ef2454bd3f243
+#16 exporting manifest list sha256:ebab7055e2f44a1ea91aa5ce126f00ff212b80b458430289504ef2454bd3f243 0.1s done
+#16 naming to docker.io/library/infra-bot:latest done
+#16 unpacking to docker.io/library/infra-bot:latest 0.0s done
+#16 DONE 0.6s
+
+#17 [miniapp] exporting to image
+#17 exporting layers done
+#17 exporting manifest sha256:93017b884075aca46038079d73b8c0209d7bef188f7636d99639c5ddb162a40d done
+#17 exporting config sha256:c048631208d90c5ecedae9cff27e9e78705031127a35dba8a787569a2e8d9f98 done
+#17 exporting attestation manifest sha256:fe1d369581f8200a6ca52e1dd3b988e8aaebef4e7e6e83e09123cf0539401d1c 0.2s done
+#17 exporting manifest list sha256:e77c7c2140c9b0cc8029544633431953d06c587415cf3e40e2b48b5f5866ee1a 0.1s done
+#17 naming to docker.io/library/infra-miniapp:latest 0.0s done
+#17 unpacking to docker.io/library/infra-miniapp:latest 0.0s done
+#17 DONE 0.6s
+
+#18 [api] exporting to image
+#18 exporting layers done
+#18 exporting manifest sha256:c551ccade8c39bb0ceed59891f39014416b607b81ba75908f4cead1bb7bad417 done
+#18 exporting config sha256:291a5ff5dffc81bb41bb256ac489778fd391aab67787b08d5383de0879ea19f3 done
+#18 exporting attestation manifest sha256:c1cd660b9db0c1dde30a0e15c4b6c281c73f19b05782bd7cf917319c5e428690 0.2s done
+#18 exporting manifest list sha256:e2de61bc31c39720549a5b9f6548d12517ba370c92d8a628793b0222960d5ef6 0.1s done
+#18 naming to docker.io/library/infra-api:latest 0.0s done
+#18 unpacking to docker.io/library/infra-api:latest 0.0s done
+#18 DONE 0.6s
+
+#19 [worker] exporting to image
+#19 exporting layers 0.0s done
+#19 exporting manifest sha256:866556d38fc0013953c2c5b1e9c71972207981fe3144c93f9a3e81624abe4695 done
+#19 exporting config sha256:5474c1435abf831cada36097e68f33c77c9329b2b17180fd9c9aae423b0d85fe 0.0s done
+#19 exporting attestation manifest sha256:1d325a08dda89893c8ce33caba338a9163592c02e1dc6fa1df6679a21305e947 0.3s done
+#19 exporting manifest list sha256:0a304cea40ae566fd55db57fd42e040d48a8cf82858c21f09dbddc9ea212800e 0.1s done
+#19 naming to docker.io/library/infra-worker:latest 0.0s done
+#19 unpacking to docker.io/library/infra-worker:latest 0.0s done
+#19 DONE 0.6s
+
+#20 [miniapp] resolving provenance for metadata file
+#20 ...
+
+#21 [worker] resolving provenance for metadata file
+#21 DONE 0.1s
+
+#20 [miniapp] resolving provenance for metadata file
+#20 DONE 0.1s
+
+#22 [api] resolving provenance for metadata file
+#22 DONE 0.1s
+
+#23 [bot] resolving provenance for metadata file
+#23 DONE 0.0s
+ Image infra-miniapp Built 
+ Image infra-worker Built 
+ Image infra-api Built 
+ Image infra-bot Built 
+ Network infra_default Creating 
+ Network infra_default Created 
+ Container infra-postgres-1 Creating 
+ Container infra-minio-1 Creating 
+ Container infra-redis-1 Creating 
+ Container infra-minio-1 Created 
+ Container infra-redis-1 Created 
+ Container infra-postgres-1 Created 
+ Container infra-api-1 Creating 
+ Container infra-api-1 Created 
+ Container infra-miniapp-1 Creating 
+ Container infra-bot-1 Creating 
+ Container infra-prometheus-1 Creating 
+ Container infra-worker-1 Creating 
+ Container infra-prometheus-1 Created 
+ Container infra-grafana-1 Creating 
+ Container infra-bot-1 Created 
+ Container infra-miniapp-1 Created 
+ Container infra-caddy-1 Creating 
+ Container infra-worker-1 Created 
+ Container infra-grafana-1 Created 
+ Container infra-caddy-1 Created 
+ Container infra-redis-1 Starting 
+ Container infra-postgres-1 Starting 
+ Container infra-minio-1 Starting 
+Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint infra-minio-1 (42120d37c6edd317425d111c7e9d03afb2bb16587ccb43be7a8a2a724842c80e): Bind for 0.0.0.0:9000 failed: port is already allocated

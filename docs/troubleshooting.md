@@ -23,7 +23,7 @@ Use [Quickstart](./quickstart.md) for the standard first-run flow, [Bootstrap Do
 ```powershell
 $env:HAPPYTG_MINIAPP_PORT=3002; pnpm dev:miniapp
 $env:HAPPYTG_API_PORT=4001; pnpm dev:api
-$env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.example.yml up redis
+$env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose --env-file .env -f infra/docker-compose.example.yml up redis
 ```
 
 Interactive `pnpm happytg install` now surfaces the same port classification before later startup guidance and lets you pick one of the nearest free ports, enter a custom port, or abort instead of silently rebinding.

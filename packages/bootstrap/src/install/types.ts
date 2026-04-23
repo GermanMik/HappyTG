@@ -3,6 +3,8 @@ import type { AutomationItem } from "../finalization.js";
 export type InstallRepoMode = "clone" | "update" | "current";
 export type DirtyWorktreeStrategy = "cancel" | "stash" | "keep";
 export type BackgroundMode = "launchagent" | "scheduled-task" | "startup" | "systemd-user" | "manual" | "skip";
+export type InstallLaunchMode = "local" | "docker" | "manual" | "skip";
+export type InstallLaunchStatus = "not-started" | "started" | "skipped" | "failed";
 export type PostInstallCheck = "setup" | "doctor" | "verify";
 export type InstallStatus = "pass" | "warn" | "fail";
 export type InstallOutcome = "success" | "success-with-warnings" | "recoverable-failure" | "fatal-failure";
@@ -44,6 +46,7 @@ export interface InstallCommandOptions {
   telegramAllowedUserIds: string[];
   telegramHomeChannel?: string;
   backgroundMode?: BackgroundMode;
+  launchMode?: InstallLaunchMode;
   postChecks: PostInstallCheck[];
 }
 
@@ -177,6 +180,36 @@ export interface BackgroundSetupResult {
   launcherPath?: string;
 }
 
+export interface InstallLaunchCommandResult {
+  id: string;
+  command: string;
+  status: "passed" | "failed" | "skipped";
+  detail: string;
+  exitCode?: number;
+  stdout?: string;
+  stderr?: string;
+}
+
+export interface InstallLaunchHealthCheck {
+  id: string;
+  label: string;
+  status: InstallStatus;
+  detail: string;
+  url?: string;
+}
+
+export interface InstallLaunchResult {
+  mode: InstallLaunchMode;
+  status: InstallLaunchStatus;
+  detail: string;
+  composeFile?: string;
+  command?: string;
+  commands: InstallLaunchCommandResult[];
+  health: InstallLaunchHealthCheck[];
+  warnings: string[];
+  nextSteps: string[];
+}
+
 export interface InstallStepRecord {
   id: string;
   label: string;
@@ -212,6 +245,7 @@ export interface InstallDraftState {
   };
   telegram?: TelegramSetup;
   backgroundMode?: BackgroundMode;
+  launchMode?: InstallLaunchMode;
   postChecks?: PostInstallCheck[];
   updatedAt: string;
 }
@@ -241,6 +275,7 @@ export interface InstallResult {
     lookup?: TelegramLookupDiagnostic;
   };
   background: BackgroundSetupResult;
+  launch: InstallLaunchResult;
   finalization?: {
     items: AutomationItem[];
   };

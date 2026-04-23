@@ -24,6 +24,7 @@ import { runCommand, runShellCommand, CommandExecutionError } from "./commands.j
 import { resolveInstallerRepoSources } from "./config.js";
 import { writeMergedEnvFile } from "./env.js";
 import { createInstallRuntimeError, isRetryableCommandOutput, toInstallRuntimeErrorDetail } from "./errors.js";
+import { createStaticLaunchResult, launchAutomationItems, launchStepStatus, runDockerLaunch } from "./launch.js";
 import { detectInstallerEnvironment } from "./platform.js";
 import {
   defaultDirtyWorktreeStrategy,
@@ -41,6 +42,7 @@ import {
   renderBackgroundModeScreen,
   renderFinalScreen,
   renderDirtyWorktreeScreen,
+  renderLaunchModeScreen,
   renderPostCheckScreen,
   renderProgress,
   renderRepoModeScreen,
@@ -54,6 +56,8 @@ import type {
   BackgroundMode,
   InstallCommandOptions,
   InstallDraftState,
+  InstallLaunchMode,
+  InstallLaunchResult,
   InstallRepoMode,
   InstallResult,
   InstallRuntimeErrorDetail,
@@ -108,6 +112,7 @@ interface InstallRuntimeDependencies {
   fetchTelegramBotIdentity: typeof fetchTelegramBotIdentity;
   readInstallDraft: typeof readInstallDraft;
   resolveExecutable: typeof resolveExecutable;
+  runDockerLaunch: typeof runDockerLaunch;
   runCommand: typeof runCommand;
   runShellCommand: typeof runShellCommand;
   syncRepository: typeof syncRepository;
@@ -834,6 +839,31 @@ function backgroundOptionsForPlatform(platform: NodeJS.Platform): Array<{ mode: 
   ];
 }
 
+function launchOptionsForInstall(): Array<{ mode: InstallLaunchMode; label: string; detail: string }> {
+  return [
+    {
+      mode: "local",
+      label: "Local dev",
+      detail: "Do not start containers; final guidance uses `pnpm dev`, `pnpm daemon:pair`, and `pnpm dev:daemon`."
+    },
+    {
+      mode: "docker",
+      label: "Docker Compose",
+      detail: "Validate and start the packaged control-plane stack with `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d`."
+    },
+    {
+      mode: "manual",
+      label: "Manual",
+      detail: "Do not start anything automatically; print exact local and Docker startup commands."
+    },
+    {
+      mode: "skip",
+      label: "Skip",
+      detail: "No startup action beyond install and selected post-checks."
+    }
+  ];
+}
+
 function createStep(id: string, label: string, detail: string): InstallStepRecord {
   return {
     id,
@@ -1267,6 +1297,7 @@ export function createInstallFailureResult(input: {
       homeChannel: input.options.telegramHomeChannel
     },
     background: createFallbackBackground(backgroundMode),
+    launch: createStaticLaunchResult(input.options.launchMode ?? "local"),
     postChecks: [],
     steps: [],
     nextSteps: [],
@@ -1275,6 +1306,7 @@ export function createInstallFailureResult(input: {
     reportJson: {
       branch: input.options.branch,
       error: detail,
+      launch: createStaticLaunchResult(input.options.launchMode ?? "local"),
       outcome,
       repoUrl: detail.repoUrl ?? input.options.repoUrl ?? "unresolved"
     }
@@ -1303,6 +1335,7 @@ export async function runHappyTGInstall(
     fetchTelegramBotIdentity,
     readInstallDraft,
     resolveExecutable,
+    runDockerLaunch,
     runCommand,
     runShellCommand,
     syncRepository,
@@ -1344,6 +1377,7 @@ export async function runHappyTGInstall(
     repo?: InstallDraftState["repo"];
     telegram?: TelegramSetup;
     backgroundMode?: BackgroundMode;
+    launchMode?: InstallLaunchMode;
     postChecks?: PostInstallCheck[];
   }): Promise<void> => {
     draft = await deps.writeInstallDraft({
@@ -1361,6 +1395,7 @@ export async function runHappyTGInstall(
           }
           : draft?.telegram,
         backgroundMode: patch.backgroundMode ?? draft?.backgroundMode,
+        launchMode: patch.launchMode ?? draft?.launchMode,
         postChecks: patch.postChecks ?? draft?.postChecks,
         updatedAt: nowIso()
       },
@@ -1441,6 +1476,9 @@ export async function runHappyTGInstall(
   const backgroundModes = backgroundOptionsForPlatform(platform.platform.platform);
   const backgroundDefault = options.backgroundMode ?? draft?.backgroundMode ?? backgroundModes[0]!.mode;
   let backgroundMode = backgroundDefault;
+  const launchModes = launchOptionsForInstall();
+  const launchDefault = options.launchMode ?? draft?.launchMode ?? "local";
+  let launchMode = launchDefault;
   const requestedPostChecks = samePostChecks(options.postChecks, DEFAULT_POST_CHECKS) && draft?.postChecks
     ? draft.postChecks
     : options.postChecks;
@@ -1453,6 +1491,7 @@ export async function runHappyTGInstall(
   let botIdentity: InstallResult["telegram"]["bot"] | undefined;
   let telegramLookup: InstallResult["telegram"]["lookup"] | undefined;
   let background = createFallbackBackground(backgroundMode);
+  let launch: InstallLaunchResult = createStaticLaunchResult(launchMode);
   let repoEnv: NodeJS.ProcessEnv | undefined;
   let preflightSetupReport: BootstrapReport | undefined;
   let portPreflightDetail = "Planned port preflight did not run.";
@@ -1522,6 +1561,7 @@ export async function runHappyTGInstall(
         })
       },
       background,
+      launch,
       postChecks: [],
       steps,
       nextSteps: [],
@@ -1532,6 +1572,7 @@ export async function runHappyTGInstall(
         error: detail,
         fallbackSource: repoSources.fallback?.url,
         fallbackUsed: repoSyncResult?.fallbackUsed ?? detail.fallbackUsed ?? false,
+        launch,
         outcome,
         platform: platform.platform,
         repoSource: repoSyncResult?.repoSource ?? detail.repoSource ?? draft?.repo?.source ?? "local",
@@ -1614,6 +1655,19 @@ export async function runHappyTGInstall(
       })
       : backgroundDefault;
     background = createFallbackBackground(backgroundMode);
+    launchMode = interactive
+      ? await promptSelect({
+        stdin,
+        stdout,
+        items: launchModes.map((mode) => mode.mode),
+        initial: launchDefault,
+        render: (activeMode) => renderLaunchModeScreen({
+          activeMode,
+          modes: launchModes
+        })
+      })
+      : launchDefault;
+    launch = createStaticLaunchResult(launchMode);
     postChecks = interactive
       ? await promptMultiSelect({
         stdin,
@@ -1637,6 +1691,7 @@ export async function runHappyTGInstall(
       },
       telegram: telegramSetup,
       backgroundMode,
+      launchMode,
       postChecks
     });
     steps = [
@@ -1647,6 +1702,7 @@ export async function runHappyTGInstall(
       createStep("port-preflight", "Resolve planned ports", "Check planned HappyTG ports before later startup guidance."),
       createStep("telegram-bot", "Connect Telegram bot", "Validate the token and capture bot identity for later /pair guidance."),
       createStep("background", "Configure background run mode", backgroundModes.find((item) => item.mode === backgroundMode)?.detail ?? backgroundMode),
+      createStep("launch", "Launch control-plane stack", launchModes.find((item) => item.mode === launchMode)?.detail ?? launchMode),
       ...postChecks.map((check) => createStep(`check-${check}`, `Run ${check}`, `Execute HappyTG ${check} in the selected checkout.`))
     ];
     if (interactive) {
@@ -1719,6 +1775,17 @@ export async function runHappyTGInstall(
           ...steps.find((step) => step.id === stepId)!,
           status: "passed",
           detail: dependency.version ? `Available (${dependency.version}).` : "Available."
+        });
+        continue;
+      }
+
+      if (dependency.id === "docker") {
+        updateStep({
+          ...steps.find((step) => step.id === stepId)!,
+          status: launchMode === "docker" ? "warn" : "skipped",
+          detail: launchMode === "docker"
+            ? "Docker launch was selected; Docker will be verified during the launch step with actionable recovery guidance."
+            : "Optional for Docker launch; not needed for the selected launch mode."
         });
         continue;
       }
@@ -1973,6 +2040,36 @@ export async function runHappyTGInstall(
     });
 
     repoEnv ??= await buildRepoEnv(repoSyncResult.path, installEnv);
+    updateStep({
+      ...steps.find((step) => step.id === "launch")!,
+      status: "running",
+      detail: launchModes.find((item) => item.mode === launchMode)?.detail ?? launchMode
+    });
+    launch = launchMode === "docker"
+      ? await deps.runDockerLaunch({
+        repoPath: repoSyncResult.path,
+        repoEnv,
+        installEnv,
+        platform: platform.platform.platform,
+        fetchImpl: input?.fetchImpl,
+        resolveExecutableImpl: deps.resolveExecutable,
+        runCommandImpl: deps.runCommand
+      })
+      : createStaticLaunchResult(launchMode);
+    pushUniqueLines(warnings, launch.warnings);
+    updateStep({
+      ...steps.find((step) => step.id === "launch")!,
+      status: launchStepStatus(launch),
+      detail: [
+        launch.detail,
+        launch.command ? `Command: \`${launch.command}\`.` : "",
+        ...launch.health.map((item) => `${item.label}: ${item.detail}`)
+      ].filter(Boolean).join("\n")
+    });
+    if (launch.mode === "docker") {
+      preflightSetupReport = undefined;
+    }
+
     const postCheckReports: InstallResult["postChecks"] = [];
     const postCheckWarnings: string[] = [];
     const postCheckAutomationItems: AutomationItem[] = [];
@@ -2053,6 +2150,7 @@ export async function runHappyTGInstall(
     pushAutomationItems(finalizationItems, pnpmInstallAutomationItems);
     pushAutomationItems(finalizationItems, portPreflightAutomationItems(appliedPortOverrides));
     pushAutomationItems(finalizationItems, preflightConflictItems);
+    pushAutomationItems(finalizationItems, launchAutomationItems(launch));
     pushAutomationItems(finalizationItems, await buildInstallFinalizationItems({
       background,
       fetchImpl: input?.fetchImpl,
@@ -2066,6 +2164,9 @@ export async function runHappyTGInstall(
       runCommandImpl: deps.runCommand,
       telegramLookup
     }));
+    if (finalizationItems.some((item) => item.id === "running-stack-reuse")) {
+      removeAutomationItems(finalizationItems, "start-repo-services");
+    }
     const finalWarnings = dedupeWarningsAgainstAutomationItems(warnings, finalizationItems);
     const finalNextSteps = legacyNextStepsFromAutomation(finalizationItems);
     const result: InstallResult = {
@@ -2093,6 +2194,7 @@ export async function runHappyTGInstall(
         lookup: telegramLookup
       },
       background,
+      launch,
       finalization: {
         items: finalizationItems
       },
@@ -2109,6 +2211,7 @@ export async function runHappyTGInstall(
         fallbackSource: repoSources.fallback?.url,
         fallbackUsed: repoSyncResult.fallbackUsed,
         outcome,
+        launch,
         finalizationItems,
         pnpmInstall: pnpmInstallAssessment
           ? {
@@ -2152,6 +2255,7 @@ export async function runHappyTGInstall(
       },
       telegram: telegramSetup,
       backgroundMode,
+      launchMode,
       postChecks
     });
 
