@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-04-23-release-043-docker-launch-and-telegram",
+  "verdict": "passed",
+  "reason": "Release metadata for 0.4.3 is aligned, release notes are present, and fresh release-ready verification passed."
+}

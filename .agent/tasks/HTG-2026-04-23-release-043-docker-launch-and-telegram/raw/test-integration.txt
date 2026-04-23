@@ -1,0 +1,2 @@
+No standalone release-only integration command exists for this repository.
+The release verification uses the repo-wide `pnpm test` run captured in `raw/test-unit.txt`.

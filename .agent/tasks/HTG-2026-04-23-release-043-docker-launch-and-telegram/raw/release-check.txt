@@ -1,0 +1,6 @@
+
+> happytg@0.4.3 release:check C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+> node scripts/release/validate-release.mjs "--version" "0.4.3"
+
+Release validation passed for 0.4.3.
+Checked 16 package versions, CHANGELOG.md, and docs/releases/0.4.3.md.

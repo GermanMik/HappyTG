@@ -1,0 +1,4 @@
+d2edcee feat: add installer docker launch mode (#30)
+2189b59 fix: speed up Telegram polling fallback on Windows
+ea3a2a7 fix: enable Telegram Mini App menu launch
+406a6f1 fix: clarify local Mini App launch diagnostics
