@@ -1,0 +1,8 @@
+Live public browser console after restarting the fixed Mini App on port 3007
+
+Observed Playwright console:
+- [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://happytg.gerta.crazedns.ru/api/v1/miniapp/auth/session:0
+
+Interpretation:
+- The old localhost/CORS browser failure is gone.
+- The remaining console error is the truthful `401` auth rejection caused by missing Telegram `initData` in the desktop-browser probe.

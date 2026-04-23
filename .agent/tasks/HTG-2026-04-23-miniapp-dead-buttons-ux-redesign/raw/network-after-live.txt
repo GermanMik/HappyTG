@@ -1,0 +1,14 @@
+Live public browser probe after restarting the fixed Mini App on port 3007
+
+Observed Playwright network:
+- [POST] https://happytg.gerta.crazedns.ru/api/v1/miniapp/auth/session => [401]
+
+Observed eval result:
+- status:401|url:https://happytg.gerta.crazedns.ru/api/v1/miniapp/auth/session|body:{
+  "error": "Mini App auth failed",
+  "detail": "Mini App initData invalid: missing_hash"
+}
+
+Interpretation:
+- The browser-side auth/session POST now targets the public HTTPS origin instead of localhost.
+- Outside Telegram the endpoint correctly rejects empty `initData` with `401`, which proves the route is reachable and the remaining failure is authentication precondition, not wrong-origin routing.

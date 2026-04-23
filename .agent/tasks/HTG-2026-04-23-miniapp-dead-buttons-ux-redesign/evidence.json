@@ -1,0 +1,144 @@
+{
+  "taskId": "HTG-2026-04-23-miniapp-dead-buttons-ux-redesign",
+  "phase": "fresh verify passed",
+  "artifacts": [
+    "raw/init-analysis.txt",
+    "raw/browser-api-base-before.txt",
+    "raw/network-before.txt",
+    "raw/console-before.txt",
+    "raw/browser-api-base-after.txt",
+    "raw/network-after.txt",
+    "raw/console-after.txt",
+    "raw/browser-api-base-after-live.txt",
+    "raw/network-after-live.txt",
+    "raw/console-after-live.txt",
+    "raw/before-screenshots.txt",
+    "raw/after-screenshots.txt",
+    "raw/ux-audit-notes.txt",
+    "raw/cjm-review.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/typecheck.txt",
+    "raw/build.txt",
+    "raw/lint.txt",
+    "raw/repo-typecheck.txt",
+    "raw/repo-lint.txt",
+    "raw/repo-test.txt",
+    "raw/repo-build.txt",
+    "raw/doctor-env.txt",
+    "raw/verify-env.txt",
+    "raw/release-check.txt",
+    "raw/fresh-verifier.txt",
+    "raw/task-validate.txt",
+    "spec.md",
+    "evidence.md",
+    "evidence.json",
+    "problems.md",
+    "verdict.json",
+    "task.json",
+    "state.json"
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "root-cause-proven",
+      "status": "satisfied",
+      "evidence": [
+        "raw/init-analysis.txt",
+        "raw/browser-api-base-before.txt",
+        "raw/network-before.txt",
+        "raw/console-before.txt"
+      ]
+    },
+    {
+      "id": "public-miniapp-restored",
+      "status": "satisfied",
+      "evidence": [
+        "apps/miniapp/src/index.ts",
+        "raw/browser-api-base-after-live.txt",
+        "raw/network-after-live.txt",
+        "raw/console-after-live.txt",
+        "raw/live-public-after.png",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "localhost-dev-preserved",
+      "status": "satisfied",
+      "evidence": [
+        "apps/miniapp/src/index.ts",
+        "apps/miniapp/src/index.test.ts",
+        "docs/configuration.md",
+        "docs/self-hosting.md",
+        "raw/test-unit.txt"
+      ]
+    },
+    {
+      "id": "request-aware-derivation-covered",
+      "status": "satisfied",
+      "evidence": [
+        "apps/miniapp/src/index.ts",
+        "apps/miniapp/src/index.test.ts",
+        "raw/test-unit.txt",
+        "raw/typecheck.txt"
+      ]
+    },
+    {
+      "id": "visible-feedback",
+      "status": "satisfied",
+      "evidence": [
+        "apps/miniapp/src/index.ts",
+        "apps/miniapp/src/index.test.ts",
+        "raw/after-screenshots.txt",
+        "raw/live-public-after.png"
+      ]
+    },
+    {
+      "id": "bounded-mobile-ux-redesign",
+      "status": "satisfied",
+      "evidence": [
+        "raw/ux-audit-notes.txt",
+        "raw/cjm-review.txt",
+        "docs/architecture/miniapp-rich-ux.md",
+        "apps/miniapp/src/index.ts"
+      ]
+    },
+    {
+      "id": "verification-and-release",
+      "status": "satisfied_with_unrelated_environment_warnings",
+      "evidence": [
+        "raw/release-check.txt",
+        "raw/doctor-env.txt",
+        "raw/verify-env.txt",
+        "raw/fresh-verifier.txt",
+        "raw/task-validate.txt",
+        "verdict.json"
+      ]
+    }
+  ],
+  "classifications": [
+    {
+      "area": "miniapp-browser-routing",
+      "kind": "wrong-public-private-origin-derivation",
+      "summary": "The public HTTPS Mini App rendered a browser API base that pointed at localhost HTTP, causing auth bootstrap and primary browser actions to target the wrong origin."
+    },
+    {
+      "area": "miniapp-feedback",
+      "kind": "silent-auth-and-action-failure",
+      "summary": "Auth bootstrap and primary actions swallowed browser failures, so the UI looked dead instead of recoverable."
+    },
+    {
+      "area": "miniapp-mobile-cjm",
+      "kind": "low-signal-pending-shell",
+      "summary": "The auth-pending shell hid the user intent, provided no next action, and made the Telegram WebView feel frozen."
+    }
+  ],
+  "freshVerifier": {
+    "role": "external-read-only-task-verifier",
+    "status": "passed_with_unrelated_environment_warnings",
+    "residualRisks": [
+      "Request-aware same-origin rendering depends on correct forwarded proxy headers (`X-Forwarded-Host`, `X-Forwarded-Proto`, `X-Forwarded-Prefix`).",
+      "A real Telegram WebView smoke after merge/deploy is still advisable even though the live public browser probe and route contract now pass."
+    ]
+  },
+  "generatedAt": "2026-04-23T23:57:28.5656846+03:00"
+}

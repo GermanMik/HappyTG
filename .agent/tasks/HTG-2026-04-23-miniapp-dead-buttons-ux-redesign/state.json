@@ -1,0 +1,63 @@
+{
+  "task_id": "HTG-2026-04-23-miniapp-dead-buttons-ux-redesign",
+  "session_id": "manual-miniapp-dead-buttons-ux-redesign",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "freeze",
+      "entered_at": "2026-04-23T20:10:00.000+03:00",
+      "event": "TaskSpecFrozen"
+    },
+    {
+      "phase": "build",
+      "entered_at": "2026-04-23T20:16:00.000+03:00",
+      "event": "BuilderStarted"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-04-23T23:57:28.5656846+03:00",
+      "event": "EvidenceRecorded"
+    },
+    {
+      "phase": "fresh verify",
+      "entered_at": "2026-04-23T23:57:28.5656846+03:00",
+      "event": "VerifierCompleted"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-04-23T23:57:28.5656846+03:00",
+      "event": "TaskCompleted"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\spec.md",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\evidence.md",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\evidence.json",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\verdict.json",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\problems.md",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\task.json",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\state.json",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\build.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\test-unit.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\test-integration.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\lint.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\typecheck.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\repo-typecheck.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\repo-lint.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\repo-test.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\repo-build.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\doctor-env.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\verify-env.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\release-check.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\task-validate.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\fresh-verifier.txt",
+    "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\raw\\live-public-after.png"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-04-23T20:10:00.000+03:00",
+    "updated_at": "2026-04-23T23:57:28.5656846+03:00"
+  }
+}

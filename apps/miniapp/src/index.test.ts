@@ -7,11 +7,36 @@ import {
   formatMiniAppPortConflictMessage,
   formatMiniAppPortConflictMessageDetailed,
   formatMiniAppPortReuseMessage,
+  resolveBrowserApiBaseUrlForRequest,
   startMiniAppServer
 } from "./index.js";
 
 async function closeServer(server: ReturnType<typeof createHttpServer>): Promise<void> {
   await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+}
+
+async function withEnv<T>(overrides: Record<string, string | undefined>, run: () => Promise<T>): Promise<T> {
+  const previous = new Map<string, string | undefined>();
+  for (const [key, value] of Object.entries(overrides)) {
+    previous.set(key, process.env[key]);
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  try {
+    return await run();
+  } finally {
+    for (const [key, value] of previous.entries()) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
 }
 
 test("mini app ready endpoint returns 503 when api health fails", async () => {
@@ -185,6 +210,103 @@ test("mini app links honor the /miniapp reverse-proxy base path", async () => {
   }
 });
 
+test("public reverse-proxied mini app uses same-origin browser API when local env points at localhost", async () => {
+  await withEnv({
+    HAPPYTG_BROWSER_API_URL: "",
+    HAPPYTG_PUBLIC_URL: "http://localhost:4000",
+    HAPPYTG_API_URL: "http://localhost:4000"
+  }, async () => {
+    const server = createMiniAppServer({
+      async fetchJson(pathname) {
+        if (pathname === "/health") {
+          return { ok: true } as never;
+        }
+        if (pathname === "/api/v1/miniapp/dashboard?userId=usr_1") {
+          return {
+            stats: {
+              activeSessions: 0,
+              pendingApprovals: 0,
+              blockedSessions: 0,
+              verifyProblems: 0
+            },
+            attention: [],
+            recentSessions: [],
+            recentReports: []
+          } as never;
+        }
+        throw new Error(`Unexpected path ${pathname}`);
+      }
+    });
+
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Mini App server did not bind to a TCP port");
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${address.port}/?userId=usr_1`, {
+        headers: {
+          "x-forwarded-prefix": "/miniapp",
+          "x-forwarded-proto": "https",
+          "x-forwarded-host": "happytg.gerta.crazedns.ru"
+        }
+      });
+      const html = await response.text();
+
+      assert.equal(response.status, 200);
+      assert.match(html, /window\.HAPPYTgApiBase = "";/);
+      assert.match(html, /aria-current="page">Главная/);
+    } finally {
+      await closeServer(server);
+    }
+  });
+});
+
+test("local direct mini app keeps the explicit local API origin without reverse-proxy headers", async () => {
+  assert.equal(resolveBrowserApiBaseUrlForRequest({}, {
+    HAPPYTG_BROWSER_API_URL: "",
+    HAPPYTG_PUBLIC_URL: "http://localhost:4000",
+    HAPPYTG_API_URL: "http://localhost:4000"
+  }), "http://localhost:4000");
+});
+
+test("auth-pending shell exposes retry-safe auth feedback controls", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/`, {
+      headers: {
+        "x-forwarded-prefix": "/miniapp",
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "happytg.gerta.crazedns.ru"
+      }
+    });
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /data-auth-status/);
+    assert.match(html, /Повторить подключение/);
+    assert.match(html, /data-auth-step="telegram"/);
+    assert.match(html, /window\.HAPPYTgNeedsAuth = true/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("mini app forwards browser session cookie as bearer auth", async () => {
   const calls: Array<{ pathname: string; authorization?: string }> = [];
   const server = createMiniAppServer({
@@ -277,7 +399,7 @@ test("task page renders scoped canonical artifacts", async () => {
     const html = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(html, /Task HTG-0001/);
+    assert.match(html, /Задача HTG-0001/);
     assert.match(html, /Proof Progress/);
     assert.match(html, /Fresh Verify/);
     assert.match(html, /missing raw\/test-unit.txt/);
@@ -357,6 +479,8 @@ test("projects page renders workspaces and new task creates a Codex session", as
     assert.match(projectsHtml, /HappyTG/);
     assert.match(projectsHtml, /C:\/Develop\/Projects\/HappyTG/);
     assert.match(projectsHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1"/);
+    assert.match(projectsHtml, /Создать Codex-сессию/);
+    assert.match(projectsHtml, /data-task-feedback/);
 
     const taskResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
       method: "POST",
@@ -515,6 +639,7 @@ test("approval page renders real authenticated action buttons", async () => {
     assert.match(html, /data-approval-id="apr_1"/);
     assert.match(html, /"authorization": "Bearer " \+ sessionToken/);
     assert.match(html, /\/api\/v1\/miniapp\/approvals\//);
+    assert.match(html, /data-action-feedback/);
     assert.doesNotMatch(html, /href="#"/);
   } finally {
     await closeServer(server);

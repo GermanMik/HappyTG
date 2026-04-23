@@ -69,6 +69,8 @@ HAPPYTG_DEV_CORS_ORIGINS=http://localhost:3007,http://127.0.0.1:3007
 HAPPYTG_MINIAPP_UPSTREAM=127.0.0.1:3007
 ```
 
+Leave `HAPPYTG_BROWSER_API_URL` empty for the public Telegram Mini App path. When Caddy serves `/miniapp` with public HTTPS forwarded headers, HappyTG now renders browser API calls as same-origin `/api/...`; direct localhost development without those headers still falls back to the configured local API origin.
+
 ## Control Plane Bring-Up
 
 1. Copy `.env.example` to `.env` on the control-plane host.

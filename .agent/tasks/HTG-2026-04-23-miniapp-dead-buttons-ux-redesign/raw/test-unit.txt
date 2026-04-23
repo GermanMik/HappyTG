@@ -1,0 +1,28 @@
+$ pnpm --filter @happytg/miniapp test
+
+> @happytg/miniapp@0.4.4 test C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\apps\miniapp
+> tsx --test src/*.test.ts
+
+✔ mini app ready endpoint returns 503 when api health fails (31.9851ms)
+✔ overview page renders hosts, sessions, approvals, and tasks (12.6521ms)
+✔ mini app links honor the /miniapp reverse-proxy base path (9.9985ms)
+✔ public reverse-proxied mini app uses same-origin browser API when local env points at localhost (11.8559ms)
+✔ local direct mini app keeps the explicit local API origin without reverse-proxy headers (0.2821ms)
+✔ auth-pending shell exposes retry-safe auth feedback controls (5.9802ms)
+✔ mini app forwards browser session cookie as bearer auth (5.457ms)
+✔ task page renders scoped canonical artifacts (7.2096ms)
+✔ projects page renders workspaces and new task creates a Codex session (10.2882ms)
+✔ session page renders timeline, summary, and task link (8.5693ms)
+✔ approval page renders real authenticated action buttons (6.832ms)
+✔ startMiniAppServer returns an actionable message when the port is already in use (5528.0917ms)
+✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (47.7131ms)
+✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (3.9478ms)
+✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (4.0375ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5991.0943

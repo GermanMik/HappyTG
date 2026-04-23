@@ -1,0 +1,14 @@
+Sanitized operator env extracted from C:\Develop\Projects\HappyTG\.env
+
+HAPPYTG_MINIAPP_PORT=3007
+HAPPYTG_APP_URL=http://localhost:3007
+HAPPYTG_API_URL=http://localhost:4000
+HAPPYTG_PUBLIC_URL=http://localhost:4000
+HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru/miniapp
+HAPPYTG_BROWSER_API_URL=
+HAPPYTG_DEV_CORS_ORIGINS=http://localhost:3001,http://127.0.0.1:3001
+
+Notes:
+- Clean implementation worktree does not contain a checked-in .env file.
+- The active public Mini App URL is HTTPS, but the local public/api env remains localhost HTTP.
+- The dev CORS allowlist is still pinned to 3001, while the operator mini app port is 3007.

@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-23-miniapp-dead-buttons-ux-redesign",
+  "status": "passed",
+  "verifier": {
+    "role": "external-read-only-task-verifier",
+    "runId": "fresh-verify-2026-04-23"
+  },
+  "checks": [
+    {
+      "name": "root-cause-proof",
+      "ok": true,
+      "detail": "The live public page before the fix injected `window.HAPPYTgApiBase = \"http://localhost:4000\"`, and the browser then failed `POST http://localhost:4000/api/v1/miniapp/auth/session` with `TypeError: Failed to fetch` plus a CORS/preflight rejection."
+    },
+    {
+      "name": "request-aware-public-routing",
+      "ok": true,
+      "detail": "The final Mini App renderer now derives browser API base from the incoming forwarded public origin/prefix. The live public probe after restart shows `window.HAPPYTgApiBase = \"\"` and a browser-side `POST https://happytg.gerta.crazedns.ru/api/v1/miniapp/auth/session`."
+    },
+    {
+      "name": "localhost-dev-fallback",
+      "ok": true,
+      "detail": "Deterministic unit coverage proves that direct localhost development without reverse-proxy headers still falls back to `HAPPYTG_API_URL`."
+    },
+    {
+      "name": "visible-feedback-and-ux",
+      "ok": true,
+      "detail": "The auth shell, approval actions, and new-task flow now expose explicit loading/success/error feedback with a clearer Russian mobile-first navigation shell."
+    },
+    {
+      "name": "verification-and-release-metadata",
+      "ok": true,
+      "detail": "Scoped Mini App checks, API tests, repo-wide typecheck/lint/test/build, env-backed doctor/verify, release metadata validation, and task validation all completed. Remaining warnings are unrelated local environment conditions."
+    }
+  ],
+  "generatedAt": "2026-04-23T23:57:28.5656846+03:00"
+}

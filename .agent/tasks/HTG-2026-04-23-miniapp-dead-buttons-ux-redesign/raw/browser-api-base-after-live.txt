@@ -1,0 +1,14 @@
+Live public route probe after restarting the fixed Mini App on port 3007
+
+URL: https://happytg.gerta.crazedns.ru/miniapp
+
+Observed page values:
+- window.HAPPYTgApiBase = ""
+- window.HAPPYTgMiniAppBasePath = "/miniapp"
+- window.HAPPYTgNeedsAuth = true
+- heading = "Открываем HappyTG"
+- auth detail = "Mini App session проверяется через Telegram."
+
+Interpretation:
+- The live public page no longer injects `http://localhost:4000` into browser-visible JS config.
+- Browser API routing now falls back to same-origin `location.origin + /api/...` on the real public HTTPS launch surface.

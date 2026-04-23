@@ -1,0 +1,10 @@
+$ pnpm happytg task validate --repo . --task HTG-2026-04-23-miniapp-dead-buttons-ux-redesign
+
+> happytg@0.4.4 happytg C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-23-miniapp-dead-buttons-ux-redesign"
+
+Task: HTG-2026-04-23-miniapp-dead-buttons-ux-redesign
+Bundle: C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\.agent\tasks\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign
+Validation: ok
+Phase: complete
+Verification: passed

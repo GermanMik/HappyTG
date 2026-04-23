@@ -1,0 +1,8 @@
+Playwright network log against live public /miniapp after reproducing auth POST in page context
+
+[POST] http://localhost:4000/api/v1/miniapp/auth/session => [FAILED] net::ERR_FAILED
+[POST] http://localhost:4000/api/v1/miniapp/auth/session => [FAILED] net::ERR_FAILED
+
+Interpretation:
+- Browser attempts a localhost POST from the public HTTPS Mini App page.
+- The failure occurs before the user can obtain Mini App session context for auth-gated screens.

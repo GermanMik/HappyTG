@@ -62,7 +62,10 @@ Lower layers may tighten but must not weaken higher layers.
 - `HAPPYTG_MINIAPP_URL` is the production Mini App URL used in Telegram `web_app` buttons and Bot API menu setup. It must be public HTTPS, for example `https://happy.example.com/miniapp`.
 - If `HAPPYTG_MINIAPP_URL` is empty, HappyTG first uses a public HTTPS `HAPPYTG_APP_URL`; otherwise, when `HAPPYTG_PUBLIC_URL` is public HTTPS, it derives the Mini App URL as `HAPPYTG_PUBLIC_URL + /miniapp`.
 - `HAPPYTG_APP_URL` is also the local development Mini App URL. When both `HAPPYTG_APP_URL=http://localhost:3007` and `HAPPYTG_PUBLIC_URL=http://localhost:4000` are local HTTP, diagnostics should point at the Mini App port `3007`; Telegram `web_app` buttons still stay disabled until a public HTTPS URL is configured. Do not use `http://localhost:3001` or `http://localhost:3007` for production Telegram `web_app` buttons.
-- `HAPPYTG_BROWSER_API_URL` optionally overrides the browser-visible API origin. In production with Caddy, leave it empty so Mini App browser actions use same-origin `/api/...`.
+- `HAPPYTG_BROWSER_API_URL` optionally overrides the browser-visible API origin.
+- If `HAPPYTG_BROWSER_API_URL` is empty and the Mini App request reaches HappyTG through a public HTTPS reverse proxy such as Caddy on `/miniapp`, the rendered page injects an empty browser API base and the browser uses same-origin `/api/...`.
+- If `HAPPYTG_BROWSER_API_URL` is empty and you open the Mini App directly in local development without reverse-proxy headers, the browser falls back to `HAPPYTG_API_URL`, for example `http://localhost:4000`.
+- Do not force `HAPPYTG_BROWSER_API_URL=http://localhost:4000` for a public Telegram Mini App. Telegram clients must not receive a browser API origin that points at local HTTP or loopback.
 - The bot includes inline `web_app` buttons only when the resolved Mini App URL is public HTTPS. Local HTTP, localhost, private/internal, or malformed URLs leave normal bot replies functional without Web App buttons.
 
 ## Mini App Local Port And Caddy Upstream
@@ -110,6 +113,7 @@ If only non-standard HTTPS port `8443` is externally available, Caddy certificat
 - `HAPPYTG_DEV_CORS_ORIGINS` is a comma-separated development allowlist for local or tunnel Mini App origins.
 - Production must stay strict: do not use wildcard CORS for `happytg.gerta.crazedns.ru`.
 - The API applies this allowlist only outside `NODE_ENV=production`; same-origin production routing through Caddy should not require wildcard CORS.
+- This means a public Mini App launched from `https://<domain>/miniapp` should authenticate through `https://<domain>/api/v1/miniapp/auth/session`, while direct local development may still call the local API origin.
 
 ## Mini App Launch and Session Configuration
 

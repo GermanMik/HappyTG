@@ -1,0 +1,7 @@
+After screenshots and browser artifacts
+
+- Post-fix proxy harness screenshot: `raw/after-proxied-auth-feedback.png`
+- Post-fix live public screenshot after restarting the fixed Mini App on port `3007`: `raw/live-public-after.png`
+- Post-fix harness stdout: `raw/miniapp-after-harness.stdout.txt`
+- Post-fix harness script: `raw/miniapp-after-harness.ts`
+- Post-fix live browser probe script: `raw/live-public-probe.cjs`
