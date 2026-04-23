@@ -44,11 +44,10 @@ flowchart TD
     E --> G
     F --> G
     G --> H["pnpm install + env merge + setup/doctor/verify"]
-    H --> I{"Redis already running on 6379?"}
-    I -->|Yes| J["Start postgres + minio only"]
-    I -->|No| K["Start postgres + redis + minio"]
-    J --> L["pnpm dev + pairing + daemon"]
-    K --> L
+    H --> I{"Launch mode"}
+    I -->|local| J["pnpm dev + pairing + host daemon"]
+    I -->|docker| K["docker compose config + up --build -d + host daemon outside Compose"]
+    I -->|manual/skip| L["print exact commands only"]
 ```
 
 ## What The Installer Does
@@ -72,7 +71,12 @@ flowchart TD
    - macOS: `LaunchAgent`, `manual`, `skip`
    - Windows: `Scheduled Task`, `Startup`, `manual`, `skip`
    - Linux: current service flow remains supported, plus installer-safe user-service/manual options
-10. Can run `setup`, `doctor`, and `verify` in one unified flow.
+10. Offers a launch mode for the control-plane stack:
+   - `local`: do not start containers; final guidance uses `pnpm dev`
+   - `docker`: validate and start `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d`
+   - `manual`: do not start anything; print exact local and Docker commands
+   - `skip`: no startup action beyond install and selected post-checks
+11. Can run `setup`, `doctor`, and `verify` in one unified flow.
 
 When pnpm reports ignored build scripts, HappyTG does not silently suppress that state:
 
@@ -92,12 +96,22 @@ Useful flags:
 
 ```bash
 pnpm happytg install --non-interactive --repo-mode current --telegram-bot-token <TOKEN> --allowed-user 123456789 --home-channel @team --post-check setup --post-check doctor
+pnpm happytg install --non-interactive --repo-mode current --launch-mode docker --telegram-bot-token <TOKEN>
 pnpm happytg install --json
 ```
 
 ## First Start
 
-Run the first start in separate terminals so infra, pairing, and daemon startup stay explicit.
+Run the first start in separate terminals so control-plane startup, pairing, and host-daemon startup stay explicit.
+
+`pnpm happytg install` now asks how to launch the control-plane stack after setup:
+
+- `Local dev` keeps the existing `pnpm dev` path and does not touch Docker.
+- `Docker Compose` validates `infra/docker-compose.example.yml`, starts the packaged stack, and still leaves the host daemon on the host.
+- `Manual` prints the exact commands without starting anything.
+- `Skip` stops after install plus any selected post-checks.
+
+In non-interactive mode the default remains `local`; Docker starts only with `--launch-mode docker`.
 
 ### Terminal 1: installer or shared infra
 
@@ -105,18 +119,24 @@ Run the first start in separate terminals so infra, pairing, and daemon startup 
 pnpm happytg install
 ```
 
+For a packaged control-plane start directly from the installer:
+
+```bash
+pnpm happytg install --launch-mode docker
+```
+
 If `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` already point at reachable services, reuse them and skip Docker in this terminal.
 
 If Redis is already running on `localhost:6379` and you still want local Compose for PostgreSQL plus MinIO:
 
 ```bash
-docker compose -f infra/docker-compose.example.yml up postgres minio
+docker compose --env-file .env -f infra/docker-compose.example.yml up postgres minio
 ```
 
 If PostgreSQL, Redis, and MinIO are not already provided elsewhere:
 
 ```bash
-docker compose -f infra/docker-compose.example.yml up postgres redis minio
+docker compose --env-file .env -f infra/docker-compose.example.yml up postgres redis minio
 ```
 
 ### Terminal 2: repo services
@@ -124,6 +144,8 @@ docker compose -f infra/docker-compose.example.yml up postgres redis minio
 ```bash
 pnpm dev
 ```
+
+Do not run the full `pnpm dev` stack on the same default ports as `--launch-mode docker`. Choose one control-plane startup path per host unless you intentionally remap the relevant `HAPPYTG_*_PORT` values first.
 
 By default, the local repo path uses Telegram polling when `HAPPYTG_PUBLIC_URL` is local or otherwise not webhook-capable, so `/start` and `/pair <CODE>` do not require a public domain during local development.
 
@@ -147,6 +169,8 @@ pnpm daemon:pair
 # send /pair <CODE> to the configured Telegram bot
 pnpm dev:daemon
 ```
+
+Even after `--launch-mode docker`, the host daemon stays outside Compose because it needs direct access to local repositories and Codex configuration.
 
 ### Important
 
@@ -214,7 +238,7 @@ PowerShell examples:
 ```powershell
 $env:HAPPYTG_MINIAPP_PORT=3002; pnpm dev:miniapp
 $env:HAPPYTG_API_PORT=4001; pnpm dev:api
-$env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.example.yml up redis
+$env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose --env-file .env -f infra/docker-compose.example.yml up redis
 ```
 
 ## Developer Install
@@ -223,7 +247,7 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
 2. Reuse existing PostgreSQL / Redis / S3-compatible services through `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT`, or start local infrastructure:
 
    ```bash
-   docker compose -f infra/docker-compose.example.yml up postgres redis minio
+   docker compose --env-file .env -f infra/docker-compose.example.yml up postgres redis minio
    ```
 
 3. In a separate terminal, run the monorepo in watch mode:
@@ -264,7 +288,7 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose -f infra/docker-compose.exampl
 3. Start the packaged compose stack without `pnpm dev`:
 
    ```bash
-   docker compose -f infra/docker-compose.example.yml up --build -d
+   docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
    ```
 
 4. Put a reverse proxy with TLS in front of the API and Mini App.

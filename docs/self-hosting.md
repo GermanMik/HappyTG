@@ -76,10 +76,22 @@ HAPPYTG_MINIAPP_UPSTREAM=127.0.0.1:3007
 3. Start the packaged services:
 
    ```bash
-   docker compose -f infra/docker-compose.example.yml up --build -d
+   docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
    ```
 
-4. Confirm API, bot, worker, and Mini App logs are healthy.
+   The installer can make this an explicit first-start choice with:
+
+   ```bash
+   pnpm happytg install --launch-mode docker
+   ```
+
+   This starts API, worker, bot, Mini App, Caddy, and observability through Compose, but it does not start `apps/host-daemon`.
+
+4. Confirm API, bot, worker, and Mini App logs are healthy. The installer's Docker launch path validates:
+   - `docker compose --env-file .env -f infra/docker-compose.example.yml config`
+   - `docker compose --env-file .env -f infra/docker-compose.example.yml ps`
+   - host readiness for `http://127.0.0.1:${HAPPYTG_API_PORT:-4000}/ready`, `http://127.0.0.1:${HAPPYTG_BOT_PORT:-4100}/ready`, and `http://127.0.0.1:${HAPPYTG_MINIAPP_PORT:-3001}/ready`
+   - worker health through Compose service health
 5. Confirm Prometheus can scrape API `/metrics` and Grafana can see the Prometheus datasource.
 6. Configure Telegram webhook delivery against `https://<domain>/telegram/webhook`.
 7. Configure the persistent Telegram menu button after the public route passes preflight:
@@ -93,7 +105,7 @@ HAPPYTG_MINIAPP_UPSTREAM=127.0.0.1:3007
 
 1. Install Git, Node.js 22+, `pnpm`, and Codex CLI on the execution host.
 2. Run `pnpm happytg doctor` and resolve blocking findings.
-3. Start `apps/host-daemon` directly on the execution host.
+3. Start `apps/host-daemon` directly on the execution host. This remains outside Compose by design.
 4. Pair the host through Telegram and wait for the control plane to record the host heartbeat.
 5. Run `pnpm happytg verify` and one quick Codex smoke session before allowing proof-loop tasks.
 

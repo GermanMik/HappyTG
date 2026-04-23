@@ -1,0 +1,6 @@
+command=pnpm --filter @happytg/bootstrap run lint
+exitCode=0
+
+
+> @happytg/bootstrap@0.4.2 lint C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\bootstrap
+> tsc -p tsconfig.json --noEmit

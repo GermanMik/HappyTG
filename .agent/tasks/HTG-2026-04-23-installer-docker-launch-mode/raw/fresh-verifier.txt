@@ -1,0 +1,59 @@
+Fresh verifier pass
+Timestamp: 2026-04-23T20:48:07.5967347+03:00
+Role: task-verifier (manual read-only)
+
+Reviewed artifacts:
+- spec.md
+- evidence.md
+- evidence.json
+- problems.md
+- verdict.json
+- raw/test-unit.txt
+- raw/typecheck.txt
+- raw/build.txt
+- raw/lint.txt
+- raw/test-integration.txt
+- raw/root-typecheck.txt
+- raw/root-build.txt
+- raw/root-lint.txt
+- raw/doctor-json.txt
+- raw/verify-json.txt
+- raw/docker-compose-config-without-env-file.txt
+- raw/docker-compose-up-without-env-file.txt
+- raw/docker-compose-config.txt
+- raw/docker-compose-up.txt
+- raw/docker-compose-ps.txt
+- raw/health-api.txt
+- raw/health-bot.txt
+- raw/health-miniapp.txt
+
+Diff reviewed:
+- packages/bootstrap/src/cli.ts
+- packages/bootstrap/src/install/types.ts
+- packages/bootstrap/src/install/tui.ts
+- packages/bootstrap/src/install/index.ts
+- packages/bootstrap/src/install/launch.ts
+- packages/bootstrap/src/index.ts
+- packages/bootstrap/src/cli.test.ts
+- packages/bootstrap/src/install.test.ts
+- packages/bootstrap/src/install.runtime.test.ts
+- packages/bootstrap/src/infra-config.test.ts
+- infra/docker-compose.example.yml
+- README.md
+- docs/installation.md
+- docs/self-hosting.md
+- docs/bootstrap-doctor.md
+- docs/quickstart.md
+- docs/troubleshooting.md
+- docs/operations/runbook.md
+- docs/engineering-blueprint.md
+
+Verifier conclusions:
+- The installer now exposes an explicit launch-mode decision and keeps Docker optional.
+- The host daemon still stays outside Compose in code, tests, and docs.
+- Real Compose proof discovered and justified one additional runtime fix: explicit `--env-file .env` is required for `.env` host-port overrides to affect Compose host bindings when the file lives under `infra/`.
+- Post-fix Compose config proves the corrected host-port interpolation.
+- The sanitized Compose stack still reports unhealthy services locally; the implementation correctly treats such health failures as recoverable installer outcomes with next steps.
+
+Findings:
+- No scoped production-code findings remain.

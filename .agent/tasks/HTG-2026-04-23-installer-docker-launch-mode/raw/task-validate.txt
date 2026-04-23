@@ -1,0 +1,12 @@
+command=pnpm happytg task validate --repo . --task HTG-2026-04-23-installer-docker-launch-mode
+exitCode=0
+
+
+> happytg@0.4.2 happytg C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-23-installer-docker-launch-mode"
+
+Task: HTG-2026-04-23-installer-docker-launch-mode
+Bundle: C:\Develop\Projects\HappyTG-installer-docker-launch-mode\.agent\tasks\HTG-2026-04-23-installer-docker-launch-mode
+Validation: ok
+Phase: complete
+Verification: passed

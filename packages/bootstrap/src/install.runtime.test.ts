@@ -239,6 +239,8 @@ async function advanceInteractiveInstallToPortPreflight(input: {
   await input.emitKeypress("\r", { name: "enter" });
   await input.waitForOutput("Background Run Mode");
   await input.emitKeypress("\r", { name: "enter" });
+  await input.waitForOutput("Launch Mode");
+  await input.emitKeypress("\r", { name: "enter" });
   await input.waitForOutput("Post-Install Checks");
   await input.emitKeypress("\r", { name: "enter" });
 }
@@ -382,6 +384,458 @@ async function runInstallWithPnpmBehavior(input: {
     result
   };
 }
+
+test("runHappyTGInstall defaults to local launch and does not start Docker", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-local-launch-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  let dockerLaunchCalls = 0;
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      postChecks: []
+    }, {
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "manual",
+          detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+        }),
+        runDockerLaunch: async () => {
+          dockerLaunchCalls += 1;
+          throw new Error("Docker launch should not run for the default local mode.");
+        }
+      }
+    });
+
+    assert.equal(dockerLaunchCalls, 0);
+    assert.equal(result.launch.mode, "local");
+    assert.equal(result.finalization?.items.find((item) => item.id === "start-repo-services")?.message, "Start local repo services: `pnpm dev`.");
+    assert.equal(result.finalization?.items.find((item) => item.id === "start-daemon")?.message, "Start the daemon with `pnpm dev:daemon`.");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall launch-mode docker validates config, starts Compose, and probes published services", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-docker-launch-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const pnpmPath = path.join(tempDir, "pnpm");
+  const dockerPath = path.join(tempDir, "docker");
+  const dockerCalls: Array<{ args: string[]; cwd?: string }> = [];
+  const readyUrls: string[] = [];
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "skip",
+      launchMode: "docker",
+      postChecks: []
+    }, {
+      fetchImpl: async (url) => {
+        readyUrls.push(String(url));
+        return new Response("ok", { status: 200 });
+      },
+      runBootstrapCheck: async () => setupReportWithPorts({
+        status: "pass",
+        ports: []
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? pnpmPath : command === "docker" ? dockerPath : undefined,
+        runCommand: async ({ command, args, cwd }) => {
+          const normalizedArgs = [...(args ?? [])];
+          if (command === dockerPath) {
+            dockerCalls.push({ args: normalizedArgs, cwd });
+            if (normalizedArgs[0] === "compose" && normalizedArgs[1] === "version") {
+              return { stdout: "Docker Compose version v2.29.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs[0] === "info") {
+              return { stdout: "Server Version: 27.0.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.at(-1) === "config") {
+              return { stdout: "services:\n  api: {}\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.includes("up")) {
+              return { stdout: "Container happytg-api Started\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.includes("ps")) {
+              return {
+                stdout: JSON.stringify([
+                  { Service: "api", State: "running", Health: "healthy" },
+                  { Service: "bot", State: "running", Health: "healthy" },
+                  { Service: "miniapp", State: "running", Health: "healthy" },
+                  { Service: "worker", State: "running", Health: "healthy" }
+                ]),
+                stderr: "",
+                exitCode: 0,
+                binaryPath: dockerPath,
+                shell: false,
+                fallbackUsed: false
+              };
+            }
+          }
+
+          return { stdout: "", stderr: "", exitCode: 0, binaryPath: pnpmPath, shell: false, fallbackUsed: false };
+        },
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background daemon setup was skipped."
+        })
+      }
+    });
+
+    assert.equal(result.launch.mode, "docker");
+    assert.equal(result.launch.status, "started");
+    assert.deepEqual(dockerCalls.map((call) => call.args), [
+      ["compose", "version"],
+      ["info"],
+      ["compose", "--env-file", ".env", "-f", "infra/docker-compose.example.yml", "config"],
+      ["compose", "--env-file", ".env", "-f", "infra/docker-compose.example.yml", "up", "--build", "-d"],
+      ["compose", "--env-file", ".env", "-f", "infra/docker-compose.example.yml", "ps", "--format", "json"]
+    ]);
+    assert.equal(dockerCalls.every((call) => call.cwd === repoPath), true);
+    assert.deepEqual(readyUrls, [
+      "http://127.0.0.1:4000/ready",
+      "http://127.0.0.1:4100/ready",
+      "http://127.0.0.1:3001/ready"
+    ]);
+    assert.equal(result.finalization?.items.find((item) => item.id === "start-repo-services")?.kind, "auto");
+    assert.match(JSON.stringify(result.reportJson.launch), /docker compose --env-file \.env -f infra\/docker-compose\.example\.yml up --build -d/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall launch-mode docker reports missing Docker as recoverable and keeps host daemon guidance outside Compose", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-docker-missing-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "manual",
+      launchMode: "docker",
+      postChecks: []
+    }, {
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({ stdout: "", stderr: "", exitCode: 0, binaryPath: path.join(tempDir, "pnpm"), shell: false, fallbackUsed: false }),
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "manual",
+          detail: "Start the daemon manually with `pnpm dev:daemon` after pairing."
+        })
+      }
+    });
+
+    assert.equal(result.status, "fail");
+    assert.equal(result.outcome, "recoverable-failure");
+    assert.equal(result.launch.status, "failed");
+    assert.match(result.launch.detail, /Docker binary was not found/);
+    assert.equal(result.finalization?.items.find((item) => item.id === "host-daemon-outside-compose")?.kind, "manual");
+    assert.match(result.finalization?.items.find((item) => item.id === "host-daemon-outside-compose")?.message ?? "", /host daemon is not part of Docker Compose/i);
+    assert.equal(result.finalization?.items.find((item) => item.id === "start-daemon")?.kind, "manual");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall launch-mode docker reports daemon unavailable separately from a missing binary", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-docker-daemon-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const dockerPath = path.join(tempDir, "docker");
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "skip",
+      launchMode: "docker",
+      postChecks: []
+    }, {
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({ path: repoPath, sync: "cloned", repoSource: "primary", repoUrl: primarySource.url, attempts: 1, fallbackUsed: false }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : command === "docker" ? dockerPath : undefined,
+        runCommand: async ({ command, args }) => {
+          if (command === dockerPath && args?.[0] === "compose") {
+            return { stdout: "Docker Compose version v2.29.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+          }
+          if (command === dockerPath && args?.[0] === "info") {
+            return { stdout: "", stderr: "Cannot connect to the Docker daemon at npipe:////./pipe/dockerDesktopLinuxEngine. Is the docker daemon running?", exitCode: 1, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+          }
+          return { stdout: "", stderr: "", exitCode: 0, binaryPath: path.join(tempDir, "pnpm"), shell: false, fallbackUsed: false };
+        },
+        writeMergedEnvFile: async () => ({ envFilePath: path.join(repoPath, ".env"), created: true, changed: true, addedKeys: ["TELEGRAM_BOT_TOKEN"], preservedKeys: [] }),
+        fetchTelegramBotIdentity: async () => ({ ok: true, username: "happytg_bot" }),
+        configureBackgroundMode: async ({ mode }) => ({ mode, status: "skipped", detail: "Background daemon setup was skipped." })
+      }
+    });
+
+    assert.equal(result.launch.status, "failed");
+    assert.match(result.launch.detail, /daemon\/Desktop is unavailable/);
+    assert.match(result.launch.nextSteps.join("\n"), /Start Docker Desktop|docker info/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("interactive Docker launch receives Mini App port override saved by port preflight", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-docker-port-preflight-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const harness = createInteractiveHarness();
+  let setupCall = 0;
+  let dockerLaunchMiniAppPort: string | undefined;
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(path.join(repoPath, ".env.example"), "TELEGRAM_BOT_TOKEN=\nHAPPYTG_MINIAPP_PORT=3001\n", "utf8");
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: [],
+      backgroundMode: "skip",
+      launchMode: "docker",
+      postChecks: []
+    }, {
+      stdin: harness.stdin,
+      stdout: harness.stdout,
+      runBootstrapCheck: async () => {
+        setupCall += 1;
+        return setupReportWithPorts({
+          status: setupCall === 1 ? "warn" : "pass",
+          findings: setupCall === 1 ? [{ code: "MINIAPP_PORT_BUSY", severity: "warn", message: "Mini App plans to use port 3001, but another process is already there." }] : [],
+          ports: setupCall === 1
+            ? [{ id: "miniapp", label: "Mini App", port: 3001, state: "occupied_external", detail: "Mini App plans to use port 3001, but another process is already there.", overrideEnv: "HAPPYTG_MINIAPP_PORT", suggestedPort: 3002, suggestedPorts: [3002, 3003, 3004] }]
+            : [{ id: "miniapp", label: "Mini App", port: 3002, state: "free", detail: "Mini App plans to use port 3002; it is free.", overrideEnv: "HAPPYTG_MINIAPP_PORT" }]
+        });
+      },
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: { ...baseEnvironment().platform, isInteractiveTerminal: true }
+        }),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, { exists: true, isRepo: true, emptyDirectory: false, rootPath: repoPath }),
+          choices: [{ mode: "update" as const, label: "Update existing checkout", path: repoPath, available: true, detail: "Existing checkout is ready to update." }]
+        }),
+        syncRepository: async () => ({ path: repoPath, sync: "updated", repoSource: "primary", repoUrl: primarySource.url, attempts: 1, fallbackUsed: false }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({ stdout: "", stderr: "", exitCode: 0, binaryPath: path.join(tempDir, "pnpm"), shell: false, fallbackUsed: false }),
+        fetchTelegramBotIdentity: async () => ({ ok: true, username: "happytg_bot" }),
+        configureBackgroundMode: async ({ mode }) => ({ mode, status: "skipped", detail: "Background daemon setup was skipped." }),
+        runDockerLaunch: async ({ repoEnv }) => {
+          dockerLaunchMiniAppPort = repoEnv.HAPPYTG_MINIAPP_PORT;
+          return {
+            mode: "docker",
+            status: "started",
+            detail: "Docker Compose control-plane stack started. Host daemon still runs outside Docker.",
+            composeFile: "infra/docker-compose.example.yml",
+            command: "docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d",
+            commands: [],
+            health: [],
+            warnings: [],
+            nextSteps: []
+          };
+        }
+      }
+    });
+
+    await advanceInteractiveInstallToPortPreflight(harness);
+    await harness.waitForOutput("Port Conflict");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Final Summary");
+    await harness.emitKeypress("\r", { name: "enter" });
+    const result = await install;
+
+    assert.equal(setupCall, 2);
+    assert.equal(result.launch.mode, "docker");
+    assert.equal(dockerLaunchMiniAppPort, "3002");
+    assert.match(await readFile(path.join(repoPath, ".env"), "utf8"), /HAPPYTG_MINIAPP_PORT=3002/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
 
 test("syncRepository retries transient primary failures and reports attempt progress", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-sync-retry-"));
@@ -1672,6 +2126,8 @@ test("runHappyTGInstall interactive Telegram form starts blank even when draft a
     await emitKeypress("\r", { name: "return" });
     await waitForOutput("Background Run Mode");
     await emitKeypress("\r", { name: "return" });
+    await waitForOutput("Launch Mode");
+    await emitKeypress("\r", { name: "return" });
     await waitForOutput("Post-Install Checks");
     await emitKeypress("\r", { name: "return" });
     await waitForOutput("Final Summary");
@@ -1829,6 +2285,8 @@ test("runHappyTGInstall releases stdin after ENTER closes the final summary", as
     await emitKeypress("", { name: "down" });
     await emitKeypress("\r", { name: "enter" });
     await waitForOutput("Background Run Mode");
+    await emitKeypress("\r", { name: "enter" });
+    await waitForOutput("Launch Mode");
     await emitKeypress("\r", { name: "enter" });
     await waitForOutput("Post-Install Checks");
     await emitKeypress("\r", { name: "enter" });
@@ -2162,7 +2620,7 @@ test("runHappyTGInstall interactive port preflight shows progress while saving t
     assert.match(progressScreen, /Resolve planned ports/);
     assert.match(progressScreen, /Re-running planned port preflight so the installer can continue/);
     assert.doesNotMatch(progressScreen, /Final Summary/);
-    assert.match(latestProgressScreen, /\[#####-----\] 3\/6 steps complete/);
+    assert.match(latestProgressScreen, /\[####------\] 3\/7 steps complete/);
 
     releaseSecondSetup?.();
     await harness.waitForOutput("Final Summary");

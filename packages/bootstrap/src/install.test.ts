@@ -15,6 +15,7 @@ import {
   promptPortValue,
   promptTelegramForm,
   renderFinalScreen,
+  renderLaunchModeScreen,
   renderProgressScreen,
   renderRepoModeScreen,
   renderTelegramScreen,
@@ -198,6 +199,25 @@ test("retro installer renderers include active cursor and keyboard hints", () =>
   assert.match(repoMode, /Repo Mode/);
   assert.match(repoMode, /›/);
   assert.match(repoMode, /ESC cancel/);
+
+  const launchMode = renderLaunchModeScreen({
+    activeMode: "docker",
+    modes: [
+      {
+        mode: "local",
+        label: "Local dev",
+        detail: "Use pnpm dev."
+      },
+      {
+        mode: "docker",
+        label: "Docker Compose",
+        detail: "Run docker compose."
+      }
+    ]
+  });
+  assert.match(launchMode, /Launch Mode/);
+  assert.match(launchMode, /Docker Compose/);
+  assert.match(launchMode, /›/);
 });
 
 test("progress screen uses a readable ASCII running indicator instead of a unicode ellipsis", () => {

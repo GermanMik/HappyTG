@@ -1,0 +1,6 @@
+config_exit=0
+up_exit=1
+ps_exit=0
+api_port=64677
+bot_port=64678
+miniapp_port=64679

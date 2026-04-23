@@ -1,0 +1,6 @@
+command=pnpm --filter @happytg/bootstrap run build
+exitCode=0
+
+
+> @happytg/bootstrap@0.4.2 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\bootstrap
+> tsc -p tsconfig.json

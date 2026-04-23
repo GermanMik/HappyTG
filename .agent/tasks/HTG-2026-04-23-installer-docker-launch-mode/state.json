@@ -1,0 +1,63 @@
+{
+  "task_id": "HTG-2026-04-23-installer-docker-launch-mode",
+  "session_id": "codex-installer-docker-launch-mode",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "freeze",
+      "entered_at": "2026-04-23T16:21:33.720Z",
+      "event": "TaskSpecFrozen"
+    },
+    {
+      "phase": "build",
+      "entered_at": "2026-04-23T16:24:00.000Z",
+      "event": "BuilderStarted"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-04-23T20:48:07.5967347+03:00",
+      "event": "EvidenceRecorded"
+    },
+    {
+      "phase": "fresh verify",
+      "entered_at": "2026-04-23T20:48:07.5967347+03:00",
+      "event": "VerifierCompleted"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-04-23T20:48:07.5967347+03:00",
+      "event": "TaskCompleted"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\spec.md",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\evidence.md",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\evidence.json",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\verdict.json",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\problems.md",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\task.json",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\build.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\test-unit.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\test-integration.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\lint.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\typecheck.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\root-typecheck.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\root-build.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\root-lint.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\doctor-json.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\verify-json.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\docker-compose-config.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\docker-compose-up.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\docker-compose-ps.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\fresh-verifier.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\raw\\task-validate.txt",
+    "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode\\state.json"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-04-23T16:21:33.720Z",
+    "updated_at": "2026-04-23T20:48:07.5967347+03:00"
+  }
+}

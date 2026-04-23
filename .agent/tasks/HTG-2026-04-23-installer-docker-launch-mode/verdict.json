@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-23-installer-docker-launch-mode",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "fresh-verify-2026-04-23"
+  },
+  "checks": [
+    {
+      "name": "launch-mode-contract",
+      "ok": true,
+      "detail": "Installer types, CLI parsing, TUI flow, and install execution now carry an explicit launch mode contract for `local`, `docker`, `manual`, and `skip`."
+    },
+    {
+      "name": "docker-launch-execution",
+      "ok": true,
+      "detail": "Docker launch validates `docker compose version`, checks daemon availability with `docker info`, runs Compose config and startup, and records structured command and health results."
+    },
+    {
+      "name": "compose-env-file-runtime-fix",
+      "ok": true,
+      "detail": "Controlled runtime proof showed host-port overrides were ignored without `--env-file .env`; installer and docs now use the corrected Compose command form and the post-fix config artifact shows published high ports from `.env`."
+    },
+    {
+      "name": "host-daemon-separation",
+      "ok": true,
+      "detail": "Compose startup remains limited to the packaged control-plane stack; host-daemon pairing and startup stay explicit manual steps outside Compose."
+    },
+    {
+      "name": "port-preflight-miniapp-semantics",
+      "ok": true,
+      "detail": "Port preflight still runs before Docker launch, persists `HAPPYTG_*_PORT` overrides, preserves the Mini App internal listener at `3001`, and keeps the host-port mapping configurable."
+    },
+    {
+      "name": "verification",
+      "ok": true,
+      "detail": "Scoped bootstrap checks and fresh repo-wide test/typecheck/build/lint all passed after the final fix. `doctor`/`verify` still report unrelated local-environment issues, and task validation now reports the bundle as complete/passed."
+    }
+  ],
+  "generatedAt": "2026-04-23T20:48:07.5967347+03:00"
+}

@@ -1,0 +1,22 @@
+{
+  "id": "HTG-2026-04-23-installer-docker-launch-mode",
+  "sessionId": "codex-installer-docker-launch-mode",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode\\.agent\\tasks\\HTG-2026-04-23-installer-docker-launch-mode",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Installer Docker launch mode",
+  "acceptanceCriteria": [
+    "Installer UX exposes an explicit Docker Compose launch option.",
+    "Non-interactive installs can request Docker launch through a documented flag.",
+    "Docker is not required for local install or existing-service reuse.",
+    "Compose startup never includes the host daemon.",
+    "Final output separates Compose control-plane startup from host-daemon pairing/startup.",
+    "Port conflict handling and Mini App port semantics are preserved.",
+    "Verification passes and a fresh verifier pass confirms the task.",
+    "Docs explain pnpm dev, Docker Compose, and manual startup choices."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-23T16:21:33.720Z",
+  "updatedAt": "2026-04-23T20:48:07.5967347+03:00"
+}

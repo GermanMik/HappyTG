@@ -1,0 +1,426 @@
+ Image htg_installer_verify-miniapp Building 
+ Image htg_installer_verify-bot Building 
+ Image htg_installer_verify-worker Building 
+ Image htg_installer_verify-api Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 2.41kB 0.0s done
+#1 DONE 0.0s
+
+#2 [bot internal] load build definition from Dockerfile.app
+#2 transferring dockerfile: 445B done
+#2 DONE 0.0s
+
+#3 [miniapp internal] load metadata for docker.io/library/node:22-bookworm-slim
+#3 DONE 1.8s
+
+#4 [worker internal] load .dockerignore
+#4 transferring context: 164B done
+#4 DONE 0.0s
+
+#5 [bot internal] load build context
+#5 DONE 0.0s
+
+#6 [bot 1/7] FROM docker.io/library/node:22-bookworm-slim@sha256:d415caac2f1f77b98caaf9415c5f807e14bc8d7bdea62561ea2fef4fbd08a73c
+#6 resolve docker.io/library/node:22-bookworm-slim@sha256:d415caac2f1f77b98caaf9415c5f807e14bc8d7bdea62561ea2fef4fbd08a73c
+#6 resolve docker.io/library/node:22-bookworm-slim@sha256:d415caac2f1f77b98caaf9415c5f807e14bc8d7bdea62561ea2fef4fbd08a73c 0.0s done
+#6 DONE 0.0s
+
+#5 [worker internal] load build context
+#5 transferring context: 391.22kB 0.1s done
+#5 DONE 0.1s
+
+#7 [miniapp 2/7] WORKDIR /app
+#7 CACHED
+
+#8 [miniapp 3/7] RUN corepack enable
+#8 CACHED
+
+#9 [miniapp 4/7] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+#9 CACHED
+
+#10 [miniapp 5/7] COPY apps ./apps
+#10 CACHED
+
+#11 [miniapp 6/7] COPY packages ./packages
+#11 DONE 1.9s
+
+#11 [bot 6/7] COPY packages ./packages
+#11 DONE 1.9s
+
+#12 [api 7/7] RUN pnpm install --frozen-lockfile
+#12 2.477 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.0.0.tgz
+#12 ...
+
+#13 [bot 7/7] RUN pnpm install --frozen-lockfile
+#13 2.429 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.0.0.tgz
+#13 ...
+
+#14 [miniapp 7/7] RUN pnpm install --frozen-lockfile
+#14 2.561 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.0.0.tgz
+#14 ...
+
+#15 [worker 7/7] RUN pnpm install --frozen-lockfile
+#15 2.573 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.0.0.tgz
+#15 ...
+
+#14 [miniapp 7/7] RUN pnpm install --frozen-lockfile
+#14 29.39 Scope: all 16 workspace projects
+#14 29.74 Lockfile is up to date, resolution step is skipped
+#14 29.76 Progress: resolved 1, reused 0, downloaded 0, added 0
+#14 29.77 Packages: +10
+#14 29.77 ++++++++++
+#14 30.76 Progress: resolved 10, reused 0, downloaded 0, added 0
+#14 32.61 Progress: resolved 10, reused 0, downloaded 1, added 0
+#14 33.61 Progress: resolved 10, reused 0, downloaded 2, added 1
+#14 34.61 Progress: resolved 10, reused 0, downloaded 4, added 2
+#14 35.61 Progress: resolved 10, reused 0, downloaded 4, added 4
+#14 37.84 
+#14 37.84    ╭───────────────────────────────────────────────────────────────────╮
+#14 37.84    │                                                                   │
+#14 37.84    │                Update available! 10.0.0 → 10.33.2.                │
+#14 37.84    │   Changelog: https://github.com/pnpm/pnpm/releases/tag/v10.33.2   │
+#14 37.84    │         Run "corepack install -g pnpm@10.33.2" to update.         │
+#14 37.84    │                                                                   │
+#14 37.84    ╰───────────────────────────────────────────────────────────────────╯
+#14 37.84 
+#14 38.34 Progress: resolved 10, reused 0, downloaded 5, added 4
+#14 39.34 Progress: resolved 10, reused 0, downloaded 6, added 5
+#14 40.34 Progress: resolved 10, reused 0, downloaded 6, added 6
+#14 41.57 Progress: resolved 10, reused 0, downloaded 7, added 6
+#14 ...
+
+#13 [bot 7/7] RUN pnpm install --frozen-lockfile
+#13 42.31 Scope: all 16 workspace projects
+#13 42.65 Lockfile is up to date, resolution step is skipped
+#13 42.68 Progress: resolved 1, reused 0, downloaded 0, added 0
+#13 42.71 Packages: +10
+#13 42.71 ++++++++++
+#13 43.68 Progress: resolved 10, reused 0, downloaded 0, added 0
+#13 45.00 Progress: resolved 10, reused 0, downloaded 1, added 0
+#13 46.00 Progress: resolved 10, reused 0, downloaded 3, added 3
+#13 47.00 Progress: resolved 10, reused 0, downloaded 4, added 3
+#13 47.45 
+#13 47.45    ╭───────────────────────────────────────────────────────────────────╮
+#13 47.45    │                                                                   │
+#13 47.45    │                Update available! 10.0.0 → 10.33.2.                │
+#13 47.45    │   Changelog: https://github.com/pnpm/pnpm/releases/tag/v10.33.2   │
+#13 47.45    │         Run "corepack install -g pnpm@10.33.2" to update.         │
+#13 47.45    │                                                                   │
+#13 47.45    ╰───────────────────────────────────────────────────────────────────╯
+#13 47.45 
+#13 48.00 Progress: resolved 10, reused 0, downloaded 4, added 4
+#13 ...
+
+#12 [api 7/7] RUN pnpm install --frozen-lockfile
+#12 48.21 Scope: all 16 workspace projects
+#12 48.50 Lockfile is up to date, resolution step is skipped
+#12 48.52 Progress: resolved 1, reused 0, downloaded 0, added 0
+#12 48.55 Packages: +10
+#12 48.55 ++++++++++
+#12 49.53 Progress: resolved 10, reused 0, downloaded 0, added 0
+#12 50.87 Progress: resolved 10, reused 0, downloaded 1, added 0
+#12 51.87 Progress: resolved 10, reused 0, downloaded 3, added 1
+#12 52.16 
+#12 52.16    ╭───────────────────────────────────────────────────────────────────╮
+#12 52.16    │                                                                   │
+#12 52.16    │                Update available! 10.0.0 → 10.33.2.                │
+#12 52.16    │   Changelog: https://github.com/pnpm/pnpm/releases/tag/v10.33.2   │
+#12 52.16    │         Run "corepack install -g pnpm@10.33.2" to update.         │
+#12 52.16    │                                                                   │
+#12 52.16    ╰───────────────────────────────────────────────────────────────────╯
+#12 52.16 
+#12 ...
+
+#14 [miniapp 7/7] RUN pnpm install --frozen-lockfile
+#14 42.63 Progress: resolved 10, reused 0, downloaded 7, added 7
+#14 ...
+
+#15 [worker 7/7] RUN pnpm install --frozen-lockfile
+#15 45.92 Scope: all 16 workspace projects
+#15 46.14 Lockfile is up to date, resolution step is skipped
+#15 46.16 Progress: resolved 1, reused 0, downloaded 0, added 0
+#15 46.18 Packages: +10
+#15 46.18 ++++++++++
+#15 47.16 Progress: resolved 10, reused 0, downloaded 0, added 0
+#15 48.63 Progress: resolved 10, reused 0, downloaded 1, added 0
+#15 49.63 Progress: resolved 10, reused 0, downloaded 2, added 2
+#15 50.63 Progress: resolved 10, reused 0, downloaded 4, added 3
+#15 51.63 Progress: resolved 10, reused 0, downloaded 4, added 4
+#15 52.28 
+#15 52.28    ╭───────────────────────────────────────────────────────────────────╮
+#15 52.28    │                                                                   │
+#15 52.28    │                Update available! 10.0.0 → 10.33.2.                │
+#15 52.28    │   Changelog: https://github.com/pnpm/pnpm/releases/tag/v10.33.2   │
+#15 52.28    │         Run "corepack install -g pnpm@10.33.2" to update.         │
+#15 52.28    │                                                                   │
+#15 52.28    ╰───────────────────────────────────────────────────────────────────╯
+#15 52.28 
+#15 52.63 Progress: resolved 10, reused 0, downloaded 5, added 5
+#15 ...
+
+#12 [api 7/7] RUN pnpm install --frozen-lockfile
+#12 52.88 Progress: resolved 10, reused 0, downloaded 4, added 4
+#12 54.31 Progress: resolved 10, reused 0, downloaded 5, added 4
+#12 55.31 Progress: resolved 10, reused 0, downloaded 7, added 7
+#12 ...
+
+#13 [bot 7/7] RUN pnpm install --frozen-lockfile
+#13 49.00 Progress: resolved 10, reused 0, downloaded 6, added 6
+#13 54.10 Progress: resolved 10, reused 0, downloaded 7, added 6
+#13 55.10 Progress: resolved 10, reused 0, downloaded 7, added 7
+#13 ...
+
+#15 [worker 7/7] RUN pnpm install --frozen-lockfile
+#15 53.63 Progress: resolved 10, reused 0, downloaded 6, added 6
+#15 54.63 Progress: resolved 10, reused 0, downloaded 7, added 6
+#15 55.64 Progress: resolved 10, reused 0, downloaded 7, added 7
+#15 ...
+
+#14 [miniapp 7/7] RUN pnpm install --frozen-lockfile
+#14 65.66 Progress: resolved 10, reused 0, downloaded 8, added 7
+#14 66.66 Progress: resolved 10, reused 0, downloaded 8, added 8
+#14 ...
+
+#13 [bot 7/7] RUN pnpm install --frozen-lockfile
+#13 80.21 Progress: resolved 10, reused 0, downloaded 8, added 7
+#13 81.21 Progress: resolved 10, reused 0, downloaded 8, added 8
+#13 84.83 Progress: resolved 10, reused 0, downloaded 9, added 8
+#13 86.21 Progress: resolved 10, reused 0, downloaded 9, added 9
+#13 ...
+
+#14 [miniapp 7/7] RUN pnpm install --frozen-lockfile
+#14 86.36 Progress: resolved 10, reused 0, downloaded 9, added 8
+#14 87.36 Progress: resolved 10, reused 0, downloaded 9, added 9
+#14 ...
+
+#15 [worker 7/7] RUN pnpm install --frozen-lockfile
+#15 81.07 Progress: resolved 10, reused 0, downloaded 8, added 7
+#15 82.07 Progress: resolved 10, reused 0, downloaded 8, added 8
+#15 84.75 Progress: resolved 10, reused 0, downloaded 9, added 8
+#15 85.86 Progress: resolved 10, reused 0, downloaded 9, added 9
+#15 ...
+
+#12 [api 7/7] RUN pnpm install --frozen-lockfile
+#12 81.08 Progress: resolved 10, reused 0, downloaded 8, added 7
+#12 82.08 Progress: resolved 10, reused 0, downloaded 8, added 8
+#12 86.26 Progress: resolved 10, reused 0, downloaded 9, added 8
+#12 87.26 Progress: resolved 10, reused 0, downloaded 9, added 9
+#12 ...
+
+#15 [worker 7/7] RUN pnpm install --frozen-lockfile
+#15 150.3 Progress: resolved 10, reused 0, downloaded 10, added 9
+#15 150.4 Progress: resolved 10, reused 0, downloaded 10, added 10, done
+#15 151.2 
+#15 151.2 devDependencies:
+#15 151.2 + @types/node 22.19.17
+#15 151.2 + tsx 4.21.0
+#15 151.2 + turbo 2.9.3
+#15 151.2 + typescript 5.9.3
+#15 151.2 
+#15 151.2 The following dependencies have build scripts that were ignored: esbuild
+#15 151.2 To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
+#15 151.2 
+#15 151.3 Done in 1m 46.7s
+#15 DONE 151.5s
+
+#12 [api 7/7] RUN pnpm install --frozen-lockfile
+#12 ...
+
+#16 [worker] exporting to image
+#16 exporting layers
+#16 ...
+
+#14 [miniapp 7/7] RUN pnpm install --frozen-lockfile
+#14 154.7 Progress: resolved 10, reused 0, downloaded 10, added 9
+#14 155.4 Progress: resolved 10, reused 0, downloaded 10, added 10, done
+#14 157.6 
+#14 157.6 devDependencies:
+#14 157.6 + @types/node 22.19.17
+#14 157.6 + tsx 4.21.0
+#14 157.6 + turbo 2.9.3
+#14 157.6 + typescript 5.9.3
+#14 157.6 
+#14 157.6 The following dependencies have build scripts that were ignored: esbuild
+#14 157.6 To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
+#14 157.6 
+#14 157.8 Done in 2m 9.7s
+#14 ...
+
+#13 [bot 7/7] RUN pnpm install --frozen-lockfile
+#13 152.8 Progress: resolved 10, reused 0, downloaded 10, added 9
+#13 153.6 Progress: resolved 10, reused 0, downloaded 10, added 10, done
+#13 156.1 
+#13 156.1 devDependencies:
+#13 156.1 + @types/node 22.19.17
+#13 156.1 + tsx 4.21.0
+#13 156.1 + turbo 2.9.3
+#13 156.1 + typescript 5.9.3
+#13 156.1 
+#13 156.1 The following dependencies have build scripts that were ignored: esbuild
+#13 156.1 To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
+#13 156.1 
+#13 156.2 Done in 1m 55.4s
+#13 DONE 157.9s
+
+#17 [bot] exporting to image
+#17 exporting layers
+#17 ...
+
+#14 [miniapp 7/7] RUN pnpm install --frozen-lockfile
+#14 DONE 160.1s
+
+#18 [miniapp] exporting to image
+#18 ...
+
+#12 [api 7/7] RUN pnpm install --frozen-lockfile
+#12 167.6 Progress: resolved 10, reused 0, downloaded 10, added 9
+#12 168.5 Progress: resolved 10, reused 0, downloaded 10, added 10, done
+#12 172.2 
+#12 172.2 devDependencies:
+#12 172.2 + @types/node 22.19.17
+#12 172.2 + tsx 4.21.0
+#12 172.2 + turbo 2.9.3
+#12 172.2 + typescript 5.9.3
+#12 172.2 
+#12 172.2 The following dependencies have build scripts that were ignored: esbuild
+#12 172.2 To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
+#12 172.2 
+#12 172.4 Done in 2m 6.4s
+#12 DONE 175.6s
+
+#16 [worker] exporting to image
+#16 ...
+
+#19 [api] exporting to image
+#19 exporting layers
+#19 ...
+
+#16 [worker] exporting to image
+#16 exporting layers 89.1s done
+#16 exporting manifest sha256:ec39cd64170a711c540cca873460d0a4d829d161571413d7af2fef96dcca9ba8
+#16 exporting manifest sha256:ec39cd64170a711c540cca873460d0a4d829d161571413d7af2fef96dcca9ba8 0.2s done
+#16 exporting config sha256:773e515d4e0d959cfef1fdd937f2a048d935d9f07595020b4ea34af3c6832abb
+#16 exporting config sha256:773e515d4e0d959cfef1fdd937f2a048d935d9f07595020b4ea34af3c6832abb 0.2s done
+#16 exporting attestation manifest sha256:0aade92c4a3114e01c537c50514e3cd6c9ef7efebd966db89a9cafea0e27bc0f
+#16 exporting attestation manifest sha256:0aade92c4a3114e01c537c50514e3cd6c9ef7efebd966db89a9cafea0e27bc0f 0.3s done
+#16 exporting manifest list sha256:89f4bdaed164d8fbd7a115a400b4a7308d5a08acbcd35ba5bbdd2552545ecc92
+#16 exporting manifest list sha256:89f4bdaed164d8fbd7a115a400b4a7308d5a08acbcd35ba5bbdd2552545ecc92 0.2s done
+#16 naming to docker.io/library/htg_installer_verify-worker:latest
+#16 naming to docker.io/library/htg_installer_verify-worker:latest done
+#16 unpacking to docker.io/library/htg_installer_verify-worker:latest
+#16 ...
+
+#18 [miniapp] exporting to image
+#18 exporting layers 84.3s done
+#18 exporting manifest sha256:61ec4e5f6f77630b16891348000817e15782a7beabe24ba73d0fa7e1d620ef92 0.2s done
+#18 exporting config sha256:30841c8a9fe6fea33ab4e4754a6a24f87ac59dc64f80f5ef673dc7efba69e2ae 0.2s done
+#18 exporting attestation manifest sha256:e97c9df0363fdbbb2a2387741e6bdde6d4026b41edd547e7718b421c407891b5 0.6s done
+#18 exporting manifest list sha256:4a1b55c4473bc8ab75ec8140fe568dfaf621a5d4ae1090f1b0081e849e764ef4 0.3s done
+#18 naming to docker.io/library/htg_installer_verify-miniapp:latest done
+#18 unpacking to docker.io/library/htg_installer_verify-miniapp:latest
+#18 ...
+
+#19 [api] exporting to image
+#19 exporting layers 72.4s done
+#19 exporting manifest sha256:13a2dbf8034c3e7585c4c9cdaa56bc72d9e5196f196f5e329691008ee2755819 0.3s done
+#19 exporting config sha256:896e4dc1353f3590e472629b39ef5204079ed0db0397f775c71f7f3bfbfd4bf3 0.1s done
+#19 exporting attestation manifest sha256:ccbac43387917f581a4b132367c37203f752fab52a6fbbdb8aa891ff6ea73c2e 0.1s done
+#19 exporting manifest list sha256:deadffd31471aeabb15b4b79732d0c9d9301c8cf701c5ac34a831a5b379344cc 0.1s done
+#19 naming to docker.io/library/htg_installer_verify-api:latest done
+#19 unpacking to docker.io/library/htg_installer_verify-api:latest
+#19 ...
+
+#17 [bot] exporting to image
+#17 exporting layers 85.1s done
+#17 exporting manifest sha256:2c67fb40798f4dd3a456078cb00b899636d9c49553b3637641bf4a9414ef86fc 0.3s done
+#17 exporting config sha256:98132a3ac4d3e632045ed0f30e18c5655460ce68c11ddf7f05ec11b071520b7c 0.2s done
+#17 exporting attestation manifest sha256:c9296d9203f5abe8b853172ebe9ce2b6fab8d5e539c5764bd8f5d2ccecaebd6a 0.4s done
+#17 exporting manifest list sha256:fefd861c3c91e3383a966f07f0b6a2b2c50e5fd57ff906b34e5ba1a1323dd9f7 0.2s done
+#17 naming to docker.io/library/htg_installer_verify-bot:latest done
+#17 unpacking to docker.io/library/htg_installer_verify-bot:latest
+#17 unpacking to docker.io/library/htg_installer_verify-bot:latest 18.9s done
+#17 DONE 105.3s
+
+#19 [api] exporting to image
+#19 ...
+
+#20 [bot] resolving provenance for metadata file
+#20 DONE 0.0s
+
+#16 [worker] exporting to image
+#16 unpacking to docker.io/library/htg_installer_verify-worker:latest 23.3s done
+#16 DONE 113.7s
+
+#18 [miniapp] exporting to image
+#18 unpacking to docker.io/library/htg_installer_verify-miniapp:latest 19.3s done
+#18 DONE 105.5s
+
+#19 [api] exporting to image
+#19 ...
+
+#21 [worker] resolving provenance for metadata file
+#21 DONE 0.1s
+
+#22 [miniapp] resolving provenance for metadata file
+#22 DONE 0.0s
+
+#19 [api] exporting to image
+#19 unpacking to docker.io/library/htg_installer_verify-api:latest 18.7s done
+#19 DONE 91.8s
+
+#23 [api] resolving provenance for metadata file
+#23 DONE 0.0s
+ Image htg_installer_verify-bot Built 
+ Image htg_installer_verify-worker Built 
+ Image htg_installer_verify-miniapp Built 
+ Image htg_installer_verify-api Built 
+ Network htg_installer_verify_default Creating 
+ Network htg_installer_verify_default Created 
+ Volume htg_installer_verify_caddy_data Creating 
+ Volume htg_installer_verify_caddy_data Created 
+ Volume htg_installer_verify_caddy_config Creating 
+ Volume htg_installer_verify_caddy_config Created 
+ Volume htg_installer_verify_prometheus_data Creating 
+ Volume htg_installer_verify_prometheus_data Created 
+ Volume htg_installer_verify_grafana_data Creating 
+ Volume htg_installer_verify_grafana_data Created 
+ Container htg_installer_verify-minio-1 Creating 
+ Container htg_installer_verify-redis-1 Creating 
+ Container htg_installer_verify-postgres-1 Creating 
+ Container htg_installer_verify-redis-1 Created 
+ Container htg_installer_verify-postgres-1 Created 
+ Container htg_installer_verify-minio-1 Created 
+ Container htg_installer_verify-api-1 Creating 
+ Container htg_installer_verify-api-1 Created 
+ Container htg_installer_verify-prometheus-1 Creating 
+ Container htg_installer_verify-bot-1 Creating 
+ Container htg_installer_verify-miniapp-1 Creating 
+ Container htg_installer_verify-worker-1 Creating 
+ Container htg_installer_verify-prometheus-1 Created 
+ Container htg_installer_verify-grafana-1 Creating 
+ Container htg_installer_verify-bot-1 Created 
+ Container htg_installer_verify-worker-1 Created 
+ Container htg_installer_verify-miniapp-1 Created 
+ Container htg_installer_verify-caddy-1 Creating 
+ Container htg_installer_verify-grafana-1 Created 
+ Container htg_installer_verify-caddy-1 Created 
+ Container htg_installer_verify-minio-1 Starting 
+ Container htg_installer_verify-postgres-1 Starting 
+ Container htg_installer_verify-redis-1 Starting 
+ Container htg_installer_verify-minio-1 Started 
+ Container htg_installer_verify-postgres-1 Started 
+ Container htg_installer_verify-redis-1 Started 
+ Container htg_installer_verify-api-1 Starting 
+ Container htg_installer_verify-api-1 Started 
+ Container htg_installer_verify-bot-1 Starting 
+ Container htg_installer_verify-worker-1 Starting 
+ Container htg_installer_verify-prometheus-1 Starting 
+ Container htg_installer_verify-miniapp-1 Starting 
+ Container htg_installer_verify-miniapp-1 Started 
+ Container htg_installer_verify-worker-1 Started 
+ Container htg_installer_verify-bot-1 Started 
+ Container htg_installer_verify-caddy-1 Starting 
+ Container htg_installer_verify-prometheus-1 Started 
+ Container htg_installer_verify-grafana-1 Starting 
+ Container htg_installer_verify-caddy-1 Started 
+ Container htg_installer_verify-grafana-1 Started 

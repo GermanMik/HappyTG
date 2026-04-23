@@ -1,0 +1,12 @@
+api=63435
+bot=63436
+grafana=63448
+http=63443
+https=63444
+miniapp=63437
+minio=63441
+minioConsole=63442
+postgres=63439
+prometheus=63445
+redis=63440
+worker=63438

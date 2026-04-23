@@ -1,0 +1,8 @@
+Initial context:
+- Existing local worktree at C:\Develop\Projects\HappyTG was dirty, so this task is implemented in isolated worktree C:\Develop\Projects\HappyTG-installer-docker-launch-mode on branch codex/installer-docker-launch-mode from origin/main.
+- Retrieved EchoVault project context and relevant memory 4edbc64f-031 before implementation.
+- Existing Compose file is infra/docker-compose.example.yml; host daemon is intentionally not part of Compose.
+- packages/bootstrap/src/install/index.ts already runs env merge and planned-port preflight before post-checks.
+- infra/docker-compose.example.yml keeps Mini App container listener at 3001 and maps ${HAPPYTG_MINIAPP_PORT:-3001}:3001.
+- Existing compose does not publish bot host port, while the frozen task requires host readiness at HAPPYTG_BOT_PORT default 4100; this is the only expected Compose adjustment unless runtime evidence changes.
+

@@ -11,7 +11,7 @@
 ## Start
 
 ```bash
-docker compose -f infra/docker-compose.example.yml up --build -d
+docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
 ```
 
 Then verify:

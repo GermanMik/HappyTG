@@ -88,6 +88,16 @@ function installTelegramSummary(result: InstallResult): string {
   return "configured";
 }
 
+function installLaunchSummary(result: InstallResult): string {
+  if (result.launch.mode === "docker") {
+    return result.launch.status === "started"
+      ? `Docker Compose started (${result.launch.command ?? "docker compose"}).`
+      : `Docker Compose ${result.launch.status}: ${result.launch.detail}`;
+  }
+
+  return result.launch.detail;
+}
+
 function findingLabel(severity: "info" | "warn" | "error"): string {
   return severity.toUpperCase().padEnd(5, " ");
 }
@@ -209,7 +219,7 @@ function usage(): string {
     "  happytg doctor|setup|repair|verify|status [--json]",
     "  happytg telegram menu set [--dry-run] [--json]",
     "  happytg telegram menu reset [--json]",
-    "  happytg install [--repo-mode clone|update|current] [--repo-dir <path>] [--repo-url <url>] [--branch <name>] [--telegram-bot-token <token>] [--allowed-user <id>]... [--home-channel <value>] [--background launchagent|scheduled-task|startup|systemd-user|manual|skip] [--post-check setup|doctor|verify]... [--non-interactive] [--json]",
+    "  happytg install [--repo-mode clone|update|current] [--repo-dir <path>] [--repo-url <url>] [--branch <name>] [--telegram-bot-token <token>] [--allowed-user <id>]... [--home-channel <value>] [--background launchagent|scheduled-task|startup|systemd-user|manual|skip] [--launch-mode local|docker|manual|skip] [--post-check setup|doctor|verify]... [--non-interactive] [--json]",
     "  happytg config init [--json]",
     "  happytg env snapshot [--json]",
     "  happytg task init --repo <path> --task <TASK_ID> [--session <id>] [--workspace <id>] [--title <title>] [--mode quick|proof] [--criterion <text>]... [--json]",
@@ -274,6 +284,7 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
     const postChecks = takeOptionList(options, "post-check")
       .filter((value): value is InstallCommandOptions["postChecks"][number] => ["setup", "doctor", "verify"].includes(value));
     const background = takeOption(options, "background");
+    const launchMode = takeOption(options, "launch-mode");
     const repoMode = takeOption(options, "repo-mode");
 
     return {
@@ -302,6 +313,9 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
         telegramHomeChannel: takeOption(options, "home-channel") || undefined,
         backgroundMode: background === "launchagent" || background === "scheduled-task" || background === "startup" || background === "systemd-user" || background === "manual" || background === "skip"
           ? background
+          : undefined,
+        launchMode: launchMode === "local" || launchMode === "docker" || launchMode === "manual" || launchMode === "skip"
+          ? launchMode
           : undefined,
         postChecks: postChecks.length > 0 ? postChecks : ["setup", "doctor", "verify"]
       }
@@ -408,6 +422,7 @@ export function renderText(result: BootstrapReport | InstallResult | TelegramMen
       `Repo: ${result.repo.sync} ${result.repo.path}`,
       `Source: ${result.repo.source} ${result.repo.repoUrl}`,
       `Background: ${result.background.detail}`,
+      `Launch: ${installLaunchSummary(result)}`,
       `Telegram: ${installTelegramSummary(result)}`,
       `Warnings: ${warningMessages.length}`
     ];

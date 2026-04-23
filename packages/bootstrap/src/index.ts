@@ -23,6 +23,9 @@ import { inspectTelegramMenuDiagnostics } from "./telegram-menu.js";
 
 export type BootstrapCommand = "doctor" | "setup" | "repair" | "verify" | "status" | "config-init" | "env-snapshot";
 
+const INFRA_COMPOSE_FILE = "infra/docker-compose.example.yml";
+const INFRA_COMPOSE_PREFIX = `docker compose --env-file .env -f ${INFRA_COMPOSE_FILE}`;
+
 interface DoctorContext {
   command: BootstrapCommand;
   cwd?: string;
@@ -166,7 +169,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     defaultPort: 6379,
     probe: "redis",
     overrideEnv: "HAPPYTG_REDIS_HOST_PORT",
-    command: "docker compose -f infra/docker-compose.example.yml up redis"
+    command: `${INFRA_COMPOSE_PREFIX} up redis`
   },
   {
     id: "postgres",
@@ -175,7 +178,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     defaultPort: 5432,
     probe: "tcp",
     overrideEnv: "HAPPYTG_POSTGRES_HOST_PORT",
-    command: "docker compose -f infra/docker-compose.example.yml up postgres"
+    command: `${INFRA_COMPOSE_PREFIX} up postgres`
   },
   {
     id: "minio-api",
@@ -184,7 +187,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     defaultPort: 9000,
     probe: "tcp",
     overrideEnv: "HAPPYTG_MINIO_PORT",
-    command: "docker compose -f infra/docker-compose.example.yml up minio"
+    command: `${INFRA_COMPOSE_PREFIX} up minio`
   },
   {
     id: "minio-console",
@@ -193,7 +196,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     defaultPort: 9001,
     probe: "tcp",
     overrideEnv: "HAPPYTG_MINIO_CONSOLE_PORT",
-    command: "docker compose -f infra/docker-compose.example.yml up minio"
+    command: `${INFRA_COMPOSE_PREFIX} up minio`
   }
 ] as const;
 
@@ -249,7 +252,7 @@ function telegramBotTarget(env: NodeJS.ProcessEnv): string {
 
 function defaultInfraComposeCommand(redis: RedisDetection, platform: NodeJS.Platform): string {
   const services = redis.state === "running" ? "postgres minio" : "postgres redis minio";
-  const command = `docker compose -f infra/docker-compose.example.yml up ${services}`;
+  const command = `${INFRA_COMPOSE_PREFIX} up ${services}`;
 
   if (platform === "win32") {
     return command;
@@ -1469,12 +1472,12 @@ function buildOnboardingItems(input: {
       pushAutomationItem(items, {
         id: "redis-remap",
         kind: "conflict",
-        message: `If you need container Redis, use \`${commands.inlineEnvExample("HAPPYTG_REDIS_HOST_PORT", 6380, "docker compose -f infra/docker-compose.example.yml up redis")}\`.`
+        message: `If you need container Redis, use \`${commands.inlineEnvExample("HAPPYTG_REDIS_HOST_PORT", 6380, `${INFRA_COMPOSE_PREFIX} up redis`)}\`.`
       });
       pushAutomationItem(items, {
         id: "shared-infra-remaining",
         kind: "manual",
-        message: "Then start the remaining shared infra: `docker compose -f infra/docker-compose.example.yml up postgres minio`."
+        message: `Then start the remaining shared infra: \`${INFRA_COMPOSE_PREFIX} up postgres minio\`.`
       });
     } else if (redis.state === "remote") {
       pushAutomationItem(items, {

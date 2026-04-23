@@ -1,0 +1,10 @@
+NAME                                IMAGE                          COMMAND                  SERVICE      CREATED         STATUS                     PORTS
+htg_installer_verify-api-1          htg_installer_verify-api       "docker-entrypoint.s…"   api          6 minutes ago   Up 6 minutes (unhealthy)   0.0.0.0:63435->4000/tcp, [::]:63435->4000/tcp
+htg_installer_verify-bot-1          htg_installer_verify-bot       "docker-entrypoint.s…"   bot          6 minutes ago   Up 6 minutes (unhealthy)   0.0.0.0:63436->4100/tcp, [::]:63436->4100/tcp
+htg_installer_verify-grafana-1      grafana/grafana:11.3.0         "/run.sh"                grafana      6 minutes ago   Up 6 minutes               0.0.0.0:63448->3000/tcp, [::]:63448->3000/tcp
+htg_installer_verify-miniapp-1      htg_installer_verify-miniapp   "docker-entrypoint.s…"   miniapp      6 minutes ago   Up 6 minutes (unhealthy)   0.0.0.0:63437->3001/tcp, [::]:63437->3001/tcp
+htg_installer_verify-minio-1        minio/minio:latest             "/usr/bin/docker-ent…"   minio        6 minutes ago   Up 6 minutes               9000-9001/tcp
+htg_installer_verify-postgres-1     postgres:16                    "docker-entrypoint.s…"   postgres     6 minutes ago   Up 6 minutes (healthy)     0.0.0.0:63439->5432/tcp, [::]:63439->5432/tcp
+htg_installer_verify-prometheus-1   prom/prometheus:v2.55.1        "/bin/prometheus --c…"   prometheus   6 minutes ago   Up 6 minutes               0.0.0.0:63445->9090/tcp, [::]:63445->9090/tcp
+htg_installer_verify-redis-1        redis:7                        "docker-entrypoint.s…"   redis        6 minutes ago   Up 6 minutes (healthy)     0.0.0.0:63440->6379/tcp, [::]:63440->6379/tcp
+htg_installer_verify-worker-1       htg_installer_verify-worker    "docker-entrypoint.s…"   worker       6 minutes ago   Up 6 minutes (unhealthy)   
