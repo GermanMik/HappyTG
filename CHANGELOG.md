@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.4.4
+
+### Fixed
+
+- Public HTTPS Mini App pages no longer inject `http://localhost:4000` into browser-visible API config when the real launch surface is `/miniapp` behind Caddy. Browser-side auth/session bootstrap now stays same-origin for reverse-proxied public requests while local direct development still uses the local API origin.
+- Telegram Mini App auth bootstrap, approval actions, and new-task submission no longer fail silently when browser-side requests cannot complete. The UI now shows explicit loading, success, and failure feedback and keeps the user on a recoverable screen.
+
+### Changed
+
+- The Mini App shell is now a clearer mobile-first control surface with active bottom navigation, stronger visual hierarchy, larger touch targets, and a more action-first auth/recovery flow.
+- Release metadata is aligned at `0.4.4` across the workspace for the Mini App public routing, auth feedback, and bounded UX redesign release.
+
+### Verification
+
+- Release validation covers Mini App request-aware browser API derivation, auth/bootstrap feedback, public reverse-proxy behavior, repo checks, and canonical task validation for the included proof bundle.
+
 ## v0.4.3
 
 ### Fixed

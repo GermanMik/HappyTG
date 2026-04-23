@@ -1,0 +1,5 @@
+$ pnpm --filter @happytg/miniapp build
+
+> @happytg/miniapp@0.4.4 build C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\apps\miniapp
+> tsc -p tsconfig.json
+

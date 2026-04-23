@@ -1,0 +1,5 @@
+Before screenshots and browser artifacts
+
+- Public desktop screenshot before fix: `raw/before-public-miniapp.png`
+- Public mobile screenshot before fix: `raw/before-auth-pending.png`
+- The pre-fix page showed the generic auth-pending shell while injecting `window.HAPPYTgApiBase = "http://localhost:4000"` on the public HTTPS route.

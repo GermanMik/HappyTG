@@ -1,0 +1,19 @@
+Fresh verifier pass summary
+
+Verifier role: external read-only task-verifier
+Verifier mode: no production edits
+Final verdict: PASS
+
+Verifier findings:
+- No scoped production-code findings remain.
+- One formal metadata issue was found and fixed by the builder: duplicate `phase` key in `task.json`.
+
+Verifier residual risks:
+- Request-aware same-origin rendering depends on correct `X-Forwarded-Host`, `X-Forwarded-Proto`, and `X-Forwarded-Prefix` headers on the reverse proxy.
+- A real Telegram-WebView smoke after merge/deploy is still advisable even though the live public browser probe now proves the correct origin and reachable auth endpoint.
+
+Acceptance summary:
+- Root cause proven by pre-fix public page injection plus failing browser POST to localhost.
+- Live public `/miniapp` now injects empty browser API base and reaches `https://happytg.gerta.crazedns.ru/api/v1/miniapp/auth/session`.
+- Localhost direct dev fallback remains covered by deterministic unit tests.
+- Bundle now validates as `Phase: complete` and `Verification: passed`.

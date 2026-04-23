@@ -1,0 +1,16 @@
+Repository-grounded initial analysis before production edits
+
+Key code paths:
+- apps/miniapp/src/index.ts:50-69 resolveBrowserApiBaseUrl() is env-only and not request-aware.
+- When HAPPYTG_BROWSER_API_URL is empty and HAPPYTG_PUBLIC_URL is not public HTTPS, the function falls back to HAPPYTG_API_URL.
+- apps/miniapp/src/index.ts:599 injects window.HAPPYTgApiBase once per page render.
+- apps/miniapp/src/index.ts:679-699 auth bootstrap posts to apiUrl("/api/v1/miniapp/auth/session") and swallows failures via catch(function () {}).
+- apps/miniapp/src/index.ts:702-727 approval buttons post to the same browser API base and only re-enable the button on failure without visible error state.
+- apps/miniapp/src/index.ts:1107-1145 treats any route without userId/cookie session as auth-pending and renders the pending shell instead of the target screen.
+- infra/caddy/Caddyfile publicly exposes only /api/v1/miniapp/auth/session and /api/v1/miniapp/approvals/{id}/resolve; generic /api/* stays blocked.
+- docs/configuration.md explicitly says production Caddy should leave HAPPYTG_BROWSER_API_URL empty so browser-visible Mini App calls use same-origin /api/... routing.
+
+Initial conclusion to prove/falsify:
+- The strongest leading hypothesis is wrong public/private browser API origin derivation.
+- If the public HTTPS Mini App injects http://localhost:4000 into browser JS, auth bootstrap and any browser POST action will target the wrong origin.
+- Silent catch blocks make the auth-pending screen look like a dead button/dead app instead of showing an actionable error.

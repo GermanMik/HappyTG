@@ -1,0 +1,91 @@
+$ pnpm lint
+
+> happytg@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign
+> turbo lint
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running lint in 15 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/runtime-adapters:lint: cache miss, executing 28bee0ce7216fd25
+@happytg/api:lint: cache miss, executing caf23653d69ad313
+@happytg/worker:lint: cache miss, executing fedabfd2e8e52fd8
+@happytg/miniapp:lint: cache miss, executing b59824c1eff131b2
+@happytg/session-engine:lint: cache miss, executing c8fbf63dd14345af
+@happytg/host-daemon:lint: cache miss, executing 26bbf2d1dd68b140
+@happytg/bootstrap:lint: cache miss, executing 5df317561cfee9d0
+@happytg/hooks:lint: cache miss, executing d78afddaf02d84b9
+@happytg/policy-engine:lint: cache miss, executing 4a1445c87111d33d
+@happytg/telegram-kit:lint: cache miss, executing 0962cef7fa732805
+@happytg/session-engine:lint: 
+@happytg/session-engine:lint: > @happytg/session-engine@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\session-engine
+@happytg/session-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/session-engine:lint: 
+@happytg/host-daemon:lint: 
+@happytg/host-daemon:lint: > @happytg/host-daemon@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\apps\host-daemon
+@happytg/host-daemon:lint: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:lint: 
+@happytg/runtime-adapters:lint: 
+@happytg/runtime-adapters:lint: > @happytg/runtime-adapters@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\runtime-adapters
+@happytg/runtime-adapters:lint: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:lint: 
+@happytg/bootstrap:lint: 
+@happytg/bootstrap:lint: > @happytg/bootstrap@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\bootstrap
+@happytg/bootstrap:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:lint: 
+@happytg/policy-engine:lint: 
+@happytg/policy-engine:lint: > @happytg/policy-engine@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\policy-engine
+@happytg/policy-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:lint: 
+@happytg/telegram-kit:lint: 
+@happytg/telegram-kit:lint: > @happytg/telegram-kit@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\telegram-kit
+@happytg/telegram-kit:lint: > tsc -p tsconfig.json --noEmit
+@happytg/telegram-kit:lint: 
+@happytg/miniapp:lint: 
+@happytg/miniapp:lint: > @happytg/miniapp@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\apps\miniapp
+@happytg/hooks:lint: 
+@happytg/hooks:lint: > @happytg/hooks@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\hooks
+@happytg/miniapp:lint: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:lint: > tsc -p tsconfig.json --noEmit
+@happytg/miniapp:lint: 
+@happytg/hooks:lint: 
+@happytg/worker:lint: 
+@happytg/worker:lint: > @happytg/worker@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\apps\worker
+@happytg/worker:lint: > tsc -p tsconfig.json --noEmit
+@happytg/worker:lint: 
+@happytg/api:lint: 
+@happytg/api:lint: > @happytg/api@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\apps\api
+@happytg/api:lint: > tsc -p tsconfig.json --noEmit
+@happytg/api:lint: 
+@happytg/repo-proof:lint: cache miss, executing 01a53a129cf853fa
+@happytg/approval-engine:lint: cache miss, executing bdc9e79028bc0044
+@happytg/protocol:lint: cache miss, executing 9a8ecd44872e5880
+@happytg/shared:lint: cache miss, executing 52f6d89cb4b4670b
+@happytg/bot:lint: cache miss, executing 977227972ac55b07
+@happytg/repo-proof:lint: 
+@happytg/repo-proof:lint: > @happytg/repo-proof@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\repo-proof
+@happytg/repo-proof:lint: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:lint: 
+@happytg/approval-engine:lint: 
+@happytg/approval-engine:lint: > @happytg/approval-engine@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\approval-engine
+@happytg/approval-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:lint: 
+@happytg/shared:lint: 
+@happytg/shared:lint: > @happytg/shared@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\shared
+@happytg/shared:lint: > tsc -p tsconfig.json --noEmit
+@happytg/shared:lint: 
+@happytg/bot:lint: 
+@happytg/bot:lint: > @happytg/bot@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\apps\bot
+@happytg/bot:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bot:lint: 
+@happytg/protocol:lint: 
+@happytg/protocol:lint: > @happytg/protocol@0.4.4 lint C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\packages\protocol
+@happytg/protocol:lint: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:lint: 
+
+ Tasks:    15 successful, 15 total
+Cached:    0 cached, 15 total
+  Time:    6.996s 
+

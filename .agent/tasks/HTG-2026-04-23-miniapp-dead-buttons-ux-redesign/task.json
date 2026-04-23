@@ -1,0 +1,21 @@
+{
+  "id": "HTG-2026-04-23-miniapp-dead-buttons-ux-redesign",
+  "sessionId": "manual-miniapp-dead-buttons-ux-redesign",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign\\.agent\\tasks\\HTG-2026-04-23-miniapp-dead-buttons-ux-redesign",
+  "mode": "proof",
+  "title": "Mini App dead buttons repair and bounded UX redesign",
+  "acceptanceCriteria": [
+    "Доказан точный root cause dead-button симптома на публичном HTTPS /miniapp.",
+    "Telegram-launched Mini App восстанавливает рабочий auth bootstrap и primary interactions без раскрытия generic /api/*.",
+    "Local direct Mini App development на localhost остается рабочим и задокументированным.",
+    "Mini App browser API derivation становится request-aware и покрыта регрессиями.",
+    "Primary actions получают явные loading/error/success feedback вместо silent failure.",
+    "Mobile-first UX/CJM улучшены без смены framework и без нарушения архитектурных инвариантов.",
+    "Свежий verifier pass, task validate и релиз 0.4.4 завершены с commit/push/merge."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-23T20:10:00.000+03:00",
+  "updatedAt": "2026-04-23T23:57:28.5656846+03:00",
+  "phase": "complete"
+}

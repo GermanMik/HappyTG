@@ -75,7 +75,7 @@ flowchart LR
 | [Runtime Codex](./docs/runtime-codex.md) | You want the Codex runtime model and execution expectations. |
 | [Proof Loop](./docs/proof-loop.md) | You are running non-trivial work with repo-local proof artifacts. |
 | [Release Process](./docs/release-process.md) | You need the guarded path for tags and GitHub Releases. |
-| [Release Notes 0.4.3](./docs/releases/0.4.3.md) | You want the current release-level summary of installer Docker startup and Telegram launch fixes. |
+| [Release Notes 0.4.4](./docs/releases/0.4.4.md) | You want the current release-level summary of the Mini App public routing repair and bounded mobile UX redesign. |
 | [Docker Compose Example](./infra/docker-compose.example.yml) | You need the local shared infra compose file. |
 | [Shared App Dockerfile](./infra/Dockerfile.app) | You need the reusable runtime image definition. |
 | [CI Workflow](./.github/workflows/ci.yml) | You want the exact baseline verification gates enforced in CI. |

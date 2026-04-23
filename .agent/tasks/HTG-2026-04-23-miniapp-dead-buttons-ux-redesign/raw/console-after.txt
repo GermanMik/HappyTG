@@ -1,0 +1,7 @@
+Playwright browser console against local public-proxy harness after fix
+
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3310/favicon.ico:0
+
+Interpretation:
+- No auth/session browser error remains in console after the routing fix.
+- The only remaining console entry in the harness is an unrelated favicon 404 from the temporary proof server.

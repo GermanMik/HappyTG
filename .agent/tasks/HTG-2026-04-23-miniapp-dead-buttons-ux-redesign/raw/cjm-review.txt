@@ -1,0 +1,28 @@
+Current CJM review before redesign
+
+1. Enter from bot
+- Entry works; Telegram launches the public HTTPS Mini App.
+
+2. Wait for Mini App auth/bootstrap
+- Fails silently. Browser attempts localhost auth/session instead of same-origin public API.
+
+3. Scan current state
+- User cannot scan anything meaningful because the auth-pending screen replaces the intended operational surface.
+
+4. Pick the next action
+- No next action is presented besides bottom navigation, and navigation does not resolve the underlying session bootstrap problem.
+
+5. Inspect detail or approve/block
+- Not reachable in the real failing path because session context is never established.
+
+6. Recover from errors or stale state
+- No recovery guidance is present. Silent catch path makes the UI look inert.
+
+7. Return to a clear done/next-step state
+- Not possible; user remains in a vague pending shell.
+
+CJM redesign targets:
+- Make auth/bootstrap state explicit and short-lived.
+- Expose retry/open-from-bot guidance on failure.
+- Preserve action-first routing after auth so the user lands directly in the requested work surface.
+- Keep the first visible screen useful even when a backend call fails.

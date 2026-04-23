@@ -10,6 +10,7 @@ import {
   readPort,
   route,
   text,
+  validatePublicHttpsUrl,
   type Logger
 } from "../../../packages/shared/src/index.js";
 import type {
@@ -30,7 +31,7 @@ import type {
 const logger = createLogger("miniapp");
 loadHappyTGEnv();
 const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
-const browserApiBaseUrl = resolveBrowserApiBaseUrl();
+const configuredBrowserApiBaseUrl = resolveBrowserApiBaseUrl();
 const miniAppSessionCookieName = "happytg_miniapp_session";
 const port = readPort(process.env, ["HAPPYTG_MINIAPP_PORT", "PORT"], 3001);
 
@@ -66,6 +67,44 @@ function resolveBrowserApiBaseUrl(env = process.env): string {
   }
 
   return env.HAPPYTG_API_URL ?? "http://localhost:4000";
+}
+
+function firstHeaderValue(value: string | string[] | undefined): string | undefined {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const trimmed = raw?.trim();
+  return trimmed ? trimmed.split(",")[0]?.trim() : undefined;
+}
+
+function resolveRequestOrigin(headers: Record<string, string | string[] | undefined>): string | undefined {
+  const host = firstHeaderValue(headers["x-forwarded-host"]) ?? firstHeaderValue(headers.host);
+  const proto = firstHeaderValue(headers["x-forwarded-proto"]) ?? "http";
+  if (!host) {
+    return undefined;
+  }
+
+  try {
+    return new URL(`${proto}://${host}`).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+export function resolveBrowserApiBaseUrlForRequest(
+  headers: Record<string, string | string[] | undefined>,
+  env = process.env
+): string {
+  const explicit = env.HAPPYTG_BROWSER_API_URL?.trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const basePath = normalizeBasePath(headers["x-forwarded-prefix"] ?? env.HAPPYTG_MINIAPP_BASE_PATH);
+  const requestOrigin = resolveRequestOrigin(headers);
+  if (basePath && requestOrigin && validatePublicHttpsUrl(requestOrigin, "Mini App request origin").ok) {
+    return "";
+  }
+
+  return resolveBrowserApiBaseUrl(env);
 }
 
 function normalizeBasePath(value: string | string[] | undefined): string {
@@ -269,7 +308,13 @@ async function detectPortOccupant(listenPort: number, fetchImpl: typeof fetch = 
   return {};
 }
 
-export function renderPage(title: string, body: string, options?: { basePath?: string; needsAuth?: boolean }): string {
+type NavKey = "home" | "sessions" | "projects" | "approvals" | "hosts" | "reports";
+
+export function renderPage(
+  title: string,
+  body: string,
+  options?: { basePath?: string; needsAuth?: boolean; browserApiBaseUrl?: string; navKey?: NavKey }
+): string {
   const basePath = normalizeBasePath(options?.basePath);
   const page = `<!doctype html>
 <html lang="ru">
@@ -279,28 +324,31 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
     <title>${title}</title>
     <style>
       :root {
-        --bg: #f7f8fb;
-        --surface: #ffffff;
+        --bg: #f2f5ef;
+        --bg-accent: radial-gradient(circle at top left, rgba(21, 132, 108, 0.18), transparent 34%), radial-gradient(circle at top right, rgba(28, 93, 153, 0.12), transparent 28%), linear-gradient(180deg, #f8fbf7 0%, #eef2ee 100%);
+        --surface: rgba(255, 255, 255, 0.88);
         --surface-soft: #eef6f3;
-        --ink: #172026;
-        --muted: #68727d;
+        --surface-strong: #f5fbf8;
+        --ink: #17312b;
+        --muted: #5e6e69;
         --accent: #0d7f66;
-        --accent-strong: #075c4b;
+        --accent-strong: #095847;
         --warn: #9a6700;
         --danger: #b42318;
         --info: #1c5d99;
-        --border: #d7dee8;
-        --shadow: 0 10px 28px rgba(23, 32, 38, 0.08);
+        --border: rgba(23, 49, 43, 0.12);
+        --shadow: 0 18px 36px rgba(17, 36, 31, 0.08);
       }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        padding: 16px 14px 92px;
+        padding: 14px 14px 124px;
         background: var(--bg);
+        background-image: var(--bg-accent);
         color: var(--ink);
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: "Segoe UI Variable Text", "Trebuchet MS", "Helvetica Neue", sans-serif;
       }
       main {
         max-width: 1080px;
@@ -309,13 +357,15 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
       .panel {
         background: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: 20px;
         padding: 16px;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
         box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
       }
       .hero {
-        background: linear-gradient(135deg, #ffffff 0%, #eef6f3 52%, #f8fafc 100%);
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 246, 243, 0.94) 55%, rgba(245, 251, 248, 0.92) 100%);
+        border-color: rgba(13, 127, 102, 0.16);
       }
       .grid {
         display: grid;
@@ -360,10 +410,11 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
         justify-content: space-between;
         align-items: center;
         gap: 10px;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
       }
       .topbar a {
         text-decoration: none;
+        color: var(--accent-strong);
       }
       .panel-header {
         display: flex;
@@ -375,10 +426,10 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
       .badge {
         display: inline-flex;
         align-items: center;
-        border-radius: 8px;
+        border-radius: 999px;
         padding: 4px 10px;
-        font-size: 12px;
-        letter-spacing: 0;
+        font-size: 11px;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
         border: 1px solid currentColor;
       }
@@ -409,9 +460,9 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
       }
       .status-list li {
         display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 12px 0;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 0;
         border-top: 1px solid var(--border);
       }
       .status-list li:first-child {
@@ -423,7 +474,7 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
         gap: 8px;
         align-items: center;
         flex-wrap: wrap;
-        justify-content: flex-end;
+        justify-content: flex-start;
       }
       .progress-list {
         list-style: none;
@@ -435,9 +486,9 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
       .progress-step {
         display: flex;
         gap: 12px;
-        align-items: center;
+        align-items: flex-start;
         padding: 12px 14px;
-        border-radius: 8px;
+        border-radius: 16px;
         border: 1px solid var(--border);
         background: #fff;
       }
@@ -467,9 +518,9 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
       }
       .kv-item {
         padding: 12px 14px;
-        border-radius: 8px;
+        border-radius: 16px;
         border: 1px solid var(--border);
-        background: #fff;
+        background: rgba(255, 255, 255, 0.82);
       }
       .eyebrow {
         margin: 0 0 8px;
@@ -485,17 +536,18 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
         margin-top: 12px;
       }
       .button {
-        min-height: 40px;
+        min-height: 46px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 8px 12px;
-        border-radius: 8px;
+        padding: 10px 14px;
+        border-radius: 14px;
         border: 1px solid var(--border);
-        background: #fff;
+        background: rgba(255, 255, 255, 0.95);
         color: var(--ink);
         text-decoration: none;
         font-weight: 650;
+        transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
       }
       .button-primary {
         border-color: var(--accent);
@@ -506,6 +558,67 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
         border-color: var(--danger);
         color: var(--danger);
       }
+      .button:disabled {
+        opacity: 0.64;
+        cursor: wait;
+        transform: none;
+      }
+      .button:not(:disabled):active {
+        transform: translateY(1px);
+      }
+      .notice {
+        border-radius: 16px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.92);
+      }
+      .notice-info {
+        border-color: rgba(28, 93, 153, 0.2);
+        background: rgba(28, 93, 153, 0.08);
+      }
+      .notice-success {
+        border-color: rgba(12, 124, 89, 0.24);
+        background: rgba(12, 124, 89, 0.08);
+      }
+      .notice-warn {
+        border-color: rgba(154, 103, 0, 0.24);
+        background: rgba(154, 103, 0, 0.08);
+      }
+      .notice-danger {
+        border-color: rgba(180, 35, 24, 0.22);
+        background: rgba(180, 35, 24, 0.08);
+      }
+      .auth-steps {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .auth-step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.84);
+      }
+      .auth-step::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #bcc8c4;
+      }
+      .auth-step[data-state="running"]::before {
+        background: var(--info);
+        box-shadow: 0 0 0 6px rgba(28, 93, 153, 0.12);
+      }
+      .auth-step[data-state="done"]::before {
+        background: var(--accent);
+      }
+      .auth-step[data-state="error"]::before {
+        background: var(--danger);
+      }
       .bottom-nav {
         position: fixed;
         left: 0;
@@ -513,26 +626,32 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
         bottom: 0;
         z-index: 20;
         display: grid;
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 0;
         border-top: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.96);
+        background: rgba(250, 252, 250, 0.94);
         backdrop-filter: blur(12px);
       }
       .bottom-nav a {
-        min-height: 58px;
+        min-height: 62px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: var(--muted);
         text-decoration: none;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 650;
+        border-top: 2px solid transparent;
+      }
+      .bottom-nav a[aria-current="page"] {
+        color: var(--accent-strong);
+        border-top-color: var(--accent);
+        background: rgba(13, 127, 102, 0.08);
       }
       .empty {
         border: 1px dashed var(--border);
-        background: #fff;
-        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.82);
+        border-radius: 16px;
         padding: 16px;
       }
       .draft-recovery {
@@ -551,14 +670,15 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
       }
       textarea, input, select {
         width: 100%;
-        min-height: 42px;
+        min-height: 46px;
         border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 10px;
+        border-radius: 14px;
+        padding: 12px;
         font: inherit;
+        background: rgba(255, 255, 255, 0.95);
       }
       textarea {
-        min-height: 92px;
+        min-height: 108px;
         resize: vertical;
       }
       @media (min-width: 760px) {
@@ -567,6 +687,17 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
         }
         h1 {
           font-size: 34px;
+        }
+        .status-list li {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .status-meta {
+          justify-content: flex-end;
+        }
+        .bottom-nav {
+          grid-template-columns: repeat(6, 1fr);
         }
       }
     </style>
@@ -587,16 +718,9 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
       </section>
       ${body}
     </main>
-    <nav class="bottom-nav" aria-label="Основная навигация">
-      <a href="/">Home</a>
-      <a href="/sessions">Sessions</a>
-      <a href="/projects">Projects</a>
-      <a href="/approvals">Approvals</a>
-      <a href="/hosts">Hosts</a>
-      <a href="/reports">Reports</a>
-    </nav>
+    ${renderBottomNav(options?.navKey)}
     <script>
-      window.HAPPYTgApiBase = ${JSON.stringify(browserApiBaseUrl)};
+      window.HAPPYTgApiBase = ${JSON.stringify(options?.browserApiBaseUrl ?? configuredBrowserApiBaseUrl)};
       window.HAPPYTgMiniAppBasePath = ${JSON.stringify(basePath)};
       window.HAPPYTgNeedsAuth = ${JSON.stringify(Boolean(options?.needsAuth))};
       window.HAPPYTgSessionCookie = ${JSON.stringify(miniAppSessionCookieName)};
@@ -605,8 +729,51 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
         var sessionKey = "happytg:miniapp:session:v1";
         var ttlMs = 24 * 60 * 60 * 1000;
         var recovery = document.getElementById("draft-recovery");
+        var authTitle = document.querySelector("[data-auth-title]");
+        var authDetail = document.querySelector("[data-auth-detail]");
+        var authStatus = document.querySelector("[data-auth-status]");
+        var authRetry = document.querySelector("[data-auth-retry]");
+        var authReload = document.querySelector("[data-auth-reload]");
         function apiUrl(pathname) {
           return new URL(pathname, window.HAPPYTgApiBase || window.location.origin);
+        }
+        function setNotice(target, tone, message) {
+          if (!target) return;
+          target.className = "notice notice-" + tone;
+          target.textContent = message;
+        }
+        function setActionFeedback(target, tone, message) {
+          if (!target) return;
+          target.hidden = false;
+          setNotice(target, tone, message);
+        }
+        function setAuthStep(name, state) {
+          var step = document.querySelector('[data-auth-step=\"' + name + '\"]');
+          if (step) {
+            step.setAttribute("data-state", state);
+          }
+        }
+        function setAuthState(config) {
+          if (authTitle && config.title) authTitle.textContent = config.title;
+          if (authDetail && config.detail) authDetail.textContent = config.detail;
+          if (authStatus && config.notice) setNotice(authStatus, config.tone || "info", config.notice);
+          if (authRetry) authRetry.hidden = !config.retry;
+          if (config.telegram) setAuthStep("telegram", config.telegram);
+          if (config.session) setAuthStep("session", config.session);
+          if (config.screen) setAuthStep("screen", config.screen);
+        }
+        function readError(response, fallback) {
+          return response.text().then(function (bodyText) {
+            if (!bodyText) return fallback;
+            try {
+              var payload = JSON.parse(bodyText);
+              return payload.detail || payload.error || fallback;
+            } catch (_error) {
+              return bodyText;
+            }
+          }, function () {
+            return fallback;
+          });
         }
         function readDraft() {
           try {
@@ -667,45 +834,134 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
           localStorage.removeItem(key);
           if (recovery) recovery.style.display = "none";
         });
+        authReload?.addEventListener("click", function () {
+          location.reload();
+        });
         var webApp = window.Telegram && window.Telegram.WebApp;
         var savedSession = readSession();
         if (savedSession) {
           persistSession(savedSession);
           if (window.HAPPYTgNeedsAuth) {
+            setAuthState({
+              title: "Возвращаем рабочий экран",
+              detail: "Локальная Mini App session найдена, обновляем страницу.",
+              notice: "Сессия уже есть. Загружаем целевой экран.",
+              tone: "success",
+              telegram: "done",
+              session: "done",
+              screen: "running",
+              retry: false
+            });
             location.reload();
             return;
           }
         }
-        if (webApp && webApp.initData) {
-          var params = new URLSearchParams(location.search);
-          if (!savedSession) {
-            fetch(apiUrl("/api/v1/miniapp/auth/session"), {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                initData: webApp.initData,
-                startAppPayload: params.get("tgWebAppStartParam") || params.get("startapp") || params.get("payload")
-              })
-            }).then(function (response) {
-              return response.ok ? response.json() : undefined;
-            }).then(function (payload) {
-              if (payload && payload.appSession) {
-                persistSession(payload.appSession);
-                if (window.HAPPYTgNeedsAuth) {
-                  location.reload();
-                }
-              }
-            }).catch(function () {});
+        function attemptMiniAppAuth() {
+          var currentWebApp = window.Telegram && window.Telegram.WebApp;
+          if (!currentWebApp || !currentWebApp.initData) {
+            if (window.HAPPYTgNeedsAuth) {
+              setAuthState({
+                title: "Ждем подтверждение из Telegram",
+                detail: "Этот экран нужно открывать из Telegram Mini App, чтобы передать initData и выдать короткую session.",
+                notice: "Не получили данные Telegram. Откройте Mini App из бота и попробуйте снова.",
+                tone: "warn",
+                telegram: "error",
+                session: "pending",
+                screen: "pending",
+                retry: false
+              });
+            }
+            return;
           }
-          webApp.ready();
+          currentWebApp.ready();
+          if (savedSession) {
+            return;
+          }
+          var params = new URLSearchParams(location.search);
+          setAuthState({
+            title: "Подключаем HappyTG",
+            detail: "Проверяем Telegram и запрашиваем короткую Mini App session.",
+            notice: "Подключение выполняется. Это занимает секунды.",
+            tone: "info",
+            telegram: "running",
+            session: "running",
+            screen: "pending",
+            retry: false
+          });
+          fetch(apiUrl("/api/v1/miniapp/auth/session"), {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              initData: currentWebApp.initData,
+              startAppPayload: params.get("tgWebAppStartParam") || params.get("startapp") || params.get("payload")
+            })
+          }).then(function (response) {
+            if (!response.ok) {
+              return readError(response, "Не удалось подтвердить Mini App session.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
+            return response.json();
+          }).then(function (payload) {
+            if (!payload || !payload.appSession) {
+              throw new Error("Backend не выдал Mini App session.");
+            }
+            persistSession(payload.appSession);
+            setAuthState({
+              title: "Доступ подтвержден",
+              detail: "Сессия создана, открываем рабочий экран.",
+              notice: "Подключение завершено. Загружаем целевую страницу.",
+              tone: "success",
+              telegram: "done",
+              session: "done",
+              screen: "running",
+              retry: false
+            });
+            if (window.HAPPYTgNeedsAuth) {
+              location.reload();
+            }
+          }).catch(function (error) {
+            setAuthState({
+              title: "Mini App не подключилась",
+              detail: "HappyTG не смог получить рабочую session через Telegram.",
+              notice: error instanceof Error && error.message ? error.message : "Проверьте соединение и откройте Mini App снова из бота.",
+              tone: "danger",
+              telegram: "done",
+              session: "error",
+              screen: "pending",
+              retry: true
+            });
+          });
+        }
+        authRetry?.addEventListener("click", function () {
+          attemptMiniAppAuth();
+        });
+        if (webApp && webApp.initData) {
+          attemptMiniAppAuth();
+        } else if (window.HAPPYTgNeedsAuth) {
+          setAuthState({
+            title: "Открываем HappyTG",
+            detail: "Mini App session проверяется через Telegram.",
+            notice: "Ждем initData от Telegram. Если экран открыт вне Telegram, подключение не завершится.",
+            tone: "info",
+            telegram: "running",
+            session: "pending",
+            screen: "pending",
+            retry: false
+          });
         }
         document.querySelectorAll("[data-approval-action]").forEach(function (button) {
           button.addEventListener("click", function () {
+            var feedback = document.querySelector("[data-action-feedback]");
             var sessionToken = token();
             if (!sessionToken) {
+              setActionFeedback(feedback, "danger", "Нет Mini App session. Откройте экран заново из бота.");
               return;
             }
             button.disabled = true;
+            var previousLabel = button.textContent;
+            button.textContent = "Отправляем...";
+            setActionFeedback(feedback, "info", "Отправляем решение и обновляем состояние.");
             fetch(apiUrl("/api/v1/miniapp/approvals/" + encodeURIComponent(button.getAttribute("data-approval-id") || "") + "/resolve"), {
               method: "POST",
               headers: {
@@ -718,12 +974,19 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
                 nonce: button.getAttribute("data-nonce") || undefined
               })
             }).then(function (response) {
-              if (!response.ok) throw new Error("approval action failed");
+              if (!response.ok) {
+                return readError(response, "Не удалось выполнить действие по подтверждению.").then(function (detail) {
+                  throw new Error(detail);
+                });
+              }
               return response.json();
             }).then(function () {
+              setActionFeedback(feedback, "success", "Решение сохранено. Обновляем экран.");
               location.reload();
-            }).catch(function () {
+            }).catch(function (error) {
               button.disabled = false;
+              button.textContent = previousLabel;
+              setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось выполнить действие. Попробуйте снова.");
             });
           });
         });
@@ -731,7 +994,10 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
           event.preventDefault();
           var form = event.currentTarget;
           var submit = form.querySelector("[type=submit]");
+          var feedback = form.querySelector("[data-task-feedback]");
           if (submit) submit.disabled = true;
+          if (submit) submit.textContent = "Создаем...";
+          setActionFeedback(feedback, "info", "Создаем сессию и готовим переход к деталям.");
           var data = new FormData(form);
           fetch(location.pathname + location.search, {
             method: "POST",
@@ -749,7 +1015,11 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
                 .filter(Boolean)
             })
           }).then(function (response) {
-            if (!response.ok) throw new Error("session create failed");
+            if (!response.ok) {
+              return readError(response, "Не удалось создать сессию.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
             return response.json();
           }).then(function (payload) {
             localStorage.removeItem(key);
@@ -757,9 +1027,12 @@ export function renderPage(title: string, body: string, options?: { basePath?: s
             if (window.HAPPYTgMiniAppBasePath && href.charAt(0) === "/") {
               href = window.HAPPYTgMiniAppBasePath + href;
             }
+            setActionFeedback(feedback, "success", "Сессия создана. Открываем детальную страницу.");
             location.href = href;
-          }).catch(function () {
+          }).catch(function (error) {
             if (submit) submit.disabled = false;
+            if (submit) submit.textContent = "Создать Codex-сессию";
+            setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось создать сессию.");
           });
         });
       })();
@@ -773,6 +1046,18 @@ function linkButton(label: string, href: string, primary = false): string {
   return `<a class="button${primary ? " button-primary" : ""}" href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
 }
 
+function renderBottomNav(active?: NavKey): string {
+  const items: Array<{ key: NavKey; href: string; label: string }> = [
+    { key: "home", href: "/", label: "Главная" },
+    { key: "sessions", href: "/sessions", label: "Сессии" },
+    { key: "projects", href: "/projects", label: "Проекты" },
+    { key: "approvals", href: "/approvals", label: "Решения" },
+    { key: "hosts", href: "/hosts", label: "Хосты" },
+    { key: "reports", href: "/reports", label: "Отчеты" }
+  ];
+  return `<nav class="bottom-nav" aria-label="Основная навигация">${items.map((item) => `<a href="${item.href}"${item.key === active ? ' aria-current="page"' : ""}>${item.label}</a>`).join("")}</nav>`;
+}
+
 function renderEmptyState(title: string, detail: string, actionLabel: string, href: string): string {
   return `<div class="empty">
     <h2>${escapeHtml(title)}</h2>
@@ -783,8 +1068,19 @@ function renderEmptyState(title: string, detail: string, actionLabel: string, hr
 
 function renderAuthPending(): string {
   return `<section class="panel hero">
-    <h1>Открываем HappyTG</h1>
-    <p class="muted">Mini App session проверяется через Telegram.</p>
+    <p class="eyebrow">Подключение</p>
+    <h1 data-auth-title>Открываем HappyTG</h1>
+    <p class="muted" data-auth-detail>Mini App session проверяется через Telegram.</p>
+    <div class="notice notice-info" data-auth-status>Ждем initData и короткую Mini App session.</div>
+    <div class="auth-steps">
+      <div class="auth-step" data-auth-step="telegram" data-state="pending"><strong>Telegram</strong><span class="muted">Получить initData</span></div>
+      <div class="auth-step" data-auth-step="session" data-state="pending"><strong>Session</strong><span class="muted">Выдать короткий токен</span></div>
+      <div class="auth-step" data-auth-step="screen" data-state="pending"><strong>Экран</strong><span class="muted">Открыть нужный раздел</span></div>
+    </div>
+    <div class="actions">
+      <button class="button button-primary" type="button" data-auth-retry hidden>Повторить подключение</button>
+      <button class="button" type="button" data-auth-reload>Обновить экран</button>
+    </div>
   </section>`;
 }
 
@@ -807,15 +1103,15 @@ function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
       <p class="muted">Короткий статус, быстрые действия и переход к деталям без чтения raw logs.</p>
       <div class="actions">
         ${linkButton("Новая задача", "/new-task", true)}
-        ${linkButton("Projects", "/projects")}
-        ${linkButton("Approvals", "/approvals")}
+        ${linkButton("Проекты", "/projects")}
+        ${linkButton("Подтверждения", "/approvals")}
         ${dashboard.recentSessions[0] ? linkButton("Продолжить последнюю", dashboard.recentSessions[0].href) : ""}
       </div>
     </section>
     <section class="grid">
-      <div class="kv-item"><div class="eyebrow">Active</div><strong>${dashboard.stats.activeSessions}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Approvals</div><strong>${dashboard.stats.pendingApprovals}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Blocked</div><strong>${dashboard.stats.blockedSessions}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Активные</div><strong>${dashboard.stats.activeSessions}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Подтв.</div><strong>${dashboard.stats.pendingApprovals}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Блокеры</div><strong>${dashboard.stats.blockedSessions}</strong></div>
       <div class="kv-item"><div class="eyebrow">Verify</div><strong>${dashboard.stats.verifyProblems}</strong></div>
     </section>
     <section class="panel">
@@ -854,7 +1150,7 @@ function renderSessionCards(sessions: MiniAppSessionCard[]): string {
 
 function renderProjectCards(projects: MiniAppProjectCard[]): string {
   if (projects.length === 0) {
-    return renderEmptyState("Проекты не найдены", "Подключите host daemon и дождитесь hello со списком workspaces.", "Проверить hosts", "/hosts");
+    return renderEmptyState("Проекты не найдены", "Подключите host daemon и дождитесь hello со списком workspaces.", "Проверить хосты", "/hosts");
   }
 
   return `<ul class="status-list">${projects.map((project) => `<li>
@@ -878,9 +1174,10 @@ function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?:
   <section class="panel">
     ${projects.length === 0 ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form>
       <input type="hidden" name="hostId" value="${escapeHtml(selectedProject?.hostId ?? selected?.hostId ?? "")}">
-      <label class="eyebrow" for="workspaceId">Project</label>
+      <div class="notice notice-info" data-task-feedback hidden>Создаем сессию.</div>
+      <label class="eyebrow" for="workspaceId">Проект</label>
       <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''">${options}</select>
-      <label class="eyebrow" for="mode">Mode</label>
+      <label class="eyebrow" for="mode">Режим</label>
       <select id="mode" name="mode">
         <option value="proof" selected>proof</option>
         <option value="quick">quick</option>
@@ -889,16 +1186,16 @@ function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?:
       <input id="title" name="title" value="Mini App task">
       <label class="eyebrow" for="task-draft">Инструкция</label>
       <textarea id="task-draft" name="prompt" data-draft placeholder="Опишите задачу коротко и конкретно"></textarea>
-      <label class="eyebrow" for="acceptanceCriteria">Acceptance criteria</label>
+      <label class="eyebrow" for="acceptanceCriteria">Критерии приемки</label>
       <textarea id="acceptanceCriteria" name="acceptanceCriteria" placeholder="Каждый критерий с новой строки"></textarea>
-      <div class="actions"><button class="button button-primary" type="submit">Создать Codex session</button>${linkButton("Отмена", "/projects")}</div>
+      <div class="actions"><button class="button button-primary" type="submit">Создать Codex-сессию</button>${linkButton("Отмена", "/projects")}</div>
     </form>`}
   </section>`;
 }
 
 function renderApprovalCards(approvals: MiniAppApprovalCard[]): string {
   if (approvals.length === 0) {
-    return renderEmptyState("Нет pending approvals", "Если агенту понадобится рискованное действие, запрос появится отдельной карточкой.", "Открыть sessions", "/sessions");
+    return renderEmptyState("Нет pending approvals", "Если агенту понадобится рискованное действие, запрос появится отдельной карточкой.", "Открыть сессии", "/sessions");
   }
 
   return `<ul class="status-list">${approvals.map((approval) => `<li>
@@ -912,7 +1209,7 @@ function renderApprovalCards(approvals: MiniAppApprovalCard[]): string {
 
 function renderHostCards(hosts: MiniAppHostCard[]): string {
   if (hosts.length === 0) {
-    return renderEmptyState("Host еще не подключен", "Подключите host daemon через pairing, чтобы HappyTG мог работать рядом с repo.", "Открыть справку", "/hosts");
+    return renderEmptyState("Host еще не подключен", "Подключите host daemon через pairing, чтобы HappyTG мог работать рядом с repo.", "Открыть хосты", "/hosts");
   }
 
   return `<ul class="status-list">${hosts.map((host) => `<li>
@@ -927,7 +1224,7 @@ function renderHostCards(hosts: MiniAppHostCard[]): string {
 
 function renderReportCards(reports: MiniAppReportCard[]): string {
   if (reports.length === 0) {
-    return renderEmptyState("Отчетов пока нет", "Proof-loop отчеты появятся после первой задачи с evidence и verify.", "Открыть sessions", "/sessions");
+    return renderEmptyState("Отчетов пока нет", "Proof-loop отчеты появятся после первой задачи с evidence и verify.", "Открыть сессии", "/sessions");
   }
 
   return `<ul class="status-list">${reports.map((report) => `<li>
@@ -1133,16 +1430,29 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       body: JSON.stringify(body)
     });
   };
-  const renderForRequest = (req: { headers: Record<string, string | string[] | undefined> }, title: string, body: string, options?: { needsAuth?: boolean }) => renderPage(title, body, {
+  const renderForRequest = (
+    req: { headers: Record<string, string | string[] | undefined> },
+    title: string,
+    body: string,
+    options?: { needsAuth?: boolean; navKey?: NavKey }
+  ) => renderPage(title, body, {
     basePath: basePathFor(req),
-    needsAuth: options?.needsAuth
+    needsAuth: options?.needsAuth,
+    navKey: options?.navKey,
+    browserApiBaseUrl: resolveBrowserApiBaseUrlForRequest(req.headers)
   });
-  const requireSessionContext = (req: { headers: Record<string, string | string[] | undefined> }, res: Parameters<typeof text>[0], url: URL, title: string): boolean => {
+  const requireSessionContext = (
+    req: { headers: Record<string, string | string[] | undefined> },
+    res: Parameters<typeof text>[0],
+    url: URL,
+    title: string,
+    navKey: NavKey
+  ): boolean => {
     if (hasSessionContext(req, url)) {
       return true;
     }
 
-    html(res, 200, renderForRequest(req, title, renderAuthPending(), { needsAuth: true }));
+    html(res, 200, renderForRequest(req, title, renderAuthPending(), { needsAuth: true, navKey }));
     return false;
   };
 
@@ -1165,19 +1475,19 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
       }),
       route("GET", "/", async ({ req, res, url }) => {
-        if (!requireSessionContext(req, res, url, "HappyTG Mini App")) {
+        if (!requireSessionContext(req, res, url, "HappyTG Mini App", "home")) {
           return;
         }
 
         const screen = url.searchParams.get("screen");
         if (screen === "sessions") {
           const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
-          html(res, 200, renderForRequest(req, "Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`));
+          html(res, 200, renderForRequest(req, "Сессии", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`, { navKey: "sessions" }));
           return;
         }
         if (screen === "approvals") {
           const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
-          html(res, 200, renderForRequest(req, "Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`));
+          html(res, 200, renderForRequest(req, "Подтверждения", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`, { navKey: "approvals" }));
           return;
         }
         if (screen === "session" && url.searchParams.get("id")) {
@@ -1189,41 +1499,41 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             events: SessionEvent[];
             actions: string[];
           }>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(id)}`);
-          html(res, 200, renderForRequest(req, `Session ${detail.session.id}`, renderSessionDetail(detail)));
+          html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions" }));
           return;
         }
         if (screen === "diff" && url.searchParams.get("sessionId")) {
           const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/diff`);
-          html(res, 200, renderForRequest(req, "Diff", renderDiffView(diff)));
+          html(res, 200, renderForRequest(req, "Дифф", renderDiffView(diff), { navKey: "sessions" }));
           return;
         }
         if (screen === "verify" && url.searchParams.get("sessionId")) {
           const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/verify`);
-          html(res, 200, renderForRequest(req, "Verify", renderVerifyView(verify)));
+          html(res, 200, renderForRequest(req, "Проверка", renderVerifyView(verify), { navKey: "sessions" }));
           return;
         }
 
         const dashboard = await fetchForRequest<MiniAppDashboardProjection>(req, url, "/api/v1/miniapp/dashboard");
-        html(res, 200, renderForRequest(req, "HappyTG Mini App", renderDashboardView(dashboard)));
+        html(res, 200, renderForRequest(req, "HappyTG Mini App", renderDashboardView(dashboard), { navKey: "home" }));
       }),
       route("GET", "/sessions", async ({ req, res, url }) => {
-        if (!requireSessionContext(req, res, url, "Sessions")) {
+        if (!requireSessionContext(req, res, url, "Сессии", "sessions")) {
           return;
         }
 
         const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
-        html(res, 200, renderForRequest(req, "Sessions", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Статус, фаза, verify и следующий шаг в одном месте.</p></section>${renderSessionCards(sessions.sessions)}`));
+        html(res, 200, renderForRequest(req, "Сессии", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Статус, фаза, verify и следующий шаг в одном месте.</p></section>${renderSessionCards(sessions.sessions)}`, { navKey: "sessions" }));
       }),
       route("GET", "/approvals", async ({ req, res, url }) => {
-        if (!requireSessionContext(req, res, url, "Approvals")) {
+        if (!requireSessionContext(req, res, url, "Подтверждения", "approvals")) {
           return;
         }
 
         const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
-        html(res, 200, renderForRequest(req, "Approvals", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`));
+        html(res, 200, renderForRequest(req, "Подтверждения", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`, { navKey: "approvals" }));
       }),
       route("GET", "/approval/:id", async ({ req, res, params, url }) => {
-        if (!requireSessionContext(req, res, url, "Approval")) {
+        if (!requireSessionContext(req, res, url, "Подтверждение", "approvals")) {
           return;
         }
 
@@ -1232,43 +1542,44 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           ? `${approvalActionButton("Разрешить один раз", detail.approval, "approved", "once", true)}${approvalActionButton("Разрешить на фазу", detail.approval, "approved", "phase")}${approvalActionButton("Отклонить", detail.approval, "rejected")}`
           : "";
         const body = `<section class="panel hero">
-          <p class="eyebrow">Approval</p>
+          <p class="eyebrow">Подтверждение</p>
           <h1>${escapeHtml(detail.approval.title)}</h1>
           <p class="muted">${escapeHtml(detail.approval.reason)}</p>
+          <div class="notice notice-info" data-action-feedback hidden>Ждем действие.</div>
           <div class="grid">
-            <div class="kv-item"><div class="eyebrow">Risk</div><strong>${escapeHtml(detail.approval.risk)}</strong></div>
+            <div class="kv-item"><div class="eyebrow">Риск</div><strong>${escapeHtml(detail.approval.risk)}</strong></div>
             <div class="kv-item"><div class="eyebrow">Scope</div><strong>${escapeHtml(detail.approval.scope ?? "once")}</strong></div>
-            <div class="kv-item"><div class="eyebrow">Expires</div><strong>${escapeHtml(detail.approval.expiresAt)}</strong></div>
+            <div class="kv-item"><div class="eyebrow">Истекает</div><strong>${escapeHtml(detail.approval.expiresAt)}</strong></div>
           </div>
-          <div class="actions">${approvalActions}${detail.session ? linkButton("Открыть session", detail.session.href) : ""}</div>
+          <div class="actions">${approvalActions}${detail.session ? linkButton("Открыть сессию", detail.session.href) : ""}</div>
         </section>`;
-        html(res, 200, renderForRequest(req, `Approval ${detail.approval.id}`, body));
+        html(res, 200, renderForRequest(req, `Подтверждение ${detail.approval.id}`, body, { navKey: "approvals" }));
       }),
       route("GET", "/hosts", async ({ req, res, url }) => {
-        if (!requireSessionContext(req, res, url, "Hosts")) {
+        if (!requireSessionContext(req, res, url, "Хосты", "hosts")) {
           return;
         }
 
         const hosts = await fetchForRequest<{ hosts: MiniAppHostCard[] }>(req, url, "/api/v1/miniapp/hosts");
-        html(res, 200, renderForRequest(req, "Hosts", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`));
+        html(res, 200, renderForRequest(req, "Хосты", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`, { navKey: "hosts" }));
       }),
       route("GET", "/projects", async ({ req, res, url }) => {
-        if (!requireSessionContext(req, res, url, "Projects")) {
+        if (!requireSessionContext(req, res, url, "Проекты", "projects")) {
           return;
         }
 
         const projects = await fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects");
-        html(res, 200, renderForRequest(req, "Projects", `<section class="panel hero"><h1>Projects</h1><p class="muted">Workspaces reported by paired hosts. Start a Codex CLI session from the project you want to operate on.</p></section>${renderProjectCards(projects.projects)}`));
+        html(res, 200, renderForRequest(req, "Проекты", `<section class="panel hero"><h1>Проекты</h1><p class="muted">Workspaces reported by paired hosts. Start a Codex CLI session from the project you want to operate on.</p></section>${renderProjectCards(projects.projects)}`, { navKey: "projects" }));
       }),
       route("GET", "/project/:id", async ({ req, res, params, url }) => {
-        if (!requireSessionContext(req, res, url, "Project")) {
+        if (!requireSessionContext(req, res, url, "Проект", "projects")) {
           return;
         }
 
         const projects = await fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects");
         const project = projects.projects.find((item) => item.id === params.id);
         if (!project) {
-          html(res, 404, renderForRequest(req, "Project not found", renderEmptyState("Project not found", "Workspace is not available for this Mini App session.", "Projects", "/projects")));
+          html(res, 404, renderForRequest(req, "Проект не найден", renderEmptyState("Проект не найден", "Workspace is not available for this Mini App session.", "Проекты", "/projects"), { navKey: "projects" }));
           return;
         }
 
@@ -1278,10 +1589,10 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             <div class="kv-item"><div class="eyebrow">Host</div><strong>${escapeHtml(project.hostLabel ?? "host n/a")}</strong></div>
             <div class="kv-item"><div class="eyebrow">Active sessions</div><strong>${project.activeSessions}</strong></div>
           </section>`;
-        html(res, 200, renderForRequest(req, `Project ${project.repoName}`, body));
+        html(res, 200, renderForRequest(req, `Проект ${project.repoName}`, body, { navKey: "projects" }));
       }),
       route("GET", "/host/:id", async ({ req, res, params, url }) => {
-        if (!requireSessionContext(req, res, url, "Host")) {
+        if (!requireSessionContext(req, res, url, "Хост", "hosts")) {
           return;
         }
 
@@ -1289,45 +1600,45 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         const body = `<section class="panel hero"><h1>${escapeHtml(detail.host.label)}</h1><p class="muted">${escapeHtml(detail.host.repoNames.join(", ") || "repos not reported")}</p><div class="actions">${linkButton("Использовать для новой задачи", "/new-task", true)}${linkButton("Проверить состояние", "/hosts")}</div></section>
           <section class="panel"><h2>Repos</h2><ul class="status-list">${detail.workspaces.map((workspace) => `<li><div><strong>${escapeHtml(workspace.repoName)}</strong><div class="muted">${escapeHtml(workspace.path)}</div></div><div class="status-meta">${renderBadge(workspace.status)}</div></li>`).join("")}</ul></section>
           <section class="panel"><h2>Sessions</h2>${renderSessionCards(detail.sessions)}</section>`;
-        html(res, 200, renderForRequest(req, `Host ${detail.host.label}`, body));
+        html(res, 200, renderForRequest(req, `Хост ${detail.host.label}`, body, { navKey: "hosts" }));
       }),
       route("GET", "/reports", async ({ req, res, url }) => {
-        if (!requireSessionContext(req, res, url, "Reports")) {
+        if (!requireSessionContext(req, res, url, "Отчеты", "reports")) {
           return;
         }
 
         const reports = await fetchForRequest<{ reports: MiniAppReportCard[] }>(req, url, "/api/v1/miniapp/reports");
-        html(res, 200, renderForRequest(req, "Reports", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`));
+        html(res, 200, renderForRequest(req, "Отчеты", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`, { navKey: "reports" }));
       }),
       route("GET", "/diff/:id", async ({ req, res, params, url }) => {
-        if (!requireSessionContext(req, res, url, "Diff")) {
+        if (!requireSessionContext(req, res, url, "Дифф", "sessions")) {
           return;
         }
 
         const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/diff`);
-        html(res, 200, renderForRequest(req, "Diff", renderDiffView(diff)));
+        html(res, 200, renderForRequest(req, "Дифф", renderDiffView(diff), { navKey: "sessions" }));
       }),
       route("GET", "/verify/:id", async ({ req, res, params, url }) => {
-        if (!requireSessionContext(req, res, url, "Verify")) {
+        if (!requireSessionContext(req, res, url, "Проверка", "sessions")) {
           return;
         }
 
         const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/verify`);
-        html(res, 200, renderForRequest(req, "Verify", renderVerifyView(verify)));
+        html(res, 200, renderForRequest(req, "Проверка", renderVerifyView(verify), { navKey: "sessions" }));
       }),
       route("GET", "/new-task", async ({ req, res, url }) => {
-        if (!requireSessionContext(req, res, url, "New task")) {
+        if (!requireSessionContext(req, res, url, "Новая задача", "projects")) {
           return;
         }
 
         const projects = await fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects");
-        html(res, 200, renderForRequest(req, "New task", renderNewTaskForm(projects.projects, {
+        html(res, 200, renderForRequest(req, "Новая задача", renderNewTaskForm(projects.projects, {
           hostId: url.searchParams.get("hostId") ?? undefined,
           workspaceId: url.searchParams.get("workspaceId") ?? undefined
-        })));
+        }), { navKey: "projects" }));
       }),
       route("POST", "/new-task", async ({ req, res, url }) => {
-        if (!requireSessionContext(req, res, url, "New task")) {
+        if (!requireSessionContext(req, res, url, "Новая задача", "projects")) {
           return;
         }
 
@@ -1342,7 +1653,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         });
       }),
       route("GET", "/task/:id", async ({ req, res, params, url }) => {
-        if (!requireSessionContext(req, res, url, "Task")) {
+        if (!requireSessionContext(req, res, url, "Задача", "reports")) {
           return;
         }
 
@@ -1373,10 +1684,10 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           </section>
         `;
 
-        html(res, 200, renderForRequest(req, `Task ${bundle.task.id}`, body));
+        html(res, 200, renderForRequest(req, `Задача ${bundle.task.id}`, body, { navKey: "reports" }));
       }),
       route("GET", "/session/:id", async ({ req, res, params, url }) => {
-        if (!requireSessionContext(req, res, url, "Session")) {
+        if (!requireSessionContext(req, res, url, "Сессия", "sessions")) {
           return;
         }
 
@@ -1387,7 +1698,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           events: SessionEvent[];
           actions: string[];
         }>(req, url, `/api/v1/miniapp/sessions/${params.id}`);
-        html(res, 200, renderForRequest(req, `Session ${detail.session.id}`, renderSessionDetail(detail)));
+        html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions" }));
       })
     ],
     logger

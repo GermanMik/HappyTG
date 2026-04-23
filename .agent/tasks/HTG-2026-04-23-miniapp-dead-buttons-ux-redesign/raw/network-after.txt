@@ -1,0 +1,7 @@
+Playwright network log against local public-proxy harness after fix
+
+[POST] http://127.0.0.1:3310/api/v1/miniapp/auth/session => [200] OK
+
+Interpretation:
+- The exact browser-side auth bootstrap request succeeds when the public Mini App flow uses same-origin /api routing.
+- This directly removes the dead-end observed before, where the browser posted to localhost and failed.

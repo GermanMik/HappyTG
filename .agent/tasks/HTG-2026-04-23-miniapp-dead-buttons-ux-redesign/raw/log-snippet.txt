@@ -1,0 +1,9 @@
+Operator-provided runtime context from task prompt
+
+@happytg/miniapp:dev: {"scope":"miniapp","message":"Mini App listening","metadata":{"port":3007,"apiBaseUrl":"http://localhost:4000"}}
+@happytg/bot:dev: {"scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"miniAppLaunchUrl":"https://happytg.gerta.crazedns.ru/miniapp"}}
+
+Interpretation:
+- Mini App browser launch URL is public HTTPS.
+- Mini App runtime API base is local HTTP.
+- This is evidence context, not yet proof of the browser-side failure mode.

@@ -1,0 +1,41 @@
+$ pnpm happytg doctor
+
+> happytg@0.4.4 happytg C:\Develop\Projects\HappyTG-HTG-2026-04-23-miniapp-dead-buttons-ux-redesign
+> tsx packages/bootstrap/src/cli.ts "doctor"
+
+HappyTG doctor [WARN]
+Summary: 2 warnings, 1 info found.
+Profile: recommended
+
+Checks:
+- Env: .env found
+- Codex: codex-cli 0.118.0
+- Telegram: configured
+- Telegram Mini App URL: https://happytg.gerta.crazedns.ru/miniapp
+- Caddy /miniapp: Public Caddy Mini App route responded with HTTP 200.
+- Telegram menu button: Telegram menu button state is not checked during doctor/verify to avoid leaking tokens through network diagnostics. Run `pnpm happytg telegram menu set --dry-run`, then `pnpm happytg telegram menu set`.
+- Redis: running on localhost:6379
+- Ports: conflicts: Mini App 3007; reuse: API 4000, Bot 4100, Worker probe 4200, Redis host port 6379, Postgres host port 5432, MinIO API host port 9000, MinIO console host port 9001
+
+Findings:
+- WARN  Codex CLI returned the smoke reply, but the process did not exit before the timeout: Codex smoke command did not exit before the 120000ms timeout. Run `pnpm happytg doctor --json` for stderr details.
+- INFO  HappyTG services already appear to be running on 4000, 4100, 4200. Reuse the running stack or stop it before starting another copy.
+- WARN  Mini App plans to use port 3007, but HTTP listener (200) is already there. This is a conflict, not a supported HappyTG reuse path. Nearest free ports: 3008, 3009, 3010. Choose one with `HAPPYTG_MINIAPP_PORT/PORT` or enter your own port manually. For example: `$env:HAPPYTG_MINIAPP_PORT="3008"; pnpm dev:miniapp`.
+
+Requires user:
+- Request a pairing code on the execution host: `pnpm daemon:pair`.
+- Send `/pair <CODE>` to @gerta_workbot.
+- After pairing, start the daemon with `pnpm dev:daemon`.
+
+Reuse:
+- Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.
+- Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.
+
+Conflicts:
+- Mini App plans to use port 3007, but HTTP listener (200) is already there.
+  - This is a conflict, not a supported HappyTG reuse path.
+  - Nearest free ports: 3008, 3009, 3010.
+  - Choose one with `HAPPYTG_MINIAPP_PORT/PORT` or enter your own port manually. For example: `$env:HAPPYTG_MINIAPP_PORT="3008"; pnpm dev:miniapp`.
+
+Diagnostics:
+- Run `pnpm happytg doctor --json` for machine-readable details.

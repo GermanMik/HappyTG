@@ -5,17 +5,19 @@ Wave 4 keeps the existing TypeScript `apps/miniapp` service and turns it into an
 ## UX Principles
 
 1. Instant clarity: Home shows active sessions, pending approvals, blocked sessions, and verify problems first.
-2. Mobile-first: bottom navigation, compact cards, sticky-ish primary actions, no dense admin tables.
+2. Mobile-first: bottom navigation, compact cards, thumb-friendly actions, no dense admin tables.
 3. Action-first: every screen exposes the next best action before raw details.
 4. Progressive depth: summary first, then diff, verify details, artifacts, and timeline.
 5. Continuity with bot: bot `web_app` links map to `screen=session|diff|verify|approvals` and ids.
 6. Secure launch: `startapp` payload is not auth; backend validates Telegram `initData` and issues a short-lived app session.
 7. Close/reopen resilience: safe drafts are stored locally with TTL and can be restored or cleared.
+8. Trustworthy feedback: auth bootstrap, approval actions, and new-task submission must show in-flight, success, and failure states instead of failing silently.
 
 ## Information Architecture
 
 - Home: dashboard and "Требует внимания".
 - Sessions: operational session cards.
+- Projects: рабочие каталоги и запуск новой Codex-сессии.
 - Approvals: risk/action cards.
 - Hosts: host health, repos, active sessions.
 - Reports: proof-loop report cards.
@@ -23,7 +25,7 @@ Wave 4 keeps the existing TypeScript `apps/miniapp` service and turns it into an
 
 ## Navigation Model
 
-Bottom navigation contains Home, Sessions, Approvals, Hosts, Reports. Detail screens keep a compact title, primary action, and secondary actions as buttons. Bot deep links use query screens for continuity, while path routes remain stable for direct links.
+Bottom navigation contains Home, Sessions, Projects, Approvals, Hosts, Reports. Detail screens keep a compact title, primary action, and secondary actions as buttons. Bot deep links use query screens for continuity, while path routes remain stable for direct links. The active tab stays highlighted so the user always knows which operational area they are in.
 
 ## Screen Specs
 
@@ -38,7 +40,7 @@ Bottom navigation contains Home, Sessions, Approvals, Hosts, Reports. Detail scr
 
 ## Component Map
 
-- `renderPage`: shell, mobile CSS, bottom nav, auth bridge script, draft recovery prompt.
+- `renderPage`: shell, mobile CSS, bottom nav, auth bridge script, auth feedback state, draft recovery prompt.
 - `renderDashboardView`: Home summary and attention.
 - `renderSessionCards`, `renderApprovalCards`, `renderHostCards`, `renderReportCards`: list cards.
 - `renderSessionDetail`: session cockpit.
@@ -54,6 +56,8 @@ Bottom navigation contains Home, Sessions, Approvals, Hosts, Reports. Detail scr
 5. API validates Telegram hash, auth date, signed launch payload, expiry, revocation, use count, and user binding.
 6. API issues a short-lived `MiniAppSession` token.
 7. Frontend stores only this short-lived token and local drafts.
+
+When the Mini App is served through a public HTTPS reverse proxy on `/miniapp`, browser-side API requests stay same-origin. The rendered page injects an empty browser API base so `fetch("/api/...")` resolves against the public Mini App origin instead of any local `localhost` API URL. Direct localhost development without reverse-proxy headers still falls back to the configured local API origin.
 
 ## Access Lifecycle
 
@@ -71,6 +75,8 @@ App sessions expire by `MINIAPP_SESSION_TTL_SECONDS`. Launch grants expire by `M
 - Access denied: return to bot and re-open Mini App.
 - Reconnect available: resume session.
 - Draft found: continue or clear local draft.
+- Auth pending: show Telegram/session/screen steps, retry action, and a clear explanation when the screen was opened outside Telegram.
+- Approval/new task failure: keep the user on the same screen, show the backend error, and preserve available retry actions.
 
 ## Mobile Rules
 
@@ -79,12 +85,14 @@ App sessions expire by `MINIAPP_SESSION_TTL_SECONDS`. Launch grants expire by `M
 - Put primary actions in the first screen section.
 - Keep lists scannable with status badges and one-line context.
 - Use local storage only for safe draft text and current wizard context with TTL.
+- Keep bottom navigation reachable by thumb inside Telegram WebView and make primary buttons large enough for one-handed use.
 
 ## Action Hierarchy
 
 1. Risk/blocking actions: approval, resume, verify/fix.
 2. Inspection actions: diff, evidence, proof timeline.
 3. Secondary navigation: reports, hosts, raw artifacts.
+4. Recovery actions: retry auth, reload screen, restore or clear draft.
 
 ## Microcopy Examples
 
@@ -121,6 +129,7 @@ App sessions expire by `MINIAPP_SESSION_TTL_SECONDS`. Launch grants expire by `M
 8. Verify failed: run fix or inspect report.
 9. Verify stale: rerun verify.
 10. No reports: start a proof task.
+11. Auth bootstrap failed: retry from the same screen or reopen from the bot.
 
 ## Compatibility Notes
 

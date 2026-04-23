@@ -1,0 +1,11 @@
+Live public route probe: https://happytg.gerta.crazedns.ru/miniapp
+
+HTTP status: 200
+Extracted values from page source:
+- window.HAPPYTgApiBase = "http://localhost:4000"
+- window.HAPPYTgMiniAppBasePath = "/miniapp"
+- window.HAPPYTgNeedsAuth = true
+- first heading = "Открываем HappyTG"
+
+Implication:
+- The public HTTPS page injects a browser-visible API base that points to localhost HTTP instead of same-origin /api or public HTTPS origin.

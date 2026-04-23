@@ -1,0 +1,11 @@
+Playwright browser console against live public /miniapp after reproducing auth POST in page context
+
+[ERROR] Access to fetch at 'http://localhost:4000/api/v1/miniapp/auth/session' from origin 'https://happytg.gerta.crazedns.ru' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+[ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:4000/api/v1/miniapp/auth/session:0
+
+Observed eval result from page context:
+- error:TypeError:Failed to fetch
+
+Interpretation:
+- Chromium does not report this path as mixed-content; it reports a real cross-origin localhost request failure.
+- The observable browser-side failure is auth bootstrap to the wrong origin.

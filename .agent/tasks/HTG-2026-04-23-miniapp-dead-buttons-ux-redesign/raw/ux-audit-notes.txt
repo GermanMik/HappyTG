@@ -1,0 +1,35 @@
+Current Mini App UX audit before redesign (mobile Telegram lens)
+
+1. Information architecture
+- The auth-pending shell hides the target screen entirely; user cannot tell whether they opened Home, Sessions, Approvals, or another destination.
+
+2. Visual hierarchy
+- The large hero card dominates the viewport with only a generic "Открываем HappyTG" message; no next action, retry state, or status detail is visually prioritized.
+
+3. Mobile ergonomics
+- Bottom nav is reachable, but the primary content area is mostly empty and wastes the thumb zone above the nav.
+
+4. Interaction design
+- No visible loading spinner, progress step, retry button, or failure banner appears while auth bootstrap is happening or failing.
+
+5. Readability
+- Navigation labels are still English (Home, Sessions, Projects, Approvals, Hosts, Reports) while the screen copy is Russian.
+
+6. Accessibility
+- Empty-state clarity is weak: the user receives no semantic error explanation and no obvious actionable control besides generic navigation.
+
+7. Error recovery
+- There is no retry CTA, no "open from bot again" fallback, no diagnostics copy, and no distinction between Telegram-missing vs network/auth failure.
+
+8. Trust and safety
+- The screen does not explain whether the system is waiting on Telegram auth, local network, or server availability, so user trust degrades quickly.
+
+9. Performance perception
+- The UI looks frozen because the page remains static after the first paint and auth errors are swallowed.
+
+10. Telegram-native feel
+- The experience feels like a blank admin placeholder rather than a compact operational assistant.
+
+Summary:
+- The existing shell is structurally simple but does not communicate progress, failure, or next action.
+- The redesign should reduce perceived deadness before it adds more data density.

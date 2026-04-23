@@ -1,0 +1,12 @@
+Local public-proxy harness after fix
+
+Harness URL: http://127.0.0.1:3310/miniapp
+Injected values observed in browser page context:
+- window.HAPPYTgApiBase = ""
+- window.HAPPYTgMiniAppBasePath = "/miniapp"
+- window.HAPPYTgNeedsAuth = true
+- auth status text = "Ждем initData от Telegram. Если экран открыт вне Telegram, подключение не завершится."
+
+Implication:
+- Public reverse-proxy rendering no longer injects http://localhost:4000 into browser-visible JS config.
+- Browser API routing falls back to same-origin location.origin + /api/... for proxy flows.
