@@ -1,0 +1,24 @@
+{
+  "taskId": "HTG-2026-04-23-enable-miniapp-launch-buttons",
+  "title": "Enable Telegram Mini App launch buttons through public HTTPS",
+  "status": "complete",
+  "phase": "complete",
+  "roles": {
+    "spec": "task-spec-freezer",
+    "builder": "task-builder",
+    "verifier": "task-verifier",
+    "fixer": "task-fixer"
+  },
+  "scope": {
+    "preferredFix": "configuration and deployment verification",
+    "codeChangesAllowedOnlyIf": "a valid public HTTPS /miniapp URL cannot enable launch buttons through existing behavior",
+    "forbidden": [
+      "weaken validatePublicHttpsUrl",
+      "send localhost or plain HTTP URLs to Telegram web_app or MenuButtonWebApp",
+      "bypass telegram menu preflight",
+      "hardcode production URL in application code",
+      "change TELEGRAM_UPDATES_MODE without separate evidence"
+    ]
+  },
+  "generatedAt": "2026-04-23T07:37:14.7152663+03:00"
+}

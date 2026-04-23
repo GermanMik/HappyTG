@@ -1,0 +1,46 @@
+{
+	email {$CADDY_ACME_EMAIL:}
+}
+
+{$HAPPYTG_DOMAIN:happytg.gerta.crazedns.ru} {
+	encode zstd gzip
+
+	# Public health/API surface.
+	handle /health {
+		reverse_proxy api:4000
+	}
+
+	handle /api/v1/miniapp/auth/session {
+		reverse_proxy api:4000
+	}
+
+	@miniappApprovalResolve path_regexp miniapp_approval_resolve ^/api/v1/miniapp/approvals/[^/]+/resolve$
+	handle @miniappApprovalResolve {
+		reverse_proxy api:4000
+	}
+
+	handle /api/* {
+		respond "Not found" 404
+	}
+
+	handle /telegram/webhook {
+		reverse_proxy bot:4100
+	}
+
+	# Public Telegram Mini App route used by inline web_app buttons and setChatMenuButton.
+	handle_path /miniapp* {
+		reverse_proxy {$HAPPYTG_MINIAPP_UPSTREAM:miniapp:3001} {
+			header_up X-Forwarded-Prefix /miniapp
+		}
+	}
+
+	handle_path /static* {
+		reverse_proxy {$HAPPYTG_MINIAPP_UPSTREAM:miniapp:3001}
+	}
+
+	# Keep the root URL inspectable by redirecting operators to the Mini App.
+	handle {
+		redir /miniapp 302
+	}
+}
+

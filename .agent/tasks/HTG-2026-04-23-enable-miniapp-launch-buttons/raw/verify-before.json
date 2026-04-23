@@ -1,0 +1,48 @@
+{
+  "command": "pnpm happytg verify --json",
+  "status": "warn",
+  "findings": [
+    {
+      "code": "CODEX_SMOKE_WARNINGS",
+      "severity": "warn",
+      "message": "Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Unrelated to Mini App launch."
+    },
+    {
+      "code": "TELEGRAM_MINIAPP_URL_UNSAFE",
+      "severity": "info",
+      "message": "Mini App URL must use HTTPS. Local polling can still use Telegram bot commands; Telegram WebApp buttons and menu setup require a public HTTPS /miniapp URL."
+    },
+    {
+      "code": "SERVICES_ALREADY_RUNNING",
+      "severity": "info",
+      "message": "HappyTG services already appear to be running on 3007, 4000, 4100, 4200."
+    }
+  ],
+  "telegramMenu": {
+    "token": {
+      "status": "configured",
+      "configured": true,
+      "message": "TELEGRAM_BOT_TOKEN is configured."
+    },
+    "miniAppUrl": {
+      "value": "http://localhost:3001/",
+      "ok": false,
+      "message": "Mini App URL must use HTTPS. Local polling can still use Telegram bot commands; Telegram WebApp buttons and menu setup require a public HTTPS /miniapp URL."
+    },
+    "caddy": {
+      "checked": false,
+      "message": "Public Caddy Mini App route was not checked because the Mini App URL is missing or unsafe."
+    },
+    "menuButton": {
+      "checked": false,
+      "message": "Telegram menu button state is not checked during doctor/verify."
+    }
+  },
+  "ports": [
+    { "id": "miniapp", "port": 3007, "state": "occupied_expected" },
+    { "id": "api", "port": 4000, "state": "occupied_expected" },
+    { "id": "bot", "port": 4100, "state": "occupied_expected" },
+    { "id": "worker", "port": 4200, "state": "occupied_expected" }
+  ],
+  "omitted": ["Codex smoke stdout/stderr and Cloudflare challenge HTML"]
+}

@@ -1,0 +1,23 @@
+Sanitized environment summary
+Generated: 2026-04-23T03:33:42.2117017Z
+Files inspected: .env, .env.example
+
+[.env]
+HAPPYTG_MINIAPP_URL=<unset>
+HAPPYTG_APP_URL=http://localhost:3001
+HAPPYTG_PUBLIC_URL=http://localhost:4000
+HAPPYTG_MINIAPP_PORT=3007
+TELEGRAM_UPDATES_MODE=auto
+HAPPYTG_MINIAPP_UPSTREAM=<unset>
+HAPPYTG_HTTPS_PORT=443
+HAPPYTG_DOMAIN=happytg.gerta.crazedns.ru
+
+[.env.example]
+HAPPYTG_MINIAPP_URL=
+HAPPYTG_APP_URL=http://localhost:3001
+HAPPYTG_PUBLIC_URL=http://localhost:4000
+HAPPYTG_MINIAPP_PORT=3001
+TELEGRAM_UPDATES_MODE=auto
+HAPPYTG_MINIAPP_UPSTREAM=<unset>
+HAPPYTG_HTTPS_PORT=443
+HAPPYTG_DOMAIN=happytg.gerta.crazedns.ru

@@ -1,0 +1,7 @@
+
+> happytg@0.4.2 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "telegram" "menu" "set"
+
+fetch failed
+ ELIFECYCLE  Command failed with exit code 1.
+ExitCode: 1

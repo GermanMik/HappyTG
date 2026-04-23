@@ -1,0 +1,19 @@
+Local Caddy /miniapp route probes
+Generated: 2026-04-23T03:37:24.4018374Z
+
+[listeners 443]
+local=:::443 pid=24480
+
+URL: https://127.0.0.1/miniapp with Host: happytg.gerta.crazedns.ru
+% Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+curl: (35) schannel: next InitializeSecurityContext failed: SEC_E_INTERNAL_ERROR (0x80090304) - Не удается установить связь с лока
+
+URL: https://localhost/miniapp with Host: happytg.gerta.crazedns.ru
+% Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+curl: (35) schannel: next InitializeSecurityContext failed: SEC_E_INTERNAL_ERROR (0x80090304) - Не удается установить связь с лока

@@ -1,0 +1,49 @@
+{
+  "command": "pnpm happytg doctor --json",
+  "status": "warn",
+  "findings": [
+    {
+      "code": "CODEX_SMOKE_WARNINGS",
+      "severity": "warn",
+      "message": "Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Unrelated to Mini App launch."
+    },
+    {
+      "code": "CADDY_MINIAPP_ROUTE_UNAVAILABLE",
+      "severity": "warn",
+      "message": "Public Caddy Mini App route is unavailable: The operation was aborted due to timeout. Fix the public Caddy route before running pnpm happytg telegram menu set."
+    },
+    {
+      "code": "SERVICES_ALREADY_RUNNING",
+      "severity": "info",
+      "message": "HappyTG services already appear to be running on 3007, 4000, 4100, 4200."
+    }
+  ],
+  "telegramMenu": {
+    "token": {
+      "status": "configured",
+      "configured": true,
+      "message": "TELEGRAM_BOT_TOKEN is configured."
+    },
+    "miniAppUrl": {
+      "value": "https://happytg.gerta.crazedns.ru/miniapp",
+      "ok": true,
+      "message": "Mini App URL is public HTTPS."
+    },
+    "caddy": {
+      "checked": true,
+      "ok": false,
+      "message": "Public Caddy Mini App route is unavailable: The operation was aborted due to timeout"
+    },
+    "menuButton": {
+      "checked": false,
+      "message": "Telegram menu button state is not checked during doctor/verify. Run pnpm happytg telegram menu set --dry-run, then pnpm happytg telegram menu set."
+    }
+  },
+  "ports": [
+    { "id": "miniapp", "port": 3007, "state": "occupied_expected" },
+    { "id": "api", "port": 4000, "state": "occupied_expected" },
+    { "id": "bot", "port": 4100, "state": "occupied_expected" },
+    { "id": "worker", "port": 4200, "state": "occupied_expected" }
+  ],
+  "omitted": ["Codex smoke stdout/stderr and Cloudflare challenge HTML"]
+}

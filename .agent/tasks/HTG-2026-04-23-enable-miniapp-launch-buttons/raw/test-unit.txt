@@ -1,0 +1,186 @@
+
+> @happytg/bot@0.4.2 test C:\Develop\Projects\HappyTG\apps\bot
+> tsx --test src/*.test.ts
+
+✔ menu command renders a concise action-first main menu (7.2837ms)
+✔ menu command omits Telegram web_app buttons when Mini App URL is local HTTP (0.3987ms)
+✔ start command preserves the inline Mini App web_app button for public HTTPS URLs (0.4145ms)
+✔ mini app url resolver derives public https URL before legacy dev app URL (0.4023ms)
+✔ mini app launch diagnostics prefer the local Mini App port over the local API URL (0.3296ms)
+✔ mini app url resolver degrades invalid production URL (0.2263ms)
+✔ inline web_app buttons use the production mini app URL (0.4669ms)
+✔ task wizard uses smart defaults and creates a proof session from callback flow (2.2185ms)
+✔ verify command surfaces scoped approval keyboard with nonce (0.9495ms)
+✔ approval callback resolves with scope and nonce for the linked HappyTG user (1.2025ms)
+✔ resume command posts resume and then renders a session card (0.5542ms)
+✔ session approval report and callback detail flows never emit local HTTP web_app buttons (1.36ms)
+✔ bot ready endpoint returns healthy when api is reachable (39.4846ms)
+✔ bot ready endpoint returns 503 when api is unreachable (10.4289ms)
+✔ startBotServer reuses an already-running HappyTG bot on the same port (53.8236ms)
+✔ startBotServer rejects when a different HappyTG service occupies the bot port (4.7643ms)
+✔ startBotServer names a foreign HTTP listener when the port is occupied (4.0656ms)
+✔ createBotRuntime reuses an existing HappyTG bot without starting a second Telegram delivery loop (53.2538ms)
+✔ botConfigurationMessage stays actionable without exposing secrets (0.2859ms)
+✔ initializeBotEnvironment prefers a valid .env token over placeholder shell state (4.0958ms)
+✔ createDefaultSendTelegramMessage falls back to Windows PowerShell after a Node transport timeout (0.6632ms)
+✔ createDefaultSendTelegramMessage logs parsed Telegram 400 descriptions from the Windows fallback (0.4619ms)
+✔ createDefaultSendTelegramMessage bounds the Windows Node attempt before fallback (39.0162ms)
+✔ createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful without using fallback (1.4413ms)
+✔ resolveTelegramDeliveryMode selects polling for local auto mode (0.1612ms)
+✔ resolveTelegramDeliveryMode selects webhook for public https auto mode (0.1036ms)
+✔ resolveTelegramDeliveryMode keeps explicit webhook mode degraded when the public URL is not webhook-capable (0.145ms)
+{"at":"2026-04-23T03:54:47.175Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-23T03:54:47.176Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:3007/"}}
+✔ caddy and docs use the public /telegram/webhook contract (2.3236ms)
+✔ ready endpoint reports disabled Mini App launch buttons with the local Mini App port (26.5514ms)
+{"at":"2026-04-23T03:54:47.238Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-23T03:54:47.238Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:4000/miniapp"}}
+✔ webhook endpoint dispatches updates through the shared bot handlers (36.0799ms)
+{"at":"2026-04-23T03:54:47.293Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-23T03:54:47.293Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:4000/miniapp"}}
+✔ local polling mode receives /start without a public webhook (55.0159ms)
+✔ local polling mode receives /pair and preserves the pairing claim API boundary (31.494ms)
+✔ local polling mode skips a failing update and continues with later updates (31.6334ms)
+{"at":"2026-04-23T03:54:47.402Z","level":"WARN","scope":"bot","message":"Telegram polling degraded","metadata":{"detail":"Telegram deleteWebhook could not be confirmed through Node HTTPS (Connection to api.telegram.org timed out.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Proxy authentication required.. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine."}}
+{"at":"2026-04-23T03:54:47.402Z","level":"WARN","scope":"bot","message":"Bot listening with degraded Telegram delivery","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"degraded","telegramDeliveryDetail":"Telegram deleteWebhook could not be confirmed through Node HTTPS (Connection to api.telegram.org timed out.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Proxy authentication required.. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:4000/miniapp"}}
+✔ local polling mode falls back to Windows PowerShell Bot API calls after a Node transport timeout (46.4118ms)
+{"at":"2026-04-23T03:54:47.404Z","level":"WARN","scope":"bot","message":"Bot listening with degraded Telegram delivery","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"degraded","telegramDeliveryDetail":"Telegram webhook mode expects https://happy.example.com/telegram/webhook, but current webhook URL is empty.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":3,"miniAppLaunchStatus":"ready","miniAppLaunchDetail":"Telegram Mini App launch buttons are enabled with a public HTTPS URL.","miniAppLaunchUrl":"https://happy.example.com/miniapp"}}
+✔ polling mode stays degraded with actionable detail when both Telegram transports fail on Windows (2.0976ms)
+{"at":"2026-04-23T03:54:47.409Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram webhook active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram webhook mode is active and matches the expected webhook URL.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","actualWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":0,"miniAppLaunchStatus":"ready","miniAppLaunchDetail":"Telegram Mini App launch buttons are enabled with a public HTTPS URL.","miniAppLaunchUrl":"https://happy.example.com/miniapp"}}
+✔ webhook mode stays separate from polling and reports degraded readiness when Telegram webhook is not configured (4.5749ms)
+{"at":"2026-04-23T03:54:47.413Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+{"at":"2026-04-23T03:54:47.413Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"polling","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:3001/"}}
+✔ bot runtime reports Mini App launch readiness without auto-configuring Telegram menu button (4.2319ms)
+{"at":"2026-04-23T03:54:47.450Z","level":"INFO","scope":"bot","message":"Telegram getWebhookInfo delivered via Windows PowerShell fallback"}
+{"at":"2026-04-23T03:54:47.450Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram webhook active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram webhook mode is active and matches the expected webhook URL.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","actualWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":0,"miniAppLaunchStatus":"ready","miniAppLaunchDetail":"Telegram Mini App launch buttons are enabled with a public HTTPS URL.","miniAppLaunchUrl":"https://happy.example.com/miniapp"}}
+✔ bot ready keeps Telegram delivery healthy when Mini App public URL is invalid (36.659ms)
+✔ webhook inspection falls back to Windows PowerShell Bot API calls after a Node transport timeout (3.8579ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 868.8271
+ExitCode: 0
+
+--- pnpm --filter @happytg/bootstrap test ---
+
+> @happytg/bootstrap@0.4.2 test C:\Develop\Projects\HappyTG\packages\bootstrap
+> tsx --test src/*.test.ts
+
+✔ parseHappyTGArgs maps config and env nested commands (2.4735ms)
+✔ parseHappyTGArgs maps Telegram menu commands (0.4161ms)
+✔ parseHappyTGArgs maps install flags into the installer request (0.452ms)
+✔ parseHappyTGArgs uses CliUsageError for invalid CLI surfaces (0.6551ms)
+✔ executeHappyTG initializes and inspects repo-local task bundles (40.0413ms)
+✔ executeHappyTG returns a structured install failure when installer throws before its internal runtime boundary (160.1743ms)
+✔ executeHappyTG delegates install requests through the CLI wrapper without changing the installer result contract (2.0543ms)
+✔ renderText returns a compact bootstrap summary with preflight and diagnostics hints (1.5957ms)
+✔ renderText includes the exact Telegram Mini App menu URL (0.5306ms)
+✔ renderText returns a compact install summary with structured finalization sections (0.591ms)
+✔ renderText keeps warning-only follow-up separate from manual actions in install summaries (0.2408ms)
+✔ renderText explains recoverable installer failures without claiming completion (0.1607ms)
+✔ doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim (356.6483ms)
+✔ verify surfaces Codex smoke warnings as warn when config exists (168.0848ms)
+✔ doctor distinguishes unavailable Codex from a missing Codex binary (101.2369ms)
+✔ doctor recovers through the npm wrapper when Codex is off PATH and leaves a PATH follow-up warning (382.9007ms)
+✔ doctor recovers through a standard Windows APPDATA npm wrapper path when npm prefix probing is unavailable (282.4947ms)
+✔ doctor keeps Codex smoke green through a Windows wrapper when the prompt contains spaces (393.3602ms)
+✔ doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix (161.6495ms)
+✔ setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis (211.2891ms)
+✔ setup names existing PostgreSQL, Redis, and S3 endpoints when Redis is absent locally (154.0438ms)
+✔ doctor reports Redis installed but stopped (153.7653ms)
+✔ doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service (390.7867ms)
+✔ setup treats compatible Redis, PostgreSQL, and MinIO listeners as supported reuse while flagging unrelated conflicts (202.696ms)
+✔ setup respects PORT fallback when app-specific port overrides are absent (164.2575ms)
+✔ config-init and env-snapshot remain deterministic plan-only commands (7.5252ms)
+✔ compose keeps Mini App host port separate from container port for Caddy (8.2943ms)
+✔ Caddy Mini App upstream is configurable and defaults to Docker network (1.655ms)
+✔ syncRepository retries transient primary failures and reports attempt progress (21.5315ms)
+✔ syncRepository returns repo_retry_exhausted after 5 primary attempts (7.3589ms)
+✔ syncRepository falls back to the configured alternative source after exhausting primary retries (7.0488ms)
+✔ syncRepository reports repo_fallback_failure when both configured sources fail (10.2304ms)
+✔ syncRepository updates an existing checkout via the fetched commit without checking out the target branch (1.4678ms)
+✔ runCommand normalizes Windows shim companions like pnpm.cmd (132.6178ms)
+✔ runHappyTGInstall classifies ignored build scripts as warning-only when the critical tsx/esbuild path stays healthy (20.1345ms)
+✔ runHappyTGInstall fails honestly when ignored build scripts leave the critical tsx/esbuild path broken (10.5414ms)
+✔ runHappyTGInstall keeps the no-warning pnpm install path unchanged (10.9179ms)
+✔ runHappyTGInstall uses approve-builds guidance only when the runtime pnpm exposes that command (10.6382ms)
+✔ runHappyTGInstall returns a structured runtime error for Windows shim spawn failures instead of throwing usage-style failures (9.7623ms)
+✔ runHappyTGInstall returns a structured runtime error when non-interactive mode is missing a Telegram token (9.7666ms)
+✔ runHappyTGInstall rejects bot usernames like @name in the token field before runtime work starts (11.1633ms)
+✔ runHappyTGInstall resumes saved installer values on rerun (14.6047ms)
+✔ Telegram setup reducer treats pasted token chunks as text and preserves editing/navigation behavior (1.2911ms)
+✔ Telegram setup reducer commits pasted token and allowed user ID chunks that include trailing CRLF (0.2675ms)
+✔ Telegram setup reducer supports clearing a prefilled token and pasting a replacement (0.2855ms)
+✔ renderMaskedSecretPreview safely degrades for short values (0.1262ms)
+✔ Telegram setup reducer blocks invalid @bot usernames and keeps the user in the form (0.2315ms)
+✔ runHappyTGInstall reports warning-only Telegram getMe failures as success-with-warnings without dropping configured Telegram state (14.2173ms)
+✔ runHappyTGInstall treats a transport-probe-validated Telegram identity as a normal success path (9.9828ms)
+✔ runHappyTGInstall keeps invalid Telegram tokens as configuration failures after a transport fallback probe (9.8628ms)
+✔ runHappyTGInstall interactive Telegram form starts blank even when draft and .env already contain a token (117.2012ms)
+✔ runHappyTGInstall releases stdin after ENTER closes the final summary (121.2194ms)
+✔ runHappyTGInstall interactive port preflight offers three suggested ports and saves the selected override (110.6596ms)
+✔ runHappyTGInstall interactive port preflight shows progress while saving the selected override and rerunning preflight (123.5985ms)
+✔ runHappyTGInstall interactive port preflight accepts a manual port override (140.9169ms)
+✔ runHappyTGInstall interactive port preflight keeps the custom-port prompt active after invalid input and then accepts enter-confirmed retry (157.6614ms)
+✔ runHappyTGInstall interactive port preflight skips port changes for supported reuse (110.6813ms)
+✔ runHappyTGInstall interactive port preflight can abort instead of silently rebinding (119.1187ms)
+✔ runHappyTGInstall keeps an already-known Telegram username when getMe lookup fails (12.2982ms)
+✔ runHappyTGInstall normalizes completed post-check failures into recoverable installer failures (11.1758ms)
+✔ runHappyTGInstall keeps the final result at warning level when post-checks only report Codex PATH follow-up (11.6662ms)
+✔ runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible in the final summary (11.6086ms)
+✔ runHappyTGInstall semantically dedupes repeated setup next steps and compresses repeated post-check warning sets (12.7044ms)
+✔ runHappyTGInstall removes contradictory start commands when setup already says to reuse the running stack (7.2475ms)
+✔ runHappyTGInstall auto-requests a pairing code and suppresses the manual request step once the code is available (10.8802ms)
+✔ runHappyTGInstall refreshes the pairing code automatically when an existing local host is still registering (14.1254ms)
+✔ runHappyTGInstall reuses an already paired existing host without requesting a fresh pairing code (13.7528ms)
+✔ runHappyTGInstall keeps pairing blocked and skips code requests when Telegram token validation fails (9.5416ms)
+✔ runHappyTGInstall renders an honest manual fallback when the existing-host probe is unavailable (12.8962ms)
+✔ runHappyTGInstall reports requested background automation as a warning when configuration falls back to manual (9.7073ms)
+✔ runHappyTGInstall suppresses warning duplicates when the same guidance is already classified as a conflict (11.1541ms)
+✔ runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning level with real bootstrap checks (838.8632ms)
+✔ install.ps1 clears only broken external NODE_OPTIONS preload and does not misdiagnose Node as missing (1075.135ms)
+✔ install.ps1 keeps missing preload failures inside HAPPYTG_BOOTSTRAP_DIR as a hard error (675.8833ms)
+✔ install.ps1 normalizes ignored build script bootstrap warnings before handing off to the shared installer (907.683ms)
+✔ install.sh mirrors the external NODE_OPTIONS preload sanitization without a false Node-missing diagnosis (4056.561ms)
+✔ detectLinuxFamily classifies Debian and Fedora os-release content (15.8483ms)
+✔ detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path (1243.9703ms)
+✔ inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe (603.4892ms)
+✔ mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun (19.3896ms)
+✔ retro installer renderers include active cursor and keyboard hints (1.0797ms)
+✔ progress screen uses a readable ASCII running indicator instead of a unicode ellipsis (0.6441ms)
+✔ progress screen renders an aggregate ASCII progress bar from terminal step states (0.3098ms)
+✔ Telegram screen renders a masked preview instead of the raw bot token (0.9212ms)
+✔ final screen groups structured finalization items and dedupes warning text (1.4926ms)
+✔ waitForEnter resolves when ENTER close is pressed on the final screen (3.2702ms)
+✔ waitForEnter does not render the same final screen twice when ENTER closes it (0.4222ms)
+✔ promptSelect resolves on enter for single-select menus (0.5803ms)
+✔ promptPortValue keeps validation visible after invalid input and accepts a later enter-confirmed retry (1.3057ms)
+✔ promptTelegramForm accepts pasted token and allowed user IDs with trailing CRLF in the interactive keypress path (2.1981ms)
+✔ fetchTelegramBotIdentity separates invalid-token API rejections from recoverable network lookups (3.1967ms)
+✔ fetchTelegramBotIdentity classifies DNS-style fetch failures and non-JSON responses (4.453ms)
+✔ fetchTelegramBotIdentity accepts Windows PowerShell validation as a success fallback after a Node timeout (0.3867ms)
+✔ fetchTelegramBotIdentity promotes invalid tokens when a Windows follow-up probe reaches Telegram (0.8722ms)
+✔ Mini App URL resolution chooses configured public HTTPS URLs before local legacy app URLs (8.4697ms)
+✔ Mini App URL resolution keeps local Mini App port diagnostics separate from the local API URL (0.2732ms)
+✔ Telegram menu setup rejects invalid, local, private, and plain HTTP Mini App URLs (1.277ms)
+✔ Telegram menu setup supports explicit public 8443 Mini App URLs (6.0033ms)
+✔ Telegram menu setup sends the MenuButtonWebApp payload after Caddy preflight (6.122ms)
+✔ Telegram menu dry-run does not call Telegram Bot API (1.3208ms)
+✔ Telegram menu setup fails before network calls when the token is missing (0.9982ms)
+✔ Telegram menu setup blocks when public Caddy /miniapp preflight is unavailable (1.7746ms)
+✔ Telegram menu reset sends a default menu button payload (1.5974ms)
+✔ Telegram menu diagnostics report an unavailable Caddy route without checking menu state (0.8542ms)
+✔ Telegram menu diagnostics explain local polling separately from public HTTPS launch buttons (0.3237ms)
+ℹ tests 105
+ℹ suites 0
+ℹ pass 105
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7116.5846
+ExitCode: 0
