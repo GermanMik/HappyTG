@@ -1,0 +1,28 @@
+
+Windows IP Configuration
+
+
+Unknown adapter Tailscale:
+
+   Connection-specific DNS Suffix  . : tail396093.ts.net
+   IPv6 Address. . . . . . . . . . . : fd7a:115c:a1e0::373a:8e2c
+   Link-local IPv6 Address . . . . . : fe80::bc29:ca9:d9fe:5bd4%8
+   IPv4 Address. . . . . . . . . . . : 100.87.142.44
+   Subnet Mask . . . . . . . . . . . : 255.255.255.255
+   Default Gateway . . . . . . . . . : 
+
+Ethernet adapter Ethernet:
+
+   Connection-specific DNS Suffix  . : 
+   Link-local IPv6 Address . . . . . : fe80::3e85:a3b5:a721:af63%17
+   IPv4 Address. . . . . . . . . . . : 192.168.50.83
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 192.168.50.1
+
+Ethernet adapter vEthernet (Default Switch):
+
+   Connection-specific DNS Suffix  . : 
+   Link-local IPv6 Address . . . . . : fe80::da4b:214a:c5bc:2024%10
+   IPv4 Address. . . . . . . . . . . : 172.25.240.1
+   Subnet Mask . . . . . . . . . . . : 255.255.240.0
+   Default Gateway . . . . . . . . . : 

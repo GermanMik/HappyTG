@@ -1,0 +1,15 @@
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+System.Management.Automation.RemoteException
+  0      0   0      0   0      0      0      0                              0
+100      9 100      9   0      0   1019      0                              0
+100      9 100      9   0      0   1011      0                              0
+100      9 100      9   0      0    995      0                              0
+HTTP/1.1 404 Not Found
+Alt-Svc: h3=":443"; ma=2592000
+Content-Type: text/plain; charset=utf-8
+Server: Caddy
+Date: Fri, 24 Apr 2026 16:59:08 GMT
+Content-Length: 9
+
+Not found

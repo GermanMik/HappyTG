@@ -1,0 +1,90 @@
+
+> happytg@0.4.4 build C:\Develop\Projects\HappyTG
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running build in 15 packages
+   • Remote caching disabled
+
+@happytg/miniapp:build: cache miss, executing 467c456557165a86
+@happytg/protocol:build: cache miss, executing ecf6f9b52b989e36
+@happytg/bootstrap:build: cache miss, executing 91d27436a23acee1
+@happytg/repo-proof:build: cache miss, executing e3965133636b267b
+@happytg/host-daemon:build: cache miss, executing c62ebc519ff640a2
+@happytg/bot:build: cache miss, executing 847fb9959a2ed618
+@happytg/runtime-adapters:build: cache miss, executing ac53fa586ba22d93
+@happytg/session-engine:build: cache miss, executing 791039dc2e8b73b9
+@happytg/worker:build: cache miss, executing b755df2cb9d5eb65
+@happytg/policy-engine:build: cache miss, executing f9d32d98ded4cb9a
+@happytg/miniapp:build: 
+@happytg/miniapp:build: > @happytg/miniapp@0.4.4 build C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.4.4 build C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.4.4 build C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.4.4 build C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.4.4 build C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.4.4 build C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.4.4 build C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.4.4 build C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+@happytg/session-engine:build: 
+@happytg/session-engine:build: > @happytg/session-engine@0.4.4 build C:\Develop\Projects\HappyTG\packages\session-engine
+@happytg/session-engine:build: > tsc -p tsconfig.json
+@happytg/session-engine:build: 
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.4.4 build C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build: 
+@happytg/shared:build: cache miss, executing bfd0230d64295e3d
+@happytg/hooks:build: cache miss, executing d273fad7bb03c70f
+@happytg/telegram-kit:build: cache miss, executing 082fc997849a9cad
+@happytg/api:build: cache miss, executing deb8d87907b90896
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.4.4 build C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.4.4 build C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.4.4 build C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+@happytg/approval-engine:build: cache miss, executing 008cd1151263a4d8
+@happytg/telegram-kit:build: 
+@happytg/telegram-kit:build: > @happytg/telegram-kit@0.4.4 build C:\Develop\Projects\HappyTG\packages\telegram-kit
+@happytg/telegram-kit:build: > tsc -p tsconfig.json
+@happytg/telegram-kit:build: 
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.4.4 build C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+
+ Tasks:    15 successful, 15 total
+Cached:    0 cached, 15 total
+  Time:    25.033s 
+

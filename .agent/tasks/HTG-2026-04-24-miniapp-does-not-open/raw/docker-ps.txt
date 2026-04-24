@@ -1,0 +1,25 @@
+NAMES                                IMAGE                                      PORTS                                                                                          STATUS
+healthos-api-caddy-recovery          healthcheck-api                            0.0.0.0:81->8000/tcp, [::]:81->8000/tcp                                                        Up 6 minutes (healthy)
+nportal-postgres-1                   postgres:16-alpine                         5432/tcp                                                                                       Up 2 days (healthy)
+nportal-redis-1                      redis:7-alpine                             6379/tcp                                                                                       Up 2 days (healthy)
+contacts-telegram-bot                contacts-telegram-bot                                                                                                                     Up 2 days
+contacts-backend                     contacts-backend                           0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp                                                    Up 2 days
+shared-redis                         redis:7-alpine                             0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp                                                    Up 2 days (healthy)
+nportal-paperclip-tests-postgres-1   postgres:16-alpine                         0.0.0.0:55433->5432/tcp, [::]:55433->5432/tcp                                                  Up 2 days (healthy)
+nportal-fixrun-postgres-1            postgres:16-alpine                         0.0.0.0:58432->5432/tcp, [::]:58432->5432/tcp                                                  Up 2 days (healthy)
+nportal-fixrun-redis-1               redis:7-alpine                             0.0.0.0:58379->6379/tcp, [::]:58379->6379/tcp                                                  Up 2 days (healthy)
+nportal-fixrun-minio-1               minio/minio:RELEASE.2025-09-07T16-13-09Z   0.0.0.0:59110->9000/tcp, [::]:59110->9000/tcp, 0.0.0.0:59111->9001/tcp, [::]:59111->9001/tcp   Up 2 days
+nportal-fixrun-meilisearch-1         getmeili/meilisearch:v1.14                 0.0.0.0:57710->7700/tcp, [::]:57710->7700/tcp                                                  Up 2 days
+contacts-ocr-service                 contacts-ocr-service-local                 0.0.0.0:8003->8001/tcp, [::]:8003->8001/tcp                                                    Up 2 days (healthy)
+contacts-nlp-service                 contacts-nlp-service                       0.0.0.0:8001->8001/tcp, [::]:8001->8001/tcp                                                    Up 2 days (healthy)
+contacts-frontend                    contacts-frontend                          0.0.0.0:3001->4173/tcp, [::]:3001->4173/tcp                                                    Up 2 days
+contacts-miniapp                     contacts-miniapp                           0.0.0.0:4174->4174/tcp, [::]:4174->4174/tcp                                                    Up 2 days
+deploy-factory-1                     deploy-factory                             127.0.0.1:3004->3003/tcp                                                                       Up 2 days
+shared-ocr-service                   shared-ocr-service:latest                  0.0.0.0:8002->8001/tcp, [::]:8002->8001/tcp                                                    Up 2 days (healthy)
+shared-ollama                        ollama/ollama:latest                       0.0.0.0:11434->11434/tcp, [::]:11434->11434/tcp                                                Up 2 days
+nportal-minio-1                      minio/minio:RELEASE.2025-09-07T16-13-09Z   0.0.0.0:9000-9001->9000-9001/tcp, [::]:9000-9001->9000-9001/tcp                                Up 2 days
+nportal-meilisearch-1                getmeili/meilisearch:v1.14                 0.0.0.0:7700->7700/tcp, [::]:7700->7700/tcp                                                    Up 2 days
+contacts-nginx                       nginx:alpine                               0.0.0.0:80->80/tcp, [::]:80->80/tcp                                                            Up 2 days
+contacts-postgres                    postgres:16                                0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp                                                    Up 2 days (healthy)
+contacts-bull-board                  contacts-bull-board                        0.0.0.0:3003->3001/tcp, [::]:3003->3001/tcp                                                    Up 2 days
+healthos-postgres                    postgres:16                                5432/tcp                                                                                       Up 19 minutes (healthy)

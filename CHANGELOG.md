@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.4.5
+
+### Fixed
+
+- Telegram Mini App launch validation now proves the public `/miniapp` route is actually serving HappyTG Mini App HTML instead of accepting any `HTTP 200` page from the edge.
+- Public Caddy routing now exposes the exact authenticated Mini App dashboard projection at `/api/v1/miniapp/dashboard`, allowing same-origin dashboard requests to reach API session auth instead of being stopped by the generic API deny rule.
+
+### Changed
+
+- The public Mini App API contract remains explicit: `auth/session`, `dashboard`, and approval resolve are the narrow public exceptions, while generic `/api/*` still returns `404`.
+- Release metadata is aligned at `0.4.5` across the workspace for the Mini App launch identity and dashboard API route repair.
+
+### Verification
+
+- Release validation covers Mini App route identity checks, Caddy API boundary tests, live/public dashboard route probes, repo checks, and canonical task validation for the included proof bundles.
+
 ## v0.4.4
 
 ### Fixed

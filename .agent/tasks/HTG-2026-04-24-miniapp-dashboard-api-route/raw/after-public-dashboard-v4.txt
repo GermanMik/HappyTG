@@ -1,0 +1,19 @@
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+System.Management.Automation.RemoteException
+  0      0   0      0   0      0      0      0                              0
+100     48 100     48   0      0    821      0                              0
+100     48 100     48   0      0    819      0                              0
+100     48 100     48   0      0    818      0                              0
+HTTP/1.1 401 Unauthorized
+Server: Web server
+Date: Fri, 24 Apr 2026 17:02:59 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 48
+Connection: keep-alive
+Alt-Svc: h3=":8443"; ma=2592000
+Via: 1.1 Caddy
+
+{
+  "error": "Mini App session auth required"
+}

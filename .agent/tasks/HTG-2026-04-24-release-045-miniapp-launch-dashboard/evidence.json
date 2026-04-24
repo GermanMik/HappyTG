@@ -1,0 +1,16 @@
+{
+  "taskId": "HTG-2026-04-24-release-045-miniapp-launch-dashboard",
+  "status": "initialized",
+  "version": "0.4.5",
+  "checks": [
+    {
+      "command": "pnpm release:check --version 0.4.5",
+      "status": "passed",
+      "artifact": "raw/release-check.txt"
+    }
+  ],
+  "sourceProofBundles": [
+    "HTG-2026-04-24-miniapp-does-not-open",
+    "HTG-2026-04-24-miniapp-dashboard-api-route"
+  ]
+}

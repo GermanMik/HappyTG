@@ -1,0 +1,5 @@
+remote_ip=78.47.125.180
+local_ip=192.168.50.83
+http_code=200
+content_type=text/html; charset=utf-8
+ssl_verify=0

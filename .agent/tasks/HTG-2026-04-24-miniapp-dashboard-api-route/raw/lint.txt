@@ -1,0 +1,4 @@
+
+> @happytg/bootstrap@0.4.4 lint C:\Develop\Projects\HappyTG\packages\bootstrap
+> tsc -p tsconfig.json --noEmit
+

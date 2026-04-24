@@ -1,0 +1,3 @@
+Navigating to https://happytg.gerta.crazedns.ru/miniapp
+Waiting for timeout 2500...
+Capturing screenshot into output\playwright\HTG-2026-04-24-miniapp-public.png

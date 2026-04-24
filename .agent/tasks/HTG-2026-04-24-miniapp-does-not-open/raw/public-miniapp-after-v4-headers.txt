@@ -1,0 +1,9 @@
+HTTP/1.1 200 OK
+Server: Web server
+Date: Fri, 24 Apr 2026 15:56:55 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 27488
+Connection: keep-alive
+Alt-Svc: h3=":8443"; ma=2592000
+Via: 1.1 Caddy
+

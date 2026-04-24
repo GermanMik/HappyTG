@@ -14,6 +14,10 @@
 		reverse_proxy api:4000
 	}
 
+	handle /api/v1/miniapp/dashboard {
+		reverse_proxy api:4000
+	}
+
 	@miniappApprovalResolve path_regexp miniapp_approval_resolve ^/api/v1/miniapp/approvals/[^/]+/resolve$
 	handle @miniappApprovalResolve {
 		reverse_proxy api:4000

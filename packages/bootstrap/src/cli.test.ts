@@ -374,7 +374,7 @@ test("renderText includes the exact Telegram Mini App menu URL", () => {
       ok: true,
       url: "https://happytg.gerta.crazedns.ru:8443/miniapp",
       status: 200,
-      detail: "Public Caddy Mini App route responded with HTTP 200."
+      detail: "Public Caddy Mini App route responded with HTTP 200 and HappyTG Mini App identity."
     },
     telegram: {
       method: "setChatMenuButton",

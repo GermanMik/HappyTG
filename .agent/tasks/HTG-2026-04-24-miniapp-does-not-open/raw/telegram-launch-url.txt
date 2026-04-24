@@ -1,0 +1,16 @@
+Telegram Mini App launch URL evidence
+
+Resolved URL sent to Telegram:
+https://happytg.gerta.crazedns.ru/miniapp
+
+Resolution inputs, sanitized:
+- HAPPYTG_MINIAPP_URL=https://happytg.gerta.crazedns.ru/miniapp
+- HAPPYTG_APP_URL=http://localhost:3007
+- HAPPYTG_PUBLIC_URL=http://localhost:4000
+- HAPPYTG_MINIAPP_PORT=3007
+
+Observed command output:
+- raw/telegram-menu-dry-run-before.txt: Mini App URL sent to Telegram: https://happytg.gerta.crazedns.ru/miniapp
+- raw/telegram-menu-dry-run-after.txt: Mini App URL sent to Telegram: https://happytg.gerta.crazedns.ru/miniapp
+
+No Telegram token, initData, cookies, or private user data were recorded.

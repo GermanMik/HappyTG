@@ -1,0 +1,38 @@
+{
+  "taskId": "HTG-2026-04-24-miniapp-does-not-open",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "fresh-verifier-019dc03e-d069-70c2-aaa3-4b912996c903"
+  },
+  "checks": [
+    {
+      "name": "Fresh verifier review",
+      "ok": true,
+      "detail": "Read-only verifier confirmed reproduced symptom, root cause, code behavior, route boundary evidence, and checks."
+    },
+    {
+      "name": "Header-only identity coverage",
+      "ok": true,
+      "detail": "Focused regression test covers x-happytg-service: miniapp acceptance; bootstrap tests passed 115/115."
+    },
+    {
+      "name": "Task validation",
+      "ok": true,
+      "detail": "pnpm happytg task validate --repo . --task HTG-2026-04-24-miniapp-does-not-open passed."
+    }
+  ],
+  "criteria": {
+    "reproducedFailure": true,
+    "identifiedLaunchUrl": true,
+    "publicRouteCaptured": true,
+    "rootCauseProven": true,
+    "localDevelopmentPreserved": true,
+    "publicApiBoundaryPreserved": true,
+    "regressionCoverageAdded": true,
+    "builderVerificationPassed": true,
+    "freshVerifierPassed": true,
+    "taskValidationPassed": true
+  },
+  "generatedAt": "2026-04-24T19:13:26.2841612+03:00"
+}

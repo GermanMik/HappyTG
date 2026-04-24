@@ -1,0 +1,22 @@
+{
+  "id": "HTG-2026-04-24-miniapp-does-not-open",
+  "sessionId": "codex-session-2026-04-24",
+  "workspaceId": "C:\\Develop\\Projects\\HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-24-miniapp-does-not-open",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Repair Telegram Mini App launch/open failure",
+  "acceptanceCriteria": [
+    "Reproduce and record the user-visible launch symptom before the fix.",
+    "Record the exact Mini App URL that Telegram launch paths try to open.",
+    "Probe the intended public HTTPS /miniapp route and record status, redirects, content-type, and body identity.",
+    "Prove the root cause category without substituting assumptions for repository/runtime evidence.",
+    "Preserve local direct development behavior.",
+    "Preserve public HTTPS Mini App access through Caddy without exposing generic public /api/*.",
+    "Add focused regression coverage for the repaired launch/routing behavior.",
+    "Complete builder verification, fresh read-only verifier pass, and task validation."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-24T00:00:00+03:00",
+  "updatedAt": "2026-04-24T19:13:26.2841612+03:00"
+}

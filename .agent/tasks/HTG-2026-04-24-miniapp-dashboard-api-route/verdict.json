@@ -1,0 +1,23 @@
+{
+  "taskId": "HTG-2026-04-24-miniapp-dashboard-api-route",
+  "status": "passed",
+  "verdict": "passed",
+  "checks": [
+    {
+      "name": "Dashboard public route",
+      "ok": true,
+      "detail": "Public/local Caddy now returns API 401 auth-required for /api/v1/miniapp/dashboard instead of Caddy 404."
+    },
+    {
+      "name": "Generic API boundary",
+      "ok": true,
+      "detail": "Generic /api/v1/tasks remains 404; no /api/v1/miniapp* wildcard was introduced."
+    },
+    {
+      "name": "Regression tests",
+      "ok": true,
+      "detail": "Bootstrap Caddy contract tests and API tests passed."
+    }
+  ],
+  "generatedAt": "2026-04-24T20:05:00+03:00"
+}
