@@ -1,0 +1,9 @@
+
+LocalAddress LocalPort RemoteAddress RemotePort State  AppliedSetting OwningProcess
+------------ --------- ------------- ---------- -----  -------------- -------------
+::           443       ::            0          Listen                24480
+::           3007      ::            0          Listen                30308
+::           4000      ::            0          Listen                21612
+::           4100      ::            0          Listen                10824
+
+

@@ -1,0 +1,14 @@
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0
+HTTP/1.1 302 Found
+Alt-Svc: h3=":443"; ma=2592000
+Location: /miniapp
+Server: Caddy
+Date: Fri, 24 Apr 2026 15:53:16 GMT
+Content-Length: 0
+

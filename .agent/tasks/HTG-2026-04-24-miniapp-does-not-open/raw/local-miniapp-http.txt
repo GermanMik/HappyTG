@@ -1,0 +1,18 @@
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+HTTP/1.1 404 Not Found
+content-type: application/json; charset=utf-8
+Date: Fri, 24 Apr 2026 15:52:57 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 49
+
+{
+  "error": "Not found",
+  "path": "/miniapp"
+}
+100     49 100     49   0      0  27313      0                              0
+100     49 100     49   0      0  26400      0                              0
+100     49 100     49   0      0  25708      0                              0

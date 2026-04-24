@@ -1,0 +1,59 @@
+
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:9:    encode gzip zstd
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:10:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:11:    handle /api/* {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:12:        reverse_proxy http://localhost:81 {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:13:            header_up Host {http.request.host}
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:26:    encode gzip zstd
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:27:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:28:    handle /api/* {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:29:        reverse_proxy http://localhost:81 {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:30:            header_up Host {http.request.host}
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:38:}
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:39:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:40:(happytg_runtime) {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:41:    encode gzip zstd
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:42:
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:45:    }
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:46:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:47:    handle /api/v1/miniapp/auth/session {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:48:        reverse_proxy http://localhost:4000
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:49:    }
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:50:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:51:    @miniappApprovalResolve path_regexp miniapp_approval_resolve ^/api/v1/miniapp/approvals/[^/]+/resolve$
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:52:    handle @miniappApprovalResolve {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:53:        reverse_proxy http://localhost:4000
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:54:    }
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:55:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:56:    handle /api/* {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:57:        respond "Not found" 404
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:58:    }
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:137:happytg.gerta.crazedns.ru:8443 {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:138:    # Внешний HTTPS на этом хосте приходит в Caddy :8443; HappyTG должен совпадать с route на :443.
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:139:    import happytg_runtime
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:140:}
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:141:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:142:https://:8443 {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:143:    # KeenDNS backend HTTPS can arrive on ALPHA:8443 without useful SNI.
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:144:    # Keep HealthOS as the default, but reserve HappyTG Mini App paths before
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:150:    }
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:151:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:152:    handle /api/v1/miniapp/auth/session {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:153:        reverse_proxy http://localhost:4000
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:154:    }
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:155:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:156:    @miniappApprovalResolveFallback path_regexp miniapp_approval_resolve_fallback ^/api/v1/miniapp/approvals/[^/]+/resolve$
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:157:    handle @miniappApprovalResolveFallback {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:158:        reverse_proxy http://localhost:4000
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:178:    }
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:179:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:180:    handle /api/* {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:181:        reverse_proxy http://localhost:81 {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:182:            header_up Host {http.request.host}
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:225:
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:226:happytg.gerta.crazedns.ru {
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:227:    import happytg_runtime
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:228:}
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:229:
+
+

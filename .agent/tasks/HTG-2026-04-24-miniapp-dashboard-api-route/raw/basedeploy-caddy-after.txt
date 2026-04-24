@@ -1,0 +1,27 @@
+
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:10:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:11:    handle /api/* {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:12:        reverse_proxy http://localhost:81 {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:27:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:28:    handle /api/* {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:29:        reverse_proxy http://localhost:81 {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:46:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:47:    handle /api/v1/miniapp/auth/session {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:48:        reverse_proxy http://localhost:4000
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:50:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:51:    handle /api/v1/miniapp/dashboard {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:52:        reverse_proxy http://localhost:4000
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:59:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:60:    handle /api/* {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:61:        respond "Not found" 404
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:155:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:156:    handle /api/v1/miniapp/auth/session {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:157:        reverse_proxy http://localhost:4000
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:159:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:160:    handle /api/v1/miniapp/dashboard {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:161:        reverse_proxy http://localhost:4000
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:187:
+> C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:188:    handle /api/* {
+  C:\Develop\Projects\BaseDeploy\caddy\Caddyfile:189:        reverse_proxy http://localhost:81 {
+
+

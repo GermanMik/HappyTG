@@ -1,0 +1,9 @@
+
+> happytg@0.4.5 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-24-release-045-miniapp-launch-dashboard"
+
+Task: HTG-2026-04-24-release-045-miniapp-launch-dashboard
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-24-release-045-miniapp-launch-dashboard
+Validation: ok
+Phase: evidence
+Verification: running

@@ -1,0 +1,80 @@
+2026-04-24 15:49:49,282 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:34634 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:50:19,501 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:50:19,501 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:50:19,501 INFO sqlalchemy.engine.Engine [cached since 228.6s ago] ()
+2026-04-24 15:50:19,502 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:60176 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:50:21,561 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:50:21,561 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:50:21,562 INFO sqlalchemy.engine.Engine [cached since 230.7s ago] ()
+2026-04-24 15:50:21,563 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     172.23.0.1:52510 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:50:21,565 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:50:21,565 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:50:21,565 INFO sqlalchemy.engine.Engine [cached since 230.7s ago] ()
+2026-04-24 15:50:21,566 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     172.23.0.1:52510 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:50:49,780 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:50:49,780 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:50:49,781 INFO sqlalchemy.engine.Engine [cached since 258.9s ago] ()
+2026-04-24 15:50:49,782 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:43654 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:51:20,037 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:51:20,037 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:51:20,037 INFO sqlalchemy.engine.Engine [cached since 289.2s ago] ()
+2026-04-24 15:51:20,038 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:46824 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     172.23.0.1:47792 - "OPTIONS /api/v1/sync/pull HTTP/1.1" 405 Method Not Allowed
+INFO:     172.23.0.1:47792 - "OPTIONS /api/v1/sync/pull HTTP/1.1" 405 Method Not Allowed
+INFO:     172.23.0.1:47786 - "OPTIONS /api/v1/sync/pull HTTP/1.1" 405 Method Not Allowed
+INFO:     172.23.0.1:47786 - "OPTIONS /api/v1/sync/pull HTTP/1.1" 405 Method Not Allowed
+INFO:     172.23.0.1:47786 - "OPTIONS /api/v1/sync/pull HTTP/1.1" 405 Method Not Allowed
+INFO:     172.23.0.1:47786 - "GET /api/v1/miniapp/dashboard HTTP/1.1" 404 Not Found
+INFO:     172.23.0.1:47786 - "OPTIONS /api/v1/sync/pull HTTP/1.1" 405 Method Not Allowed
+INFO:     172.23.0.1:32938 - "OPTIONS /api/v1/sync/pull HTTP/1.1" 405 Method Not Allowed
+2026-04-24 15:51:50,286 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:51:50,286 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:51:50,286 INFO sqlalchemy.engine.Engine [cached since 319.4s ago] ()
+2026-04-24 15:51:50,287 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:48428 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:51:59,556 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:51:59,556 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:51:59,556 INFO sqlalchemy.engine.Engine [cached since 328.7s ago] ()
+2026-04-24 15:51:59,557 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     172.23.0.1:36002 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:51:59,559 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:51:59,560 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:51:59,560 INFO sqlalchemy.engine.Engine [cached since 328.7s ago] ()
+2026-04-24 15:51:59,560 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     172.23.0.1:36002 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:52:12,868 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:52:12,868 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:52:12,868 INFO sqlalchemy.engine.Engine [cached since 342s ago] ()
+2026-04-24 15:52:12,869 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     172.23.0.1:41008 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:52:20,513 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:52:20,513 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:52:20,513 INFO sqlalchemy.engine.Engine [cached since 349.6s ago] ()
+2026-04-24 15:52:20,514 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:35716 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:52:50,731 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:52:50,731 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:52:50,731 INFO sqlalchemy.engine.Engine [cached since 379.9s ago] ()
+2026-04-24 15:52:50,733 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:38950 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:52:56,485 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:52:56,485 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:52:56,485 INFO sqlalchemy.engine.Engine [cached since 385.6s ago] ()
+2026-04-24 15:52:56,486 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     172.23.0.1:44098 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:53:21,035 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:53:21,035 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:53:21,035 INFO sqlalchemy.engine.Engine [cached since 410.2s ago] ()
+2026-04-24 15:53:21,036 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:37970 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-04-24 15:53:32,578 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-24 15:53:32,578 INFO sqlalchemy.engine.Engine SELECT 1
+2026-04-24 15:53:32,578 INFO sqlalchemy.engine.Engine [cached since 421.7s ago] ()
+2026-04-24 15:53:32,579 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     172.23.0.1:37072 - "GET /api/v1/health HTTP/1.1" 200 OK

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { resolveMiniAppBaseUrl } from "../../shared/src/index.js";
 import {
+  checkCaddyMiniAppRoute,
   inspectTelegramMenuDiagnostics,
   resolveTelegramMenuMiniAppUrl,
   runTelegramMenuReset,
@@ -20,6 +21,15 @@ function telegramOk(result: unknown = true): Response {
     status: 200,
     headers: {
       "content-type": "application/json"
+    }
+  });
+}
+
+function miniAppOk(): Response {
+  return new Response("<!doctype html><title>HappyTG Mini App</title><script>var key = \"happytg:miniapp:draft:v1\";</script>", {
+    status: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8"
     }
   });
 }
@@ -87,7 +97,7 @@ test("Telegram menu setup supports explicit public 8443 Mini App URLs", async ()
     },
     fetchImpl: async (input) => {
       calls.push(String(input));
-      return new Response("ok", { status: 200 });
+      return miniAppOk();
     }
   });
 
@@ -112,7 +122,7 @@ test("Telegram menu setup sends the MenuButtonWebApp payload after Caddy preflig
       if (url.includes("api.telegram.org")) {
         return telegramOk(true);
       }
-      return new Response("ok", { status: 200 });
+      return miniAppOk();
     }
   });
 
@@ -151,7 +161,7 @@ test("Telegram menu setup falls back to Windows PowerShell when Node fetch canno
       if (url.includes("api.telegram.org")) {
         throw new TypeError("fetch failed");
       }
-      return new Response("ok", { status: 200 });
+      return miniAppOk();
     },
     telegramApiPowerShellFallback: async (method, token, payload) => {
       fallbackCalls.push({
@@ -198,7 +208,7 @@ test("Telegram menu dry-run does not call Telegram Bot API", async () => {
     fetchImpl: async (input) => {
       calls.push(String(input));
       assert.equal(String(input).includes("api.telegram.org"), false);
-      return new Response("ok", { status: 200 });
+      return miniAppOk();
     }
   });
 
@@ -215,7 +225,7 @@ test("Telegram menu setup fails before network calls when the token is missing",
       },
       fetchImpl: async () => {
         called = true;
-        return new Response("ok", { status: 200 });
+        return miniAppOk();
       }
     }),
     /TELEGRAM_BOT_TOKEN is missing/
@@ -241,6 +251,39 @@ test("Telegram menu setup blocks when public Caddy /miniapp preflight is unavail
   );
 
   assert.deepEqual(calls, [MINIAPP_URL]);
+});
+
+test("Telegram menu setup rejects public /miniapp routes that return another product", async () => {
+  const healthOsHtml = "<!DOCTYPE html><title>HealthOS - AI assistant</title><script src=\"/assets/index.js\"></script>";
+  const result = await checkCaddyMiniAppRoute(MINIAPP_URL, {
+    fetchImpl: async () => new Response(healthOsHtml, {
+      status: 200,
+      headers: {
+        "content-type": "text/html; charset=utf-8"
+      }
+    })
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.status, 200);
+  assert.match(result.detail, /did not return HappyTG Mini App identity/);
+  assert.match(result.detail, /HealthOS/);
+});
+
+test("Telegram menu setup accepts explicit HappyTG Mini App service identity header", async () => {
+  const result = await checkCaddyMiniAppRoute(MINIAPP_URL, {
+    fetchImpl: async () => new Response("<!doctype html><title>Edge health</title>", {
+      status: 200,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "x-happytg-service": "miniapp"
+      }
+    })
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.status, 200);
+  assert.match(result.detail, /HappyTG Mini App identity/);
 });
 
 test("Telegram menu reset sends a default menu button payload", async () => {

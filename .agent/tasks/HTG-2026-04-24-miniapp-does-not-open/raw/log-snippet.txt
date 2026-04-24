@@ -1,0 +1,12 @@
+Runtime and route log summary
+
+No secret-bearing Telegram or user-session logs were recorded.
+
+Relevant sanitized runtime artifacts:
+- raw/processes.txt: local Caddy and Node listeners were present.
+- raw/listeners.txt: Caddy listened on 443; HappyTG Mini App listened on 3007; HappyTG API listened on 4000.
+- raw/docker-ps.txt: unrelated HealthOS containers were running, supporting the wrong-product/public-edge investigation.
+- raw/healthos-caddy-log-snippet.txt: captured non-secret Caddy/HealthOS context for route drift investigation.
+- raw/local-caddy-miniapp-http.txt: local Caddy host/SNI probe returned HappyTG Mini App HTML.
+- raw/public-miniapp-http.txt and raw/public-miniapp-body.txt: initial public /miniapp returned HealthOS HTML with HTTP 200.
+- raw/public-miniapp-after-v4-http.txt and raw/public-miniapp-after-v4-body.txt: later public IPv4 /miniapp returned HappyTG Mini App HTML.

@@ -1,0 +1,22 @@
+Fresh verifier: 019dc03e-d069-70c2-aaa3-4b912996c903
+
+Initial verifier verdict: PASS.
+
+Summary:
+- The reproduced symptom is supported by public route artifacts: https://happytg.gerta.crazedns.ru/miniapp returned HTTP 200 text/html while serving HealthOS HTML, so Telegram opened a valid-looking URL for the wrong product instead of a usable HappyTG Mini App.
+- The code change in packages/bootstrap/src/telegram-menu.ts rejects 2xx/3xx public /miniapp responses unless they prove HappyTG identity via x-happytg-service: miniapp or both <title>HappyTG Mini App</title> and happytg:miniapp:draft:v1.
+- Tests cover HappyTG body-marker acceptance and HealthOS wrong-product rejection.
+- Local/public boundary evidence supports direct local root, expected direct /miniapp 404 on the Mini App server, Caddy /miniapp success, and generic public /api/* 404.
+- Builder check artifacts and task validation were reviewed.
+
+Residual note from initial verifier:
+- Header-only identity acceptance was not directly tested.
+
+Incremental verifier update:
+- A focused test was added for x-happytg-service: miniapp header-only acceptance.
+- pnpm --filter @happytg/bootstrap test passed 115/115.
+- The verifier confirmed this resolves the residual test-risk note.
+
+Final verifier verdict: PASS.
+
+Remaining blockers: none.

@@ -1,0 +1,75 @@
+{
+  "taskId": "HTG-2026-04-24-miniapp-does-not-open",
+  "status": "complete",
+  "telegramLaunchUrl": "https://happytg.gerta.crazedns.ru/miniapp",
+  "symptom": {
+    "type": "wrong-product-html",
+    "description": "The intended public /miniapp URL returned HTTP 200 text/html for a HealthOS page instead of HappyTG Mini App HTML.",
+    "statusCode": 200,
+    "contentType": "text/html; charset=utf-8",
+    "redirects": "none on /miniapp",
+    "firstMeaningfulBodyDetail": "HealthOS title/base/assets instead of HappyTG Mini App title/marker"
+  },
+  "rootCause": [
+    "public edge route drift/misidentity served another application at the intended Mini App URL",
+    "Telegram menu/Caddy preflight accepted HTTP 200 without verifying HappyTG Mini App identity"
+  ],
+  "notRootCause": [
+    "HTML content-type bug",
+    "Mini App base-path bug",
+    "missing static asset bug",
+    "need to expose generic public /api/*",
+    "local Mini App runtime failure"
+  ],
+  "fix": {
+    "summary": "Require public /miniapp preflight to prove HappyTG Mini App identity using x-happytg-service: miniapp or HappyTG title plus server marker.",
+    "files": [
+      "packages/bootstrap/src/telegram-menu.ts",
+      "packages/bootstrap/src/telegram-menu.test.ts",
+      "packages/bootstrap/src/cli.test.ts"
+    ]
+  },
+  "publicBoundary": {
+    "localCaddyMiniapp": "200 HappyTG HTML under /miniapp",
+    "localCaddyRoot": "302 Location: /miniapp",
+    "genericApi": "404 for /api/v1/miniapp/dashboard through public Caddy route"
+  },
+  "localDevelopment": {
+    "directRoot": "http://127.0.0.1:3007/ returns HappyTG Mini App HTML",
+    "directMiniappPath": "http://127.0.0.1:3007/miniapp returns 404 because Caddy strips /miniapp"
+  },
+  "checks": [
+    { "command": "pnpm --filter @happytg/bootstrap test", "status": "passed", "artifact": "raw/test-bootstrap.txt", "detail": "115/115 after header-only identity coverage" },
+    { "command": "pnpm --filter @happytg/miniapp test", "status": "passed", "artifact": "raw/test-unit.txt" },
+    { "command": "pnpm --filter @happytg/miniapp typecheck", "status": "passed", "artifact": "raw/typecheck.txt" },
+    { "command": "pnpm --filter @happytg/miniapp build", "status": "passed", "artifact": "raw/build.txt" },
+    { "command": "pnpm --filter @happytg/miniapp lint", "status": "passed", "artifact": "raw/lint.txt" },
+    { "command": "pnpm --filter @happytg/api test", "status": "passed", "artifact": "raw/test-integration.txt" },
+    { "command": "pnpm typecheck", "status": "passed", "artifact": "raw/typecheck-full.txt" },
+    { "command": "pnpm lint", "status": "passed", "artifact": "raw/lint-full.txt" },
+    { "command": "pnpm test", "status": "passed", "artifact": "raw/test-full.txt" },
+    { "command": "pnpm build", "status": "passed", "artifact": "raw/build-full.txt" },
+    { "command": "pnpm happytg telegram menu set --dry-run", "status": "passed", "artifact": "raw/telegram-menu-dry-run-after.txt" },
+    { "command": "pnpm happytg doctor --json", "status": "warn-unrelated-smoke-state", "artifact": "raw/doctor-after.json" },
+    { "command": "pnpm happytg verify --json", "status": "warn-unrelated-smoke-state", "artifact": "raw/verify-after.json" },
+    { "command": "fresh read-only verifier pass", "status": "passed", "artifact": "raw/fresh-verifier.txt" },
+    { "command": "pnpm happytg task validate --repo . --task HTG-2026-04-24-miniapp-does-not-open", "status": "passed", "artifact": "raw/task-validate.txt" }
+  ],
+  "artifacts": [
+    "raw/init-analysis.txt",
+    "raw/env-summary-sanitized.txt",
+    "raw/telegram-launch-url.txt",
+    "raw/public-miniapp-http.txt",
+    "raw/public-miniapp-headers.txt",
+    "raw/public-miniapp-body.txt",
+    "raw/local-caddy-miniapp-http.txt",
+    "raw/local-caddy-api-boundary.txt",
+    "raw/public-miniapp-after-v4-http.txt",
+    "raw/browser-network.txt",
+    "output/playwright/HTG-2026-04-24-miniapp-public.png",
+    "raw/telegram-launch-url.txt",
+    "raw/log-snippet.txt",
+    "raw/fresh-verifier.txt",
+    "raw/task-validate.txt"
+  ]
+}

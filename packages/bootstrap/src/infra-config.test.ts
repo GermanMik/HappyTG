@@ -24,3 +24,22 @@ test("Caddy Mini App upstream is configurable and defaults to Docker network", a
   assert.match(caddy, /\{\$HAPPYTG_MINIAPP_UPSTREAM:miniapp:3001\}/);
   assert.doesNotMatch(caddy, /localhost:3001/);
 });
+
+test("Caddy exposes only narrow public Mini App API exceptions before generic API deny", async () => {
+  const caddy = await readFile(new URL("../../../infra/caddy/Caddyfile", import.meta.url), "utf8");
+
+  const dashboardIndex = caddy.indexOf("handle /api/v1/miniapp/dashboard");
+  const authIndex = caddy.indexOf("handle /api/v1/miniapp/auth/session");
+  const approvalIndex = caddy.indexOf("@miniappApprovalResolve");
+  const denyIndex = caddy.indexOf("handle /api/*");
+
+  assert.ok(authIndex >= 0);
+  assert.ok(dashboardIndex >= 0);
+  assert.ok(approvalIndex >= 0);
+  assert.ok(denyIndex >= 0);
+  assert.ok(authIndex < denyIndex);
+  assert.ok(dashboardIndex < denyIndex);
+  assert.ok(approvalIndex < denyIndex);
+  assert.doesNotMatch(caddy, /handle(?:_path)?\s+\/api\/v1\/miniapp\*/);
+  assert.match(caddy, /handle \/api\/\* \{\s+respond "Not found" 404\s+\}/);
+});

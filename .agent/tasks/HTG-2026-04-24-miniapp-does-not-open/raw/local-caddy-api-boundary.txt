@@ -1,0 +1,15 @@
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0
+100      9 100      9   0      0    970      0                              0
+100      9 100      9   0      0    964      0                              0
+100      9 100      9   0      0    955      0                              0
+HTTP/1.1 404 Not Found
+Alt-Svc: h3=":443"; ma=2592000
+Content-Type: text/plain; charset=utf-8
+Server: Caddy
+Date: Fri, 24 Apr 2026 15:53:16 GMT
+Content-Length: 9
+
+Not found

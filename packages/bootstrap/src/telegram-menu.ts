@@ -9,6 +9,9 @@ import {
 } from "../../shared/src/index.js";
 
 export const TELEGRAM_MENU_BUTTON_TEXT = "HappyTG";
+const HAPPYTG_MINIAPP_TITLE = "<title>HappyTG Mini App</title>";
+const HAPPYTG_MINIAPP_MARKER = "happytg:miniapp:draft:v1";
+const HAPPYTG_MINIAPP_SERVICE_HEADER = "x-happytg-service";
 
 interface TelegramApiEnvelope<T> {
   ok: boolean;
@@ -88,6 +91,22 @@ export interface TelegramMenuPreflightOptions {
   timeoutMs?: number;
 }
 
+function firstMeaningfulBodyDetail(value: string): string {
+  return value
+    .replace(/\s+/gu, " ")
+    .trim()
+    .slice(0, 160);
+}
+
+function hasHappyTGMiniAppIdentity(response: Response, bodyText: string): boolean {
+  const serviceHeader = response.headers.get(HAPPYTG_MINIAPP_SERVICE_HEADER)?.trim().toLowerCase();
+  if (serviceHeader === "miniapp") {
+    return true;
+  }
+
+  return bodyText.includes(HAPPYTG_MINIAPP_TITLE) && bodyText.includes(HAPPYTG_MINIAPP_MARKER);
+}
+
 function envValue(env: NodeJS.ProcessEnv, key: string): string | undefined {
   if (env[key] !== undefined) {
     return env[key];
@@ -161,11 +180,27 @@ export async function checkCaddyMiniAppRoute(
       signal: AbortSignal.timeout(timeoutMs)
     });
     if (response.status >= 200 && response.status < 400) {
+      const contentType = response.headers.get("content-type") ?? "";
+      const bodyText = contentType.includes("text/html") || contentType.startsWith("text/")
+        ? await response.text()
+        : "";
+      if (!hasHappyTGMiniAppIdentity(response, bodyText)) {
+        const bodyDetail = firstMeaningfulBodyDetail(bodyText);
+        return {
+          ok: false,
+          url: miniAppUrl,
+          status: response.status,
+          detail: bodyDetail
+            ? `Public Caddy Mini App route responded with HTTP ${response.status}, but did not return HappyTG Mini App identity. First body detail: ${bodyDetail}`
+            : `Public Caddy Mini App route responded with HTTP ${response.status}, but did not return HappyTG Mini App identity.`
+        };
+      }
+
       return {
         ok: true,
         url: miniAppUrl,
         status: response.status,
-        detail: `Public Caddy Mini App route responded with HTTP ${response.status}.`
+        detail: `Public Caddy Mini App route responded with HTTP ${response.status} and HappyTG Mini App identity.`
       };
     }
 

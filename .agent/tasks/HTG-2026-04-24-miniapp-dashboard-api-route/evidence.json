@@ -1,0 +1,35 @@
+{
+  "taskId": "HTG-2026-04-24-miniapp-dashboard-api-route",
+  "status": "complete",
+  "rootCause": "Caddy public allowlist blocked /api/v1/miniapp/dashboard before the request reached the already-authenticated API endpoint.",
+  "fix": {
+    "scope": "narrow-public-api-exception",
+    "routesAdded": [
+      "/api/v1/miniapp/dashboard"
+    ],
+    "files": [
+      "infra/caddy/Caddyfile",
+      "C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile",
+      "packages/bootstrap/src/infra-config.test.ts"
+    ]
+  },
+  "checks": [
+    { "command": "curl local Caddy dashboard before", "status": "404", "artifact": "raw/before-local-caddy-dashboard.txt" },
+    { "command": "curl direct API dashboard without auth", "status": "401", "artifact": "raw/direct-api-dashboard-no-auth.txt" },
+    { "command": "caddy reload", "status": "passed", "artifact": "raw/caddy-reload.txt" },
+    { "command": "curl local Caddy dashboard after", "status": "401", "artifact": "raw/after-local-caddy-dashboard.txt" },
+    { "command": "curl public IPv4 dashboard after", "status": "401", "artifact": "raw/after-public-dashboard-v4.txt" },
+    { "command": "curl local Caddy generic API after", "status": "404", "artifact": "raw/after-local-caddy-generic-api.txt" },
+    { "command": "curl public IPv4 generic API after", "status": "404", "artifact": "raw/after-public-generic-api-v4.txt" },
+    { "command": "pnpm --filter @happytg/bootstrap test", "status": "passed", "artifact": "raw/test-bootstrap.txt" },
+    { "command": "pnpm --filter @happytg/api test", "status": "passed", "artifact": "raw/test-api.txt" },
+    { "command": "pnpm --filter @happytg/bootstrap lint", "status": "passed", "artifact": "raw/lint-bootstrap.txt" },
+    { "command": "pnpm --filter @happytg/bootstrap build", "status": "passed", "artifact": "raw/build-bootstrap.txt" },
+    { "command": "pnpm happytg task validate --repo . --task HTG-2026-04-24-miniapp-dashboard-api-route", "status": "passed", "artifact": "raw/task-validate.txt" }
+  ],
+  "publicBoundary": {
+    "dashboard": "401 from API without Mini App session auth",
+    "genericApi": "404 remains for /api/v1/tasks",
+    "broadMiniappWildcard": "not added"
+  }
+}
