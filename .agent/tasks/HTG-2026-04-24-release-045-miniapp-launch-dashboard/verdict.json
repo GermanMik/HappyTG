@@ -1,11 +1,22 @@
 {
   "taskId": "HTG-2026-04-24-release-045-miniapp-launch-dashboard",
-  "status": "pending",
+  "status": "passed",
   "checks": [
     {
       "name": "Release metadata",
       "ok": true,
       "detail": "pnpm release:check --version 0.4.5 passed."
+    },
+    {
+      "name": "Merge",
+      "ok": true,
+      "detail": "PR #32 merged to main as b09b8207cef017b856bde023ed4380c12c1550be."
+    },
+    {
+      "name": "GitHub Release",
+      "ok": true,
+      "detail": "Release workflow 24902224045 succeeded and published v0.4.5."
     }
-  ]
+  ],
+  "generatedAt": "2026-04-24T20:15:00+03:00"
 }
