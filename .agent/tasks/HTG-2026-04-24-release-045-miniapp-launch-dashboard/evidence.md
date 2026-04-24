@@ -1,6 +1,6 @@
 # Evidence
 
-Status: initialized after release metadata preparation.
+Status: complete.
 
 ## Release Metadata
 
@@ -14,3 +14,6 @@ Status: initialized after release metadata preparation.
 ## Verification
 
 - `pnpm release:check --version 0.4.5`: see `raw/release-check.txt`
+- PR `#32` merged to `main` as `b09b8207cef017b856bde023ed4380c12c1550be`: see `raw/release-pr.json`
+- GitHub Actions `Release` workflow run `24902224045` completed successfully on `main`: see `raw/release-workflow.json`
+- GitHub Release `v0.4.5` is published and targets `b09b8207cef017b856bde023ed4380c12c1550be`: see `raw/github-release.json`
