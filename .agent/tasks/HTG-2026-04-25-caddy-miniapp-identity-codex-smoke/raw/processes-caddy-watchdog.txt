@@ -1,0 +1,365 @@
+
+Id          : 10484
+ProcessName : caddy_windows_amd64
+Path        :
+CommandLine :
+
+Id          : 2428
+ProcessName : cmd
+Path        :
+CommandLine :
+
+Id          : 2652
+ProcessName : cmd
+Path        :
+CommandLine :
+
+Id          : 2692
+ProcessName : cmd
+Path        :
+CommandLine :
+
+Id          : 2932
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 3112
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 4008
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c "C:\Users\tikta\AppData\Local\pnpm\.tools\pnpm\10.0.0\bin\pnpm ^"dev^""
+
+Id          : 8688
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 8880
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 8964
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 9688
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 12860
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c ""C:\Program Files\WindowsApps\Microsoft.PowerAutomateDesktop_11.2604.143.0_x64__8wekyb3d8bbwe\dotnet\PAD.BrowserNativeMessageHost.exe" chrome-extension://kagpabjoboikccfdghpdlaaopmgpgfdc/ --parent-window=0" < \\.\pipe\chrome.nativeMessaging.in.2732a70a708ac2ef > \\.\pipe\chrome.nativeMessaging.out.2732a70a708ac2ef
+
+Id          : 13196
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c tsx watch src/index.ts
+
+Id          : 13740
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 15596
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 15736
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 18484
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 21284
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\AppData\Local\pnpm\.tools\pnpm\10.0.0\bin\pnpm.CMD" run dev"
+
+Id          : 21744
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c tsx watch src/index.ts
+
+Id          : 22156
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 22456
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c tsx watch src/index.ts
+
+Id          : 22644
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 22764
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\AppData\Local\pnpm\.tools\pnpm\10.0.0\bin\pnpm.CMD" run dev"
+
+Id          : 23388
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 27204
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 27696
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c turbo dev
+
+Id          : 28272
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 28764
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 28904
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c tsx watch src/index.ts
+
+Id          : 32228
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 33304
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\AppData\Local\pnpm\.tools\pnpm\10.0.0\bin\pnpm.CMD" run dev"
+
+Id          : 39236
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 40168
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 40300
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 40988
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c tsx watch src/index.ts
+
+Id          : 41432
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 41476
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 42288
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 42468
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 42492
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 42604
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 43020
+ProcessName : cmd
+Path        :
+CommandLine :
+
+Id          : 43240
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\AppData\Local\pnpm\.tools\pnpm\10.0.0\bin\pnpm.CMD" run dev"
+
+Id          : 43664
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 43900
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\AppData\Local\pnpm\.tools\pnpm\10.0.0\bin\pnpm.CMD" run dev"
+
+Id          : 44044
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 44416
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 44788
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 44896
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 45068
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 45172
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 45500
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c pnpm --filter @happytg/host-daemon run dev
+
+Id          : 45816
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c tsx watch src/index.ts
+
+Id          : 45912
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c "C:\Users\tikta\AppData\Local\pnpm\.tools\pnpm\10.0.0\bin\pnpm ^"dev:daemon^""
+
+Id          : 45928
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 46660
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 46664
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Users\tikta\.local\bin\memory.cmd" mcp"
+
+Id          : 47344
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 47592
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 47688
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 48684
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : C:\WINDOWS\system32\cmd.exe /d /s /c playwright-mcp
+
+Id          : 49128
+ProcessName : cmd
+Path        :
+CommandLine :
+
+Id          : 49476
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 50512
+ProcessName : cmd
+Path        : C:\WINDOWS\system32\cmd.exe
+CommandLine : cmd.exe /e:ON /v:OFF /d /c ""C:\Program Files\nodejs\npx.cmd" @playwright/mcp@latest"
+
+Id          : 50744
+ProcessName : cmd
+Path        :
+CommandLine :
+
+Id          : 51572
+ProcessName : cmd
+Path        :
+CommandLine :
+
+Id          : 51836
+ProcessName : cmd
+Path        :
+CommandLine :
+
+Id          : 24680
+ProcessName : Microsoft.CmdPal.Ext.PowerToys
+Path        : C:\Program Files\PowerToys\Microsoft.CmdPal.Ext.PowerToys.exe
+CommandLine : "C:\Program Files\PowerToys\\Microsoft.CmdPal.Ext.PowerToys.exe" -RegisterProcessAsComServer -Embedding
+
+Id          : 22912
+ProcessName : Microsoft.CmdPal.UI
+Path        : C:\Program Files\WindowsApps\Microsoft.CommandPalette_0.8.10263.0_x64__8wekyb3d8bbwe\Microsoft.CmdPal.UI.exe
+CommandLine : "C:\Program Files\WindowsApps\Microsoft.CommandPalette_0.8.10263.0_x64__8wekyb3d8bbwe\Microsoft.CmdPal.UI.exe" x-cmdpal://background/
+
+Id          : 22792
+ProcessName : powershell
+Path        :
+CommandLine :
+
+Id          : 31984
+ProcessName : powershell
+Path        : C:\WINDOWS\system32\WindowsPowerShell\v1.0\PowerShell.exe
+CommandLine : "PowerShell.exe" -noexit -WorkingDirectory "C:\Develop\Projects\HappyTG"
+
+Id          : 39324
+ProcessName : powershell
+Path        : C:\WINDOWS\system32\WindowsPowerShell\v1.0\PowerShell.exe
+CommandLine : "PowerShell.exe" -noexit -WorkingDirectory "C:\Develop\Projects\HappyTG"
+
+Id          : 52308
+ProcessName : powershell
+Path        :
+CommandLine :

@@ -1,0 +1,744 @@
+HTTP/1.1 200 OK
+Alt-Svc: h3=":443"; ma=2592000
+Content-Length: 27488
+Content-Type: text/html; charset=utf-8
+Date: Sat, 25 Apr 2026 09:43:12 GMT
+Via: 1.1 Caddy
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HappyTG Mini App</title>
+    <style>
+      :root {
+        --bg: #f2f5ef;
+        --bg-accent: radial-gradient(circle at top left, rgba(21, 132, 108, 0.18), transparent 34%), radial-gradient(circle at top right, rgba(28, 93, 153, 0.12), transparent 28%), linear-gradient(180deg, #f8fbf7 0%, #eef2ee 100%);
+        --surface: rgba(255, 255, 255, 0.88);
+        --surface-soft: #eef6f3;
+        --surface-strong: #f5fbf8;
+        --ink: #17312b;
+        --muted: #5e6e69;
+        --accent: #0d7f66;
+        --accent-strong: #095847;
+        --warn: #9a6700;
+        --danger: #b42318;
+        --info: #1c5d99;
+        --border: rgba(23, 49, 43, 0.12);
+        --shadow: 0 18px 36px rgba(17, 36, 31, 0.08);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 14px 14px 124px;
+        background: var(--bg);
+        background-image: var(--bg-accent);
+        color: var(--ink);
+        font-family: "Segoe UI Variable Text", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      }
+      main {
+        max-width: 1080px;
+        margin: 0 auto;
+      }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 16px;
+        margin-bottom: 14px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+      .hero {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 246, 243, 0.94) 55%, rgba(245, 251, 248, 0.92) 100%);
+        border-color: rgba(13, 127, 102, 0.16);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+      }
+      h1, h2 {
+        margin-top: 0;
+        letter-spacing: 0;
+      }
+      h1 {
+        font-size: 26px;
+        line-height: 1.12;
+        margin-bottom: 8px;
+      }
+      h2 {
+        font-size: 18px;
+        line-height: 1.25;
+        margin-bottom: 12px;
+      }
+      code, pre {
+        font-family: "SFMono-Regular", ui-monospace, monospace;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        max-height: 48vh;
+        overflow: auto;
+      }
+      a {
+        color: var(--accent);
+        text-decoration-thickness: 1px;
+      }
+      ul {
+        padding-left: 20px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .topbar a {
+        text-decoration: none;
+        color: var(--accent-strong);
+      }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 1px solid currentColor;
+      }
+      .badge-neutral {
+        color: #6f675c;
+        background: rgba(111, 103, 92, 0.08);
+      }
+      .badge-info {
+        color: #2d5b7c;
+        background: rgba(45, 91, 124, 0.1);
+      }
+      .badge-success {
+        color: #0c7c59;
+        background: rgba(12, 124, 89, 0.1);
+      }
+      .badge-warn {
+        color: #8b5e10;
+        background: rgba(139, 94, 16, 0.1);
+      }
+      .badge-danger {
+        color: #a7382a;
+        background: rgba(167, 56, 42, 0.1);
+      }
+      .status-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .status-list li {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 0;
+        border-top: 1px solid var(--border);
+      }
+      .status-list li:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .status-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+      .progress-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+      .progress-step {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+      .progress-step-done {
+        border-color: rgba(12, 124, 89, 0.35);
+        background: rgba(12, 124, 89, 0.08);
+      }
+      .progress-step-current {
+        border-color: rgba(45, 91, 124, 0.35);
+        background: rgba(45, 91, 124, 0.08);
+      }
+      .progress-marker {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+      .kv-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .kv-item {
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.82);
+      }
+      .eyebrow {
+        margin: 0 0 8px;
+        font-size: 12px;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .button {
+        min-height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.95);
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 650;
+        transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      }
+      .button-primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+      .button-danger {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .button:disabled {
+        opacity: 0.64;
+        cursor: wait;
+        transform: none;
+      }
+      .button:not(:disabled):active {
+        transform: translateY(1px);
+      }
+      .notice {
+        border-radius: 16px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.92);
+      }
+      .notice-info {
+        border-color: rgba(28, 93, 153, 0.2);
+        background: rgba(28, 93, 153, 0.08);
+      }
+      .notice-success {
+        border-color: rgba(12, 124, 89, 0.24);
+        background: rgba(12, 124, 89, 0.08);
+      }
+      .notice-warn {
+        border-color: rgba(154, 103, 0, 0.24);
+        background: rgba(154, 103, 0, 0.08);
+      }
+      .notice-danger {
+        border-color: rgba(180, 35, 24, 0.22);
+        background: rgba(180, 35, 24, 0.08);
+      }
+      .auth-steps {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .auth-step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.84);
+      }
+      .auth-step::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #bcc8c4;
+      }
+      .auth-step[data-state="running"]::before {
+        background: var(--info);
+        box-shadow: 0 0 0 6px rgba(28, 93, 153, 0.12);
+      }
+      .auth-step[data-state="done"]::before {
+        background: var(--accent);
+      }
+      .auth-step[data-state="error"]::before {
+        background: var(--danger);
+      }
+      .bottom-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        border-top: 1px solid var(--border);
+        background: rgba(250, 252, 250, 0.94);
+        backdrop-filter: blur(12px);
+      }
+      .bottom-nav a {
+        min-height: 62px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 650;
+        border-top: 2px solid transparent;
+      }
+      .bottom-nav a[aria-current="page"] {
+        color: var(--accent-strong);
+        border-top-color: var(--accent);
+        background: rgba(13, 127, 102, 0.08);
+      }
+      .empty {
+        border: 1px dashed var(--border);
+        background: rgba(255, 255, 255, 0.82);
+        border-radius: 16px;
+        padding: 16px;
+      }
+      .draft-recovery {
+        display: none;
+        border-color: rgba(154, 103, 0, 0.35);
+        background: #fff8e7;
+      }
+      .timeline {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .timeline li {
+        border-left: 2px solid var(--border);
+        padding: 0 0 12px 12px;
+      }
+      textarea, input, select {
+        width: 100%;
+        min-height: 46px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        font: inherit;
+        background: rgba(255, 255, 255, 0.95);
+      }
+      textarea {
+        min-height: 108px;
+        resize: vertical;
+      }
+      @media (min-width: 760px) {
+        body {
+          padding: 24px 24px 96px;
+        }
+        h1 {
+          font-size: 34px;
+        }
+        .status-list li {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .status-meta {
+          justify-content: flex-end;
+        }
+        .bottom-nav {
+          grid-template-columns: repeat(6, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="topbar">
+        <a href="/miniapp/"><strong>HappyTG</strong></a>
+        <span class="badge badge-info">Mini App</span>
+      </div>
+      <section id="draft-recovery" class="panel draft-recovery">
+        <h2>Есть незавершенный ввод</h2>
+        <p class="muted">Можно продолжить с места остановки или начать заново. Это только локальный draft, backend state не меняется.</p>
+        <div class="actions">
+          <button class="button button-primary" type="button" data-draft-restore>Продолжить</button>
+          <button class="button" type="button" data-draft-clear>Начать заново</button>
+        </div>
+      </section>
+      <section class="panel hero">
+    <p class="eyebrow">Подключение</p>
+    <h1 data-auth-title>Открываем HappyTG</h1>
+    <p class="muted" data-auth-detail>Mini App session проверяется через Telegram.</p>
+    <div class="notice notice-info" data-auth-status>Ждем initData и короткую Mini App session.</div>
+    <div class="auth-steps">
+      <div class="auth-step" data-auth-step="telegram" data-state="pending"><strong>Telegram</strong><span class="muted">Получить initData</span></div>
+      <div class="auth-step" data-auth-step="session" data-state="pending"><strong>Session</strong><span class="muted">Выдать короткий токен</span></div>
+      <div class="auth-step" data-auth-step="screen" data-state="pending"><strong>Экран</strong><span class="muted">Открыть нужный раздел</span></div>
+    </div>
+    <div class="actions">
+      <button class="button button-primary" type="button" data-auth-retry hidden>Повторить подключение</button>
+      <button class="button" type="button" data-auth-reload>Обновить экран</button>
+    </div>
+  </section>
+    </main>
+    <nav class="bottom-nav" aria-label="Основная навигация"><a href="/miniapp/" aria-current="page">Главная</a><a href="/miniapp/sessions">Сессии</a><a href="/miniapp/projects">Проекты</a><a href="/miniapp/approvals">Решения</a><a href="/miniapp/hosts">Хосты</a><a href="/miniapp/reports">Отчеты</a></nav>
+    <script>
+      window.HAPPYTgApiBase = "";
+      window.HAPPYTgMiniAppBasePath = "/miniapp";
+      window.HAPPYTgNeedsAuth = true;
+      window.HAPPYTgSessionCookie = "happytg_miniapp_session";
+      (function () {
+        var key = "happytg:miniapp:draft:v1";
+        var sessionKey = "happytg:miniapp:session:v1";
+        var ttlMs = 24 * 60 * 60 * 1000;
+        var recovery = document.getElementById("draft-recovery");
+        var authTitle = document.querySelector("[data-auth-title]");
+        var authDetail = document.querySelector("[data-auth-detail]");
+        var authStatus = document.querySelector("[data-auth-status]");
+        var authRetry = document.querySelector("[data-auth-retry]");
+        var authReload = document.querySelector("[data-auth-reload]");
+        function apiUrl(pathname) {
+          return new URL(pathname, window.HAPPYTgApiBase || window.location.origin);
+        }
+        function setNotice(target, tone, message) {
+          if (!target) return;
+          target.className = "notice notice-" + tone;
+          target.textContent = message;
+        }
+        function setActionFeedback(target, tone, message) {
+          if (!target) return;
+          target.hidden = false;
+          setNotice(target, tone, message);
+        }
+        function setAuthStep(name, state) {
+          var step = document.querySelector('[data-auth-step="' + name + '"]');
+          if (step) {
+            step.setAttribute("data-state", state);
+          }
+        }
+        function setAuthState(config) {
+          if (authTitle && config.title) authTitle.textContent = config.title;
+          if (authDetail && config.detail) authDetail.textContent = config.detail;
+          if (authStatus && config.notice) setNotice(authStatus, config.tone || "info", config.notice);
+          if (authRetry) authRetry.hidden = !config.retry;
+          if (config.telegram) setAuthStep("telegram", config.telegram);
+          if (config.session) setAuthStep("session", config.session);
+          if (config.screen) setAuthStep("screen", config.screen);
+        }
+        function readError(response, fallback) {
+          return response.text().then(function (bodyText) {
+            if (!bodyText) return fallback;
+            try {
+              var payload = JSON.parse(bodyText);
+              return payload.detail || payload.error || fallback;
+            } catch (_error) {
+              return bodyText;
+            }
+          }, function () {
+            return fallback;
+          });
+        }
+        function readDraft() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(key) || "null");
+            if (!parsed || !parsed.savedAt || Date.now() - parsed.savedAt > ttlMs) {
+              localStorage.removeItem(key);
+              return null;
+            }
+            return parsed;
+          } catch (_error) {
+            localStorage.removeItem(key);
+            return null;
+          }
+        }
+        function readSession() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(sessionKey) || "null");
+            if (!parsed || !parsed.token || (parsed.expiresAt && Date.parse(parsed.expiresAt) <= Date.now())) {
+              localStorage.removeItem(sessionKey);
+              return null;
+            }
+            return parsed;
+          } catch (_error) {
+            localStorage.removeItem(sessionKey);
+            return null;
+          }
+        }
+        function persistSession(session) {
+          localStorage.setItem(sessionKey, JSON.stringify(session));
+          var maxAge = session.expiresAt ? Math.max(1, Math.floor((Date.parse(session.expiresAt) - Date.now()) / 1000)) : 3600;
+          var cookiePath = window.HAPPYTgMiniAppBasePath || "/";
+          var secure = location.protocol === "https:" ? "; secure" : "";
+          document.cookie = window.HAPPYTgSessionCookie + "=" + encodeURIComponent(session.token) + "; path=" + cookiePath + "; max-age=" + maxAge + "; samesite=lax" + secure;
+        }
+        function token() {
+          return readSession()?.token;
+        }
+        var draft = readDraft();
+        if (draft && recovery) {
+          recovery.style.display = "block";
+        }
+        document.querySelectorAll("[data-draft]").forEach(function (input) {
+          input.addEventListener("input", function () {
+            localStorage.setItem(key, JSON.stringify({
+              path: location.pathname + location.search,
+              value: input.value,
+              savedAt: Date.now()
+            }));
+          });
+        });
+        document.querySelector("[data-draft-restore]")?.addEventListener("click", function () {
+          var current = readDraft();
+          if (!current) return;
+          var input = document.querySelector("[data-draft]");
+          if (input && "value" in input) input.value = current.value || "";
+        });
+        document.querySelector("[data-draft-clear]")?.addEventListener("click", function () {
+          localStorage.removeItem(key);
+          if (recovery) recovery.style.display = "none";
+        });
+        authReload?.addEventListener("click", function () {
+          location.reload();
+        });
+        var webApp = window.Telegram && window.Telegram.WebApp;
+        var savedSession = readSession();
+        if (savedSession) {
+          persistSession(savedSession);
+          if (window.HAPPYTgNeedsAuth) {
+            setAuthState({
+              title: "Возвращаем рабочий экран",
+              detail: "Локальная Mini App session найдена, обновляем страницу.",
+              notice: "Сессия уже есть. Загружаем целевой экран.",
+              tone: "success",
+              telegram: "done",
+              session: "done",
+              screen: "running",
+              retry: false
+            });
+            location.reload();
+            return;
+          }
+        }
+        function attemptMiniAppAuth() {
+          var currentWebApp = window.Telegram && window.Telegram.WebApp;
+          if (!currentWebApp || !currentWebApp.initData) {
+            if (window.HAPPYTgNeedsAuth) {
+              setAuthState({
+                title: "Ждем подтверждение из Telegram",
+                detail: "Этот экран нужно открывать из Telegram Mini App, чтобы передать initData и выдать короткую session.",
+                notice: "Не получили данные Telegram. Откройте Mini App из бота и попробуйте снова.",
+                tone: "warn",
+                telegram: "error",
+                session: "pending",
+                screen: "pending",
+                retry: false
+              });
+            }
+            return;
+          }
+          currentWebApp.ready();
+          if (savedSession) {
+            return;
+          }
+          var params = new URLSearchParams(location.search);
+          setAuthState({
+            title: "Подключаем HappyTG",
+            detail: "Проверяем Telegram и запрашиваем короткую Mini App session.",
+            notice: "Подключение выполняется. Это занимает секунды.",
+            tone: "info",
+            telegram: "running",
+            session: "running",
+            screen: "pending",
+            retry: false
+          });
+          fetch(apiUrl("/api/v1/miniapp/auth/session"), {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              initData: currentWebApp.initData,
+              startAppPayload: params.get("tgWebAppStartParam") || params.get("startapp") || params.get("payload")
+            })
+          }).then(function (response) {
+            if (!response.ok) {
+              return readError(response, "Не удалось подтвердить Mini App session.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
+            return response.json();
+          }).then(function (payload) {
+            if (!payload || !payload.appSession) {
+              throw new Error("Backend не выдал Mini App session.");
+            }
+            persistSession(payload.appSession);
+            setAuthState({
+              title: "Доступ подтвержден",
+              detail: "Сессия создана, открываем рабочий экран.",
+              notice: "Подключение завершено. Загружаем целевую страницу.",
+              tone: "success",
+              telegram: "done",
+              session: "done",
+              screen: "running",
+              retry: false
+            });
+            if (window.HAPPYTgNeedsAuth) {
+              location.reload();
+            }
+          }).catch(function (error) {
+            setAuthState({
+              title: "Mini App не подключилась",
+              detail: "HappyTG не смог получить рабочую session через Telegram.",
+              notice: error instanceof Error && error.message ? error.message : "Проверьте соединение и откройте Mini App снова из бота.",
+              tone: "danger",
+              telegram: "done",
+              session: "error",
+              screen: "pending",
+              retry: true
+            });
+          });
+        }
+        authRetry?.addEventListener("click", function () {
+          attemptMiniAppAuth();
+        });
+        if (webApp && webApp.initData) {
+          attemptMiniAppAuth();
+        } else if (window.HAPPYTgNeedsAuth) {
+          setAuthState({
+            title: "Открываем HappyTG",
+            detail: "Mini App session проверяется через Telegram.",
+            notice: "Ждем initData от Telegram. Если экран открыт вне Telegram, подключение не завершится.",
+            tone: "info",
+            telegram: "running",
+            session: "pending",
+            screen: "pending",
+            retry: false
+          });
+        }
+        document.querySelectorAll("[data-approval-action]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            var feedback = document.querySelector("[data-action-feedback]");
+            var sessionToken = token();
+            if (!sessionToken) {
+              setActionFeedback(feedback, "danger", "Нет Mini App session. Откройте экран заново из бота.");
+              return;
+            }
+            button.disabled = true;
+            var previousLabel = button.textContent;
+            button.textContent = "Отправляем...";
+            setActionFeedback(feedback, "info", "Отправляем решение и обновляем состояние.");
+            fetch(apiUrl("/api/v1/miniapp/approvals/" + encodeURIComponent(button.getAttribute("data-approval-id") || "") + "/resolve"), {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "authorization": "Bearer " + sessionToken
+              },
+              body: JSON.stringify({
+                decision: button.getAttribute("data-decision"),
+                scope: button.getAttribute("data-scope") || undefined,
+                nonce: button.getAttribute("data-nonce") || undefined
+              })
+            }).then(function (response) {
+              if (!response.ok) {
+                return readError(response, "Не удалось выполнить действие по подтверждению.").then(function (detail) {
+                  throw new Error(detail);
+                });
+              }
+              return response.json();
+            }).then(function () {
+              setActionFeedback(feedback, "success", "Решение сохранено. Обновляем экран.");
+              location.reload();
+            }).catch(function (error) {
+              button.disabled = false;
+              button.textContent = previousLabel;
+              setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось выполнить действие. Попробуйте снова.");
+            });
+          });
+        });
+        document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var form = event.currentTarget;
+          var submit = form.querySelector("[type=submit]");
+          var feedback = form.querySelector("[data-task-feedback]");
+          if (submit) submit.disabled = true;
+          if (submit) submit.textContent = "Создаем...";
+          setActionFeedback(feedback, "info", "Создаем сессию и готовим переход к деталям.");
+          var data = new FormData(form);
+          fetch(location.pathname + location.search, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              hostId: data.get("hostId"),
+              workspaceId: data.get("workspaceId"),
+              mode: data.get("mode") || "proof",
+              title: data.get("title") || "Mini App task",
+              prompt: data.get("prompt") || "",
+              acceptanceCriteria: String(data.get("acceptanceCriteria") || "")
+                .split(/\r?\n/)
+                .map(function (item) { return item.trim(); })
+                .filter(Boolean)
+            })
+          }).then(function (response) {
+            if (!response.ok) {
+              return readError(response, "Не удалось создать сессию.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
+            return response.json();
+          }).then(function (payload) {
+            localStorage.removeItem(key);
+            var href = payload.sessionHref || (payload.session && payload.session.href) || "/sessions";
+            if (window.HAPPYTgMiniAppBasePath && href.charAt(0) === "/") {
+              href = window.HAPPYTgMiniAppBasePath + href;
+            }
+            setActionFeedback(feedback, "success", "Сессия создана. Открываем детальную страницу.");
+            location.href = href;
+          }).catch(function (error) {
+            if (submit) submit.disabled = false;
+            if (submit) submit.textContent = "Создать Codex-сессию";
+            setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось создать сессию.");
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

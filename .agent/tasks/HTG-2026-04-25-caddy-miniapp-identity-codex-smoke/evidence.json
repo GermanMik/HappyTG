@@ -1,0 +1,44 @@
+{
+  "taskId": "HTG-2026-04-25-caddy-miniapp-identity-codex-smoke",
+  "status": "verified",
+  "init": {
+    "echoVaultRetrieved": true,
+    "originalWorktreeDirty": true,
+    "dirtyStatusArtifact": "raw/original-worktree-dirty-status.txt",
+    "worktree": "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode",
+    "branch": "codex/fix-caddy-miniapp-identity-codex-smoke"
+  },
+  "findings": [
+    {
+      "id": "caddy-root-cause",
+      "status": "fixed",
+      "summary": "External BaseDeploy Caddy config missed HappyTG host/fallback routes, so /miniapp fell through to HealthOS HTML."
+    },
+    {
+      "id": "public-miniapp-identity",
+      "status": "pass",
+      "summary": "Public /miniapp returns HTTP 200 with HappyTG Mini App title and marker."
+    },
+    {
+      "id": "api-boundary",
+      "status": "pass",
+      "summary": "Allowed Mini App API paths route to HappyTG API; generic /api/v1/projects returns 404 Not found."
+    },
+    {
+      "id": "codex-smoke",
+      "status": "truthful-warning",
+      "summary": "Websocket 403 is followed by a model-version failure; no smoke reply is returned. Doctor now reports Codex CLI too old for configured gpt-5.5."
+    }
+  ],
+  "verification": [
+    { "command": "pnpm --filter @happytg/runtime-adapters test", "status": "pass", "artifact": "raw/test-runtime-adapters-after-parser.txt" },
+    { "command": "pnpm --filter @happytg/bootstrap test", "status": "pass", "artifact": "raw/test-bootstrap-after-parser.txt" },
+    { "command": "pnpm typecheck", "status": "pass", "artifact": "raw/typecheck.txt" },
+    { "command": "pnpm lint", "status": "pass", "artifact": "raw/lint.txt" },
+    { "command": "pnpm test", "status": "pass", "artifact": "raw/test-unit.txt" },
+    { "command": "pnpm build", "status": "pass", "artifact": "raw/build.txt" },
+    { "command": "pnpm happytg doctor --json", "status": "warn", "artifact": "raw/doctor-after-parser-fix-env-final.json" },
+    { "command": "pnpm happytg verify --json", "status": "warn", "artifact": "raw/verify-after-parser-fix-final.json" },
+    { "command": "pnpm happytg telegram menu set --dry-run", "status": "pass", "artifact": "raw/telegram-menu-dry-run-after-parser-fix-final.txt" }
+  ]
+}

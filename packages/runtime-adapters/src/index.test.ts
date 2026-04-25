@@ -471,6 +471,14 @@ test("summarizeCodexSmokeStderr extracts concise actionable root causes", () => 
     "Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP."
   );
   assert.equal(
+    summarizeCodexSmokeStderr([
+      "2026-04-17T04:22:49.185023Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses",
+      "2026-04-17T04:22:49.285023Z  WARN codex_core::client: falling back to HTTP",
+      "{\"type\":\"error\",\"message\":\"{\\\"detail\\\":\\\"The 'gpt-5.5' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again.\\\"}\"}"
+    ].join("\n")),
+    "Codex CLI is too old for the configured gpt-5.5 model. Upgrade Codex or select a model supported by this CLI."
+  );
+  assert.equal(
     summarizeCodexSmokeStderr("2026-04-17T04:22:49.185023Z WARN codex_core::plugins::startup_sync: startup remote plugin sync failed\nProcess timed out after 120000ms."),
     "Codex smoke command did not exit before the 120000ms timeout."
   );

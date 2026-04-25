@@ -1,0 +1,11 @@
+HTTP/1.1 404 Not Found
+content-type: application/json; charset=utf-8
+Date: Sat, 25 Apr 2026 09:40:37 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 49
+
+{
+  "error": "Not found",
+  "path": "/miniapp"
+}

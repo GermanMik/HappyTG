@@ -1,0 +1,89 @@
+
+> happytg@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+> turbo build
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running build in 15 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/telegram-kit:build: cache miss, executing 5fb076d225b6ee46
+@happytg/session-engine:build: cache miss, executing f4b3c529af3d19c0
+@happytg/miniapp:build: cache miss, executing f0ef73b62c7e0682
+@happytg/protocol:build: cache miss, executing dac09e160a46196d
+@happytg/bot:build: cache miss, executing a92ded92f27aaf8a
+@happytg/runtime-adapters:build: cache miss, executing 37f2a8fab5870e5e
+@happytg/worker:build: cache miss, executing 50a866d28c3335b0
+@happytg/shared:build: cache miss, executing 9994180f96874254
+@happytg/host-daemon:build: cache miss, executing c2384e27bb58a5c6
+@happytg/policy-engine:build: cache miss, executing 0aa265fa15027158
+@happytg/session-engine:build:
+@happytg/session-engine:build: > @happytg/session-engine@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\session-engine
+@happytg/session-engine:build: > tsc -p tsconfig.json
+@happytg/session-engine:build:
+@happytg/telegram-kit:build:
+@happytg/telegram-kit:build: > @happytg/telegram-kit@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\telegram-kit
+@happytg/telegram-kit:build: > tsc -p tsconfig.json
+@happytg/telegram-kit:build:
+@happytg/miniapp:build:
+@happytg/miniapp:build: > @happytg/miniapp@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build:
+@happytg/host-daemon:build:
+@happytg/host-daemon:build: > @happytg/host-daemon@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build:
+@happytg/worker:build:
+@happytg/worker:build: > @happytg/worker@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build:
+@happytg/shared:build:
+@happytg/shared:build: > @happytg/shared@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build:
+@happytg/protocol:build:
+@happytg/protocol:build: > @happytg/protocol@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build:
+@happytg/policy-engine:build:
+@happytg/policy-engine:build: > @happytg/policy-engine@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build:
+@happytg/bot:build:
+@happytg/bot:build: > @happytg/bot@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build:
+@happytg/runtime-adapters:build:
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build:
+@happytg/api:build: cache miss, executing 465ea246129c56de
+@happytg/bootstrap:build: cache miss, executing 65a94a9da2896d9a
+@happytg/hooks:build: cache miss, executing 31e3e4d226de013d
+@happytg/approval-engine:build: cache miss, executing f9944477f1d3505e
+@happytg/repo-proof:build: cache miss, executing 906f904a8978a324
+@happytg/api:build:
+@happytg/api:build: > @happytg/api@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build:
+@happytg/bootstrap:build:
+@happytg/bootstrap:build: > @happytg/bootstrap@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build:
+@happytg/hooks:build:
+@happytg/hooks:build: > @happytg/hooks@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build:
+@happytg/approval-engine:build:
+@happytg/approval-engine:build: > @happytg/approval-engine@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build:
+@happytg/repo-proof:build:
+@happytg/repo-proof:build: > @happytg/repo-proof@0.4.5 build C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build:
+
+ Tasks:    15 successful, 15 total
+Cached:    0 cached, 15 total
+  Time:    7.428s

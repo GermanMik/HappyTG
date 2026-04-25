@@ -1,0 +1,130 @@
+===== /miniapp =====
+HTTP/1.1 200 OK
+Server: Web server
+Date: Sat, 25 Apr 2026 10:55:51 GMT
+Content-Type: text/html; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Content-Encoding: gzip
+Vary: Accept-Encoding
+Via: 1.1 Caddy
+
+
+CURL_INFO status=200 url=https://happytg.gerta.crazedns.ru/miniapp remote_ip=78.47.125.180 ssl_verify=0 content_type=text/html; charset=utf-8
+BODY_FIRST_500:
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HappyTG Mini App</title>
+    <style>
+      :root {
+        --bg: #f2f5ef;
+        --bg-accent: radial-gradient(circle at top left, rgba(21, 132, 108, 0.18), transparent 34%), radial-gradient(circle at top right, rgba(28, 93, 153, 0.12), transparent 28%), linear-gradient(180deg, #f8fbf7 0%, #eef2ee 100%);
+        --surface: rgba(255, 255, 255
+===== / =====
+HTTP/1.1 200 OK
+Server: Web server
+Date: Sat, 25 Apr 2026 10:55:51 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 1481
+Connection: keep-alive
+Content-Encoding: gzip
+Etag: "di25tv7hrtys3hn-gzip"
+Last-Modified: Sat, 25 Apr 2026 10:22:47 GMT
+Vary: Accept-Encoding
+
+
+CURL_INFO status=200 url=https://happytg.gerta.crazedns.ru/ remote_ip=78.47.125.180 ssl_verify=0 content_type=text/html; charset=utf-8
+BODY_FIRST_500:
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <base href="/" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#F5F7FB" />
+    <meta name="apple-mobile-web-app-title" content="HealthOS" />
+    <meta name="msapplication-TileColor" content="#F5F7FB" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-
+===== /health =====
+HTTP/1.1 200 OK
+Server: Web server
+Date: Sat, 25 Apr 2026 10:55:51 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 37
+Connection: keep-alive
+Via: 1.1 Caddy
+
+
+CURL_INFO status=200 url=https://happytg.gerta.crazedns.ru/health remote_ip=78.47.125.180 ssl_verify=0 content_type=application/json; charset=utf-8
+BODY_FIRST_500:
+{
+  "ok": true,
+  "service": "api"
+}
+
+===== /api/v1/miniapp/auth/session =====
+HTTP/1.1 404 Not Found
+Server: Web server
+Date: Sat, 25 Apr 2026 10:55:51 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 69
+Connection: keep-alive
+Via: 1.1 Caddy
+
+
+CURL_INFO status=404 url=https://happytg.gerta.crazedns.ru/api/v1/miniapp/auth/session remote_ip=78.47.125.180 ssl_verify=0 content_type=application/json; charset=utf-8
+BODY_FIRST_500:
+{
+  "error": "Not found",
+  "path": "/api/v1/miniapp/auth/session"
+}
+
+===== /api/v1/miniapp/dashboard =====
+HTTP/1.1 401 Unauthorized
+Server: Web server
+Date: Sat, 25 Apr 2026 10:55:51 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 48
+Connection: keep-alive
+Via: 1.1 Caddy
+
+
+CURL_INFO status=401 url=https://happytg.gerta.crazedns.ru/api/v1/miniapp/dashboard remote_ip=78.47.125.180 ssl_verify=0 content_type=application/json; charset=utf-8
+BODY_FIRST_500:
+{
+  "error": "Mini App session auth required"
+}
+
+===== /api/v1/miniapp/approvals/test/resolve =====
+HTTP/1.1 404 Not Found
+Server: Web server
+Date: Sat, 25 Apr 2026 10:55:51 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 79
+Connection: keep-alive
+Via: 1.1 Caddy
+
+
+CURL_INFO status=404 url=https://happytg.gerta.crazedns.ru/api/v1/miniapp/approvals/test/resolve remote_ip=78.47.125.180 ssl_verify=0 content_type=application/json; charset=utf-8
+BODY_FIRST_500:
+{
+  "error": "Not found",
+  "path": "/api/v1/miniapp/approvals/test/resolve"
+}
+
+===== /api/v1/projects =====
+HTTP/1.1 404 Not Found
+Server: Web server
+Date: Sat, 25 Apr 2026 10:55:51 GMT
+Content-Type: text/plain; charset=utf-8
+Content-Length: 9
+Connection: keep-alive
+
+
+CURL_INFO status=404 url=https://happytg.gerta.crazedns.ru/api/v1/projects remote_ip=78.47.125.180 ssl_verify=0 content_type=text/plain; charset=utf-8
+BODY_FIRST_500:
+Not found

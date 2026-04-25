@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+content-type: application/json; charset=utf-8
+Date: Sat, 25 Apr 2026 09:40:37 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 37
+
+{
+  "ok": true,
+  "service": "api"
+}

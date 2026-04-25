@@ -1,0 +1,3 @@
+{"level":"info","ts":1777110107.7908423,"msg":"using config from file","file":"Caddyfile"}
+{"level":"info","ts":1777110107.797647,"msg":"adapted config to JSON","adapter":"caddyfile"}
+{"level":"warn","ts":1777110107.797647,"msg":"Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies","adapter":"caddyfile","file":"Caddyfile","line":2}

@@ -1,0 +1,2 @@
+## codex/fix-caddy-miniapp-identity-codex-smoke
+?? .agent/tasks/HTG-2026-04-25-caddy-miniapp-identity-codex-smoke/

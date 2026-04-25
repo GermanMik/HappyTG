@@ -1,0 +1,9 @@
+
+> happytg@0.4.5 happytg C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-25-caddy-miniapp-identity-codex-smoke"
+
+Task: HTG-2026-04-25-caddy-miniapp-identity-codex-smoke
+Bundle: C:\Develop\Projects\HappyTG-installer-docker-launch-mode\.agent\tasks\HTG-2026-04-25-caddy-miniapp-identity-codex-smoke
+Validation: ok
+Phase: unknown
+Verification: unknown

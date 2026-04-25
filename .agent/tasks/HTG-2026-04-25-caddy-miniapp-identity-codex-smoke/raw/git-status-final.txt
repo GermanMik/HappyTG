@@ -1,0 +1,6 @@
+## codex/fix-caddy-miniapp-identity-codex-smoke
+ M infra/caddy/Caddyfile
+ M packages/bootstrap/src/index.ts
+ M packages/runtime-adapters/src/index.test.ts
+ M packages/runtime-adapters/src/index.ts
+?? .agent/tasks/HTG-2026-04-25-caddy-miniapp-identity-codex-smoke/

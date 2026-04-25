@@ -1,0 +1,9 @@
+
+LocalAddress LocalPort RemoteAddress RemotePort State  AppliedSetting OwningProcess
+------------ --------- ------------- ---------- -----  -------------- -------------
+::           443       ::            0          Listen                10484
+127.0.0.1    2019      0.0.0.0       0          Listen                10484
+::           3007      ::            0          Listen                14660
+::           4000      ::            0          Listen                43928
+::           4100      ::            0          Listen                44184
+::           4200      ::            0          Listen                39328

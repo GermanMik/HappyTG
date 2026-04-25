@@ -1,0 +1,6 @@
+
+> happytg@0.4.5 happytg C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+> tsx packages/bootstrap/src/cli.ts "telegram" "menu" "set" "--dry-run"
+
+TELEGRAM_BOT_TOKEN is missing. Set it in `.env` or the shell before configuring the Telegram menu button.
+ ELIFECYCLE  Command failed with exit code 1.

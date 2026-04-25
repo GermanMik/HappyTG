@@ -44,6 +44,6 @@
 
 	# Keep the root URL inspectable by redirecting operators to the Mini App.
 	handle {
-		redir /miniapp 302
+		redir * /miniapp 302
 	}
 }

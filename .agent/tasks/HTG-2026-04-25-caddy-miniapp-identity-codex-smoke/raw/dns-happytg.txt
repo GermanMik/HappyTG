@@ -1,0 +1,5 @@
+
+Name                                           Type   TTL   Section    IPAddress
+----                                           ----   ---   -------    ---------
+happytg.gerta.crazedns.ru                      AAAA   600   Answer     2001:2:7847:1251:feee:ed78:4712:5180
+happytg.gerta.crazedns.ru                      A      600   Answer     78.47.125.180

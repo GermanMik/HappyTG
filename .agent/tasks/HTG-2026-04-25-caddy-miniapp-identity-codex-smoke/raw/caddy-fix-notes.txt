@@ -1,0 +1,111 @@
+warning: in the working copy of 'C:\Develop\Projects\BaseDeploy\caddy\Caddyfile.bak.20260425_happytg_identity', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'C:\Develop\Projects\BaseDeploy\caddy\Caddyfile', LF will be replaced by CRLF the next time Git touches it
+diff --git "a/C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile.bak.20260425_happytg_identity" "b/C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile"
+index 831354d..1c02495 100644
+--- "a/C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile.bak.20260425_happytg_identity"
++++ "b/C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile"
+@@ -37,6 +37,49 @@
+     }
+ }
+
++(happytg_runtime) {
++    encode gzip zstd
++
++    handle /health {
++        reverse_proxy http://127.0.0.1:4000
++    }
++
++    handle /api/v1/miniapp/auth/session {
++        reverse_proxy http://127.0.0.1:4000
++    }
++
++    handle /api/v1/miniapp/dashboard {
++        reverse_proxy http://127.0.0.1:4000
++    }
++
++    @miniappApprovalResolve path_regexp miniapp_approval_resolve ^/api/v1/miniapp/approvals/[^/]+/resolve$
++    handle @miniappApprovalResolve {
++        reverse_proxy http://127.0.0.1:4000
++    }
++
++    handle /api/* {
++        respond "Not found" 404
++    }
++
++    handle /telegram/webhook {
++        reverse_proxy http://127.0.0.1:4100
++    }
++
++    handle_path /miniapp* {
++        reverse_proxy http://127.0.0.1:3007 {
++            header_up X-Forwarded-Prefix /miniapp
++        }
++    }
++
++    handle_path /static* {
++        reverse_proxy http://127.0.0.1:3007
++    }
++
++    handle {
++        redir * /miniapp 302
++    }
++}
++
+ healthos.gerta.crazedns.ru {
+     log {
+         output file logs/caddy_access.log {
+@@ -50,11 +93,55 @@ healthos.gerta.crazedns.ru {
+     import healthos_runtime
+ }
+
++https://happytg.gerta.crazedns.ru {
++    import happytg_runtime
++}
++
++happytg.gerta.crazedns.ru:8443 {
++    import happytg_runtime
++}
++
+ healthos.gerta.crazedns.ru:8443 {
+     import healthos_runtime
+ }
+
+ https://:8443 {
++    handle /health {
++        reverse_proxy http://127.0.0.1:4000
++    }
++
++    handle /api/v1/miniapp/auth/session {
++        reverse_proxy http://127.0.0.1:4000
++    }
++
++    handle /api/v1/miniapp/dashboard {
++        reverse_proxy http://127.0.0.1:4000
++    }
++
++    @miniappFallbackApprovalResolve path_regexp miniapp_fallback_approval_resolve ^/api/v1/miniapp/approvals/[^/]+/resolve$
++    handle @miniappFallbackApprovalResolve {
++        reverse_proxy http://127.0.0.1:4000
++    }
++
++    handle /telegram/webhook {
++        reverse_proxy http://127.0.0.1:4100
++    }
++
++    handle_path /miniapp* {
++        reverse_proxy http://127.0.0.1:3007 {
++            header_up Host happytg.gerta.crazedns.ru
++            header_up X-Forwarded-Host happytg.gerta.crazedns.ru
++            header_up X-Forwarded-Prefix /miniapp
++        }
++    }
++
++    handle_path /static* {
++        reverse_proxy http://127.0.0.1:3007 {
++            header_up Host happytg.gerta.crazedns.ru
++            header_up X-Forwarded-Host happytg.gerta.crazedns.ru
++        }
++    }
++
+     import healthos_runtime
+ }
