@@ -1,0 +1,27 @@
+✔ detectLinuxFamily classifies Debian and Fedora os-release content (11.9541ms)
+✔ detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path (899.2254ms)
+✔ inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe (382.1408ms)
+✔ mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun (9.2904ms)
+✔ retro installer renderers include active cursor and keyboard hints (0.5554ms)
+✔ progress screen uses a readable ASCII running indicator instead of a unicode ellipsis (0.5772ms)
+✔ progress screen renders an aggregate ASCII progress bar from terminal step states (0.2613ms)
+✔ progress screen renders explicit per-step progress when a step reports subprogress (0.1773ms)
+✔ Telegram screen renders a masked preview instead of the raw bot token (0.4789ms)
+✔ final screen groups structured finalization items and dedupes warning text (0.6133ms)
+✔ waitForEnter resolves when ENTER close is pressed on the final screen (1.2589ms)
+✔ waitForEnter does not render the same final screen twice when ENTER closes it (0.2413ms)
+✔ promptSelect resolves on enter for single-select menus (0.3365ms)
+✔ promptPortValue keeps validation visible after invalid input and accepts a later enter-confirmed retry (0.808ms)
+✔ promptTelegramForm accepts pasted token and allowed user IDs with trailing CRLF in the interactive keypress path (1.8137ms)
+✔ fetchTelegramBotIdentity separates invalid-token API rejections from recoverable network lookups (2.0702ms)
+✔ fetchTelegramBotIdentity classifies DNS-style fetch failures and non-JSON responses (1.9384ms)
+✔ fetchTelegramBotIdentity accepts Windows PowerShell validation as a success fallback after a Node timeout (0.2772ms)
+✔ fetchTelegramBotIdentity promotes invalid tokens when a Windows follow-up probe reaches Telegram (0.2743ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1650.6951

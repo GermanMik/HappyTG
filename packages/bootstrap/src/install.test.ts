@@ -194,10 +194,10 @@ test("retro installer renderers include active cursor and keyboard hints", () =>
     ]
   });
 
-  assert.match(welcome, /↑↓ navigate/);
+  assert.match(welcome, /UP\/DOWN navigate/);
   assert.match(welcome, /ENTER continue/);
   assert.match(repoMode, /Repo Mode/);
-  assert.match(repoMode, /›/);
+  assert.match(repoMode, />/);
   assert.match(repoMode, /ESC cancel/);
 
   const launchMode = renderLaunchModeScreen({
@@ -217,7 +217,7 @@ test("retro installer renderers include active cursor and keyboard hints", () =>
   });
   assert.match(launchMode, /Launch Mode/);
   assert.match(launchMode, /Docker Compose/);
-  assert.match(launchMode, /›/);
+  assert.match(launchMode, />/);
 });
 
 test("progress screen uses a readable ASCII running indicator instead of a unicode ellipsis", () => {
@@ -277,6 +277,37 @@ test("progress screen renders an aggregate ASCII progress bar from terminal step
   const visible = screen.replace(/\u001b\[[0-9;]*m/gu, "");
 
   assert.match(visible, /\[######----\] 3\/5 steps complete/);
+  assert.ok(
+    visible.indexOf("[######----] 3/5 steps complete") > visible.indexOf("Run doctor"),
+    visible
+  );
+  assert.match(visible, /\[########\] complete/);
+  assert.match(visible, /\[>-------\] running/);
+  assert.match(visible, /\[--------\] pending/);
+  assert.doesNotMatch(visible, /[^\x00-\x7F]/u);
+});
+
+test("progress screen renders explicit per-step progress when a step reports subprogress", () => {
+  const screen = renderProgressScreen({
+    title: "Preparing install.",
+    steps: [
+      {
+        id: "pnpm-install",
+        label: "Install workspace dependencies",
+        status: "running",
+        detail: "Running pnpm install.",
+        progress: {
+          completed: 1,
+          total: 2,
+          label: "attempt 1/2"
+        }
+      }
+    ]
+  });
+  const visible = screen.replace(/\u001b\[[0-9;]*m/gu, "");
+
+  assert.match(visible, /\[####----\] attempt 1\/2/);
+  assert.match(visible, /\[----------\] 0\/1 steps complete/);
 });
 
 test("Telegram screen renders a masked preview instead of the raw bot token", () => {

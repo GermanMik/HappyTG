@@ -1,0 +1,46 @@
+{
+  "taskId": "HTG-2026-04-25-installer-bottom-progress-substeps",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "agent": "Codex",
+    "runId": "codex-2026-04-25-installer-bottom-progress-substeps"
+  },
+  "summary": "The installer progress renderer now places the aggregate progress bar below the step list, adds local ASCII-safe indicators for every step, and keeps progress-adjacent TUI glyphs ASCII-safe for Windows terminals. Fresh targeted renderer/runtime tests, bootstrap build, lint, and task validation passed.",
+  "checks": [
+    {
+      "name": "bottom-aggregate-progress",
+      "ok": true,
+      "detail": "renderProgressScreen() appends the aggregate progress bar after all step rows and before keyboard hints."
+    },
+    {
+      "name": "per-step-local-indicators",
+      "ok": true,
+      "detail": "Every step row includes a local progress indicator derived from status, with optional explicit completed/total support."
+    },
+    {
+      "name": "ascii-safe-output",
+      "ok": true,
+      "detail": "Progress indicators, pass markers, active pointers, and keyboard hints use ASCII-safe characters."
+    },
+    {
+      "name": "terminal-state-accounting",
+      "ok": true,
+      "detail": "Aggregate progress still counts only passed, warn, failed, and skipped states as complete."
+    },
+    {
+      "name": "fresh-verification",
+      "ok": true,
+      "detail": "Targeted progress tests, runtime progress tests, build, lint, and task validation all exited 0."
+    },
+    {
+      "name": "separate-verifier-pass",
+      "ok": true,
+      "detail": "A separate verifier role reviewed the diff and proof bundle without editing production code and reported pass."
+    }
+  ],
+  "residualRisks": [
+    "Local step indicators are status-based by default, not duration-based. They avoid false estimates but cannot show fine-grained progress for long commands until those commands provide explicit subprogress."
+  ],
+  "generatedAt": "2026-04-25T12:43:00+03:00"
+}

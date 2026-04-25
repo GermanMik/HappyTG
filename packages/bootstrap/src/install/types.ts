@@ -215,6 +215,11 @@ export interface InstallStepRecord {
   label: string;
   status: StepStatus;
   detail: string;
+  progress?: {
+    completed: number;
+    total: number;
+    label?: string;
+  };
 }
 
 export interface InstallRuntimeErrorDetail {

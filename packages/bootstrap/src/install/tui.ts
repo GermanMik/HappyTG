@@ -41,7 +41,7 @@ function dim(text: string): string {
 function statusIcon(status: "pass" | "warn" | "fail" | "info"): string {
   switch (status) {
     case "pass":
-      return tint("✓", COLORS.cyan);
+      return tint("v", COLORS.cyan);
     case "warn":
       return tint("!", COLORS.warn);
     case "fail":
@@ -66,7 +66,7 @@ function header(title: string, subtitle: string): string[] {
 }
 
 function keyboardHints(extra?: string): string {
-  return dim(`↑↓ navigate   SPACE toggle   ENTER confirm   ESC cancel${extra ? `   ${extra}` : ""}`);
+  return dim(`UP/DOWN navigate   SPACE toggle   ENTER confirm   ESC cancel${extra ? `   ${extra}` : ""}`);
 }
 
 function finalActionHints(actionLabel: string): string {
@@ -87,9 +87,14 @@ function renderIndentedDetail(detail: string): string[] {
     .map((line) => `   ${line}`);
 }
 
+const TERMINAL_STEP_STATUSES = new Set<InstallStepRecord["status"]>(["passed", "warn", "failed", "skipped"]);
+
+function isTerminalStepStatus(status: InstallStepRecord["status"]): boolean {
+  return TERMINAL_STEP_STATUSES.has(status);
+}
+
 function summarizeStepProgress(steps: readonly InstallStepRecord[]): { completed: number; total: number } {
-  const terminalStatuses = new Set<InstallStepRecord["status"]>(["passed", "warn", "failed", "skipped"]);
-  const completed = steps.reduce((count, step) => count + (terminalStatuses.has(step.status) ? 1 : 0), 0);
+  const completed = steps.reduce((count, step) => count + (isTerminalStepStatus(step.status) ? 1 : 0), 0);
 
   return {
     completed,
@@ -97,8 +102,7 @@ function summarizeStepProgress(steps: readonly InstallStepRecord[]): { completed
   };
 }
 
-function renderStepProgressBar(completed: number, total: number): string {
-  const width = 10;
+function renderStepProgressBar(completed: number, total: number, width = 10): string {
   const normalizedCompleted = Math.max(0, Math.min(completed, total));
   const filled = total <= 0
     ? 0
@@ -108,6 +112,52 @@ function renderStepProgressBar(completed: number, total: number): string {
   const empty = width - filled;
 
   return `[${filled > 0 ? tint("#".repeat(filled), `${COLORS.bold}${COLORS.cyan}`) : ""}${empty > 0 ? dim("-".repeat(empty)) : ""}]`;
+}
+
+function renderStatusProgressBar(status: InstallStepRecord["status"]): string {
+  const width = 8;
+  if (isTerminalStepStatus(status)) {
+    const color = status === "failed"
+      ? COLORS.error
+      : status === "warn"
+        ? COLORS.warn
+        : status === "skipped"
+          ? COLORS.info
+          : COLORS.cyan;
+    return `[${tint("#".repeat(width), `${COLORS.bold}${color}`)}]`;
+  }
+  if (status === "running") {
+    return `[${tint(">", `${COLORS.bold}${COLORS.violet}`)}${dim("-".repeat(width - 1))}]`;
+  }
+  return `[${dim("-".repeat(width))}]`;
+}
+
+function stepProgressLabel(step: InstallStepRecord): string {
+  switch (step.status) {
+    case "passed":
+      return "complete";
+    case "warn":
+      return "warning";
+    case "failed":
+      return "failed";
+    case "skipped":
+      return "skipped";
+    case "running":
+      return "running";
+    case "pending":
+    default:
+      return "pending";
+  }
+}
+
+function renderStepProgressIndicator(step: InstallStepRecord): string {
+  if (step.progress && step.progress.total > 0) {
+    const completed = Math.max(0, Math.min(step.progress.completed, step.progress.total));
+    const label = step.progress.label ?? `${completed}/${step.progress.total}`;
+    return `${renderStepProgressBar(completed, step.progress.total, 8)} ${dim(label)}`;
+  }
+
+  return `${renderStatusProgressBar(step.status)} ${dim(stepProgressLabel(step))}`;
 }
 
 function pushUniqueLine(lines: string[], line: string): void {
@@ -175,7 +225,7 @@ function appendWarningSection(lines: string[], warnings: readonly string[], warn
 
 function renderOptions(options: Array<{ label: string; detail: string; active: boolean; selected?: boolean }>): string[] {
   return options.flatMap((option) => {
-    const pointer = option.active ? tint("›", COLORS.cyan) : dim(" ");
+    const pointer = option.active ? tint(">", COLORS.cyan) : dim(" ");
     const selection = option.selected === undefined
       ? ""
       : option.selected
@@ -310,7 +360,7 @@ export function renderTelegramScreen(input: {
       ]
       : []),
     "",
-    keyboardHints(input.editing ? "typing…" : "ENTER edit / confirm")
+    keyboardHints(input.editing ? "typing..." : "ENTER edit / confirm")
   ]);
 }
 
@@ -472,13 +522,12 @@ export function renderProgressScreen(input: {
   const progress = summarizeStepProgress(input.steps);
   const lines = [
     ...header("Installation Progress", input.title),
-    `${renderStepProgressBar(progress.completed, progress.total)} ${bright(`${progress.completed}/${progress.total} steps complete`)}`,
     ""
   ];
 
   for (const step of input.steps) {
     const icon = step.status === "passed"
-      ? tint("✓", COLORS.cyan)
+      ? tint("v", COLORS.cyan)
       : step.status === "warn"
         ? tint("!", COLORS.warn)
         : step.status === "failed"
@@ -499,8 +548,11 @@ export function renderProgressScreen(input: {
             : bright(step.label);
     lines.push(`${icon} ${label}`);
     lines.push(...renderIndentedDetail(step.detail));
+    lines.push(`   ${renderStepProgressIndicator(step)}`);
   }
 
+  lines.push("");
+  lines.push(`${renderStepProgressBar(progress.completed, progress.total)} ${bright(`${progress.completed}/${progress.total} steps complete`)}`);
   lines.push("");
   lines.push(keyboardHints("progress is automatic"));
   return renderFrame(lines);
