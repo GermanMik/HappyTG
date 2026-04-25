@@ -1,6 +1,6 @@
 # Evidence
 
-Status: release-ready locally; PR checks passed; publication pending.
+Status: passed; GitHub Release `v0.4.6` is published.
 
 ## Implementation Artifacts
 
@@ -19,7 +19,9 @@ Status: release-ready locally; PR checks passed; publication pending.
 5. Repo-level `pnpm lint`, `pnpm test`, `pnpm typecheck`, and `pnpm build` passed.
 6. Task validation passed after standard raw evidence files were recorded.
 7. PR #35 CI checks passed and are recorded in `raw/pr-checks.txt`.
-8. PR merge and GitHub Release publication are pending.
+8. PR #35 was merged to `main` as `bd80cd0b78c50c1421f59ec2e2ecf62d7b216a94`.
+9. GitHub Actions Release workflow run `24928353549` completed successfully from `main`.
+10. GitHub Release `v0.4.6` is published and targets `bd80cd0b78c50c1421f59ec2e2ecf62d7b216a94`.
 
 ## Raw Artifacts
 

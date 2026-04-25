@@ -1,1 +1,436 @@
-pending
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  * Ensure tag and release do not already exist
+  * Typecheck
+  * Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  * Typecheck
+  * Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  * Typecheck
+  * Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  * Typecheck
+  * Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  * Typecheck
+  * Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  * Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  * Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  * Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  * Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch less than a minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  * Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  ✓ Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  ✓ Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  ✓ Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  ✓ Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  ✓ Test
+  * Build
+  * Create tag and GitHub Release
+  * Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+Refreshing run status every 3 seconds. Press Ctrl+C to quit.
+
+* main Release · 24928353549
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+* publish (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  ✓ Test
+  ✓ Build
+  ✓ Create tag and GitHub Release
+  ✓ Post Setup Node.js
+  * Post Setup pnpm
+  * Post Checkout
+✓ main Release · 24928353549
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+✓ publish in 1m16s (ID 73001997215)
+  ✓ Set up job
+  ✓ Checkout
+  ✓ Setup pnpm
+  ✓ Setup Node.js
+  ✓ Install dependencies
+  ✓ Require latest default-branch HEAD
+  ✓ Validate release metadata
+  ✓ Ensure tag and release do not already exist
+  ✓ Typecheck
+  ✓ Lint
+  ✓ Test
+  ✓ Build
+  ✓ Create tag and GitHub Release
+  ✓ Post Setup Node.js
+  ✓ Post Setup pnpm
+  ✓ Post Checkout
+  ✓ Complete job
