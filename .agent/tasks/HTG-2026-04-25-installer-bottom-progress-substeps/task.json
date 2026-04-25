@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-04-25-installer-bottom-progress-substeps",
+  "sessionId": "codex-2026-04-25",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-25-installer-bottom-progress-substeps",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Move installer aggregate progress to bottom and add per-step progress indicators",
+  "acceptanceCriteria": [
+    "Aggregate step-count progress bar renders near the bottom of the interactive installer progress screen.",
+    "Each install step renders an ASCII-safe local progress indicator below the step label/detail.",
+    "Progress UI changes do not alter installer execution semantics or non-interactive output.",
+    "Reusable prompt artifact is added under .agent/prompts/.",
+    "Targeted renderer/runtime tests and build/lint verification are recorded."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-25T12:22:00+03:00",
+  "updatedAt": "2026-04-25T12:43:00+03:00"
+}
