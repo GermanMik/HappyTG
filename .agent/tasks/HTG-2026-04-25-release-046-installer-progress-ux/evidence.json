@@ -1,0 +1,105 @@
+{
+  "taskId": "HTG-2026-04-25-release-046-installer-progress-ux",
+  "status": "in_progress",
+  "phase": "evidence",
+  "criteria": [
+    {
+      "criterion": "Workspace package versions are aligned at 0.4.6.",
+      "artifacts": [
+        "package.json",
+        "apps/api/package.json",
+        "apps/bot/package.json",
+        "apps/host-daemon/package.json",
+        "apps/miniapp/package.json",
+        "apps/worker/package.json",
+        "packages/approval-engine/package.json",
+        "packages/bootstrap/package.json",
+        "packages/hooks/package.json",
+        "packages/policy-engine/package.json",
+        "packages/protocol/package.json",
+        "packages/repo-proof/package.json",
+        "packages/runtime-adapters/package.json",
+        "packages/session-engine/package.json",
+        "packages/shared/package.json",
+        "packages/telegram-kit/package.json"
+      ]
+    },
+    {
+      "criterion": "Release metadata exists for 0.4.6.",
+      "artifacts": [
+        "CHANGELOG.md",
+        "docs/releases/0.4.6.md",
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/release-check.txt"
+      ]
+    },
+    {
+      "criterion": "Local release verification passed.",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/build.txt",
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/lint.txt",
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/test-unit.txt",
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/test-integration.txt",
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/task-validate.txt"
+      ]
+    },
+    {
+      "criterion": "Release PR checks passed before merge.",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/pr-checks.txt"
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "name": "release-check",
+      "command": "pnpm release:check --version 0.4.6",
+      "result": "passed",
+      "raw": "raw/release-check.txt"
+    },
+    {
+      "name": "lint",
+      "command": "pnpm lint",
+      "result": "passed",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "name": "test",
+      "command": "pnpm test",
+      "result": "passed",
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "name": "typecheck",
+      "command": "pnpm typecheck",
+      "result": "passed",
+      "raw": "raw/test-integration.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm build",
+      "result": "passed",
+      "raw": "raw/build.txt"
+    },
+    {
+      "name": "task-validate",
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-04-25-release-046-installer-progress-ux",
+      "result": "passed",
+      "raw": "raw/task-validate.txt"
+    },
+    {
+      "name": "pr-checks",
+      "command": "gh pr checks 35 --watch --interval 10",
+      "result": "passed",
+      "raw": "raw/pr-checks.txt"
+    }
+  ],
+  "artifacts": [
+    ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/spec.md",
+    ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/evidence.md",
+    ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/evidence.json",
+    ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/verdict.json",
+    ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/problems.md",
+    ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/task.json"
+  ],
+  "generatedAt": "2026-04-25T13:58:00+03:00"
+}

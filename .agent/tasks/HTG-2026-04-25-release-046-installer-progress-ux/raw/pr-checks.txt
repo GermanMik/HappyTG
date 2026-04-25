@@ -1,0 +1,24 @@
+Refreshing checks status every 10 seconds. Press Ctrl+C to quit.
+
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928272105/job/73001796228
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928276188/job/73001805700
+Refreshing checks status every 10 seconds. Press Ctrl+C to quit.
+
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928272105/job/73001796228
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928276188/job/73001805700
+Refreshing checks status every 10 seconds. Press Ctrl+C to quit.
+
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928272105/job/73001796228
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928276188/job/73001805700
+Refreshing checks status every 10 seconds. Press Ctrl+C to quit.
+
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928272105/job/73001796228
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928276188/job/73001805700
+Refreshing checks status every 10 seconds. Press Ctrl+C to quit.
+
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928272105/job/73001796228
+verify	pending	0	https://github.com/GermanMik/HappyTG/actions/runs/24928276188/job/73001805700
+verify	pass	1m13s	https://github.com/GermanMik/HappyTG/actions/runs/24928272105/job/73001796228
+verify	pass	58s	https://github.com/GermanMik/HappyTG/actions/runs/24928276188/job/73001805700
+verify	pass	1m13s	https://github.com/GermanMik/HappyTG/actions/runs/24928272105/job/73001796228
+verify	pass	58s	https://github.com/GermanMik/HappyTG/actions/runs/24928276188/job/73001805700

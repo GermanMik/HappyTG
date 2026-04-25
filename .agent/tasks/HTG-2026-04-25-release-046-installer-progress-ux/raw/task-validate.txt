@@ -1,0 +1,9 @@
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-25-release-046-installer-progress-ux"
+
+Task: HTG-2026-04-25-release-046-installer-progress-ux
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-25-release-046-installer-progress-ux
+Validation: ok
+Phase: fresh verify
+Verification: pr-checks-passed
