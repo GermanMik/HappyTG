@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.6
+
+### Changed
+
+- Interactive installer progress now keeps the shared aggregate step-count bar near the bottom of the progress screen, after the step list and before keyboard hints.
+- Each installer step now renders an ASCII-safe local status indicator, with optional bounded subprogress for steps that can report real completed/total progress.
+- Installer TUI progress-adjacent glyphs now avoid Unicode markers for safer Windows terminal rendering.
+
+### Verification
+
+- Release validation covers the installer progress proof bundle, targeted bootstrap progress tests, bootstrap build/lint, and task validation.
+
 ## v0.4.5
 
 ### Fixed

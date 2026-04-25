@@ -1,0 +1,25 @@
+{
+  "taskId": "HTG-2026-04-25-release-046-installer-progress-ux",
+  "status": "release_ready",
+  "verifier": {
+    "role": "task-verifier",
+    "agent": "pending"
+  },
+  "summary": "Release metadata is prepared for 0.4.6 and local release validation, lint, test, typecheck, build, and task validation passed. PR merge and GitHub Release publication are pending.",
+  "checks": [
+    {
+      "name": "release-metadata",
+      "ok": true,
+      "detail": "Workspace versions, changelog, and docs/releases/0.4.6.md are aligned."
+    },
+    {
+      "name": "local-verification",
+      "ok": true,
+      "detail": "release:check, lint, test, typecheck, build, and task validation passed."
+    }
+  ],
+  "residualRisks": [
+    "GitHub Release v0.4.6 still needs to be published through the repository Release workflow after merge to main."
+  ],
+  "generatedAt": "2026-04-25T13:04:00+03:00"
+}
