@@ -1,7 +1,7 @@
 {
   "taskId": "HTG-2026-04-25-release-046-installer-progress-ux",
-  "status": "in_progress",
-  "phase": "evidence",
+  "status": "passed",
+  "phase": "complete",
   "criteria": [
     {
       "criterion": "Workspace package versions are aligned at 0.4.6.",
@@ -47,6 +47,13 @@
       "artifacts": [
         ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/pr-checks.txt"
       ]
+    },
+    {
+      "criterion": "GitHub Release v0.4.6 is published from the latest main through the Release workflow.",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/release-workflow.txt",
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/github-release.json"
+      ]
     }
   ],
   "commands": [
@@ -91,6 +98,18 @@
       "command": "gh pr checks 35 --watch --interval 10",
       "result": "passed",
       "raw": "raw/pr-checks.txt"
+    },
+    {
+      "name": "release-workflow",
+      "command": "gh workflow run Release --ref main -f version=0.4.6 -f draft=false -f prerelease=false; gh run watch 24928353549 --exit-status",
+      "result": "passed",
+      "raw": "raw/release-workflow.txt"
+    },
+    {
+      "name": "github-release",
+      "command": "gh release view v0.4.6 --json tagName,name,isDraft,isPrerelease,publishedAt,targetCommitish,url",
+      "result": "passed",
+      "raw": "raw/github-release.json"
     }
   ],
   "artifacts": [
@@ -101,5 +120,5 @@
     ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/problems.md",
     ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/task.json"
   ],
-  "generatedAt": "2026-04-25T13:58:00+03:00"
+  "generatedAt": "2026-04-25T14:04:00+03:00"
 }

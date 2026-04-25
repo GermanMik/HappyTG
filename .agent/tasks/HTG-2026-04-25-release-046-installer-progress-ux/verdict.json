@@ -1,11 +1,11 @@
 {
   "taskId": "HTG-2026-04-25-release-046-installer-progress-ux",
-  "status": "release_ready",
+  "status": "passed",
   "verifier": {
     "role": "task-verifier",
     "agent": "pending"
   },
-  "summary": "Release metadata is prepared for 0.4.6 and local release validation, lint, test, typecheck, build, task validation, and PR checks passed. PR merge and GitHub Release publication are pending.",
+  "summary": "HappyTG 0.4.6 release metadata was merged to main and GitHub Release v0.4.6 was published through the guarded Release workflow.",
   "checks": [
     {
       "name": "release-metadata",
@@ -21,10 +21,13 @@
       "name": "pr-checks",
       "ok": true,
       "detail": "PR #35 CI checks passed before merge."
+    },
+    {
+      "name": "release-publication",
+      "ok": true,
+      "detail": "Release workflow run 24928353549 completed successfully and published v0.4.6 targeting bd80cd0b78c50c1421f59ec2e2ecf62d7b216a94."
     }
   ],
-  "residualRisks": [
-    "GitHub Release v0.4.6 still needs to be published through the repository Release workflow after merge to main."
-  ],
-  "generatedAt": "2026-04-25T13:58:00+03:00"
+  "residualRisks": [],
+  "generatedAt": "2026-04-25T14:04:00+03:00"
 }
