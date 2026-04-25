@@ -1,0 +1,47 @@
+* Added happytg.gerta.crazedns.ru:443:127.0.0.1 to DNS cache
+* Hostname happytg.gerta.crazedns.ru was found in DNS cache
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0*   Trying 127.0.0.1:443...
+* schannel: disabled automatic use of client certificate
+* ALPN: curl offers http/1.1
+* ALPN: server accepted http/1.1
+* Established connection to happytg.gerta.crazedns.ru (127.0.0.1 port 443) from 127.0.0.1 port 64631
+* using HTTP/1.x
+> HEAD /miniapp HTTP/1.1
+
+> Host: happytg.gerta.crazedns.ru
+
+> User-Agent: curl/8.18.0
+
+> Accept: */*
+
+>
+
+* Request completely sent off
+* schannel: remote party requests renegotiation
+* schannel: renegotiating SSL/TLS connection
+* schannel: SSL/TLS connection renegotiated
+< HTTP/1.1 404 Not Found
+
+< Alt-Svc: h3=":443"; ma=2592000
+
+< Content-Type: application/json; charset=utf-8
+
+< Date: Sat, 25 Apr 2026 09:43:12 GMT
+
+< Via: 1.1 Caddy
+
+<
+
+
+  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0
+* Connection #0 to host happytg.gerta.crazedns.ru:443 left intact
+HTTP/1.1 404 Not Found
+Alt-Svc: h3=":443"; ma=2592000
+Content-Type: application/json; charset=utf-8
+Date: Sat, 25 Apr 2026 09:43:12 GMT
+Via: 1.1 Caddy

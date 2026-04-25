@@ -1,0 +1,18 @@
+{
+  "id": "HTG-2026-04-25-caddy-miniapp-identity-codex-smoke",
+  "title": "Fix Caddy Mini App identity and Codex smoke readiness",
+  "status": "complete_with_operator_warnings",
+  "branch": "codex/fix-caddy-miniapp-identity-codex-smoke",
+  "worktree": "C:\\Develop\\Projects\\HappyTG-installer-docker-launch-mode",
+  "createdAt": "2026-04-25",
+  "phases": [
+    "init",
+    "freeze/spec",
+    "build",
+    "evidence",
+    "fresh verify",
+    "minimal fix",
+    "fresh verify",
+    "complete"
+  ]
+}

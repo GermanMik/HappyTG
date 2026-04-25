@@ -1,0 +1,14 @@
+
+name                              ok detail
+----                              -- ------
+public /miniapp HappyTG title   True public probe body contains HappyTG title
+generic API blocked             True generic /api/v1/projects returns Not found
+miniapp dashboard routed to API True dashboard path reaches HappyTG API auth guard
+telegram menu dry-run pass      True dry-run passed Caddy identity preflight
+doctor caddy identity           True doctor checks public Caddy identity with sanitized env
+codex classified as old CLI     True Codex failure is actionable model/CLI mismatch
+typecheck.txt                   True typecheck.txt has pass marker
+lint.txt                        True lint.txt has pass marker
+test-unit.txt                   True test-unit.txt has pass marker
+build.txt                       True build.txt has pass marker
+task-validate.txt               True task-validate.txt has pass marker

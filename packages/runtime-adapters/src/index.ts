@@ -244,6 +244,13 @@ export function summarizeCodexSmokeStderr(stderr: string): string | undefined {
   if (lines.some((line) => /unexpected argument .* found/iu.test(line))) {
     return lines.find((line) => /unexpected argument .* found/iu.test(line)) ?? firstLine;
   }
+  const newerCodexLine = lines.find((line) => /requires a newer version of Codex/iu.test(line));
+  if (newerCodexLine) {
+    const modelMatch = newerCodexLine.match(/The '([^']+)' model requires a newer version of Codex/iu);
+    return modelMatch
+      ? `Codex CLI is too old for the configured ${modelMatch[1]} model. Upgrade Codex or select a model supported by this CLI.`
+      : "Codex CLI is too old for the configured model. Upgrade Codex or select a model supported by this CLI.";
+  }
   if (lines.some((line) => /responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden/iu.test(line)
       || /session_startup_prewarm: startup websocket prewarm setup failed: unexpected status 403 Forbidden/iu.test(line)
       || /unexpected status 403 Forbidden: .*wss:\/\/chatgpt\.com\/backend-api\/codex\/responses/iu.test(line))) {

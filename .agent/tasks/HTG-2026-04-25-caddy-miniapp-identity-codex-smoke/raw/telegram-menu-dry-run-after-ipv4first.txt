@@ -1,0 +1,6 @@
+
+> happytg@0.4.5 happytg C:\Develop\Projects\HappyTG-installer-docker-launch-mode
+> tsx packages/bootstrap/src/cli.ts "telegram" "menu" "set" "--dry-run"
+
+Public Caddy Mini App route responded with HTTP 200, but did not return HappyTG Mini App identity. First body detail: <!DOCTYPE html> <html lang="ru"> <head> <base href="/" /> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum Refusing to call Telegram setChatMenuButton for https://happytg.gerta.crazedns.ru/miniapp.
+ ELIFECYCLE  Command failed with exit code 1.

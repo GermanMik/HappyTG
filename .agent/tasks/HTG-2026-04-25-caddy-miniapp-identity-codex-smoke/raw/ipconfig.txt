@@ -1,0 +1,59 @@
+
+Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : ALFRED
+   Primary Dns Suffix  . . . . . . . :
+   Node Type . . . . . . . . . . . . : Hybrid
+   IP Routing Enabled. . . . . . . . : No
+   WINS Proxy Enabled. . . . . . . . : No
+   DNS Suffix Search List. . . . . . : tail396093.ts.net
+
+Unknown adapter Tailscale:
+
+   Connection-specific DNS Suffix  . : tail396093.ts.net
+   Description . . . . . . . . . . . : Tailscale Tunnel
+   Physical Address. . . . . . . . . :
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+   IPv6 Address. . . . . . . . . . . : fd7a:115c:a1e0::373a:8e2c(Preferred)
+   Link-local IPv6 Address . . . . . : fe80::bc29:ca9:d9fe:5bd4%7(Preferred)
+   IPv4 Address. . . . . . . . . . . : 100.87.142.44(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.255.255
+   Default Gateway . . . . . . . . . :
+   NetBIOS over Tcpip. . . . . . . . : Disabled
+   Connection-specific DNS Suffix Search List :
+                                       tail396093.ts.net
+
+Ethernet adapter Ethernet:
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Intel(R) I211 Gigabit Network Connection
+   Physical Address. . . . . . . . . : 7C-10-C9-D2-6E-31
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::3e85:a3b5:a721:af63%15(Preferred)
+   IPv4 Address. . . . . . . . . . . : 192.168.50.83(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Lease Obtained. . . . . . . . . . : 25 апреля 2026 г. 10:32:04
+   Lease Expires . . . . . . . . . . : 25 апреля 2026 г. 17:32:04
+   Default Gateway . . . . . . . . . : 192.168.50.1
+   DHCP Server . . . . . . . . . . . : 192.168.50.1
+   DHCPv6 IAID . . . . . . . . . . . : 108794057
+   DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-2F-70-46-D5-7C-10-C9-D2-6E-31
+   DNS Servers . . . . . . . . . . . : 192.168.50.1
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+Ethernet adapter vEthernet (Default Switch):
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Hyper-V Virtual Ethernet Adapter
+   Physical Address. . . . . . . . . : 00-15-5D-D7-F7-DF
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::da4b:214a:c5bc:2024%17(Preferred)
+   IPv4 Address. . . . . . . . . . . : 172.31.192.1(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.240.0
+   Default Gateway . . . . . . . . . :
+   DHCPv6 IAID . . . . . . . . . . . : 285218141
+   DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-2F-70-46-D5-7C-10-C9-D2-6E-31
+   NetBIOS over Tcpip. . . . . . . . : Enabled

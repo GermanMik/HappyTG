@@ -1,0 +1,3 @@
+200
+{"accept-ranges":"bytes","connection":"keep-alive","content-length":"4523","content-type":"text/html; charset=utf-8","date":"Sat, 25 Apr 2026 10:45:43 GMT","etag":"\"di25tv7hrtys3hn\"","last-modified":"Sat, 25 Apr 2026 10:22:47 GMT","server":"Web server","vary":"Accept-Encoding"}
+<!DOCTYPE html> <html lang="ru"> <head> <base href="/" /> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" /> <meta name="theme-color" content="#F5F7FB" /> <meta name="apple-mobile-web-app-title" content="HealthOS" /> <meta name="msapplication-TileColor" content="#F5F7FB" /> <meta name="apple-mobile-web-app-capable" content="yes" /> <meta name="apple-

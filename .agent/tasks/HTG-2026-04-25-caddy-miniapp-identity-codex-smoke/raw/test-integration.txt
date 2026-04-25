@@ -1,0 +1,1 @@
+No separate integration test script exists in package.json. Integration coverage for this task is recorded through public Caddy probes, pnpm happytg doctor --json, pnpm happytg verify --json, and pnpm happytg telegram menu set --dry-run artifacts in this proof bundle.

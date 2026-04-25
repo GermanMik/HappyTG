@@ -1,0 +1,69 @@
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0* Host happytg.gerta.crazedns.ru:443 was resolved.
+* IPv6: (none)
+* IPv4: 78.47.125.180
+*   Trying 78.47.125.180:443...
+* schannel: disabled automatic use of client certificate
+* ALPN: curl offers http/1.1
+* ALPN: server accepted http/1.1
+* Established connection to happytg.gerta.crazedns.ru (78.47.125.180 port 443) from 192.168.50.83 port 55684
+* using HTTP/1.x
+> HEAD /miniapp HTTP/1.1
+
+> Host: happytg.gerta.crazedns.ru
+
+> User-Agent: curl/8.18.0
+
+> Accept: */*
+
+>
+
+* Request completely sent off
+* schannel: remote party requests renegotiation
+* schannel: renegotiating SSL/TLS connection
+* schannel: SSL/TLS connection renegotiated
+* schannel: remote party requests renegotiation
+* schannel: renegotiating SSL/TLS connection
+* schannel: SSL/TLS connection renegotiated
+< HTTP/1.1 200 OK
+
+< Server: Web server
+
+< Date: Sat, 25 Apr 2026 09:42:17 GMT
+
+< Content-Type: text/html; charset=utf-8
+
+< Content-Length: 4523
+
+< Connection: keep-alive
+
+< Accept-Ranges: bytes
+
+< Alt-Svc: h3=":8443"; ma=2592000
+
+< Etag: "di14h5uj0o3g3hn"
+
+< Last-Modified: Fri, 24 Apr 2026 05:06:31 GMT
+
+< Vary: Accept-Encoding
+
+<
+
+
+  0   4523   0      0   0      0      0      0                              0
+  0   4523   0      0   0      0      0      0                              0
+  0   4523   0      0   0      0      0      0                              0
+* Connection #0 to host happytg.gerta.crazedns.ru:443 left intact
+HTTP/1.1 200 OK
+Server: Web server
+Date: Sat, 25 Apr 2026 09:42:17 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 4523
+Connection: keep-alive
+Accept-Ranges: bytes
+Alt-Svc: h3=":8443"; ma=2592000
+Etag: "di14h5uj0o3g3hn"
+Last-Modified: Fri, 24 Apr 2026 05:06:31 GMT
+Vary: Accept-Encoding

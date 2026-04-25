@@ -1,0 +1,27 @@
+
+> @happytg/runtime-adapters@0.4.5 test C:\Develop\Projects\HappyTG-installer-docker-launch-mode\packages\runtime-adapters
+> tsx --test src/*.test.ts
+
+✔ checkCodexReadiness reports available Codex and captures smoke warnings (269.1519ms)
+✔ tool execution model classifies actions and serializes mutations (1.5928ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from Path (282.8766ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext (320.0723ms)
+✔ checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated (330.876ms)
+✔ checkCodexReadiness closes stdin so smoke runs do not hang waiting for EOF (174.6382ms)
+✔ checkCodexReadiness preserves spaced prompts when it runs through a Windows cmd wrapper (322.17ms)
+✔ checkCodexReadiness treats a Windows shell command-not-found result as missing (5.4169ms)
+✔ checkCodexReadiness marks only true ENOENT failures as missing (85.2809ms)
+✔ classifyCodexSmokeStderr ignores known benign Codex internal warnings only (1.2377ms)
+✔ summarizeCodexSmokeStderr extracts concise actionable root causes (2.0629ms)
+✔ codexCliMissingMessage explains PATH diagnosis and reinstall fallback (0.256ms)
+✔ runCodexExec reads summary from the Codex output file (99.9228ms)
+✔ runCodexExec marks timeout and returns a timeout summary (45.3076ms)
+✔ runCodexExec returns actionable guidance when Codex CLI is missing (7.1983ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2359.0898

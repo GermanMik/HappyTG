@@ -1,0 +1,13 @@
+{
+  "taskId": "HTG-2026-04-25-caddy-miniapp-identity-codex-smoke",
+  "status": "verified_with_operator_warnings",
+  "freshVerifier": "pass",
+  "complete": true,
+  "summary": "Public /miniapp identity and Telegram dry-run preflight are fixed. Codex smoke remains a truthful operator warning because codex-cli 0.118.0 is too old for configured gpt-5.5.",
+  "remainingWarnings": [
+    "Codex CLI/model mismatch blocks the smoke reply until the CLI is upgraded or the model is changed.",
+    ".env is absent in the isolated worktree; sanitized env was used for public URL/token format checks.",
+    "Local Mini App default port 3001 is occupied by Contacts; running HappyTG Mini App is on 3007.",
+    "Public / still serves HealthOS from BaseDeploy fallback, outside this /miniapp readiness repair."
+  ]
+}

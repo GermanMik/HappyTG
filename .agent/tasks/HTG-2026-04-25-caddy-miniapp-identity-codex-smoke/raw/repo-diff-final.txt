@@ -1,0 +1,73 @@
+diff --git a/infra/caddy/Caddyfile b/infra/caddy/Caddyfile
+index cb8b179..8ef853d 100644
+--- a/infra/caddy/Caddyfile
++++ b/infra/caddy/Caddyfile
+@@ -44,6 +44,6 @@
+
+   # Keep the root URL inspectable by redirecting operators to the Mini App.
+   handle {
+-    redir /miniapp 302
++    redir * /miniapp 302
+   }
+ }
+diff --git a/packages/bootstrap/src/index.ts b/packages/bootstrap/src/index.ts
+index 810874e..629b4ad 100644
+--- a/packages/bootstrap/src/index.ts
++++ b/packages/bootstrap/src/index.ts
+@@ -313,14 +313,17 @@ function codexSmokeFailureMessage(input: {
+   output?: string;
+   timedOut?: boolean;
+ }): string {
+-  const summary = summarizeCodexSmokeStderr(input.stderr);
++  const smokeDetails = [input.stderr, input.output].filter(Boolean).join("\n");
++  const summary = summarizeCodexSmokeStderr(smokeDetails || input.stderr);
+   if (input.timedOut && codexSmokeOutputLooksSuccessful(input.output)) {
+     return summary
+       ? `Codex CLI returned the smoke reply, but the process did not exit before the timeout: ${summary} Run \`pnpm happytg doctor --json\` for stderr details.`
+       : "Codex CLI returned the smoke reply, but the process did not exit before the timeout. Run `pnpm happytg doctor --json` for stderr details.";
+   }
+
+-  return codexSmokeFailedMessage(input.stderr);
++  return summary
++    ? `Codex CLI started, but the smoke check failed: ${summary} Run \`pnpm happytg doctor --json\` for stderr details.`
++    : codexSmokeFailedMessage(input.stderr);
+ }
+
+ function codexSmokeWarningsMessage(stderr: string): string {
+diff --git a/packages/runtime-adapters/src/index.test.ts b/packages/runtime-adapters/src/index.test.ts
+index acda50d..ce4bd7b 100644
+--- a/packages/runtime-adapters/src/index.test.ts
++++ b/packages/runtime-adapters/src/index.test.ts
+@@ -470,6 +470,14 @@ test("summarizeCodexSmokeStderr extracts concise actionable root causes", () =>
+     ].join("\n")),
+     "Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP."
+   );
++  assert.equal(
++    summarizeCodexSmokeStderr([
++      "2026-04-17T04:22:49.185023Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses",
++      "2026-04-17T04:22:49.285023Z  WARN codex_core::client: falling back to HTTP",
++      "{\"type\":\"error\",\"message\":\"{\\\"detail\\\":\\\"The 'gpt-5.5' model requires a newer version of Codex. Please upgrade to the latest app or CLI and try again.\\\"}\"}"
++    ].join("\n")),
++    "Codex CLI is too old for the configured gpt-5.5 model. Upgrade Codex or select a model supported by this CLI."
++  );
+   assert.equal(
+     summarizeCodexSmokeStderr("2026-04-17T04:22:49.185023Z WARN codex_core::plugins::startup_sync: startup remote plugin sync failed\nProcess timed out after 120000ms."),
+     "Codex smoke command did not exit before the 120000ms timeout."
+diff --git a/packages/runtime-adapters/src/index.ts b/packages/runtime-adapters/src/index.ts
+index a988711..708f0b2 100644
+--- a/packages/runtime-adapters/src/index.ts
++++ b/packages/runtime-adapters/src/index.ts
+@@ -244,6 +244,13 @@ export function summarizeCodexSmokeStderr(stderr: string): string | undefined {
+   if (lines.some((line) => /unexpected argument .* found/iu.test(line))) {
+     return lines.find((line) => /unexpected argument .* found/iu.test(line)) ?? firstLine;
+   }
++  const newerCodexLine = lines.find((line) => /requires a newer version of Codex/iu.test(line));
++  if (newerCodexLine) {
++    const modelMatch = newerCodexLine.match(/The '([^']+)' model requires a newer version of Codex/iu);
++    return modelMatch
++      ? `Codex CLI is too old for the configured ${modelMatch[1]} model. Upgrade Codex or select a model supported by this CLI.`
++      : "Codex CLI is too old for the configured model. Upgrade Codex or select a model supported by this CLI.";
++  }
+   if (lines.some((line) => /responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden/iu.test(line)
+       || /session_startup_prewarm: startup websocket prewarm setup failed: unexpected status 403 Forbidden/iu.test(line)
+       || /unexpected status 403 Forbidden: .*wss:\/\/chatgpt\.com\/backend-api\/codex\/responses/iu.test(line))) {

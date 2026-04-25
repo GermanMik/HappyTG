@@ -313,14 +313,17 @@ function codexSmokeFailureMessage(input: {
   output?: string;
   timedOut?: boolean;
 }): string {
-  const summary = summarizeCodexSmokeStderr(input.stderr);
+  const smokeDetails = [input.stderr, input.output].filter(Boolean).join("\n");
+  const summary = summarizeCodexSmokeStderr(smokeDetails || input.stderr);
   if (input.timedOut && codexSmokeOutputLooksSuccessful(input.output)) {
     return summary
       ? `Codex CLI returned the smoke reply, but the process did not exit before the timeout: ${summary} Run \`pnpm happytg doctor --json\` for stderr details.`
       : "Codex CLI returned the smoke reply, but the process did not exit before the timeout. Run `pnpm happytg doctor --json` for stderr details.";
   }
 
-  return codexSmokeFailedMessage(input.stderr);
+  return summary
+    ? `Codex CLI started, but the smoke check failed: ${summary} Run \`pnpm happytg doctor --json\` for stderr details.`
+    : codexSmokeFailedMessage(input.stderr);
 }
 
 function codexSmokeWarningsMessage(stderr: string): string {

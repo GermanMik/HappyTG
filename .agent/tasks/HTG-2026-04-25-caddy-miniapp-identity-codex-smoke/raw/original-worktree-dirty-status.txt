@@ -1,0 +1,7 @@
+## codex/installer-bottom-progress-substeps
+ M packages/bootstrap/src/install.test.ts
+ M packages/bootstrap/src/install/tui.ts
+ M packages/bootstrap/src/install/types.ts
+?? .agent/prompts/caddy-miniapp-identity-codex-smoke-repair.md
+?? .agent/prompts/installer-bottom-progress-substep-indicators.md
+?? .agent/tasks/HTG-2026-04-25-installer-bottom-progress-substeps/
