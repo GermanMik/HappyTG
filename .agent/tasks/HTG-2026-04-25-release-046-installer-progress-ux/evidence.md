@@ -1,6 +1,6 @@
 # Evidence
 
-Status: release-ready locally; publication pending.
+Status: release-ready locally; PR checks passed; publication pending.
 
 ## Implementation Artifacts
 
@@ -18,7 +18,8 @@ Status: release-ready locally; publication pending.
 4. Local release validation passed with `pnpm release:check --version 0.4.6`.
 5. Repo-level `pnpm lint`, `pnpm test`, `pnpm typecheck`, and `pnpm build` passed.
 6. Task validation passed after standard raw evidence files were recorded.
-7. PR merge and GitHub Release publication are pending.
+7. PR #35 CI checks passed and are recorded in `raw/pr-checks.txt`.
+8. PR merge and GitHub Release publication are pending.
 
 ## Raw Artifacts
 

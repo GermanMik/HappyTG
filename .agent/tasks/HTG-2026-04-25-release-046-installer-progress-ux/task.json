@@ -3,7 +3,7 @@
   "sessionId": "codex-2026-04-25",
   "workspaceId": "HappyTG",
   "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-25-release-046-installer-progress-ux",
-  "phase": "evidence",
+  "phase": "fresh verify",
   "mode": "proof",
   "title": "Release HappyTG 0.4.6 for installer progress UX",
   "acceptanceCriteria": [
@@ -13,7 +13,7 @@
     "Local release validation and task validation pass.",
     "Release PR is merged to main and GitHub Release v0.4.6 is published through the Release workflow."
   ],
-  "verificationState": "local-passed",
+  "verificationState": "pr-checks-passed",
   "createdAt": "2026-04-25T12:55:00+03:00",
-  "updatedAt": "2026-04-25T13:04:00+03:00"
+  "updatedAt": "2026-04-25T13:58:00+03:00"
 }

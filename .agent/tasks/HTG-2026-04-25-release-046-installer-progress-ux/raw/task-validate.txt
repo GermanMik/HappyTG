@@ -5,5 +5,5 @@
 Task: HTG-2026-04-25-release-046-installer-progress-ux
 Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-25-release-046-installer-progress-ux
 Validation: ok
-Phase: evidence
-Verification: local-passed
+Phase: fresh verify
+Verification: pr-checks-passed

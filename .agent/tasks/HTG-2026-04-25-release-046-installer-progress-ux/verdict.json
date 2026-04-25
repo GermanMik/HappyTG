@@ -5,7 +5,7 @@
     "role": "task-verifier",
     "agent": "pending"
   },
-  "summary": "Release metadata is prepared for 0.4.6 and local release validation, lint, test, typecheck, build, and task validation passed. PR merge and GitHub Release publication are pending.",
+  "summary": "Release metadata is prepared for 0.4.6 and local release validation, lint, test, typecheck, build, task validation, and PR checks passed. PR merge and GitHub Release publication are pending.",
   "checks": [
     {
       "name": "release-metadata",
@@ -16,10 +16,15 @@
       "name": "local-verification",
       "ok": true,
       "detail": "release:check, lint, test, typecheck, build, and task validation passed."
+    },
+    {
+      "name": "pr-checks",
+      "ok": true,
+      "detail": "PR #35 CI checks passed before merge."
     }
   ],
   "residualRisks": [
     "GitHub Release v0.4.6 still needs to be published through the repository Release workflow after merge to main."
   ],
-  "generatedAt": "2026-04-25T13:04:00+03:00"
+  "generatedAt": "2026-04-25T13:58:00+03:00"
 }

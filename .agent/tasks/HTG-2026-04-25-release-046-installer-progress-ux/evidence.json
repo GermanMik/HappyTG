@@ -41,6 +41,12 @@
         ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/test-integration.txt",
         ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/task-validate.txt"
       ]
+    },
+    {
+      "criterion": "Release PR checks passed before merge.",
+      "artifacts": [
+        ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/raw/pr-checks.txt"
+      ]
     }
   ],
   "commands": [
@@ -79,6 +85,12 @@
       "command": "pnpm happytg task validate --repo . --task HTG-2026-04-25-release-046-installer-progress-ux",
       "result": "passed",
       "raw": "raw/task-validate.txt"
+    },
+    {
+      "name": "pr-checks",
+      "command": "gh pr checks 35 --watch --interval 10",
+      "result": "passed",
+      "raw": "raw/pr-checks.txt"
     }
   ],
   "artifacts": [
@@ -89,5 +101,5 @@
     ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/problems.md",
     ".agent/tasks/HTG-2026-04-25-release-046-installer-progress-ux/task.json"
   ],
-  "generatedAt": "2026-04-25T13:04:00+03:00"
+  "generatedAt": "2026-04-25T13:58:00+03:00"
 }
