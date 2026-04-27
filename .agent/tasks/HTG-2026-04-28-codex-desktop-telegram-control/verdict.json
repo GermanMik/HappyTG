@@ -1,0 +1,47 @@
+{
+  "taskId": "HTG-2026-04-28-codex-desktop-telegram-control",
+  "status": "BLOCKED",
+  "implementationStatus": "PASS",
+  "reason": "Implemented scoped read-only Codex Desktop visibility and source-aware Telegram/Mini App/API controls. Release/merge is blocked because required HappyTG doctor/verify reports fail in this local environment and Desktop mutating contracts are not proven for production.",
+  "blockers": [
+    {
+      "kind": "environment",
+      "scope": "release",
+      "detail": "`pnpm happytg doctor` and `pnpm happytg verify` report FAIL because `.env`/`TELEGRAM_BOT_TOKEN` are missing. Secrets cannot be invented or committed."
+    },
+    {
+      "kind": "environment",
+      "scope": "release",
+      "detail": "Mini App port 3001 is occupied by an unrelated Contacts container, so local doctor/verify reports a port conflict."
+    },
+    {
+      "kind": "contract",
+      "scope": "codex-desktop-resume",
+      "detail": "No stable Desktop/API-safe Resume contract was proven; production Resume remains unsupported."
+    },
+    {
+      "kind": "contract",
+      "scope": "codex-desktop-stop",
+      "detail": "No stable session-to-process/control handle was proven; Stop remains unsupported and no process-kill workaround was implemented."
+    },
+    {
+      "kind": "contract",
+      "scope": "codex-desktop-new-task",
+      "detail": "No stable Desktop task creation contract was proven; New Desktop Task remains unsupported."
+    }
+  ],
+  "checks": {
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "test": "PASS",
+    "doctor": "FAIL_ENVIRONMENT",
+    "verify": "FAIL_ENVIRONMENT",
+    "smokeTelegram": "PASS",
+    "smokeMiniApp": "PASS",
+    "freshVerifier": "PASS"
+  },
+  "release": {
+    "branch": "codex/codex-desktop-telegram-control-20260428",
+    "merge": "BLOCKED_UNTIL_LOCAL_VERIFICATION_AND_RELEASE_CHECKS_PASS"
+  }
+}

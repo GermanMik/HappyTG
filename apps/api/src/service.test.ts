@@ -1,14 +1,15 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
 import type { TaskBundle } from "../../../packages/protocol/src/index.js";
+import { CodexDesktopStateAdapter } from "../../../packages/runtime-adapters/src/index.js";
 import { FileStateStore } from "../../../packages/shared/src/index.js";
 
-import { HappyTGControlPlaneService } from "./service.js";
+import { CodexDesktopControlError, HappyTGControlPlaneService } from "./service.js";
 
 function signedMiniAppInitData(fields: Record<string, string>, botToken: string): string {
   const params = new URLSearchParams(fields);
@@ -21,13 +22,56 @@ function signedMiniAppInitData(fields: Record<string, string>, botToken: string)
   return params.toString();
 }
 
-async function createServiceWithTempStore() {
+async function createServiceWithTempStore(codexDesktop?: CodexDesktopStateAdapter) {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-api-test-"));
   const storePath = path.join(tempDir, "control-plane.json");
+  const store = new FileStateStore(storePath);
   return {
     tempDir,
-    service: new HappyTGControlPlaneService(new FileStateStore(storePath))
+    store,
+    service: new HappyTGControlPlaneService(store, undefined, codexDesktop)
   };
+}
+
+async function createKnownUser(service: HappyTGControlPlaneService, suffix: string): Promise<string> {
+  const pairing = await service.startPairing({
+    hostLabel: `desktop-host-${suffix}`,
+    fingerprint: `fp-desktop-${suffix}`
+  });
+  const claim = await service.claimPairing({
+    pairingCode: pairing.pairingCode,
+    telegramUserId: `99${suffix}`,
+    chatId: `99${suffix}`,
+    displayName: `Desktop User ${suffix}`
+  });
+  return claim.user.id;
+}
+
+async function createCodexDesktopHome(root: string): Promise<string> {
+  const codexHome = path.join(root, ".codex-fixture");
+  const sessionDir = path.join(codexHome, "sessions", "2026", "04", "28");
+  await mkdir(sessionDir, { recursive: true });
+  await writeFile(
+    path.join(codexHome, ".codex-global-state.json"),
+    JSON.stringify({
+      "electron-saved-workspace-roots": ["C:/Develop/Projects/HappyTG"],
+      "thread-workspace-root-hints": {
+        "desktop-session-1": "C:/Develop/Projects/HappyTG"
+      }
+    }),
+    "utf8"
+  );
+  await writeFile(
+    path.join(codexHome, "session_index.jsonl"),
+    `${JSON.stringify({ id: "desktop-session-1", thread_name: "Desktop fixture", updated_at: "2026-04-28T08:00:00.000Z" })}\n`,
+    "utf8"
+  );
+  await writeFile(
+    path.join(sessionDir, "desktop-session-1.jsonl"),
+    `${JSON.stringify({ timestamp: "2026-04-28T09:00:00.000Z", payload: { id: "desktop-session-1", cwd: "C:/Develop/Projects/HappyTG", content: "RAW_SECRET_PROMPT" } })}\n`,
+    "utf8"
+  );
+  return codexHome;
 }
 
 test("proof session creates task bundle and approval, then approval dispatches session", async () => {
@@ -299,6 +343,141 @@ test("bot projections list user-scoped workspaces, sessions, approvals, and reje
 
   assert.equal(replay.approval.state, "approved_session");
   assert.equal(replay.dispatch, undefined);
+});
+
+test("Codex Desktop projections are user-scoped and sanitized", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-api-desktop-projection-"));
+  let serviceTempDir: string | undefined;
+  try {
+    const codexHome = await createCodexDesktopHome(tempDir);
+    const bundle = await createServiceWithTempStore(new CodexDesktopStateAdapter({ codexHome }));
+    serviceTempDir = bundle.tempDir;
+    const { store, service } = bundle;
+    const userId = await createKnownUser(service, "01");
+
+    const projects = await service.listCodexDesktopProjects(userId);
+    const sessions = await service.listCodexDesktopSessions(userId);
+
+    assert.equal(projects.projects[0]?.source, "codex-desktop");
+    assert.equal(projects.projects[0]?.label, "HappyTG");
+    assert.equal(sessions.sessions[0]?.source, "codex-desktop");
+    assert.equal(sessions.sessions[0]?.canResume, false);
+    assert.equal(sessions.sessions[0]?.canStop, false);
+    assert.doesNotMatch(JSON.stringify({ projects, sessions }), /RAW_SECRET_PROMPT/);
+    await assert.rejects(() => service.listCodexDesktopSessions("unknown-user"), /User not found/);
+
+    const storeState = await store.read();
+    assert.equal(storeState.users.some((user) => user.id === userId), true);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+    if (serviceTempDir) {
+      await rm(serviceTempDir, { recursive: true, force: true });
+    }
+  }
+});
+
+test("Codex Desktop controls block unavailable contracts and audit attempts", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-api-desktop-unsupported-"));
+  let serviceTempDir: string | undefined;
+  try {
+    const codexHome = await createCodexDesktopHome(tempDir);
+    const bundle = await createServiceWithTempStore(new CodexDesktopStateAdapter({ codexHome }));
+    serviceTempDir = bundle.tempDir;
+    const { store, service } = bundle;
+    const userId = await createKnownUser(service, "02");
+
+    await assert.rejects(
+      () => service.resumeCodexDesktopSession(userId, "desktop-session-1"),
+      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501
+    );
+    await assert.rejects(
+      () => service.stopCodexDesktopSession(userId, "desktop-session-1"),
+      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501
+    );
+    await assert.rejects(
+      () => service.createCodexDesktopTask({ userId, prompt: "Do desktop work", projectPath: "C:/Develop/Projects/HappyTG" }),
+      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501
+    );
+
+    const actions = (await store.read()).auditRecords.map((record) => record.action);
+    assert.equal(actions.includes("codex_desktop.resume.attempt"), true);
+    assert.equal(actions.includes("codex_desktop.resume.unsupported"), true);
+    assert.equal(actions.includes("codex_desktop.stop.attempt"), true);
+    assert.equal(actions.includes("codex_desktop.stop.unsupported"), true);
+    assert.equal(actions.includes("codex_desktop.new_task.attempt"), true);
+    assert.equal(actions.includes("codex_desktop.new_task.unsupported"), true);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+    if (serviceTempDir) {
+      await rm(serviceTempDir, { recursive: true, force: true });
+    }
+  }
+});
+
+test("Codex Desktop controls execute only through supported adapter contract", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-api-desktop-supported-"));
+  let serviceTempDir: string | undefined;
+  try {
+    const codexHome = await createCodexDesktopHome(tempDir);
+    const calls: string[] = [];
+    const adapter = new CodexDesktopStateAdapter({
+      codexHome,
+      controlContract: {
+        supportsResume: true,
+        supportsStop: true,
+        supportsNewTask: true,
+        async resumeSession(session) {
+          calls.push(`resume:${session.id}`);
+          return { ok: true, action: "resume", source: "codex-desktop", session };
+        },
+        async stopSession(session) {
+          calls.push(`stop:${session.id}`);
+          return { ok: true, action: "stop", source: "codex-desktop", session };
+        },
+        async createTask(input) {
+          calls.push(`new-task:${input.projectPath ?? input.projectId}`);
+          return {
+            ok: true,
+            action: "new-task",
+            source: "codex-desktop",
+            task: {
+              id: "cdt_supported",
+              title: input.title ?? "Desktop task",
+              projectPath: input.projectPath,
+              status: "created"
+            }
+          };
+        }
+      }
+    });
+    const bundle = await createServiceWithTempStore(adapter);
+    serviceTempDir = bundle.tempDir;
+    const { store, service } = bundle;
+    const userId = await createKnownUser(service, "03");
+
+    const resume = await service.resumeCodexDesktopSession(userId, "desktop-session-1");
+    const stop = await service.stopCodexDesktopSession(userId, "desktop-session-1");
+    const created = await service.createCodexDesktopTask({ userId, prompt: "Do desktop work", projectPath: "C:/Develop/Projects/HappyTG" });
+
+    assert.equal(resume.action, "resume");
+    assert.equal(stop.action, "stop");
+    assert.equal(created.task?.id, "cdt_supported");
+    assert.deepEqual(calls, [
+      "resume:desktop-session-1",
+      "stop:desktop-session-1",
+      "new-task:C:/Develop/Projects/HappyTG"
+    ]);
+
+    const actions = (await store.read()).auditRecords.map((record) => record.action);
+    assert.equal(actions.includes("codex_desktop.resume.completed"), true);
+    assert.equal(actions.includes("codex_desktop.stop.completed"), true);
+    assert.equal(actions.includes("codex_desktop.new_task.completed"), true);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+    if (serviceTempDir) {
+      await rm(serviceTempDir, { recursive: true, force: true });
+    }
+  }
 });
 
 test("mini app launch validates initData, issues app session, and exposes action-first projections", async () => {

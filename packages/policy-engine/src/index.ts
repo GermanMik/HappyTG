@@ -123,6 +123,24 @@ export function createDefaultPolicies(): Policy[] {
           reason: "Resume attempts are allowed and revalidated server-side"
         },
         {
+          id: "rule_allow_codex_desktop_resume",
+          actionKind: "codex_desktop_resume",
+          effect: "allow",
+          reason: "Codex Desktop resume attempts are allowed only through a proven adapter contract"
+        },
+        {
+          id: "rule_allow_codex_desktop_stop",
+          actionKind: "codex_desktop_stop",
+          effect: "allow",
+          reason: "Codex Desktop stop attempts are allowed only through a proven adapter control handle"
+        },
+        {
+          id: "rule_allow_codex_desktop_new_task",
+          actionKind: "codex_desktop_new_task",
+          effect: "allow",
+          reason: "Codex Desktop task creation is allowed only through a proven adapter contract"
+        },
+        {
           id: "rule_allow_verify",
           actionKind: "verification_run",
           effect: "allow",

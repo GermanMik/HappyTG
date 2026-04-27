@@ -1,0 +1,71 @@
+{
+  "taskId": "HTG-2026-04-28-codex-desktop-telegram-control",
+  "phase": "fresh_verify",
+  "implementationStatus": "pass",
+  "controls": {
+    "resume": {
+      "production": "unsupported",
+      "reason": "No stable Codex Desktop daemon/API-safe resume contract was proven."
+    },
+    "stop": {
+      "production": "unsupported",
+      "reason": "No stable session-to-process/control handle was proven."
+    },
+    "newDesktopTask": {
+      "production": "unsupported",
+      "reason": "No stable Codex Desktop task creation contract was proven."
+    }
+  },
+  "checks": [
+    {
+      "name": "pnpm lint",
+      "status": "pass",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "name": "pnpm typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "name": "pnpm test",
+      "status": "pass",
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "name": "pnpm happytg doctor",
+      "status": "fail_environment",
+      "raw": "raw/doctor.txt",
+      "reason": "Missing .env/TELEGRAM_BOT_TOKEN and local Mini App port conflict."
+    },
+    {
+      "name": "pnpm happytg verify",
+      "status": "fail_environment",
+      "raw": "raw/verify.txt",
+      "reason": "Missing .env/TELEGRAM_BOT_TOKEN and local Mini App port conflict."
+    },
+    {
+      "name": "smoke Telegram Codex",
+      "status": "pass",
+      "raw": "raw/smoke-telegram.txt"
+    },
+    {
+      "name": "smoke Mini App Codex",
+      "status": "pass",
+      "raw": "raw/smoke-miniapp.txt"
+    },
+    {
+      "name": "fresh verifier",
+      "status": "pass",
+      "raw": "raw/fresh-verifier.txt"
+    }
+  ],
+  "privacy": {
+    "botReadsCodexHome": false,
+    "miniAppReadsCodexHome": false,
+    "adapterReadsAuthJson": false,
+    "rawPayloadsProjected": false,
+    "desktopStopUsesProcessKillWorkaround": false,
+    "successfulNoopDesktopControls": false
+  }
+}

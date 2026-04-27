@@ -66,6 +66,9 @@ export const ACTION_KINDS = [
   "bootstrap_config_edit",
   "daemon_pair",
   "session_resume",
+  "codex_desktop_resume",
+  "codex_desktop_stop",
+  "codex_desktop_new_task",
   "verification_run"
 ] as const;
 
@@ -639,6 +642,53 @@ export interface RuntimeExecutionResult {
   lastMessagePath?: string;
 }
 
+export type CodexRuntimeSource = "codex-cli" | "codex-desktop";
+
+export interface CodexDesktopProject {
+  id: string;
+  label: string;
+  path: string;
+  source: "codex-desktop";
+  lastSeenAt?: string;
+  active?: boolean;
+}
+
+export interface CodexDesktopSession {
+  id: string;
+  title: string;
+  projectPath?: string;
+  projectId?: string;
+  updatedAt: string;
+  status: "active" | "recent" | "archived" | "unknown";
+  source: "codex-desktop";
+  canResume: boolean;
+  canStop: boolean;
+  canCreateTask?: boolean;
+  unsupportedReason?: string;
+}
+
+export interface CodexDesktopControlResult {
+  ok: true;
+  action: "resume" | "stop" | "new-task";
+  source: "codex-desktop";
+  session?: CodexDesktopSession;
+  task?: {
+    id: string;
+    title: string;
+    projectId?: string;
+    projectPath?: string;
+    status: "created" | "queued" | "running" | "unknown";
+  };
+}
+
+export interface CreateCodexDesktopTaskRequest {
+  userId: string;
+  projectId?: string;
+  projectPath?: string;
+  title?: string;
+  prompt: string;
+}
+
 export interface CreatePairingRequest {
   hostLabel: string;
   fingerprint: string;
@@ -746,15 +796,22 @@ export interface MiniAppSessionCard {
   id: string;
   title: string;
   state: SessionState;
-  runtime?: Session["runtime"];
+  runtime?: CodexRuntimeSource;
+  source?: CodexRuntimeSource;
+  desktopStatus?: CodexDesktopSession["status"];
   phase?: TaskPhase;
   verificationState?: VerificationState;
   hostLabel?: string;
   repoName?: string;
+  projectPath?: string;
   lastUpdatedAt: string;
   attention?: string;
   href: string;
   nextAction: string;
+  canResume?: boolean;
+  canStop?: boolean;
+  canCreateTask?: boolean;
+  unsupportedReason?: string;
 }
 
 export interface MiniAppProjectCard {

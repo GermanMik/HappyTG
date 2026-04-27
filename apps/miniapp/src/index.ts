@@ -14,6 +14,8 @@ import {
   type Logger
 } from "../../../packages/shared/src/index.js";
 import type {
+  CodexDesktopProject,
+  CodexDesktopSession,
   CreateSessionRequest,
   MiniAppApprovalCard,
   MiniAppDashboardProjection,
@@ -308,7 +310,7 @@ async function detectPortOccupant(listenPort: number, fetchImpl: typeof fetch = 
   return {};
 }
 
-type NavKey = "home" | "sessions" | "projects" | "approvals" | "hosts" | "reports";
+type NavKey = "home" | "codex" | "sessions" | "projects" | "approvals" | "hosts" | "reports";
 
 export function renderPage(
   title: string,
@@ -1019,6 +1021,44 @@ export function renderPage(
             });
           });
         });
+        document.querySelectorAll("[data-desktop-action]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            var feedback = document.querySelector("[data-action-feedback]");
+            var sessionToken = token();
+            if (!sessionToken) {
+              setActionFeedback(feedback, "danger", "Нет Mini App session. Откройте экран заново из бота.");
+              return;
+            }
+            var action = button.getAttribute("data-desktop-action") || "";
+            var sessionId = button.getAttribute("data-session-id") || "";
+            button.disabled = true;
+            var previousLabel = button.textContent;
+            button.textContent = "Отправляем...";
+            setActionFeedback(feedback, "info", "Отправляем Codex Desktop действие через API.");
+            fetch(apiUrl("/api/v1/codex-desktop/sessions/" + encodeURIComponent(sessionId) + "/" + encodeURIComponent(action)), {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "authorization": "Bearer " + sessionToken
+              },
+              body: JSON.stringify({})
+            }).then(function (response) {
+              if (!response.ok) {
+                return readError(response, "Desktop action unsupported.").then(function (detail) {
+                  throw new Error(detail);
+                });
+              }
+              return response.json();
+            }).then(function () {
+              setActionFeedback(feedback, "success", "Действие принято. Обновляем экран.");
+              location.reload();
+            }).catch(function (error) {
+              button.disabled = false;
+              button.textContent = previousLabel;
+              setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось выполнить Desktop action.");
+            });
+          });
+        });
         document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
           event.preventDefault();
           var form = event.currentTarget;
@@ -1035,6 +1075,7 @@ export function renderPage(
             body: JSON.stringify({
               hostId: data.get("hostId"),
               workspaceId: data.get("workspaceId"),
+              runtime: data.get("runtime") || "codex-cli",
               mode: data.get("mode") || "proof",
               title: data.get("title") || "Mini App task",
               prompt: data.get("prompt") || "",
@@ -1075,9 +1116,14 @@ function linkButton(label: string, href: string, primary = false): string {
   return `<a class="button${primary ? " button-primary" : ""}" href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
 }
 
+function disabledButton(label: string, reason?: string): string {
+  return `<button class="button" type="button" disabled title="${escapeHtml(reason ?? "unsupported")}">${escapeHtml(label)}</button>`;
+}
+
 function renderBottomNav(active?: NavKey): string {
   const items: Array<{ key: NavKey; href: string; label: string }> = [
     { key: "home", href: "/", label: "Главная" },
+    { key: "codex", href: "/codex", label: "Codex" },
     { key: "sessions", href: "/sessions", label: "Сессии" },
     { key: "projects", href: "/projects", label: "Проекты" },
     { key: "approvals", href: "/approvals", label: "Решения" },
@@ -1132,6 +1178,7 @@ function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
       <p class="muted">Короткий статус, быстрые действия и переход к деталям без чтения raw logs.</p>
       <div class="actions">
         ${linkButton("Новая задача", "/new-task", true)}
+        ${linkButton("Codex", "/codex")}
         ${linkButton("Проекты", "/projects")}
         ${linkButton("Подтверждения", "/approvals")}
         ${dashboard.recentSessions[0] ? linkButton("Продолжить последнюю", dashboard.recentSessions[0].href) : ""}
@@ -1159,7 +1206,13 @@ function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
 }
 
 function runtimeLabel(runtime: string | undefined): string {
-  return runtime === "codex-cli" ? "Codex CLI" : runtime ?? "runtime n/a";
+  if (runtime === "codex-cli") {
+    return "Codex CLI";
+  }
+  if (runtime === "codex-desktop") {
+    return "Codex Desktop";
+  }
+  return runtime ?? "runtime n/a";
 }
 
 function renderSessionCards(sessions: MiniAppSessionCard[]): string {
@@ -1173,8 +1226,142 @@ function renderSessionCards(sessions: MiniAppSessionCard[]): string {
       <div class="muted">${escapeHtml(runtimeLabel(session.runtime))} · ${escapeHtml(session.repoName ?? "repo not selected")} · ${escapeHtml(session.hostLabel ?? "host n/a")} · ${escapeHtml(session.lastUpdatedAt)}</div>
       ${session.attention ? `<div class="muted">Needs: ${escapeHtml(session.attention)}</div>` : ""}
     </div>
-    <div class="status-meta">${renderBadge(session.state)}${session.phase ? renderBadge(session.phase, "info") : ""}${session.verificationState ? renderBadge(session.verificationState) : ""}${linkButton(session.nextAction, session.href)}</div>
+    <div class="status-meta">${renderBadge(session.desktopStatus ?? session.state)}${session.phase ? renderBadge(session.phase, "info") : ""}${session.verificationState ? renderBadge(session.verificationState) : ""}${linkButton(session.nextAction, session.href)}</div>
   </li>`).join("")}</ul>`;
+}
+
+function desktopSessionCard(session: CodexDesktopSession): MiniAppSessionCard {
+  return {
+    id: session.id,
+    title: session.title,
+    state: session.status === "active" ? "running" : session.status === "archived" ? "completed" : session.status === "unknown" ? "blocked" : "paused",
+    runtime: "codex-desktop",
+    source: "codex-desktop",
+    desktopStatus: session.status,
+    repoName: session.projectPath ? session.projectPath.split(/[\\/]/u).filter(Boolean).at(-1) : "Desktop project",
+    projectPath: session.projectPath,
+    lastUpdatedAt: session.updatedAt,
+    href: `/codex/desktop-session?id=${encodeURIComponent(session.id)}`,
+    nextAction: "open",
+    canResume: session.canResume,
+    canStop: session.canStop,
+    canCreateTask: session.canCreateTask,
+    unsupportedReason: session.unsupportedReason
+  };
+}
+
+function renderSourceSwitcher(activeSource: string): string {
+  const items = [
+    { value: "all", label: "Все" },
+    { value: "codex-desktop", label: "Codex Desktop" },
+    { value: "codex-cli", label: "Codex CLI" }
+  ];
+  return `<div class="actions">${items.map((item) => linkButton(item.label, `/codex?source=${encodeURIComponent(item.value)}`, item.value === activeSource)).join("")}</div>`;
+}
+
+function matchesCodexSearch(card: MiniAppSessionCard, query: string): boolean {
+  if (!query) {
+    return true;
+  }
+
+  const haystack = [
+    card.title,
+    card.repoName,
+    card.hostLabel,
+    card.projectPath,
+    card.runtime,
+    card.state
+  ].filter(Boolean).join(" ").toLowerCase();
+  return haystack.includes(query.toLowerCase());
+}
+
+function renderDesktopActions(session: CodexDesktopSession): string {
+  const reason = session.unsupportedReason ?? "Stable Codex Desktop control contract is unavailable.";
+  return `<div class="actions">
+    ${session.canResume ? `<button class="button button-primary" type="button" data-desktop-action="resume" data-session-id="${escapeHtml(session.id)}">Resume</button>` : disabledButton("Resume", reason)}
+    ${session.canStop ? `<button class="button button-danger" type="button" data-desktop-action="stop" data-session-id="${escapeHtml(session.id)}">Stop</button>` : disabledButton("Stop", reason)}
+    ${session.canCreateTask ? linkButton("New Desktop Task", `/new-task?source=codex-desktop&projectId=${encodeURIComponent(session.projectId ?? "")}`, true) : disabledButton("New Desktop Task", reason)}
+  </div>`;
+}
+
+function renderCodexPanel(input: {
+  cliSessions: MiniAppSessionCard[];
+  desktopProjects: CodexDesktopProject[];
+  desktopSessions: CodexDesktopSession[];
+  source?: string;
+  state?: string;
+  project?: string;
+  q?: string;
+}): string {
+  const source = input.source ?? "all";
+  const query = input.q?.trim() ?? "";
+  const desktopCards = input.desktopSessions.map(desktopSessionCard);
+  const cliCards = input.cliSessions.map((session) => ({
+    ...session,
+    runtime: "codex-cli" as const,
+    source: "codex-cli" as const
+  }));
+  const cards = [...desktopCards, ...cliCards]
+    .filter((card) => source === "all" || card.source === source || card.runtime === source)
+    .filter((card) => !input.state || input.state === "all" || card.state === input.state || card.desktopStatus === input.state || card.attention === input.state || (input.state === "unsupported" && Boolean(card.unsupportedReason)))
+    .filter((card) => !input.project || input.project === "all" || card.repoName === input.project || card.projectPath === input.project)
+    .filter((card) => matchesCodexSearch(card, query))
+    .sort((left, right) => right.lastUpdatedAt.localeCompare(left.lastUpdatedAt));
+  const desktopReason = input.desktopSessions.find((session) => session.unsupportedReason)?.unsupportedReason;
+
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Codex control</p>
+      <h1>Codex Desktop / CLI</h1>
+      <p class="muted">Source-aware task panel. Desktop data comes from the API adapter; raw prompts and logs stay hidden.</p>
+      ${renderSourceSwitcher(source)}
+    </section>
+    <section class="panel">
+      <h2>Фильтры</h2>
+      <form method="GET" action="/codex" class="grid">
+        <input type="hidden" name="source" value="${escapeHtml(source)}">
+        <label><span class="eyebrow">State</span><select name="state">
+          ${["all", "active", "recent", "archived", "unknown", "running", "paused", "completed", "blocked", "unsupported"].map((state) => `<option value="${state}"${input.state === state ? " selected" : ""}>${state}</option>`).join("")}
+        </select></label>
+        <label><span class="eyebrow">Search</span><input name="q" value="${escapeHtml(query)}" placeholder="title, project, path"></label>
+        <div class="actions"><button class="button button-primary" type="submit">Применить</button>${linkButton("Сбросить", "/codex")}</div>
+      </form>
+    </section>
+    <section class="grid">
+      <div class="kv-item"><div class="eyebrow">Desktop projects</div><strong>${input.desktopProjects.length}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Desktop sessions</div><strong>${input.desktopSessions.length}</strong></div>
+      <div class="kv-item"><div class="eyebrow">CLI sessions</div><strong>${input.cliSessions.length}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Visible</div><strong>${cards.length}</strong></div>
+    </section>
+    ${desktopReason ? `<section class="notice notice-warn">Desktop actions may be disabled: ${escapeHtml(desktopReason)}</section>` : ""}
+    <section class="panel">
+      <h2>Sessions</h2>
+      ${renderSessionCards(cards)}
+    </section>
+    <section class="panel">
+      <h2>Codex Desktop projects</h2>
+      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="muted">${escapeHtml(project.path)}</div></div><div class="status-meta">${renderBadge(project.active ? "active" : "saved")}</div></li>`).join("")}</ul>`}
+    </section>
+  `;
+}
+
+function renderDesktopSessionDetail(session: CodexDesktopSession): string {
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Codex Desktop</p>
+      <h1>${escapeHtml(session.title)}</h1>
+      <p class="muted">${escapeHtml(session.projectPath ?? "project unknown")}</p>
+      <div class="notice notice-info" data-action-feedback hidden>Ждем действие.</div>
+      ${renderDesktopActions(session)}
+    </section>
+    <section class="grid">
+      <div class="kv-item"><div class="eyebrow">Source</div><strong>Codex Desktop</strong></div>
+      <div class="kv-item"><div class="eyebrow">Status</div><strong>${escapeHtml(session.status)}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Updated</div><strong>${escapeHtml(session.updatedAt)}</strong></div>
+      <div class="kv-item"><div class="eyebrow">Contract</div><strong>${session.canResume || session.canStop || session.canCreateTask ? "partial" : "unsupported"}</strong></div>
+    </section>
+    ${session.unsupportedReason ? `<section class="notice notice-warn">${escapeHtml(session.unsupportedReason)}</section>` : ""}
+  `;
 }
 
 function renderProjectCards(projects: MiniAppProjectCard[]): string {
@@ -1191,19 +1378,28 @@ function renderProjectCards(projects: MiniAppProjectCard[]): string {
   </li>`).join("")}</ul>`;
 }
 
-function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?: string; workspaceId?: string }): string {
+function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?: string; workspaceId?: string; source?: string }, desktop?: { projects: CodexDesktopProject[]; sessions: CodexDesktopSession[] }): string {
   const selectedWorkspaceId = selected?.workspaceId ?? projects[0]?.id;
   const selectedProject = projects.find((project) => project.id === selectedWorkspaceId) ?? projects[0];
+  const selectedSource = selected?.source === "codex-desktop" ? "codex-desktop" : "codex-cli";
+  const desktopCanCreate = Boolean(desktop?.sessions.some((session) => session.canCreateTask));
+  const desktopReason = desktop?.sessions.find((session) => session.unsupportedReason)?.unsupportedReason ?? "Stable Codex Desktop New Task contract is unavailable.";
   const options = projects.map((project) => `<option value="${escapeHtml(project.id)}" data-host-id="${escapeHtml(project.hostId)}"${project.id === selectedProject?.id ? " selected" : ""}>${escapeHtml(project.repoName)} · ${escapeHtml(project.hostLabel ?? "host n/a")}</option>`).join("");
 
   return `<section class="panel hero">
     <h1>Новая Codex-задача</h1>
-    <p class="muted">Выберите project/workspace, задайте инструкцию и создайте Codex CLI session через backend.</p>
+    <p class="muted">Сначала выберите runtime/source. CLI использует HappyTG host flow; Desktop доступен только при proven contract.</p>
   </section>
   <section class="panel">
     ${projects.length === 0 ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form>
+      <label class="eyebrow" for="runtime">Source</label>
+      <select id="runtime" name="runtime">
+        <option value="codex-cli"${selectedSource === "codex-cli" ? " selected" : ""}>Codex CLI</option>
+        <option value="codex-desktop"${selectedSource === "codex-desktop" ? " selected" : ""}${desktopCanCreate ? "" : " disabled"}>Codex Desktop${desktopCanCreate ? "" : " (unsupported)"}</option>
+      </select>
       <input type="hidden" name="hostId" value="${escapeHtml(selectedProject?.hostId ?? selected?.hostId ?? "")}">
       <div class="notice notice-info" data-task-feedback hidden>Создаем сессию.</div>
+      ${desktopCanCreate ? "" : `<div class="notice notice-warn">New Desktop Task disabled: ${escapeHtml(desktopReason)}</div>`}
       <label class="eyebrow" for="workspaceId">Проект</label>
       <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''">${options}</select>
       <label class="eyebrow" for="mode">Режим</label>
@@ -1443,6 +1639,18 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       : undefined;
   };
   const fetchForRequest = <T>(req: { headers: Record<string, string | string[] | undefined> }, url: URL, pathname: string) => dependencies.fetchJson<T>(withUser(pathname, url), authInit(req));
+  const fetchCodexForRequest = async (req: { headers: Record<string, string | string[] | undefined> }, url: URL) => {
+    const [cliSessions, desktopProjects, desktopSessions] = await Promise.all([
+      fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions"),
+      fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects"),
+      fetchForRequest<{ sessions: CodexDesktopSession[] }>(req, url, "/api/v1/codex-desktop/sessions")
+    ]);
+    return {
+      cliSessions: cliSessions.sessions,
+      desktopProjects: desktopProjects.projects,
+      desktopSessions: desktopSessions.sessions
+    };
+  };
   const postForRequest = <T>(
     req: { headers: Record<string, string | string[] | undefined> },
     url: URL,
@@ -1509,6 +1717,24 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const screen = url.searchParams.get("screen");
+        if (screen === "codex") {
+          const codex = await fetchCodexForRequest(req, url);
+          html(res, 200, renderForRequest(req, "Codex", renderCodexPanel({
+            ...codex,
+            source: url.searchParams.get("source") ?? "all",
+            state: url.searchParams.get("state") ?? undefined,
+            project: url.searchParams.get("project") ?? undefined,
+            q: url.searchParams.get("q") ?? undefined
+          }), { navKey: "codex" }));
+          return;
+        }
+        if (screen === "codex-session" && url.searchParams.get("id")) {
+          const id = url.searchParams.get("id")!;
+          const codex = await fetchCodexForRequest(req, url);
+          const session = codex.desktopSessions.find((item) => item.id === id);
+          html(res, session ? 200 : 404, renderForRequest(req, session ? `Codex Desktop ${session.id}` : "Codex Desktop session not found", session ? renderDesktopSessionDetail(session) : renderEmptyState("Desktop session не найдена", "Adapter did not return this session.", "Codex", "/codex?source=codex-desktop"), { navKey: "codex" }));
+          return;
+        }
         if (screen === "sessions") {
           const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
           html(res, 200, renderForRequest(req, "Сессии", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`, { navKey: "sessions" }));
@@ -1550,8 +1776,37 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           return;
         }
 
-        const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
-        html(res, 200, renderForRequest(req, "Сессии", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Статус, фаза, verify и следующий шаг в одном месте.</p></section>${renderSessionCards(sessions.sessions)}`, { navKey: "sessions" }));
+        const codex = await fetchCodexForRequest(req, url);
+        html(res, 200, renderForRequest(req, "Сессии", renderCodexPanel({
+          ...codex,
+          source: url.searchParams.get("source") ?? "all",
+          state: url.searchParams.get("state") ?? undefined,
+          q: url.searchParams.get("q") ?? undefined
+        }), { navKey: "sessions" }));
+      }),
+      route("GET", "/codex", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Codex", "codex")) {
+          return;
+        }
+
+        const codex = await fetchCodexForRequest(req, url);
+        html(res, 200, renderForRequest(req, "Codex", renderCodexPanel({
+          ...codex,
+          source: url.searchParams.get("source") ?? "all",
+          state: url.searchParams.get("state") ?? undefined,
+          project: url.searchParams.get("project") ?? undefined,
+          q: url.searchParams.get("q") ?? undefined
+        }), { navKey: "codex" }));
+      }),
+      route("GET", "/codex/desktop-session", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
+          return;
+        }
+
+        const id = url.searchParams.get("id");
+        const codex = await fetchCodexForRequest(req, url);
+        const session = id ? codex.desktopSessions.find((item) => item.id === id) : undefined;
+        html(res, session ? 200 : 404, renderForRequest(req, session ? `Codex Desktop ${session.id}` : "Codex Desktop session not found", session ? renderDesktopSessionDetail(session) : renderEmptyState("Desktop session не найдена", "Adapter did not return this session.", "Codex", "/codex?source=codex-desktop"), { navKey: "codex" }));
       }),
       route("GET", "/approvals", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Подтверждения", "approvals")) {
@@ -1660,25 +1915,32 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           return;
         }
 
-        const projects = await fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects");
+        const [projects, desktopProjects, desktopSessions] = await Promise.all([
+          fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects"),
+          fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects"),
+          fetchForRequest<{ sessions: CodexDesktopSession[] }>(req, url, "/api/v1/codex-desktop/sessions")
+        ]);
         html(res, 200, renderForRequest(req, "Новая задача", renderNewTaskForm(projects.projects, {
           hostId: url.searchParams.get("hostId") ?? undefined,
-          workspaceId: url.searchParams.get("workspaceId") ?? undefined
-        }), { navKey: "projects" }));
+          workspaceId: url.searchParams.get("workspaceId") ?? undefined,
+          source: url.searchParams.get("source") ?? undefined
+        }, { projects: desktopProjects.projects, sessions: desktopSessions.sessions }), { navKey: "projects" }));
       }),
       route("POST", "/new-task", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Новая задача", "projects")) {
           return;
         }
 
-        const body = await readJsonBody<Omit<CreateSessionRequest, "userId" | "runtime">>(req);
-        const created = await postForRequest<{ session: MiniAppSessionCard }>(req, url, "/api/v1/miniapp/sessions", {
-          ...body,
-          runtime: "codex-cli"
-        });
+        const body = await readJsonBody<Omit<CreateSessionRequest, "userId" | "runtime"> & { runtime?: string; projectId?: string; projectPath?: string }>(req);
+        const created = body.runtime === "codex-desktop"
+          ? await postForRequest<{ task?: { id: string }; session?: MiniAppSessionCard }>(req, url, "/api/v1/codex-desktop/tasks", body)
+          : await postForRequest<{ session: MiniAppSessionCard }>(req, url, "/api/v1/miniapp/sessions", {
+              ...body,
+              runtime: "codex-cli"
+            });
         json(res, 200, {
           ...created,
-          sessionHref: created.session.href
+          sessionHref: created.session?.href ?? "/codex?source=codex-desktop"
         });
       }),
       route("GET", "/task/:id", async ({ req, res, params, url }) => {

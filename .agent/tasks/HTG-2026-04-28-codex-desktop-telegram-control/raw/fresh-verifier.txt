@@ -1,0 +1,121 @@
+Fresh verifier pass
+Role: task-verifier (read-only; no production edits during this pass)
+Date: 2026-04-28
+Verdict: PASS for implemented scope; release remains BLOCKED by local doctor/verify environment, and Desktop Resume/Stop/New Task remain unsupported in production contract.
+
+## git diff --check
+exit=0
+warning: in the working copy of 'apps/api/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/src/service.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/src/service.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/bot/src/handlers.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/bot/src/handlers.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/miniapp/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/miniapp/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/policy-engine/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/protocol/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+
+## no direct .codex reads in bot or miniapp
+exit=0
+apps\miniapp\src\index.ts:1723:            ...codex,
+apps\miniapp\src\index.ts:1781:          ...codex,
+apps\miniapp\src\index.ts:1794:          ...codex,
+
+## no forbidden Desktop stop/process-control patterns in production surfaces
+exit=1
+
+
+## source-aware codex control locations
+exit=0
+packages\protocol\src\index.ts:645:export type CodexRuntimeSource = "codex-cli" | "codex-desktop";
+packages\protocol\src\index.ts:651:  source: "codex-desktop";
+packages\protocol\src\index.ts:663:  source: "codex-desktop";
+packages\protocol\src\index.ts:673:  source: "codex-desktop";
+packages\runtime-adapters\src\codex-desktop.ts:13:const DEFAULT_UNSUPPORTED_REASON = "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.";
+packages\runtime-adapters\src\codex-desktop.ts:286:        source: "codex-desktop" as const,
+packages\runtime-adapters\src\codex-desktop.ts:329:        title: sanitizeTitle(record.thread_name, `Codex Desktop ${id.slice(0, 8)}`),
+packages\runtime-adapters\src\codex-desktop.ts:360:          title: sanitizeTitle(draft.title, `Codex Desktop ${draft.id.slice(0, 8)}`),
+packages\runtime-adapters\src\codex-desktop.ts:365:          source: "codex-desktop"
+apps\api\src\service.ts:674:      throw new CodexDesktopControlError(404, "User not found for Codex Desktop projection");
+apps\api\src\service.ts:750:        throw new CodexDesktopControlError(409, "Codex Desktop action requires approval, but no stable Desktop approval control contract is available.");
+apps\api\src\service.ts:764:      throw new CodexDesktopControlError(404, "Codex Desktop session not found");
+apps\api\src\service.ts:789:      throw new CodexDesktopControlError(404, "Codex Desktop session not found");
+apps\api\src\service.ts:816:      targetRef: input.projectId ?? input.projectPath ?? "codex-desktop",
+apps\api\src\service.ts:818:        source: "codex-desktop",
+apps\api\src\service.ts:826:      await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.unsupported", input.projectId ?? input.projectPath ?? "codex-desktop", { reason });
+apps\api\src\service.ts:831:    await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.completed", result.task?.id ?? "codex-desktop", { ok: result.ok });
+apps\api\src\index.ts:97:          source: "codex-desktop"
+apps\api\src\index.ts:185:      route("GET", "/api/v1/codex-desktop/projects", async ({ req, res, url }) => {
+apps\api\src\index.ts:193:      route("GET", "/api/v1/codex-desktop/sessions", async ({ req, res, url }) => {
+apps\api\src\index.ts:201:      route("POST", "/api/v1/codex-desktop/sessions/:id/resume", async ({ req, res, params, url }) => {
+apps\api\src\index.ts:211:      route("POST", "/api/v1/codex-desktop/sessions/:id/stop", async ({ req, res, params, url }) => {
+apps\api\src\index.ts:221:      route("POST", "/api/v1/codex-desktop/tasks", async ({ req, res, url }) => {
+apps\miniapp\src\index.ts:1037:            setActionFeedback(feedback, "info", "Отправляем Codex Desktop действие через API.");
+apps\miniapp\src\index.ts:1038:            fetch(apiUrl("/api/v1/codex-desktop/sessions/" + encodeURIComponent(sessionId) + "/" + encodeURIComponent(action)), {
+apps\miniapp\src\index.ts:1212:  if (runtime === "codex-desktop") {
+apps\miniapp\src\index.ts:1213:    return "Codex Desktop";
+apps\miniapp\src\index.ts:1238:    runtime: "codex-desktop",
+apps\miniapp\src\index.ts:1239:    source: "codex-desktop",
+apps\miniapp\src\index.ts:1256:    { value: "codex-desktop", label: "Codex Desktop" },
+apps\miniapp\src\index.ts:1279:  const reason = session.unsupportedReason ?? "Stable Codex Desktop control contract is unavailable.";
+apps\miniapp\src\index.ts:1283:    ${session.canCreateTask ? linkButton("New Desktop Task", `/new-task?source=codex-desktop&projectId=${encodeURIComponent(session.projectId ?? "")}`, true) : disabledButton("New Desktop Task", reason)}
+apps\miniapp\src\index.ts:1315:      <h1>Codex Desktop / CLI</h1>
+apps\miniapp\src\index.ts:1342:      <h2>Codex Desktop projects</h2>
+apps\miniapp\src\index.ts:1343:      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="muted">${escapeHtml(project.path)}</div></div><div class="status-meta">${renderBadge(project.active ? "active" : "saved")}</div></li>`).join("")}</ul>`}
+apps\miniapp\src\index.ts:1351:      <p class="eyebrow">Codex Desktop</p>
+apps\miniapp\src\index.ts:1358:      <div class="kv-item"><div class="eyebrow">Source</div><strong>Codex Desktop</strong></div>
+apps\miniapp\src\index.ts:1384:  const selectedSource = selected?.source === "codex-desktop" ? "codex-desktop" : "codex-cli";
+apps\miniapp\src\index.ts:1386:  const desktopReason = desktop?.sessions.find((session) => session.unsupportedReason)?.unsupportedReason ?? "Stable Codex Desktop New Task contract is unavailable.";
+apps\miniapp\src\index.ts:1398:        <option value="codex-desktop"${selectedSource === "codex-desktop" ? " selected" : ""}${desktopCanCreate ? "" : " disabled"}>Codex Desktop${desktopCanCreate ? "" : " (unsupported)"}</option>
+apps\miniapp\src\index.ts:1645:      fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects"),
+apps\miniapp\src\index.ts:1646:      fetchForRequest<{ sessions: CodexDesktopSession[] }>(req, url, "/api/v1/codex-desktop/sessions")
+apps\miniapp\src\index.ts:1735:          html(res, session ? 200 : 404, renderForRequest(req, session ? `Codex Desktop ${session.id}` : "Codex Desktop session not found", session ? renderDesktopSessionDetail(session) : renderEmptyState("Desktop session не найдена", "Adapter did not return this session.", "Codex", "/codex?source=codex-desktop"), { navKey: "codex" }));
+apps\miniapp\src\index.ts:1802:        if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
+apps\miniapp\src\index.ts:1809:        html(res, session ? 200 : 404, renderForRequest(req, session ? `Codex Desktop ${session.id}` : "Codex Desktop session not found", session ? renderDesktopSessionDetail(session) : renderEmptyState("Desktop session не найдена", "Adapter did not return this session.", "Codex", "/codex?source=codex-desktop"), { navKey: "codex" }));
+apps\miniapp\src\index.ts:1920:          fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects"),
+apps\miniapp\src\index.ts:1921:          fetchForRequest<{ sessions: CodexDesktopSession[] }>(req, url, "/api/v1/codex-desktop/sessions")
+apps\miniapp\src\index.ts:1935:        const created = body.runtime === "codex-desktop"
+apps\miniapp\src\index.ts:1936:          ? await postForRequest<{ task?: { id: string }; session?: MiniAppSessionCard }>(req, url, "/api/v1/codex-desktop/tasks", body)
+apps\miniapp\src\index.ts:1943:          sessionHref: created.session?.href ?? "/codex?source=codex-desktop"
+apps\bot\src\handlers.ts:266:        { text: "Codex", callback_data: "cx:m" },
+apps\bot\src\handlers.ts:271:        { text: "Codex CLI", callback_data: "cc:s" }
+apps\bot\src\handlers.ts:292:      { text: "Codex Desktop", callback_data: "cx:d" },
+apps\bot\src\handlers.ts:293:      { text: "Codex CLI", callback_data: "cx:c" }
+apps\bot\src\handlers.ts:296:      { text: "Новая CLI задача", callback_data: "cx:ns:c" },
+apps\bot\src\handlers.ts:297:      { text: "Новая Desktop задача", callback_data: "cx:ns:d" }
+apps\bot\src\handlers.ts:300:      { text: "Desktop projects", callback_data: "cd:p" },
+apps\bot\src\handlers.ts:301:      { text: "Desktop sessions", callback_data: "cd:s" }
+apps\bot\src\handlers.ts:310:      { text: "Codex Desktop", callback_data: "cx:ns:d" },
+apps\bot\src\handlers.ts:311:      { text: "Codex CLI", callback_data: "cx:ns:c" }
+apps\bot\src\handlers.ts:457:    "Codex Desktop: read-only local Desktop state через API adapter."
+apps\bot\src\handlers.ts:463:    return "Codex Desktop projects не найдены или локальный Desktop state недоступен.";
+apps\bot\src\handlers.ts:467:    "Codex Desktop projects",
+apps\bot\src\handlers.ts:474:    return "Codex Desktop sessions не найдены или локальный Desktop state недоступен.";
+apps\bot\src\handlers.ts:478:    "Codex Desktop sessions",
+apps\bot\src\handlers.ts:485:    `Codex Desktop session ${shortId(session.id)}`,
+apps\bot\src\handlers.ts:488:    "Источник: Codex Desktop",
+apps\bot\src\handlers.ts:499:  const miniAppButton = telegramWebAppButton("Mini App", miniBaseUrl, "codex", { source: "codex-desktop" });
+apps\bot\src\handlers.ts:502:      { text: project.label, callback_data: "cd:s" }
+apps\bot\src\handlers.ts:505:    [{ text: "Назад", callback_data: "cx:m" }]
+apps\bot\src\handlers.ts:510:  const miniAppButton = telegramWebAppButton("Mini App", miniBaseUrl, "codex", { source: "codex-desktop" });
+apps\bot\src\handlers.ts:513:      { text: `Открыть ${shortId(session.id)}`, callback_data: `cd:u:${desktopSessionCallbackRef(session.id)}` }
+apps\bot\src\handlers.ts:516:    [{ text: "Назад", callback_data: "cx:m" }]
+apps\bot\src\handlers.ts:524:    session.canResume ? [{ text: "Resume", callback_data: `cd:r:${callbackRef}` }] : [],
+apps\bot\src\handlers.ts:525:    session.canStop ? [{ text: "Stop", callback_data: `cd:x:${callbackRef}` }] : [],
+apps\bot\src\handlers.ts:527:    [{ text: "Desktop sessions", callback_data: "cd:s" }, { text: "Назад", callback_data: "cx:m" }]
+apps\bot\src\handlers.ts:741:    const result = await dependencies.apiFetch<{ projects: CodexDesktopProject[] }>(`/api/v1/codex-desktop/projects?userId=${encodeURIComponent(userId)}`);
+apps\bot\src\handlers.ts:746:    const result = await dependencies.apiFetch<{ sessions: CodexDesktopSession[] }>(`/api/v1/codex-desktop/sessions?userId=${encodeURIComponent(userId)}`);
+apps\bot\src\handlers.ts:890:      await dependencies.sendTelegramMessage(chatId, "Codex Desktop session не найдена.", codexMenuKeyboard(miniBaseUrl));
+apps\bot\src\handlers.ts:993:      const reason = sessions[0]?.unsupportedReason ?? "Stable Codex Desktop New Task contract is unavailable.";
+apps\bot\src\handlers.ts:1003:          [{ text: "Desktop sessions", callback_data: "cd:s" }],
+apps\bot\src\handlers.ts:1004:          [{ text: "Назад", callback_data: "cx:m" }]
+apps\bot\src\handlers.ts:1010:    await dependencies.sendTelegramMessage(chatId, "Codex Desktop New Task поддержан adapter contract. Откройте Mini App для выбора проекта и подтверждения.", codexMenuKeyboard(miniBaseUrl));
+apps\bot\src\handlers.ts:1472:          await sendOrEdit(callback, "Codex Desktop session не найдена.", codexMenuKeyboard(miniBaseUrl));
+apps\bot\src\handlers.ts:1475:        await dependencies.apiFetch(`/api/v1/codex-desktop/sessions/${encodeURIComponent(session.id)}/${action === "r" ? "resume" : "stop"}`, {
+
+## verifier notes on grep findings
+- The bot/miniapp .codex search findings are false positives from TypeScript spread syntax (`...codex`), not direct filesystem reads.
+- Fresh verifier made no production code edits.

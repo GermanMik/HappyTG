@@ -3,6 +3,7 @@ import type { ServerResponse } from "node:http";
 
 import type {
   ClaimPairingRequest,
+  CreateCodexDesktopTaskRequest,
   CreateMiniAppLaunchGrantRequest,
   CreateMiniAppSessionRequest,
   CreatePairingRequest,
@@ -31,7 +32,7 @@ import {
   type Logger
 } from "../../../packages/shared/src/index.js";
 
-import { HappyTGControlPlaneService } from "./service.js";
+import { CodexDesktopControlError, HappyTGControlPlaneService } from "./service.js";
 
 const logger = createLogger("api");
 loadHappyTGEnv();
@@ -73,6 +74,33 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
     }
 
     json(res, 200, await handler(userId));
+  }
+
+  async function requireCodexDesktopUserId(req: MiniAppRequest, res: ServerResponse, url: URL): Promise<string | undefined> {
+    const userId = await miniAppUserId(req, url);
+    if (!userId) {
+      json(res, 401, { error: "userId or Mini App session auth is required" });
+      return undefined;
+    }
+
+    return userId;
+  }
+
+  async function codexDesktopJson<T>(res: ServerResponse, handler: () => Promise<T>): Promise<void> {
+    try {
+      json(res, 200, await handler());
+    } catch (error) {
+      if (error instanceof CodexDesktopControlError) {
+        json(res, error.statusCode, {
+          error: error.message,
+          reason: error.reason,
+          source: "codex-desktop"
+        });
+        return;
+      }
+
+      throw error;
+    }
   }
 
   return createJsonServer(
@@ -153,6 +181,56 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
       }),
       route("POST", "/api/v1/sessions/:id/resume", async ({ res, params }) => {
         json(res, 200, await service.resumeSession(params.id));
+      }),
+      route("GET", "/api/v1/codex-desktop/projects", async ({ req, res, url }) => {
+        const userId = await requireCodexDesktopUserId(req, res, url);
+        if (!userId) {
+          return;
+        }
+
+        await codexDesktopJson(res, () => service.listCodexDesktopProjects(userId));
+      }),
+      route("GET", "/api/v1/codex-desktop/sessions", async ({ req, res, url }) => {
+        const userId = await requireCodexDesktopUserId(req, res, url);
+        if (!userId) {
+          return;
+        }
+
+        await codexDesktopJson(res, () => service.listCodexDesktopSessions(userId));
+      }),
+      route("POST", "/api/v1/codex-desktop/sessions/:id/resume", async ({ req, res, params, url }) => {
+        const body = await readJsonBody<{ userId?: string }>(req);
+        const userId = body.userId ?? await miniAppUserId(req, url);
+        if (!userId) {
+          json(res, 401, { error: "userId or Mini App session auth is required" });
+          return;
+        }
+
+        await codexDesktopJson(res, () => service.resumeCodexDesktopSession(userId, params.id));
+      }),
+      route("POST", "/api/v1/codex-desktop/sessions/:id/stop", async ({ req, res, params, url }) => {
+        const body = await readJsonBody<{ userId?: string }>(req);
+        const userId = body.userId ?? await miniAppUserId(req, url);
+        if (!userId) {
+          json(res, 401, { error: "userId or Mini App session auth is required" });
+          return;
+        }
+
+        await codexDesktopJson(res, () => service.stopCodexDesktopSession(userId, params.id));
+      }),
+      route("POST", "/api/v1/codex-desktop/tasks", async ({ req, res, url }) => {
+        const body = await readJsonBody<CreateCodexDesktopTaskRequest>(req);
+        const userId = body.userId ?? await miniAppUserId(req, url);
+        if (!userId) {
+          json(res, 401, { error: "userId or Mini App session auth is required" });
+          return;
+        }
+        if (!body.prompt?.trim()) {
+          json(res, 400, { error: "prompt is required" });
+          return;
+        }
+
+        await codexDesktopJson(res, () => service.createCodexDesktopTask({ ...body, userId }));
       }),
       route("GET", "/api/v1/tasks/:id", async ({ res, params }) => {
         const task = await service.getTask(params.id);

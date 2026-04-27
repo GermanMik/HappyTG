@@ -7,6 +7,8 @@ import path from "node:path";
 import type { ActionKind, RuntimeExecutionResult, RuntimeReadiness, ToolCategory } from "../../protocol/src/index.js";
 import { ensureDir, fileExists, normalizeSpawnEnv, nowIso, readTextFileOrEmpty, resolveExecutable, resolveHome } from "../../shared/src/index.js";
 
+export * from "./codex-desktop.js";
+
 export interface RuntimeAdapter {
   id: string;
   kind: "codex-cli" | "secondary";
@@ -111,7 +113,10 @@ const ACTION_TOOL_CATEGORIES: Readonly<Record<ActionKind, ToolCategory>> = {
   bootstrap_install: "shell_network_system_sensitive",
   bootstrap_config_edit: "shell_network_system_sensitive",
   daemon_pair: "shell_network_system_sensitive",
-  git_push: "deploy_publish_external_side_effect"
+  git_push: "deploy_publish_external_side_effect",
+  codex_desktop_resume: "bounded_compute",
+  codex_desktop_stop: "bounded_compute",
+  codex_desktop_new_task: "bounded_compute"
 };
 
 export const TOOL_EXECUTION_CATEGORY_POLICIES: Readonly<Record<ToolCategory, ToolExecutionCategoryPolicy>> = {

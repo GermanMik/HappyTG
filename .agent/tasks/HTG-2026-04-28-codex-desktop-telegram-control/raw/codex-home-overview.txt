@@ -1,0 +1,28 @@
+codexHomeExists=True
+globalStateExists=True
+sessionIndexExists=True
+sessionsDirExists=True
+archivedSessionsDirExists=True
+globalStateTopLevelKeys=active-workspace-roots,electron-main-window-bounds,electron-persisted-atom-state,electron-saved-workspace-roots,followUpQueueMode,open-in-target-preferences,pinned-thread-ids,primary-runtime-update-jitter-ms,project-order,queued-follow-ups,runCodexInWindowsSubsystemForLinux,thread-workspace-root-hints,use-copilot-auth-if-available
+globalStateKey=electron-saved-workspace-roots;kind=array;count=9
+globalStateKey=active-workspace-roots;kind=array;count=1
+globalStateKey=electron-persisted-atom-state;kind=object;count=1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+globalStateKey=queued-follow-ups;kind=object;count=
+globalStateKey=electron-main-window-bounds;kind=object;count=1 1 1 1 1
+globalStateKey=runCodexInWindowsSubsystemForLinux;kind=Boolean;count=1
+globalStateKey=open-in-target-preferences;kind=object;count=1
+globalStateKey=thread-workspace-root-hints;kind=object;count=1 1 1 1 1 1 1 1 1 1 1
+globalStateKey=pinned-thread-ids;kind=array;count=2
+globalStateKey=use-copilot-auth-if-available;kind=Boolean;count=1
+globalStateKey=followUpQueueMode;kind=String;count=1
+globalStateKey=project-order;kind=array;count=5
+globalStateKey=primary-runtime-update-jitter-ms;kind=Int64;count=1
+sessionIndexSampleLineCount=20
+sessionIndexSampleKeySets=id,thread_name,updated_at
+sessionJsonlFileCount=54891
+sessionJsonlDatedPatternExists=True
+sessionSampleRelativePath=sessions\2026\04\28\rollout-2026-04-28T01-27-12-019dd10d-be30-72e2-b39c-533d73a2e670.jsonl
+sessionSampleTopLevelKeySets=payload,timestamp,type
+sessionSamplePayloadKeySets=approval_policy,collaboration_mode,current_date,cwd,effort,model,permission_profile,personality,realtime_active,sandbox_policy,summary,timezone,truncation_policy,turn_id,user_instructions | base_instructions,cli_version,cwd,git,id,model_provider,originator,source,timestamp | collaboration_mode_kind,model_context_window,started_at,turn_id,type | content,role,type | images,local_images,message,text_elements,type
+archivedFileCount=28
+archivedExtensions=.jsonl

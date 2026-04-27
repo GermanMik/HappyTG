@@ -8,7 +8,7 @@ import {
   formatApiPortReuseMessage,
   startApiServer
 } from "./index.js";
-import { HappyTGControlPlaneService } from "./service.js";
+import { CodexDesktopControlError, HappyTGControlPlaneService } from "./service.js";
 
 async function closeServer(server: ReturnType<typeof createHttpServer>): Promise<void> {
   await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
@@ -263,6 +263,125 @@ test("mini app project and session mutation endpoints require bearer user contex
       userId: "usr_1",
       runtime: "codex-cli"
     });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("codex desktop API is user-scoped and maps guarded control responses", async () => {
+  const calls: Array<{ kind: string; userId?: string; sessionId?: string; body?: unknown }> = [];
+  const service = {
+    async resolveMiniAppUserId(token?: string, userIdHint?: string) {
+      return token === "mas_token" ? "usr_bearer" : userIdHint;
+    },
+    async listCodexDesktopProjects(userId: string) {
+      calls.push({ kind: "projects", userId });
+      return {
+        projects: [
+          {
+            id: "cdp_1",
+            label: "HappyTG",
+            path: "C:/Develop/Projects/HappyTG",
+            source: "codex-desktop"
+          }
+        ]
+      };
+    },
+    async listCodexDesktopSessions(userId: string) {
+      calls.push({ kind: "sessions", userId });
+      return {
+        sessions: [
+          {
+            id: "cds_1",
+            title: "Desktop task",
+            updatedAt: "2026-04-28T09:00:00.000Z",
+            status: "recent",
+            source: "codex-desktop",
+            canResume: false,
+            canStop: false,
+            unsupportedReason: "contract missing"
+          }
+        ]
+      };
+    },
+    async resumeCodexDesktopSession(userId: string, sessionId: string) {
+      calls.push({ kind: "resume", userId, sessionId });
+      throw new CodexDesktopControlError(501, "contract missing");
+    },
+    async stopCodexDesktopSession(userId: string, sessionId: string) {
+      calls.push({ kind: "stop", userId, sessionId });
+      throw new CodexDesktopControlError(501, "contract missing");
+    },
+    async createCodexDesktopTask(body: { userId: string; prompt: string; projectPath?: string }) {
+      calls.push({ kind: "new-task", userId: body.userId, body });
+      return {
+        ok: true,
+        action: "new-task",
+        source: "codex-desktop",
+        task: {
+          id: "cdt_1",
+          title: "Desktop task",
+          projectPath: body.projectPath,
+          status: "created"
+        }
+      };
+    }
+  } as unknown as HappyTGControlPlaneService;
+  const server = createApiServer(service);
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("API server did not bind to a TCP port");
+  }
+
+  try {
+    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/projects`);
+    assert.equal(denied.status, 401);
+
+    const projects = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/projects?userId=usr_query`);
+    const projectsPayload = await projects.json() as { projects: Array<{ source: string }> };
+    assert.equal(projects.status, 200);
+    assert.equal(projectsPayload.projects[0]?.source, "codex-desktop");
+
+    const sessions = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/sessions`, {
+      headers: {
+        authorization: "Bearer mas_token"
+      }
+    });
+    const sessionsPayload = await sessions.json() as { sessions: Array<{ source: string; unsupportedReason?: string }> };
+    assert.equal(sessions.status, 200);
+    assert.equal(sessionsPayload.sessions[0]?.source, "codex-desktop");
+    assert.equal(sessionsPayload.sessions[0]?.unsupportedReason, "contract missing");
+
+    const unsupported = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/sessions/cds_1/resume`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ userId: "usr_query" })
+    });
+    const unsupportedPayload = await unsupported.json() as { source: string; reason: string };
+    assert.equal(unsupported.status, 501);
+    assert.equal(unsupportedPayload.source, "codex-desktop");
+    assert.equal(unsupportedPayload.reason, "contract missing");
+
+    const created = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/tasks`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer mas_token"
+      },
+      body: JSON.stringify({ prompt: "Run Desktop task", projectPath: "C:/Develop/Projects/HappyTG" })
+    });
+    const createdPayload = await created.json() as { task: { id: string } };
+    assert.equal(created.status, 200);
+    assert.equal(createdPayload.task.id, "cdt_1");
+    assert.deepEqual(calls.map((call) => `${call.kind}:${call.userId ?? ""}`), [
+      "projects:usr_query",
+      "sessions:usr_bearer",
+      "resume:usr_query",
+      "new-task:usr_bearer"
+    ]);
   } finally {
     await closeServer(server);
   }
