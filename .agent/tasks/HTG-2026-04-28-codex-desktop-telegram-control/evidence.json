@@ -77,6 +77,8 @@
     "branch": "codex/codex-desktop-telegram-control-20260428",
     "pr": "https://github.com/GermanMik/HappyTG/pull/40",
     "ci": "pass",
+    "prState": "open_draft",
+    "mergeStateStatus": "DIRTY",
     "merge": "blocked"
   }
 }

@@ -15,6 +15,11 @@
       "detail": "Mini App port 3001 is occupied by an unrelated Contacts container, so local doctor/verify reports a port conflict."
     },
     {
+      "kind": "release",
+      "scope": "pull-request",
+      "detail": "PR #40 is open as a draft and GitHub reports mergeStateStatus=DIRTY; mergeability must be resolved before merge."
+    },
+    {
       "kind": "contract",
       "scope": "codex-desktop-resume",
       "detail": "No stable Desktop/API-safe Resume contract was proven; production Resume remains unsupported."
@@ -45,6 +50,8 @@
     "branch": "codex/codex-desktop-telegram-control-20260428",
     "pr": "https://github.com/GermanMik/HappyTG/pull/40",
     "ci": "PASS",
+    "prState": "OPEN_DRAFT",
+    "mergeStateStatus": "DIRTY",
     "merge": "BLOCKED_UNTIL_LOCAL_VERIFICATION_AND_RELEASE_CHECKS_PASS"
   }
 }

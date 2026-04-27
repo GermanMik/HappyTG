@@ -43,7 +43,8 @@ Supported-control tests use an injectable adapter fixture only; production defau
 - `raw/doctor.txt`: `pnpm happytg doctor` completed but reported FAIL due local environment: missing `.env`/`TELEGRAM_BOT_TOKEN` and Mini App port conflict.
 - `raw/verify.txt`: `pnpm happytg verify` completed but reported FAIL for the same environment blockers.
 - Release PR: https://github.com/GermanMik/HappyTG/pull/40
-- GitHub check `verify`: PASS on PR #40 before this release evidence update.
+- GitHub check `verify`: PASS on PR #40 after the pushed release commits.
+- GitHub PR #40 remains draft and reports `mergeStateStatus=DIRTY`.
 
 ## Security / Privacy Evidence
 
@@ -57,4 +58,4 @@ Supported-control tests use an injectable adapter fixture only; production defau
 
 - Commit pushed to `origin/codex/codex-desktop-telegram-control-20260428`.
 - Draft PR opened as #40 because local release verification is blocked.
-- Merge was not attempted because `verdict.json` is BLOCKED until required local `doctor/verify` can pass.
+- Merge was not attempted because `verdict.json` is BLOCKED until required local `doctor/verify` can pass and PR mergeability is resolved.
