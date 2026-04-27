@@ -1312,6 +1312,17 @@ export class HappyTGControlPlaneService {
         throw new Error("Session not found");
       }
 
+      if (isTerminalSessionState(session.state)) {
+        dispatch.status = dispatch.status === "cancelled" ? "cancelled" : input.ok ? "completed" : "failed";
+        dispatch.updatedAt = nowIso();
+        appendAudit(store, "host", input.hostId, "dispatch.completed_after_terminal_session", dispatch.id, {
+          ok: input.ok,
+          sessionId: session.id,
+          sessionState: session.state
+        });
+        return session;
+      }
+
       dispatch.status = input.ok ? "completed" : "failed";
       dispatch.updatedAt = nowIso();
       moveSession(session, input.ok ? "completed" : "failed", {
@@ -1337,6 +1348,40 @@ export class HappyTGControlPlaneService {
         summary: input.summary
       });
       appendAudit(store, "host", input.hostId, "dispatch.completed", dispatch.id, { ok: input.ok });
+      return session;
+    });
+  }
+
+  async cancelSession(sessionId: string): Promise<Session> {
+    return this.store.update((store) => {
+      const session = store.sessions.find((item) => item.id === sessionId);
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      if (isTerminalSessionState(session.state)) {
+        return session;
+      }
+
+      const previousState = session.state;
+      const cancelledDispatches = store.pendingDispatches
+        .filter((item) => item.sessionId === session.id && !["completed", "failed", "cancelled"].includes(item.status));
+      const now = nowIso();
+      for (const dispatch of cancelledDispatches) {
+        dispatch.status = "cancelled";
+        dispatch.updatedAt = now;
+      }
+
+      moveSession(session, "cancelled", { summary: "Session cancelled from control plane." });
+      appendEvent(store, session.id, "SessionCancelled", {
+        reason: "control-plane-cancel",
+        previousState,
+        dispatchIds: cancelledDispatches.map((item) => item.id)
+      });
+      appendAudit(store, "system", "control-plane", "session.cancelled", session.id, {
+        previousState,
+        dispatchIds: cancelledDispatches.map((item) => item.id)
+      });
       return session;
     });
   }

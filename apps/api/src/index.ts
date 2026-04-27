@@ -154,6 +154,9 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
       route("POST", "/api/v1/sessions/:id/resume", async ({ res, params }) => {
         json(res, 200, await service.resumeSession(params.id));
       }),
+      route("POST", "/api/v1/sessions/:id/cancel", async ({ res, params }) => {
+        json(res, 200, await service.cancelSession(params.id));
+      }),
       route("GET", "/api/v1/tasks/:id", async ({ res, params }) => {
         const task = await service.getTask(params.id);
         if (!task) {

@@ -1,0 +1,55 @@
+{
+  "taskId": "HTG-2026-04-28-session-cancel-from-bot",
+  "phase": "complete",
+  "commands": [
+    {
+      "command": "pnpm --filter @happytg/api test",
+      "status": "passed",
+      "raw": "raw/test-api.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bot test",
+      "status": "passed",
+      "raw": "raw/test-bot.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bot lint",
+      "status": "passed",
+      "raw": "raw/lint-bot.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/session-engine test",
+      "status": "passed",
+      "raw": "raw/test-session-engine.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/protocol test",
+      "status": "passed",
+      "raw": "raw/test-protocol.txt"
+    },
+    {
+      "command": "pnpm lint",
+      "status": "passed",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "command": "pnpm typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "command": "pnpm build",
+      "status": "passed",
+      "raw": "raw/build.txt"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "status": "warn",
+      "raw": "raw/verify.txt",
+      "notes": "Exit 0 with environment warnings unrelated to session cancel."
+    }
+  ],
+  "limitations": [
+    "Runtime-level process kill is not implemented because no daemon-visible control channel or runtime adapter kill API is currently wired. Control-plane cancellation prevents queued dispatch delivery and preserves cancelled terminal state."
+  ]
+}
