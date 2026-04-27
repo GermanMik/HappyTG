@@ -1,0 +1,6 @@
+{
+  "taskId": "HTG-2026-04-28-installer-env-optional-values-followup",
+  "title": "Installer existing env optional Telegram values follow-up",
+  "branch": "codex/installer-env-optional-values-followup",
+  "scopeFrozen": true
+}

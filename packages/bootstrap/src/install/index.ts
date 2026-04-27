@@ -879,7 +879,14 @@ function isLocalUrlPreviewValue(rawValue: string): boolean {
   }
 }
 
-function existingEnvHasReusableTelegramValues(input: ExistingInstallEnvSetup): boolean {
+function existingEnvHasRelevantTelegramValues(input: ExistingInstallEnvSetup): boolean {
+  return Boolean(input.telegram.botToken)
+    || input.telegram.allowedUserIds.length > 0
+    || Boolean(input.telegram.homeChannel)
+    || Boolean(input.telegram.botUsername);
+}
+
+function existingEnvCanReuseTelegramSetup(input: ExistingInstallEnvSetup): boolean {
   return Boolean(input.telegram.botToken);
 }
 
@@ -1781,17 +1788,22 @@ export async function runHappyTGInstall(
         : defaultDirtyWorktreeStrategy(true, options.dirtyWorktreeStrategy ?? draft?.repo?.dirtyStrategy)
       : "keep";
     if (interactive) {
-      const existingEnvChoice: ExistingEnvReuseChoice = existingEnvHasReusableTelegramValues(repoExistingEnv)
-        ? await promptSelect({
+      const existingEnvCanReuse = existingEnvCanReuseTelegramSetup(repoExistingEnv);
+      const existingEnvChoices: ExistingEnvReuseChoice[] = existingEnvCanReuse
+        ? ["reuse", "edit"]
+        : ["edit"];
+      const existingEnvChoice: ExistingEnvReuseChoice = existingEnvHasRelevantTelegramValues(repoExistingEnv)
+        ? await promptSelect<ExistingEnvReuseChoice>({
           stdin,
           stdout,
-          items: ["reuse", "edit"],
-          initial: "reuse",
+          items: existingEnvChoices,
+          initial: existingEnvCanReuse ? "reuse" : "edit",
           render: (active) => renderExistingEnvConfirmationScreen({
             envFilePath: repoExistingEnv.envFilePath,
             telegram: repoTelegramDefaults,
             values: repoExistingEnv.previewValues,
-            activeChoice: active
+            activeChoice: active,
+            canReuse: existingEnvCanReuse
           })
         })
         : "edit";

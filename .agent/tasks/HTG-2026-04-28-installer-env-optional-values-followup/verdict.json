@@ -1,0 +1,6 @@
+{
+  "taskId": "HTG-2026-04-28-installer-env-optional-values-followup",
+  "status": "accepted",
+  "verdict": "pass",
+  "summary": "Optional Telegram values in an existing .env now produce a truthful confirmation screen without allowing reuse when TELEGRAM_BOT_TOKEN is absent."
+}

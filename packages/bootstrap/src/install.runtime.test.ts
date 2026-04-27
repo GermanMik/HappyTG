@@ -2601,6 +2601,150 @@ test("runHappyTGInstall interactive existing env confirmation can reuse Telegram
   }
 });
 
+test("runHappyTGInstall interactive existing env confirmation appears for optional Telegram IDs without prefill", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-interactive-env-ids-only-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const newToken = "123456:abcdefghijklmnopqrstuvwx";
+  const harness = createInteractiveHarness();
+  let envUpdates: Record<string, string | undefined> | undefined;
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(path.join(repoPath, ".env"), "TELEGRAM_ALLOWED_USER_IDS=1001,1002\n", "utf8");
+
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramAllowedUserIds: [],
+      backgroundMode: "manual",
+      launchMode: "local",
+      postChecks: []
+    }, {
+      stdin: harness.stdin,
+      stdout: harness.stdout,
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: {
+            ...baseEnvironment().platform,
+            isInteractiveTerminal: true
+          }
+        }),
+        readInstallDraft: async () => ({
+          version: 1,
+          telegram: {
+            botToken: "888888:drafttokenvalueqrstuvw",
+            allowedUserIds: ["42"],
+            homeChannel: "@draft"
+          },
+          updatedAt: "2026-04-28T00:00:00.000Z"
+        }),
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, {
+            exists: true,
+            isRepo: true,
+            emptyDirectory: false,
+            rootPath: repoPath
+          }),
+          choices: [
+            {
+              mode: "update" as const,
+              label: "Update existing checkout",
+              path: repoPath,
+              available: true,
+              detail: "Existing checkout is ready to update."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "updated",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async ({ updates }) => {
+          envUpdates = updates;
+          return {
+            envFilePath: path.join(repoPath, ".env"),
+            created: false,
+            changed: true,
+            addedKeys: Object.keys(updates),
+            preservedKeys: []
+          };
+        },
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: mode === "manual" ? "manual" : "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    await harness.waitForOutput("Welcome / Preflight");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Repo Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    const existingEnvScreen = await harness.waitForOutput("Existing .env Values");
+    assert.match(existingEnvScreen, /TELEGRAM_ALLOWED_USER_IDS=1001, 1002/);
+    assert.match(existingEnvScreen, /Reuse is unavailable because TELEGRAM_BOT_TOKEN was not found/);
+    assert.doesNotMatch(existingEnvScreen, /Reuse existing \.env values/);
+    await harness.emitKeypress("\r", { name: "enter" });
+    const telegramScreen = await harness.waitForOutput("Telegram Setup");
+    const telegramFormOnly = telegramScreen.slice(telegramScreen.lastIndexOf("Telegram Setup"));
+    assert.match(telegramFormOnly, /<required>/);
+    assert.doesNotMatch(telegramFormOnly, /1001/);
+    assert.doesNotMatch(telegramFormOnly, /1002/);
+    assert.doesNotMatch(telegramFormOnly, /42/);
+    assert.doesNotMatch(telegramFormOnly, /@draft/);
+
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.emitKeypress(`\u001B[200~${newToken}\r\n\u001B[201~`);
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Background Run Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Launch Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Post-Install Checks");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Final Summary");
+    await harness.emitKeypress("\r", { name: "enter" });
+
+    const result = await install;
+    assert.notEqual(result.status, "fail");
+    assert.deepEqual(result.telegram.allowedUserIds, []);
+    assert.equal(envUpdates?.TELEGRAM_BOT_TOKEN, newToken);
+    assert.equal(envUpdates?.TELEGRAM_ALLOWED_USER_IDS, "");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("runHappyTGInstall releases stdin after ENTER closes the final summary", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-final-summary-exit-"));
   const repoPath = path.join(tempDir, "HappyTG");

@@ -377,6 +377,7 @@ export function renderExistingEnvConfirmationScreen(input: {
   telegram: TelegramSetup & { botUsername?: string };
   values?: ExistingEnvValuePreview[];
   activeChoice: ExistingEnvReuseChoice;
+  canReuse?: boolean;
 }): string {
   const valueRows: ExistingEnvValuePreview[] = [];
   if (input.telegram.botToken) {
@@ -406,18 +407,23 @@ export function renderExistingEnvConfirmationScreen(input: {
   }
   valueRows.push(...(input.values ?? []));
 
-  const choices: Array<{ id: ExistingEnvReuseChoice; label: string; detail: string }> = [
-    {
+  const choices: Array<{ id: ExistingEnvReuseChoice; label: string; detail: string }> = [];
+  if (input.canReuse !== false) {
+    choices.push({
       id: "reuse",
       label: "Reuse existing .env values",
       detail: "Use the Telegram values above for this install and keep merging .env without re-entering them."
-    },
+    });
+  }
+  choices.push(
     {
       id: "edit",
       label: "Edit Telegram setup",
-      detail: "Open the setup form with a blank token; .env and draft user IDs will not be prefilled."
+      detail: input.canReuse === false
+        ? "Open the setup form because .env has no bot token; existing IDs will not be prefilled."
+        : "Open the setup form with a blank token; .env and draft user IDs will not be prefilled."
     }
-  ];
+  );
 
   return renderFrame([
     ...header("Existing .env Values", `Found ${input.envFilePath}. Confirm before reusing saved Telegram setup.`),
@@ -428,7 +434,9 @@ export function renderExistingEnvConfirmationScreen(input: {
     ]),
     "",
     `${statusIcon("info")} ${bright("If you reuse")}`,
-    "   The installer carries these Telegram values into this run and the .env merge.",
+    input.canReuse === false
+      ? "   Reuse is unavailable because TELEGRAM_BOT_TOKEN was not found in .env."
+      : "   The installer carries these Telegram values into this run and the .env merge.",
     `${statusIcon("info")} ${bright("If you edit")}`,
     "   You will re-enter Telegram setup. Existing .env and draft IDs stay out of the editable form.",
     "",
