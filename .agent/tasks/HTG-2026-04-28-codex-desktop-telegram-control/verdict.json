@@ -38,10 +38,13 @@
     "verify": "FAIL_ENVIRONMENT",
     "smokeTelegram": "PASS",
     "smokeMiniApp": "PASS",
-    "freshVerifier": "PASS"
+    "freshVerifier": "PASS",
+    "githubPrVerify": "PASS"
   },
   "release": {
     "branch": "codex/codex-desktop-telegram-control-20260428",
+    "pr": "https://github.com/GermanMik/HappyTG/pull/40",
+    "ci": "PASS",
     "merge": "BLOCKED_UNTIL_LOCAL_VERIFICATION_AND_RELEASE_CHECKS_PASS"
   }
 }

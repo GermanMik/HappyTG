@@ -42,6 +42,8 @@ Supported-control tests use an injectable adapter fixture only; production defau
 - `raw/fresh-verifier.txt`: fresh read-only verifier pass recorded; verifier made no production edits.
 - `raw/doctor.txt`: `pnpm happytg doctor` completed but reported FAIL due local environment: missing `.env`/`TELEGRAM_BOT_TOKEN` and Mini App port conflict.
 - `raw/verify.txt`: `pnpm happytg verify` completed but reported FAIL for the same environment blockers.
+- Release PR: https://github.com/GermanMik/HappyTG/pull/40
+- GitHub check `verify`: PASS on PR #40 before this release evidence update.
 
 ## Security / Privacy Evidence
 
@@ -50,3 +52,9 @@ Supported-control tests use an injectable adapter fixture only; production defau
 - Stop is not implemented by killing similar processes.
 - Adapter control flags require both a supported contract flag and a real handler; it does not return successful no-op Resume/Stop/New Task results.
 - Fresh verifier grep findings were reviewed and documented as false positives or pre-existing CLI behavior, not Desktop control behavior.
+
+## Release Closeout
+
+- Commit pushed to `origin/codex/codex-desktop-telegram-control-20260428`.
+- Draft PR opened as #40 because local release verification is blocked.
+- Merge was not attempted because `verdict.json` is BLOCKED until required local `doctor/verify` can pass.

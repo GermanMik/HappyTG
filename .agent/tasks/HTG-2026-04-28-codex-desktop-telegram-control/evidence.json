@@ -58,6 +58,11 @@
       "name": "fresh verifier",
       "status": "pass",
       "raw": "raw/fresh-verifier.txt"
+    },
+    {
+      "name": "GitHub PR verify",
+      "status": "pass",
+      "url": "https://github.com/GermanMik/HappyTG/pull/40"
     }
   ],
   "privacy": {
@@ -67,5 +72,11 @@
     "rawPayloadsProjected": false,
     "desktopStopUsesProcessKillWorkaround": false,
     "successfulNoopDesktopControls": false
+  },
+  "release": {
+    "branch": "codex/codex-desktop-telegram-control-20260428",
+    "pr": "https://github.com/GermanMik/HappyTG/pull/40",
+    "ci": "pass",
+    "merge": "blocked"
   }
 }
