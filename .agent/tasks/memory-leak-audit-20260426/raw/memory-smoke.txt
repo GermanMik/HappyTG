@@ -1,0 +1,34 @@
+memory smoke started 2026-04-26T10:23:05.9561483+03:00
+iteration=1 port=3007 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=1 port=4000 happytg_nodejs_memory_rss_bytes{service="api"} 269484032
+iteration=1 port=4100 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=1 port=4200 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=2 port=3007 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=2 port=4000 happytg_nodejs_memory_rss_bytes{service="api"} 269500416
+iteration=2 port=4100 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=2 port=4200 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=3 port=3007 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=3 port=4000 happytg_nodejs_memory_rss_bytes{service="api"} 269500416
+iteration=3 port=4100 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=3 port=4200 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=4 port=3007 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=4 port=4000 happytg_nodejs_memory_rss_bytes{service="api"} 269500416
+iteration=4 port=4100 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=4 port=4200 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=5 port=3007 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=5 port=4000 happytg_nodejs_memory_rss_bytes{service="api"} 269508608
+iteration=5 port=4100 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=5 port=4200 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=6 port=3007 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=6 port=4000 happytg_nodejs_memory_rss_bytes{service="api"} 269512704
+iteration=6 port=4100 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=6 port=4200 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=7 port=3007 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=7 port=4000 happytg_nodejs_memory_rss_bytes{service="api"} 269512704
+iteration=7 port=4100 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=7 port=4200 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=8 port=3007 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=8 port=4000 happytg_nodejs_memory_rss_bytes{service="api"} 269578240
+iteration=8 port=4100 metrics_error=Response status code does not indicate success: 404 (Not Found).
+iteration=8 port=4200 metrics_error=Response status code does not indicate success: 404 (Not Found).
+memory smoke finished 2026-04-26T10:23:08.3472619+03:00

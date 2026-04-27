@@ -1,0 +1,468 @@
+packages\repo-proof\src\index.ts:38:  approvals: string[];
+packages\repo-proof\src\index.ts:52:async function writeTaskMetadata(task: TaskBundle): Promise<void> {
+packages\repo-proof\src\index.ts:60:async function readTaskState(rootPath: string): Promise<TaskBundleState | undefined> {
+packages\repo-proof\src\index.ts:69:export async function readTaskBundleState(rootPath: string): Promise<TaskBundleState | undefined> {
+packages\repo-proof\src\index.ts:74:  approvals?: string[];
+packages\repo-proof\src\index.ts:78:}): Promise<void> {
+packages\repo-proof\src\index.ts:97:    approvals: input?.approvals ?? existing?.approvals ?? [],
+packages\repo-proof\src\index.ts:111:  approvals?: string[];
+packages\repo-proof\src\index.ts:115:}): Promise<void> {
+packages\repo-proof\src\index.ts:120:export async function readTaskBundle(rootPath: string): Promise<TaskBundle | undefined> {
+packages\repo-proof\src\index.ts:137:}): Promise<TaskBundle> {
+packages\repo-proof\src\index.ts:186:  await Promise.all([
+packages\repo-proof\src\index.ts:200:      status: "pending",
+packages\repo-proof\src\index.ts:224:}): Promise<TaskBundle> {
+packages\repo-proof\src\index.ts:268:): Promise<TaskBundle> {
+packages\repo-proof\src\index.ts:279:export async function recordTaskApproval(task: TaskBundle, approvalId: string): Promise<TaskBundle> {
+packages\repo-proof\src\index.ts:282:    approvals: [...new Set([...(state?.approvals ?? []), approvalId])]
+packages\repo-proof\src\index.ts:287:export async function markVerificationStaleAfterMutation(task: TaskBundle, event = "MutationAfterVerification"): Promise<TaskBundle> {
+packages\repo-proof\src\index.ts:302:export async function writeRawArtifact(task: TaskBundle, name: string, content: string): Promise<EvidenceArtifact> {
+packages\repo-proof\src\index.ts:315:export async function updateEvidence(task: TaskBundle, summary: string, artifacts: string[]): Promise<TaskBundle> {
+packages\repo-proof\src\index.ts:348:}): Promise<{ task: TaskBundle; verificationRun: VerificationRun }> {
+packages\repo-proof\src\index.ts:390:export async function validateTaskBundle(rootPath: string): Promise<{
+packages\repo-proof\src\index.ts:397:  await Promise.all(
+packages\repo-proof\src\index.ts:408:  await Promise.all(
+packages\repo-proof\src\index.test.ts:73:test("repo proof state tracks explicit phase advances, approvals, and stale verification", async () => {
+packages\repo-proof\src\index.test.ts:91:  assert.deepEqual(stateAfterApproval?.approvals, ["apr_1"]);
+apps\host-daemon\src\index.test.ts:33:    status: "queued",
+apps\host-daemon\src\index.test.ts:62:          dispatchId: "dsp_running",
+apps\host-daemon\src\index.test.ts:68:          dispatchId: "dsp_recent",
+apps\host-daemon\src\index.test.ts:74:          dispatchId: "dsp_old",
+apps\host-daemon\src\index.test.ts:87:    journal.entries.map((entry) => entry.dispatchId),
+apps\host-daemon\src\index.ts:143:async function loadState(): Promise<DaemonState> {
+apps\host-daemon\src\index.ts:152:async function saveState(state: DaemonState): Promise<void> {
+apps\host-daemon\src\index.ts:157:async function loadJournal(): Promise<DaemonJournal> {
+apps\host-daemon\src\index.ts:161:async function saveJournal(journal: DaemonJournal): Promise<void> {
+apps\host-daemon\src\index.ts:186:async function apiFetch<T>(pathname: string, init?: RequestInit): Promise<T> {
+apps\host-daemon\src\index.ts:203:export function sandboxForDispatch(dispatch: PendingDispatch): SandboxMode {
+apps\host-daemon\src\index.ts:204:  switch (dispatch.actionKind) {
+apps\host-daemon\src\index.ts:214:async function pairHost(labelOverride?: string): Promise<void> {
+apps\host-daemon\src\index.ts:239:async function hello(state: DaemonState): Promise<{ state: DaemonState; dispatches: PendingDispatch[] }> {
+apps\host-daemon\src\index.ts:265:    dispatches: response.pendingDispatches
+apps\host-daemon\src\index.ts:269:async function heartbeat(hostId: string): Promise<void> {
+apps\host-daemon\src\index.ts:276:async function poll(hostId: string): Promise<PendingDispatch[]> {
+apps\host-daemon\src\index.ts:277:  const response = await apiFetch<{ dispatches: PendingDispatch[] }>("/api/v1/daemon/poll", {
+apps\host-daemon\src\index.ts:282:  return response.dispatches;
+apps\host-daemon\src\index.ts:285:async function ackDispatch(dispatch: PendingDispatch, hostId: string): Promise<void> {
+apps\host-daemon\src\index.ts:288:    dispatchId: dispatch.id,
+apps\host-daemon\src\index.ts:289:    sessionId: dispatch.sessionId,
+apps\host-daemon\src\index.ts:290:    idempotencyKey: dispatch.idempotencyKey
+apps\host-daemon\src\index.ts:292:  await apiFetch("/api/v1/daemon/dispatch/ack", {
+apps\host-daemon\src\index.ts:298:async function updateSessionEvent(hostId: string, sessionId: string, summary?: string, state?: "running" | "verifying" | "completed" | "failed"): Promise<void> {
+apps\host-daemon\src\index.ts:310:async function updateTaskPhase(hostId: string, taskId: string, phase: DaemonTaskPhaseRequest["phase"], verificationState?: DaemonTaskPhaseRequest["verificationState"]): Promise<void> {
+apps\host-daemon\src\index.ts:322:async function completeDispatch(hostId: string, payload: DaemonCompleteRequest): Promise<void> {
+apps\host-daemon\src\index.ts:329:async function loadTask(taskId: string): Promise<TaskBundle> {
+apps\host-daemon\src\index.ts:334:function proofBuilderPrompt(task: TaskBundle, dispatch: PendingDispatch, workspacePath: string): string {
+apps\host-daemon\src\index.ts:341:    `Original task prompt: ${dispatch.prompt}`
+apps\host-daemon\src\index.ts:381:async function processBootstrapDispatch(state: DaemonState, dispatch: PendingDispatch): Promise<DaemonCompleteRequest> {
+apps\host-daemon\src\index.ts:382:  const command = dispatch.executionKind === "bootstrap_doctor" ? "doctor" : "verify";
+apps\host-daemon\src\index.ts:383:  await updateSessionEvent(state.hostId!, dispatch.sessionId, `Bootstrap ${command} running on ${state.hostLabel}`, "running");
+apps\host-daemon\src\index.ts:388:    dispatchId: dispatch.id,
+apps\host-daemon\src\index.ts:389:    sessionId: dispatch.sessionId,
+apps\host-daemon\src\index.ts:396:async function processQuickDispatch(state: DaemonState, dispatch: PendingDispatch, workspace: DaemonWorkspace): Promise<DaemonCompleteRequest> {
+apps\host-daemon\src\index.ts:397:  const sandbox = sandboxForDispatch(dispatch);
+apps\host-daemon\src\index.ts:398:  await updateSessionEvent(state.hostId!, dispatch.sessionId, `Quick task running in ${workspace.repoName}`, "running");
+apps\host-daemon\src\index.ts:402:    prompt: dispatch.prompt,
+apps\host-daemon\src\index.ts:408:    dispatchId: dispatch.id,
+apps\host-daemon\src\index.ts:409:    sessionId: dispatch.sessionId,
+apps\host-daemon\src\index.ts:415:async function runVerifier(task: TaskBundle, workspace: DaemonWorkspace, rawArtifactName: string): Promise<RuntimeExecutionResult> {
+apps\host-daemon\src\index.ts:425:async function processProofDispatch(state: DaemonState, dispatch: PendingDispatch, workspace: DaemonWorkspace): Promise<DaemonCompleteRequest> {
+apps\host-daemon\src\index.ts:426:  if (!dispatch.taskId) {
+apps\host-daemon\src\index.ts:427:    throw new Error("Proof dispatch is missing taskId");
+apps\host-daemon\src\index.ts:430:  let task = await loadTask(dispatch.taskId);
+apps\host-daemon\src\index.ts:432:    problem: dispatch.prompt,
+apps\host-daemon\src\index.ts:441:  await updateSessionEvent(state.hostId!, dispatch.sessionId, `Task ${task.id} spec frozen`, "running");
+apps\host-daemon\src\index.ts:445:    prompt: proofBuilderPrompt(task, dispatch, workspace.path),
+apps\host-daemon\src\index.ts:457:      dispatchId: dispatch.id,
+apps\host-daemon\src\index.ts:458:      sessionId: dispatch.sessionId,
+apps\host-daemon\src\index.ts:469:  await updateSessionEvent(state.hostId!, dispatch.sessionId, `Task ${task.id} evidence updated`, "verifying");
+apps\host-daemon\src\index.ts:492:    await updateSessionEvent(state.hostId!, dispatch.sessionId, `Task ${task.id} verifier reported findings; running minimal fix`, "running");
+apps\host-daemon\src\index.ts:530:    dispatchId: dispatch.id,
+apps\host-daemon\src\index.ts:531:    sessionId: dispatch.sessionId,
+apps\host-daemon\src\index.ts:538:async function processDispatch(state: DaemonState, dispatch: PendingDispatch): Promise<void> {
+apps\host-daemon\src\index.ts:546:  const existing = journal.entries.find((entry) => entry.dispatchId === dispatch.id);
+apps\host-daemon\src\index.ts:548:    logger.warn("Dispatch already running, skipping duplicate start", { dispatchId: dispatch.id });
+apps\host-daemon\src\index.ts:553:    sessionId: dispatch.sessionId,
+apps\host-daemon\src\index.ts:554:    dispatchId: dispatch.id,
+apps\host-daemon\src\index.ts:558:  journal.entries = journal.entries.filter((item) => item.dispatchId !== dispatch.id);
+apps\host-daemon\src\index.ts:562:  await ackDispatch(dispatch, state.hostId);
+apps\host-daemon\src\index.ts:565:    if (dispatch.executionKind === "bootstrap_doctor" || dispatch.executionKind === "bootstrap_verify") {
+apps\host-daemon\src\index.ts:566:      completion = await processBootstrapDispatch(state, dispatch);
+apps\host-daemon\src\index.ts:568:      const workspace = state.workspaces.find((item) => item.id === dispatch.workspaceId);
+apps\host-daemon\src\index.ts:570:        throw new Error(`Workspace ${dispatch.workspaceId} is not registered on this host`);
+apps\host-daemon\src\index.ts:573:      completion = dispatch.mode === "proof"
+apps\host-daemon\src\index.ts:574:        ? await processProofDispatch(state, dispatch, workspace)
+apps\host-daemon\src\index.ts:575:        : await processQuickDispatch(state, dispatch, workspace);
+apps\host-daemon\src\index.ts:585:    const message = error instanceof Error ? error.message : "Unknown dispatch error";
+apps\host-daemon\src\index.ts:588:      dispatchId: dispatch.id,
+apps\host-daemon\src\index.ts:589:      sessionId: dispatch.sessionId,
+apps\host-daemon\src\index.ts:597:async function runOnce(): Promise<void> {
+apps\host-daemon\src\index.ts:624:  const dispatches = helloResult.dispatches.length > 0 ? helloResult.dispatches : await poll(helloResult.state.hostId);
+apps\host-daemon\src\index.ts:625:  for (const dispatch of dispatches) {
+apps\host-daemon\src\index.ts:626:    await processDispatch(helloResult.state, dispatch);
+apps\host-daemon\src\index.ts:630:async function runLoop(): Promise<void> {
+apps\host-daemon\src\index.ts:640:    await new Promise((resolve) => setTimeout(resolve, heartbeatMs));
+apps\host-daemon\src\index.ts:644:async function main(): Promise<void> {
+packages\session-engine\src\index.test.ts:47:  current = transitionSession(current, "needs_approval");
+packages\session-engine\src\index.test.ts:66:  assert.equal(nextResumeState(session({ state: "needs_approval" })), "resuming");
+packages\session-engine\src\index.test.ts:74:    event(2, "ApprovalRequested", { approvalId: "apr_1" }),
+packages\session-engine\src\index.test.ts:75:    event(3, "ApprovalResolved", { approvalId: "apr_1", decision: "approved_once" }),
+packages\session-engine\src\index.ts:8:  preparing: ["ready", "running", "blocked", "needs_approval", "failed", "cancelled"],
+packages\session-engine\src\index.ts:10:  running: ["blocked", "needs_approval", "verifying", "paused", "resuming", "completed", "failed", "cancelled"],
+packages\session-engine\src\index.ts:11:  blocked: ["needs_approval", "running", "paused", "resuming", "failed", "cancelled"],
+packages\session-engine\src\index.ts:12:  needs_approval: ["ready", "paused", "resuming", "failed", "cancelled"],
+packages\session-engine\src\index.ts:15:  resuming: ["preparing", "ready", "running", "blocked", "needs_approval", "paused", "failed", "cancelled"],
+packages\session-engine\src\index.ts:69:      return "needs_approval";
+packages\approval-engine\src\index.ts:23:  approval: ApprovalRequest;
+packages\approval-engine\src\index.ts:29:const RESOLVABLE_APPROVAL_STATES: readonly ApprovalState[] = ["pending", "waiting_human"] as const;
+packages\approval-engine\src\index.ts:81:): { approval: ApprovalRequest; auditDecision: ApprovalDecision } {
+packages\approval-engine\src\index.ts:91:    approval: {
+packages\approval-engine\src\index.ts:98:      approvalRequestId: request.id,
+packages\approval-engine\src\index.ts:112:      approval: input.request,
+packages\approval-engine\src\index.ts:124:    approval: resolved.approval,
+packages\approval-engine\src\index.ts:132:  if (request.state !== "pending" && request.state !== "waiting_human") {
+apps\api\src\index.ts:50:  async function miniAppUserId(req: MiniAppRequest, url: URL): Promise<string | undefined> {
+apps\api\src\index.ts:54:  async function requireMiniAppUserId(req: MiniAppRequest, res: ServerResponse, url: URL): Promise<string | undefined> {
+apps\api\src\index.ts:68:    handler: (userId: string) => Promise<T>
+apps\api\src\index.ts:69:  ): Promise<void> {
+apps\api\src\index.ts:178:      route("GET", "/api/v1/approvals/:id", async ({ res, params }) => {
+apps\api\src\index.ts:179:        const approval = await service.getApproval(params.id);
+apps\api\src\index.ts:180:        if (!approval) {
+apps\api\src\index.ts:185:        json(res, 200, approval);
+apps\api\src\index.ts:187:      route("GET", "/api/v1/approvals", async ({ res, url }) => {
+apps\api\src\index.ts:190:          approvals: await service.listApprovals(url.searchParams.get("userId") ?? undefined, states)
+apps\api\src\index.ts:193:      route("POST", "/api/v1/approvals/:id/resolve", async ({ req, res, params }) => {
+apps\api\src\index.ts:257:      route("GET", "/api/v1/miniapp/approvals", async ({ req, res, url }) => {
+apps\api\src\index.ts:260:      route("GET", "/api/v1/miniapp/approvals/:id", async ({ req, res, params, url }) => {
+apps\api\src\index.ts:263:      route("POST", "/api/v1/miniapp/approvals/:id/resolve", async ({ req, res, params, url }) => {
+apps\api\src\index.ts:311:      route("POST", "/api/v1/daemon/dispatch/ack", async ({ req, res }) => {
+apps\api\src\index.ts:352:function delay(ms: number): Promise<void> {
+apps\api\src\index.ts:353:  return new Promise((resolve) => {
+apps\api\src\index.ts:358:async function detectHappyTGServiceOnPort(listenPort: number, fetchImpl: typeof fetch = fetch): Promise<string | undefined> {
+apps\api\src\index.ts:390:): Promise<ApiStartupResult> {
+apps\api\src\index.ts:397:  async function listenOnce(): Promise<"listening" | "in_use"> {
+apps\api\src\index.ts:398:    return await new Promise<"listening" | "in_use">((resolve, reject) => {
+packages\policy-engine\src\index.test.ts:8:test("evaluatePolicies returns deny before lower-layer approval or allow", () => {
+packages\policy-engine\src\index.test.ts:22:          reason: "Global policy blocks push"
+packages\policy-engine\src\index.test.ts:58:test("evaluatePolicies requires approval when no deny matches", () => {
+packages\policy-engine\src\index.test.ts:76:            effect: "require_approval",
+packages\policy-engine\src\index.test.ts:77:            reason: "Writes need approval"
+packages\policy-engine\src\index.test.ts:84:  assert.equal(decision.outcome, "require_approval");
+packages\policy-engine\src\index.test.ts:86:  assert.match(decision.reason, /approval/i);
+packages\policy-engine\src\index.test.ts:136:  assert.equal(decision.matches[0]?.policyId, "pol-global");
+packages\approval-engine\src\index.test.ts:6:test("createApprovalRequest creates waiting human approval with expiry", () => {
+packages\approval-engine\src\index.test.ts:10:    reason: "Need approval",
+packages\approval-engine\src\index.test.ts:27:    reason: "Need approval",
+packages\approval-engine\src\index.test.ts:32:  assert.equal(resolved.approval.state, "approved_once");
+packages\approval-engine\src\index.test.ts:41:    reason: "Need approval",
+packages\approval-engine\src\index.test.ts:54:    reason: "Need approval",
+packages\approval-engine\src\index.test.ts:78:  assert.equal(resolved.approval.state, "approved_session");
+packages\approval-engine\src\index.test.ts:82:    request: resolved.approval,
+packages\approval-engine\src\index.test.ts:92:  assert.equal(replay.approval.state, "approved_session");
+apps\worker\src\index.test.ts:15:async function closeServer(server: ReturnType<typeof createHttpServer>): Promise<void> {
+apps\worker\src\index.test.ts:16:  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\worker\src\index.test.ts:49:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\worker\src\index.test.ts:71:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\worker\src\index.test.ts:111:  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+apps\worker\src\index.test.ts:154:  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+apps\worker\src\index.test.ts:187:  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+apps\worker\src\index.ts:3:import { refreshExpiredApproval } from "../../../packages/approval-engine/src/index.js";
+apps\worker\src\index.ts:61:  async function runTick(): Promise<void> {
+apps\worker\src\index.ts:71:        for (const approval of state.approvals) {
+apps\worker\src\index.ts:72:          const refreshed = refreshExpiredApproval(approval, new Date(now));
+apps\worker\src\index.ts:73:          if (refreshed.state !== approval.state) {
+apps\worker\src\index.ts:74:            Object.assign(approval, refreshed);
+apps\worker\src\index.ts:91:          dispatchesFailed: reconcileResult.dispatchesFailed
+apps\worker\src\index.ts:232:function delay(ms: number): Promise<void> {
+apps\worker\src\index.ts:233:  return new Promise((resolve) => {
+apps\worker\src\index.ts:238:async function detectPortOccupant(listenPort: number, fetchImpl: typeof fetch = fetch): Promise<PortOccupantInfo> {
+apps\worker\src\index.ts:288:): Promise<WorkerStartupResult> {
+apps\worker\src\index.ts:295:  async function listenOnce(): Promise<"listening" | "in_use"> {
+apps\worker\src\index.ts:296:    return await new Promise<"listening" | "in_use">((resolve, reject) => {
+apps\api\src\service.ts:5:import { createApprovalRequest, resolveApprovalRequestIdempotent } from "../../../packages/approval-engine/src/index.js";
+apps\api\src\service.ts:6:import { createDefaultPolicies, evaluatePolicies } from "../../../packages/policy-engine/src/index.js";
+apps\api\src\service.ts:161:function makeDispatch(session: Session, actionKind: PendingDispatch["actionKind"], approvalId?: string): PendingDispatch {
+apps\api\src\service.ts:175:    approvalId,
+apps\api\src\service.ts:176:    status: "queued",
+apps\api\src\service.ts:177:    idempotencyKey: `dispatch_${session.id}_${Date.now()}`,
+apps\api\src\service.ts:281:  const approval = session.approvalId ? store.approvals.find((item) => item.id === session.approvalId) : undefined;
+apps\api\src\service.ts:282:  const needsAttention = approval?.state === "waiting_human"
+apps\api\src\service.ts:283:    ? "approval"
+apps\api\src\service.ts:284:    : session.state === "blocked" || session.state === "needs_approval"
+apps\api\src\service.ts:289:  const nextAction = needsAttention === "approval"
+apps\api\src\service.ts:290:    ? "open approval"
+apps\api\src\service.ts:313:function approvalCard(store: HappyTGStore, approval: ApprovalRequest): MiniAppApprovalCard {
+apps\api\src\service.ts:314:  const session = store.sessions.find((item) => item.id === approval.sessionId);
+apps\api\src\service.ts:316:    id: approval.id,
+apps\api\src\service.ts:317:    sessionId: approval.sessionId,
+apps\api\src\service.ts:318:    title: session?.title ?? approval.actionKind,
+apps\api\src\service.ts:319:    reason: approval.reason,
+apps\api\src\service.ts:320:    risk: approval.risk,
+apps\api\src\service.ts:321:    state: approval.state,
+apps\api\src\service.ts:322:    expiresAt: approval.expiresAt,
+apps\api\src\service.ts:323:    scope: approval.scope,
+apps\api\src\service.ts:324:    nonce: approval.nonce,
+apps\api\src\service.ts:325:    href: `/approval/${encodeURIComponent(approval.id)}`
+apps\api\src\service.ts:387:      approvals: [],
+apps\api\src\service.ts:399:    approvals: store.approvals.filter((item) => sessionIds.has(item.sessionId)),
+apps\api\src\service.ts:407:  async createMiniAppLaunchGrant(input: CreateMiniAppLaunchGrantRequest): Promise<CreateMiniAppLaunchGrantResponse> {
+apps\api\src\service.ts:445:  async createMiniAppSession(input: CreateMiniAppSessionRequest): Promise<CreateMiniAppSessionResponse> {
+apps\api\src\service.ts:531:  async authenticateMiniAppSession(token: string): Promise<User | undefined> {
+apps\api\src\service.ts:548:  async revokeMiniAppSession(sessionId: string, actorUserId?: string): Promise<MiniAppSession> {
+apps\api\src\service.ts:570:  async revokeMiniAppLaunchGrant(grantId: string, actorUserId?: string): Promise<MiniAppLaunchGrant> {
+apps\api\src\service.ts:592:  async resolveMiniAppUserId(token?: string, userIdHint?: string): Promise<string | undefined> {
+apps\api\src\service.ts:604:  async listHosts(userId?: string): Promise<Host[]> {
+apps\api\src\service.ts:609:  async listWorkspaces(hostId: string, userId?: string): Promise<Workspace[]> {
+apps\api\src\service.ts:619:  async listSessions(userId?: string): Promise<Session[]> {
+apps\api\src\service.ts:627:  async listApprovals(userId?: string, states?: string[]): Promise<ApprovalRequest[]> {
+apps\api\src\service.ts:632:    return store.approvals
+apps\api\src\service.ts:638:  async getUserByTelegram(telegramUserId: string): Promise<User | undefined> {
+apps\api\src\service.ts:648:  async getHost(hostId: string): Promise<Host | undefined> {
+apps\api\src\service.ts:653:  async startPairing(input: CreatePairingRequest): Promise<CreatePairingResponse> {
+apps\api\src\service.ts:694:  async claimPairing(input: ClaimPairingRequest): Promise<{ user: User; host: Host; identity: TelegramIdentity }> {
+apps\api\src\service.ts:724:  async hostHello(input: HostHelloRequest): Promise<HostHelloResponse> {
+apps\api\src\service.ts:737:      const pendingDispatches = store.pendingDispatches.filter((item) => item.hostId === host.id && item.status === "queued");
+apps\api\src\service.ts:743:        pendingDispatches
+apps\api\src\service.ts:748:  async hostHeartbeat(hostId: string): Promise<{ ok: true; host: Host }> {
+apps\api\src\service.ts:765:  async hostPoll(input: HostPollRequest): Promise<{ dispatches: PendingDispatch[] }> {
+apps\api\src\service.ts:768:      dispatches: store.pendingDispatches.filter((item) => item.hostId === input.hostId && item.status === "queued")
+apps\api\src\service.ts:772:  async getSession(sessionId: string): Promise<(Session & { task?: TaskBundle; approval?: ApprovalRequest }) | undefined> {
+apps\api\src\service.ts:782:      approval: session.approvalId ? store.approvals.find((item) => item.id === session.approvalId) : undefined
+apps\api\src\service.ts:786:  async createSession(input: CreateSessionRequest): Promise<{ session: Session; task?: TaskBundle; approval?: ApprovalRequest; dispatch?: PendingDispatch }> {
+apps\api\src\service.ts:812:        sources: ["user", "host", "workspace", "policy", "runtime"]
+apps\api\src\service.ts:833:      const policyDecision = evaluatePolicies({
+apps\api\src\service.ts:845:        outcome: policyDecision.outcome,
+apps\api\src\service.ts:846:        effectiveLayer: policyDecision.effectiveLayer,
+apps\api\src\service.ts:847:        reason: policyDecision.reason
+apps\api\src\service.ts:850:      if (policyDecision.outcome === "deny") {
+apps\api\src\service.ts:851:        session.lastError = policyDecision.reason;
+apps\api\src\service.ts:852:        moveSession(session, "failed", { error: policyDecision.reason });
+apps\api\src\service.ts:853:        appendEvent(store, session.id, "SessionFailed", { reason: policyDecision.reason });
+apps\api\src\service.ts:854:        appendAudit(store, "user", input.userId, "session.denied", session.id, { actionKind, reason: policyDecision.reason });
+apps\api\src\service.ts:858:      if (policyDecision.outcome === "require_approval") {
+apps\api\src\service.ts:859:        const approval = createApprovalRequest({
+apps\api\src\service.ts:863:          reason: policyDecision.reason
+apps\api\src\service.ts:865:        store.approvals.push(approval);
+apps\api\src\service.ts:867:          await recordTaskApproval(task, approval.id);
+apps\api\src\service.ts:869:        session.approvalId = approval.id;
+apps\api\src\service.ts:870:        moveSession(session, "needs_approval");
+apps\api\src\service.ts:872:          approvalId: approval.id,
+apps\api\src\service.ts:873:          risk: approval.risk,
+apps\api\src\service.ts:874:          scope: approval.scope,
+apps\api\src\service.ts:875:          reason: approval.reason,
+apps\api\src\service.ts:876:          expiresAt: approval.expiresAt
+apps\api\src\service.ts:878:        appendAudit(store, "user", input.userId, "approval.requested", approval.id, { sessionId: session.id, actionKind });
+apps\api\src\service.ts:879:        return { session, task, approval };
+apps\api\src\service.ts:882:      const dispatch = makeDispatch(session, actionKind);
+apps\api\src\service.ts:883:      store.pendingDispatches.push(dispatch);
+apps\api\src\service.ts:885:      appendAudit(store, "user", input.userId, "session.dispatched", session.id, { dispatchId: dispatch.id });
+apps\api\src\service.ts:886:      return { session, task, dispatch };
+apps\api\src\service.ts:894:  }): Promise<{ session: Session; approval?: ApprovalRequest; dispatch?: PendingDispatch }> {
+apps\api\src\service.ts:924:        sources: ["user", "host", "policy", "bootstrap", "resume"]
+apps\api\src\service.ts:927:      const policyDecision = evaluatePolicies({
+apps\api\src\service.ts:939:        outcome: policyDecision.outcome,
+apps\api\src\service.ts:940:        effectiveLayer: policyDecision.effectiveLayer,
+apps\api\src\service.ts:941:        reason: policyDecision.reason
+apps\api\src\service.ts:944:      if (policyDecision.outcome === "deny") {
+apps\api\src\service.ts:945:        session.lastError = policyDecision.reason;
+apps\api\src\service.ts:946:        moveSession(session, "failed", { error: policyDecision.reason });
+apps\api\src\service.ts:947:        appendEvent(store, session.id, "SessionFailed", { reason: policyDecision.reason });
+apps\api\src\service.ts:952:      if (policyDecision.outcome === "require_approval") {
+apps\api\src\service.ts:953:        const approval = createApprovalRequest({
+apps\api\src\service.ts:957:          reason: policyDecision.reason
+apps\api\src\service.ts:959:        store.approvals.push(approval);
+apps\api\src\service.ts:963:            await recordTaskApproval(task, approval.id);
+apps\api\src\service.ts:966:        session.approvalId = approval.id;
+apps\api\src\service.ts:967:        moveSession(session, "needs_approval");
+apps\api\src\service.ts:969:          approvalId: approval.id,
+apps\api\src\service.ts:970:          risk: approval.risk,
+apps\api\src\service.ts:971:          scope: approval.scope,
+apps\api\src\service.ts:972:          reason: approval.reason,
+apps\api\src\service.ts:973:          expiresAt: approval.expiresAt
+apps\api\src\service.ts:975:        appendAudit(store, "user", input.userId, "bootstrap.approval.requested", approval.id, {
+apps\api\src\service.ts:979:        return { session, approval };
+apps\api\src\service.ts:982:      const dispatch = makeDispatch(session, actionKind);
+apps\api\src\service.ts:983:      dispatch.executionKind = input.command === "doctor" ? "bootstrap_doctor" : "bootstrap_verify";
+apps\api\src\service.ts:984:      store.pendingDispatches.push(dispatch);
+apps\api\src\service.ts:986:      appendAudit(store, "user", input.userId, "bootstrap.dispatched", session.id, {
+apps\api\src\service.ts:987:        dispatchId: dispatch.id,
+apps\api\src\service.ts:990:      return { session, dispatch };
+apps\api\src\service.ts:994:  async resolveApproval(approvalId: string, input: ResolveApprovalRequest): Promise<{ approval: ApprovalRequest; session: Session; decision: ApprovalDecision; dispatch?: PendingDispatch }> {
+apps\api\src\service.ts:996:      const approval = store.approvals.find((item) => item.id === approvalId);
+apps\api\src\service.ts:997:      if (!approval) {
+apps\api\src\service.ts:1001:      const session = store.sessions.find((item) => item.id === approval.sessionId);
+apps\api\src\service.ts:1003:        throw new Error("Session not found for approval");
+apps\api\src\service.ts:1010:        request: approval,
+apps\api\src\service.ts:1017:      Object.assign(approval, resolved.approval);
+apps\api\src\service.ts:1019:        store.approvalDecisions.push(resolved.auditDecision);
+apps\api\src\service.ts:1021:          approvalId: approval.id,
+apps\api\src\service.ts:1022:          decision: approval.state
+apps\api\src\service.ts:1026:      let dispatch: PendingDispatch | undefined;
+apps\api\src\service.ts:1027:      if (resolved.approval.state === "approved_once" || resolved.approval.state === "approved_phase" || resolved.approval.state === "approved_session") {
+apps\api\src\service.ts:1029:          dispatch = makeDispatch(session, approval.actionKind, approval.id);
+apps\api\src\service.ts:1030:          store.pendingDispatches.push(dispatch);
+apps\api\src\service.ts:1034:        moveSession(session, "paused", { error: approval.reason });
+apps\api\src\service.ts:1035:        session.lastError = approval.reason;
+apps\api\src\service.ts:1039:      appendAudit(store, "user", input.userId, resolved.idempotent ? "approval.replayed" : "approval.resolved", approval.id, {
+apps\api\src\service.ts:1041:        decision: approval.state
+apps\api\src\service.ts:1044:        approval,
+apps\api\src\service.ts:1047:          id: `apd_replay_${approval.id}`,
+apps\api\src\service.ts:1048:          approvalRequestId: approval.id,
+apps\api\src\service.ts:1050:          decision: replayApprovalDecisionState(approval.state),
+apps\api\src\service.ts:1054:        dispatch
+apps\api\src\service.ts:1059:  async ackDispatch(input: DaemonDispatchAckRequest): Promise<PendingDispatch> {
+apps\api\src\service.ts:1061:      const dispatch = store.pendingDispatches.find((item) => item.id === input.dispatchId && item.sessionId === input.sessionId);
+apps\api\src\service.ts:1062:      if (!dispatch) {
+apps\api\src\service.ts:1066:      dispatch.status = "running";
+apps\api\src\service.ts:1067:      dispatch.updatedAt = nowIso();
+apps\api\src\service.ts:1069:      const session = store.sessions.find((item) => item.id === dispatch.sessionId);
+apps\api\src\service.ts:1071:        throw new Error("Session not found for dispatch");
+apps\api\src\service.ts:1076:        dispatchId: dispatch.id,
+apps\api\src\service.ts:1077:        runtime: dispatch.runtime
+apps\api\src\service.ts:1079:      return dispatch;
+apps\api\src\service.ts:1083:  async updateSessionFromDaemon(input: DaemonSessionEventRequest): Promise<Session> {
+apps\api\src\service.ts:1117:  async updateTaskPhase(taskId: string, phase: TaskBundle["phase"], verificationState?: TaskBundle["verificationState"]): Promise<TaskBundle> {
+apps\api\src\service.ts:1145:  async completeDispatch(input: DaemonCompleteRequest): Promise<Session> {
+apps\api\src\service.ts:1147:      const dispatch = store.pendingDispatches.find((item) => item.id === input.dispatchId && item.sessionId === input.sessionId);
+apps\api\src\service.ts:1148:      if (!dispatch) {
+apps\api\src\service.ts:1157:      dispatch.status = input.ok ? "completed" : "failed";
+apps\api\src\service.ts:1158:      dispatch.updatedAt = nowIso();
+apps\api\src\service.ts:1181:      appendAudit(store, "host", input.hostId, "dispatch.completed", dispatch.id, { ok: input.ok });
+apps\api\src\service.ts:1186:  async resumeSession(sessionId: string): Promise<Session> {
+apps\api\src\service.ts:1206:  async getTask(taskId: string): Promise<{ task: TaskBundle; validation: Awaited<ReturnType<typeof validateTaskBundle>> } | undefined> {
+apps\api\src\service.ts:1219:  async listTaskArtifacts(taskId: string): Promise<{ artifacts: string[] }> {
+apps\api\src\service.ts:1241:  async readTaskArtifact(taskId: string, relativePath: string): Promise<{ path: string; content: string }> {
+apps\api\src\service.ts:1263:  async getApproval(approvalId: string): Promise<ApprovalRequest | undefined> {
+apps\api\src\service.ts:1265:    return store.approvals.find((item) => item.id === approvalId);
+apps\api\src\service.ts:1268:  async getMiniAppOverview(userId?: string): Promise<{
+apps\api\src\service.ts:1272:    approvals: ApprovalRequest[];
+apps\api\src\service.ts:1281:      approvals: scoped.approvals,
+apps\api\src\service.ts:1286:  async getMiniAppDashboard(userId?: string): Promise<MiniAppDashboardProjection> {
+apps\api\src\service.ts:1290:    const pendingApprovals = scoped.approvals.filter((item) => item.state === "waiting_human" || item.state === "pending");
+apps\api\src\service.ts:1291:    const blockedSessions = scoped.sessions.filter((item) => item.state === "blocked" || item.state === "needs_approval");
+apps\api\src\service.ts:1298:      ...pendingApprovals.map((approval) => ({
+apps\api\src\service.ts:1299:        id: approval.id,
+apps\api\src\service.ts:1300:        kind: "approval" as const,
+apps\api\src\service.ts:1302:        detail: approval.reason,
+apps\api\src\service.ts:1303:        severity: approval.risk === "critical" || approval.risk === "high" ? "danger" as const : "warn" as const,
+apps\api\src\service.ts:1304:        href: `/approval/${encodeURIComponent(approval.id)}`,
+apps\api\src\service.ts:1305:        nextAction: "Открыть approval"
+apps\api\src\service.ts:1341:        pendingApprovals: pendingApprovals.length,
+apps\api\src\service.ts:1360:  async listMiniAppSessions(userId?: string): Promise<{ sessions: MiniAppSessionCard[] }> {
+apps\api\src\service.ts:1370:  async getMiniAppSessionDetail(sessionId: string, userId?: string): Promise<{
+apps\api\src\service.ts:1375:    approval?: MiniAppApprovalCard;
+apps\api\src\service.ts:1388:    const approval = session.approvalId ? store.approvals.find((item) => item.id === session.approvalId) : undefined;
+apps\api\src\service.ts:1390:      approval?.state === "waiting_human" ? "open_approval" : undefined,
+apps\api\src\service.ts:1409:      approval: approval ? approvalCard(store, approval) : undefined,
+apps\api\src\service.ts:1417:  async listMiniAppApprovals(userId?: string): Promise<{ approvals: MiniAppApprovalCard[] }> {
+apps\api\src\service.ts:1421:      approvals: scoped.approvals
+apps\api\src\service.ts:1423:        .map((approval) => approvalCard(store, approval))
+apps\api\src\service.ts:1427:  async getMiniAppApprovalDetail(approvalId: string, userId?: string): Promise<{ approval: MiniAppApprovalCard; session?: MiniAppSessionCard }> {
+apps\api\src\service.ts:1430:    const approval = scoped.approvals.find((item) => item.id === approvalId);
+apps\api\src\service.ts:1431:    if (!approval) {
+apps\api\src\service.ts:1435:    const session = store.sessions.find((item) => item.id === approval.sessionId);
+apps\api\src\service.ts:1437:      approval: approvalCard(store, approval),
+apps\api\src\service.ts:1442:  async listMiniAppHosts(userId?: string): Promise<{ hosts: MiniAppHostCard[] }> {
+apps\api\src\service.ts:1450:  async listMiniAppProjects(userId?: string): Promise<{ projects: MiniAppProjectCard[] }> {
+apps\api\src\service.ts:1460:  async getMiniAppHostDetail(hostId: string, userId?: string): Promise<{ host: MiniAppHostCard; workspaces: Workspace[]; sessions: MiniAppSessionCard[] }> {
+apps\api\src\service.ts:1475:  async listMiniAppReports(userId?: string): Promise<{ reports: MiniAppReportCard[] }> {
+apps\api\src\service.ts:1483:  async getMiniAppBundleDetail(taskId: string, userId?: string): Promise<{
+apps\api\src\service.ts:1510:  async getMiniAppDiffSummary(sessionId: string, userId?: string): Promise<MiniAppDiffProjection> {
+apps\api\src\service.ts:1535:  async getMiniAppVerifySummary(sessionId: string, userId?: string): Promise<MiniAppVerifyProjection> {
+apps\api\src\service.ts:1559:  async getSessionTimeline(sessionId: string): Promise<{
+apps\api\src\service.ts:1562:    approval?: ApprovalRequest;
+apps\api\src\service.ts:1574:      approval: session.approvalId ? store.approvals.find((item) => item.id === session.approvalId) : undefined,
+apps\api\src\index.test.ts:13:async function closeServer(server: ReturnType<typeof createHttpServer>): Promise<void> {
+apps\api\src\index.test.ts:14:  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\api\src\index.test.ts:19:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:40:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:66:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:101:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:118:test("mini app approval resolve endpoint uses bearer session user", async () => {
+apps\api\src\index.test.ts:119:  const calls: Array<{ approvalId: string; userId: string; decision: string; scope?: string; nonce?: string }> = [];
+apps\api\src\index.test.ts:124:    async resolveApproval(approvalId: string, input: { userId: string; decision: string; scope?: string; nonce?: string }) {
+apps\api\src\index.test.ts:125:      calls.push({ approvalId, ...input });
+apps\api\src\index.test.ts:127:        approval: { id: approvalId, state: "approved_once" },
+apps\api\src\index.test.ts:134:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:141:    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/approvals/apr_1/resolve`, {
+apps\api\src\index.test.ts:150:    const allowed = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/approvals/apr_1/resolve`, {
+apps\api\src\index.test.ts:162:        approvalId: "apr_1",
+apps\api\src\index.test.ts:220:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:283:  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+apps\api\src\index.test.ts:322:  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+apps\api\src\index.test.ts:355:  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+apps\api\src\index.test.ts:388:  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+apps\worker\src\reconcile.test.ts:36:  store.pendingDispatches.push({
+apps\worker\src\reconcile.test.ts:64:test("markExpiredApprovalSessions pauses awaiting approval sessions", () => {
+apps\worker\src\reconcile.test.ts:74:    state: "needs_approval",
+apps\worker\src\reconcile.test.ts:77:    approvalId: "apr_1",
+apps\worker\src\reconcile.test.ts:81:  store.approvals.push({
+packages\policy-engine\src\index.ts:5:function findMatchingRules(policy: Policy, actionKind: PolicyRule["actionKind"]): PolicyMatch[] {
+packages\policy-engine\src\index.ts:6:  return policy.rules
+packages\policy-engine\src\index.ts:9:      policyId: policy.id,
+packages\policy-engine\src\index.ts:10:      layer: policy.layer,
+packages\policy-engine\src\index.ts:17:function policyAppliesToScope(policy: Policy, request: PolicyEvaluationRequest): boolean {
+packages\policy-engine\src\index.ts:18:  const requestedScope = request.scopeRefs[policy.layer];
+packages\policy-engine\src\index.ts:20:    return policy.layer === "global" && policy.scopeRef === "global";
+packages\policy-engine\src\index.ts:23:  return policy.scopeRef === requestedScope;
+packages\policy-engine\src\index.ts:28:    .filter((policy) => policy.status === "active")
+packages\policy-engine\src\index.ts:29:    .filter((policy) => policyAppliesToScope(policy, input))
+packages\policy-engine\src\index.ts:30:    .flatMap((policy) => findMatchingRules(policy, input.actionKind))
+packages\policy-engine\src\index.ts:43:  const requireApproval = matches.find((match) => match.effect === "require_approval");
+packages\policy-engine\src\index.ts:46:      outcome: "require_approval",
+packages\policy-engine\src\index.ts:57:    reason: matches[0]?.reason ?? "No matching deny or approval rule"
+packages\policy-engine\src\index.ts:86:          effect: "require_approval",
+packages\policy-engine\src\index.ts:87:          reason: "Workspace mutations require explicit approval"
+packages\policy-engine\src\index.ts:92:          effect: "require_approval",
+packages\policy-engine\src\index.ts:93:          reason: "Out-of-root writes require explicit approval"
+packages\policy-engine\src\index.ts:98:          effect: "require_approval",
+packages\policy-engine\src\index.ts:104:          effect: "require_approval",
+packages\policy-engine\src\index.ts:110:          effect: "require_approval",
+packages\policy-engine\src\index.ts:111:          reason: "Config edits require explicit approval"
+apps\api\src\service.test.ts:32:test("proof session creates task bundle and approval, then approval dispatches session", async () => {
+apps\api\src\service.test.ts:71:  assert.equal(sessionResult.session.state, "needs_approval");
+apps\api\src\service.test.ts:72:  assert.ok(sessionResult.approval);
+apps\api\src\service.test.ts:75:  const resolved = await service.resolveApproval(sessionResult.approval!.id, {
+apps\api\src\service.test.ts:79:    nonce: sessionResult.approval!.nonce
+apps\api\src\service.test.ts:83:  assert.equal(resolved.approval.state, "approved_phase");
+apps\api\src\service.test.ts:84:  assert.ok(resolved.dispatch);
+apps\api\src\service.test.ts:87:test("quick session dispatches immediately without approval", async () => {
+apps\api\src\service.test.ts:126:  assert.ok(sessionResult.dispatch);
+apps\api\src\service.test.ts:127:  assert.equal(sessionResult.approval, undefined);
+apps\api\src\service.test.ts:179:test("bootstrap sessions dispatch deterministic doctor runs and support resume state transitions", async () => {
+apps\api\src\service.test.ts:214:  assert.equal(diagnostic.dispatch?.executionKind, "bootstrap_doctor");
+apps\api\src\service.test.ts:215:  assert.equal(diagnostic.dispatch?.actionKind, "read_status");
+apps\api\src\service.test.ts:221:test("bot projections list user-scoped workspaces, sessions, approvals, and reject stale callback nonce", async () => {
+apps\api\src\service.test.ts:269:  const approvals = await service.listApprovals(claim.user.id, ["waiting_human"]);
+apps\api\src\service.test.ts:270:  assert.equal(approvals.length, 1);
+apps\api\src\service.test.ts:271:  assert.equal(approvals[0]?.id, created.approval?.id);
+apps\api\src\service.test.ts:274:    () => service.resolveApproval(created.approval!.id, {
+apps\api\src\service.test.ts:283:  const resolved = await service.resolveApproval(created.approval!.id, {
+apps\api\src\service.test.ts:287:    nonce: created.approval!.nonce
+apps\api\src\service.test.ts:290:  assert.equal(resolved.approval.state, "approved_session");
+apps\api\src\service.test.ts:292:  const replay = await service.resolveApproval(created.approval!.id, {
+apps\api\src\service.test.ts:296:    nonce: created.approval!.nonce
+apps\api\src\service.test.ts:299:  assert.equal(replay.approval.state, "approved_session");
+apps\api\src\service.test.ts:300:  assert.equal(replay.dispatch, undefined);
+apps\api\src\service.test.ts:380:    assert.equal(anonymousDashboard.stats.pendingApprovals, 0);
+apps\api\src\service.test.ts:384:    assert.equal(anonymousOverview.approvals.length, 0);
+apps\api\src\service.test.ts:387:    assert.equal(dashboard.stats.pendingApprovals, 1);
+apps\api\src\service.test.ts:388:    assert.equal(dashboard.attention[0]?.kind, "approval");
+apps\worker\src\reconcile.ts:19:  dispatchesFailed: number;
+apps\worker\src\reconcile.ts:42:  return store.pendingDispatches
+apps\worker\src\reconcile.ts:63:  let dispatchesFailed = 0;
+apps\worker\src\reconcile.ts:70:    const dispatch = findLatestDispatch(store, session.id);
+apps\worker\src\reconcile.ts:71:    if (!dispatch || (dispatch.status !== "queued" && dispatch.status !== "running")) {
+apps\worker\src\reconcile.ts:75:    const dispatchAgeMs = currentTimeMs - new Date(dispatch.updatedAt).getTime();
+apps\worker\src\reconcile.ts:76:    if (dispatchAgeMs > config.orphanAfterMs) {
+apps\worker\src\reconcile.ts:77:      dispatch.status = "failed";
+apps\worker\src\reconcile.ts:78:      dispatch.updatedAt = timestamp;
+apps\worker\src\reconcile.ts:79:      dispatchesFailed += 1;
+apps\worker\src\reconcile.ts:89:        dispatchId: dispatch.id,
+apps\worker\src\reconcile.ts:112:    dispatchesFailed
+apps\worker\src\reconcile.ts:154:  for (const approval of store.approvals) {
+apps\worker\src\reconcile.ts:155:    if (approval.state !== "expired") {
+apps\worker\src\reconcile.ts:159:    const session = store.sessions.find((item) => item.id === approval.sessionId);
+apps\worker\src\reconcile.ts:164:    if (session.state !== "needs_approval") {
+apps\worker\src\reconcile.ts:170:    session.currentSummary = "Execution paused because the pending approval expired.";
+apps\worker\src\reconcile.ts:175:      approvalId: approval.id,

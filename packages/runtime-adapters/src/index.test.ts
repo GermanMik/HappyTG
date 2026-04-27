@@ -594,6 +594,103 @@ test("runCodexExec marks timeout and returns a timeout summary", async () => {
   }
 });
 
+test("runCodexExec settles timeout even when the child ignores normal termination", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-timeout-grace-"));
+  const originalBin = process.env.CODEX_CLI_BIN;
+  const originalGrace = process.env.HAPPYTG_COMMAND_TIMEOUT_GRACE_MS;
+  try {
+    process.env.HAPPYTG_COMMAND_TIMEOUT_GRACE_MS = "20";
+    const harness = await createCodexHarness(
+      tempDir,
+      "codex-ignore-term.mjs",
+      `
+        const args = process.argv.slice(2);
+        if (args[0] !== "exec") {
+          process.exit(1);
+        }
+        process.on("SIGTERM", () => {
+          console.error("ignored SIGTERM");
+        });
+        setInterval(() => {
+          process.stdout.write("still running\\n");
+        }, 100);
+      `
+    );
+
+    const startedAt = Date.now();
+    const result = await runCodexExec({
+      cwd: tempDir,
+      prompt: "wait forever",
+      binaryPath: harness.binaryPath,
+      binaryArgs: harness.binaryArgs,
+      outputDir: tempDir,
+      timeoutMs: 10
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.timedOut, true);
+    assert.equal(result.exitCode, 124);
+    assert.match(result.stderr, /timed out after 10ms/);
+    assert.ok(Date.now() - startedAt < 1_000);
+  } finally {
+    restoreCodexBin(originalBin);
+    if (originalGrace === undefined) {
+      delete process.env.HAPPYTG_COMMAND_TIMEOUT_GRACE_MS;
+    } else {
+      process.env.HAPPYTG_COMMAND_TIMEOUT_GRACE_MS = originalGrace;
+    }
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runCodexExec caps stdout and stderr while reporting truncation metadata", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-output-cap-"));
+  const originalBin = process.env.CODEX_CLI_BIN;
+  const originalCap = process.env.HAPPYTG_COMMAND_OUTPUT_MAX_BYTES;
+  try {
+    process.env.HAPPYTG_COMMAND_OUTPUT_MAX_BYTES = "32";
+    const harness = await createCodexHarness(
+      tempDir,
+      "codex-large-output.mjs",
+      `
+        const args = process.argv.slice(2);
+        if (args[0] !== "exec") {
+          process.exit(1);
+        }
+        process.stdout.write("stdout-" + "x".repeat(80) + "-tail");
+        process.stderr.write("stderr-" + "y".repeat(80) + "-tail");
+      `
+    );
+
+    const result = await runCodexExec({
+      cwd: tempDir,
+      prompt: "large output",
+      binaryPath: harness.binaryPath,
+      binaryArgs: harness.binaryArgs,
+      outputDir: tempDir
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.stdoutTruncated, true);
+    assert.equal(result.stderrTruncated, true);
+    assert.equal(result.outputRetentionBytes, 32);
+    assert.ok((result.stdoutBytes ?? 0) > 32);
+    assert.ok((result.stderrBytes ?? 0) > 32);
+    assert.ok(Buffer.byteLength(result.stdout) <= 32);
+    assert.ok(Buffer.byteLength(result.stderr) <= 32);
+    assert.match(result.stdout, /-tail$/);
+    assert.match(result.stderr, /-tail$/);
+  } finally {
+    restoreCodexBin(originalBin);
+    if (originalCap === undefined) {
+      delete process.env.HAPPYTG_COMMAND_OUTPUT_MAX_BYTES;
+    } else {
+      process.env.HAPPYTG_COMMAND_OUTPUT_MAX_BYTES = originalCap;
+    }
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("runCodexExec returns actionable guidance when Codex CLI is missing", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-missing-"));
   const originalBin = process.env.CODEX_CLI_BIN;

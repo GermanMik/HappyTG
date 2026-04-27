@@ -1,0 +1,36 @@
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "verify"
+
+HappyTG verify [WARN]
+Summary: 2 warnings found.
+Profile: recommended
+
+Checks:
+- Env: .env found
+- Codex: codex-cli 0.125.0
+- Telegram: configured
+- Telegram Mini App URL: https://happytg.gerta.crazedns.ru/miniapp
+- Caddy /miniapp: Public Caddy Mini App route returned HTTP 502.
+- Telegram menu button: Telegram menu button state is not checked during doctor/verify to avoid leaking tokens through network diagnostics. Run `pnpm happytg telegram menu set --dry-run`, then `pnpm happytg telegram menu set`.
+- Redis: running on localhost:6379
+- Ports: reuse: Redis host port 6379, Postgres host port 5432, MinIO API host port 9000, MinIO console host port 9001; free: Mini App 3007, API 4000, Bot 4100, Worker probe 4200
+
+Findings:
+- WARN  Codex CLI completed the smoke check with warnings: Codex Responses websocket returned 403 Forbidden, then the CLI fell back to HTTP. Run `pnpm happytg doctor --json` for stderr details.
+- WARN  Public Caddy Mini App route returned HTTP 502. Fix the public Caddy route before running `pnpm happytg telegram menu set`.
+
+Requires user:
+- Start repo services: `pnpm dev`.
+
+Blocked:
+- Pairing is blocked because the HappyTG API is not running yet.
+  - Start or reuse the HappyTG API first.
+  - Then request a pairing code with `pnpm daemon:pair`.
+
+Reuse:
+- Redis, PostgreSQL, and S3-compatible storage already look reachable locally. Reuse them and skip Docker shared infra entirely.
+
+Diagnostics:
+- Run `pnpm happytg verify --json` for machine-readable details.
+- Run `pnpm happytg doctor --json` for the full environment report.

@@ -628,6 +628,11 @@ export interface RuntimeExecutionResult {
   summary: string;
   stdout: string;
   stderr: string;
+  stdoutBytes?: number;
+  stderrBytes?: number;
+  stdoutTruncated?: boolean;
+  stderrTruncated?: boolean;
+  outputRetentionBytes?: number;
   exitCode: number;
   startedAt: string;
   finishedAt: string;

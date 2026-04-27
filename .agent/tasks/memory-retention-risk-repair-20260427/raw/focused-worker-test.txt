@@ -1,0 +1,23 @@
+PS> pnpm --filter @happytg/worker test
+
+> @happytg/worker@0.4.6 test C:\Develop\Projects\HappyTG\apps\worker
+> tsx --test src/*.test.ts
+
+✔ worker readiness becomes healthy after a successful tick (10.8568ms)
+✔ worker ready endpoint returns 503 before first tick (31.1868ms)
+✔ startWorkerServer listens and invokes onListening when the port is free (3.1227ms)
+✔ startWorkerServer reuses an already-running HappyTG worker on the same port without starting local work (59.4372ms)
+✔ startWorkerServer rejects when a different HappyTG service occupies the worker port (5.874ms)
+✔ startWorkerServer names a foreign HTTP listener when the port is occupied (4.6581ms)
+✔ reconcileSessionsAndDispatches moves active sessions to resuming when host is stale (1.8051ms)
+✔ markExpiredApprovalSessions pauses awaiting approval sessions (0.2631ms)
+✔ compactControlPlaneRecords removes expired terminal records while preserving active records (2.2916ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 423.7107
+ExitCode: 0

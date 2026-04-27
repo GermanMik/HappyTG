@@ -1,0 +1,14 @@
+{
+  "status": "fail",
+  "summary": "Memory/resource audit found 1 high, 3 medium, and 2 low retention risks. Standard lint/typecheck/test/doctor checks ran. The original pnpm happytg verify crash was cleared by a 2026-04-27 repeat, which exited 0 with WARN status.",
+  "high_risks": 1,
+  "medium_risks": 3,
+  "low_risks": 2,
+  "verification_commands": [
+    "pnpm lint",
+    "pnpm typecheck",
+    "pnpm test",
+    "pnpm happytg doctor",
+    "pnpm happytg verify"
+  ]
+}

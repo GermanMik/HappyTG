@@ -1,0 +1,29 @@
+PS> pnpm --filter @happytg/miniapp test
+
+> @happytg/miniapp@0.4.6 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+✔ mini app ready endpoint returns 503 when api health fails (29.7611ms)
+✔ overview page renders hosts, sessions, approvals, and tasks (9.7746ms)
+✔ mini app links honor the /miniapp reverse-proxy base path (7.7197ms)
+✔ public reverse-proxied mini app uses same-origin browser API when local env points at localhost (13.2487ms)
+✔ local direct mini app keeps the explicit local API origin without reverse-proxy headers (0.2127ms)
+✔ auth-pending shell exposes retry-safe auth feedback controls (6.4024ms)
+✔ mini app forwards browser session cookie as bearer auth (5.9804ms)
+✔ task page renders scoped canonical artifacts (6.9656ms)
+✔ projects page renders workspaces and new task creates a Codex session (10.5059ms)
+✔ session page renders timeline, summary, and task link (7.4455ms)
+✔ approval page renders real authenticated action buttons (4.0021ms)
+✔ startMiniAppServer returns an actionable message when the port is already in use (5532.2933ms)
+✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (62.3969ms)
+✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (3.649ms)
+✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (3.2576ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6024.6184
+ExitCode: 0

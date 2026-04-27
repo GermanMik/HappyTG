@@ -719,6 +719,7 @@ export function renderPage(
       ${body}
     </main>
     ${renderBottomNav(options?.navKey)}
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
       window.HAPPYTgApiBase = ${JSON.stringify(options?.browserApiBaseUrl ?? configuredBrowserApiBaseUrl)};
       window.HAPPYTgMiniAppBasePath = ${JSON.stringify(basePath)};
@@ -839,6 +840,11 @@ export function renderPage(
         });
         var webApp = window.Telegram && window.Telegram.WebApp;
         var savedSession = readSession();
+        var authRequestStarted = false;
+        var initDataWaitStartedAt = 0;
+        var initDataWaitTimer = 0;
+        var initDataWaitTimeoutMs = 5000;
+        var initDataPollMs = 250;
         if (savedSession) {
           persistSession(savedSession);
           if (window.HAPPYTgNeedsAuth) {
@@ -859,24 +865,13 @@ export function renderPage(
         function attemptMiniAppAuth() {
           var currentWebApp = window.Telegram && window.Telegram.WebApp;
           if (!currentWebApp || !currentWebApp.initData) {
-            if (window.HAPPYTgNeedsAuth) {
-              setAuthState({
-                title: "Ждем подтверждение из Telegram",
-                detail: "Этот экран нужно открывать из Telegram Mini App, чтобы передать initData и выдать короткую session.",
-                notice: "Не получили данные Telegram. Откройте Mini App из бота и попробуйте снова.",
-                tone: "warn",
-                telegram: "error",
-                session: "pending",
-                screen: "pending",
-                retry: false
-              });
-            }
-            return;
+            return false;
           }
           currentWebApp.ready();
-          if (savedSession) {
-            return;
+          if (savedSession || authRequestStarted) {
+            return true;
           }
+          authRequestStarted = true;
           var params = new URLSearchParams(location.search);
           setAuthState({
             title: "Подключаем HappyTG",
@@ -931,14 +926,34 @@ export function renderPage(
               screen: "pending",
               retry: true
             });
+            authRequestStarted = false;
           });
+          return true;
         }
-        authRetry?.addEventListener("click", function () {
-          attemptMiniAppAuth();
-        });
-        if (webApp && webApp.initData) {
-          attemptMiniAppAuth();
-        } else if (window.HAPPYTgNeedsAuth) {
+        function waitForTelegramInitData() {
+          initDataWaitTimer = 0;
+          if (attemptMiniAppAuth()) {
+            return;
+          }
+          if (!window.HAPPYTgNeedsAuth) {
+            return;
+          }
+          if (!initDataWaitStartedAt) {
+            initDataWaitStartedAt = Date.now();
+          }
+          if (Date.now() - initDataWaitStartedAt >= initDataWaitTimeoutMs) {
+            setAuthState({
+              title: "Ждем подтверждение из Telegram",
+              detail: "Этот экран нужно открывать из Telegram Mini App, чтобы передать initData и выдать короткую session.",
+              notice: "Не получили данные Telegram. Откройте Mini App из бота и попробуйте снова.",
+              tone: "warn",
+              telegram: "error",
+              session: "pending",
+              screen: "pending",
+              retry: true
+            });
+            return;
+          }
           setAuthState({
             title: "Открываем HappyTG",
             detail: "Mini App session проверяется через Telegram.",
@@ -949,6 +964,20 @@ export function renderPage(
             screen: "pending",
             retry: false
           });
+          if (!initDataWaitTimer) {
+            initDataWaitTimer = window.setTimeout(waitForTelegramInitData, initDataPollMs);
+          }
+        }
+        authRetry?.addEventListener("click", function () {
+          initDataWaitStartedAt = Date.now();
+          if (!initDataWaitTimer) {
+            waitForTelegramInitData();
+          }
+        });
+        if (webApp && webApp.initData) {
+          attemptMiniAppAuth();
+        } else if (window.HAPPYTgNeedsAuth) {
+          waitForTelegramInitData();
         }
         document.querySelectorAll("[data-approval-action]").forEach(function (button) {
           button.addEventListener("click", function () {

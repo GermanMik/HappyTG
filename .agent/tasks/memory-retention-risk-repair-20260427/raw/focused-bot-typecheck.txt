@@ -1,0 +1,6 @@
+PS> pnpm --filter @happytg/bot typecheck
+
+> @happytg/bot@0.4.6 typecheck C:\Develop\Projects\HappyTG\apps\bot
+> tsc -p tsconfig.json --noEmit
+
+ExitCode: 0

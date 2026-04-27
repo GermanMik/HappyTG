@@ -554,6 +554,18 @@ export function createBotHandlers(dependencies: BotDependencies) {
     return draft;
   }
 
+  function sweepExpiredDrafts(): number {
+    const cutoff = now() - DRAFT_TTL_MS;
+    let removed = 0;
+    for (const [key, draft] of wizardDrafts.entries()) {
+      if (draft.updatedAt <= cutoff) {
+        wizardDrafts.delete(key);
+        removed += 1;
+      }
+    }
+    return removed;
+  }
+
   async function sendOrEdit(callback: TelegramCallbackQuery, text: string, replyMarkup?: Record<string, unknown>): Promise<void> {
     if (dependencies.editTelegramMessage && callback.message) {
       await dependencies.editTelegramMessage(callback.message.chat.id, callback.message.message_id, text, replyMarkup);
@@ -737,6 +749,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
   }
 
   async function startTaskWizard(chatId: number, user?: TelegramUser): Promise<void> {
+    sweepExpiredDrafts();
     const userId = await resolveUserOrPrompt(chatId, user);
     if (!userId || !user) {
       return;
@@ -988,6 +1001,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
   }
 
   async function dispatchMessage(message: TelegramMessage): Promise<void> {
+    sweepExpiredDrafts();
     const text = message.text?.trim();
     if (!text) {
       return;
@@ -1157,6 +1171,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
   }
 
   async function dispatchCallback(callback: TelegramCallbackQuery): Promise<void> {
+    sweepExpiredDrafts();
     const data = callback.data ?? "";
     const chatId = callback.message?.chat.id ?? callback.from.id;
     const [prefix, action, value] = data.split(":");
@@ -1247,6 +1262,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
 
   return {
     handleMessage,
-    handleCallbackQuery
+    handleCallbackQuery,
+    wizardDraftCount: () => wizardDrafts.size
   };
 }

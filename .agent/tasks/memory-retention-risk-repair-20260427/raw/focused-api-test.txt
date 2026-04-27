@@ -1,0 +1,32 @@
+PS> pnpm --filter @happytg/api test
+
+> @happytg/api@0.4.6 test C:\Develop\Projects\HappyTG\apps\api
+> tsx --test src/*.test.ts
+
+✔ api ready endpoint returns store metadata (31.5832ms)
+✔ api exposes fast version and prometheus metrics endpoints (13.9113ms)
+✔ api dev CORS allows only explicit Mini App origins (11.7744ms)
+✔ mini app projection endpoints require session auth instead of falling back to global state (8.009ms)
+✔ mini app approval resolve endpoint uses bearer session user (16.786ms)
+✔ mini app project and session mutation endpoints require bearer user context (13.5083ms)
+✔ startApiServer reuses an already-running HappyTG API on the same port (56.9594ms)
+✔ startApiServer rejects with an actionable message when another process occupies the port (10.265ms)
+✔ startApiServer rejects when a different HappyTG service occupies the API port (8.0558ms)
+✔ startApiServer retries a transient HappyTG API handoff before classifying reuse (41.563ms)
+✔ proof session creates task bundle and approval, then approval dispatches session (32.4238ms)
+✔ quick session dispatches immediately without approval (9.4433ms)
+✔ session timeline and task artifact reads are available for mini app inspection (32.5792ms)
+✔ bootstrap sessions dispatch deterministic doctor runs and support resume state transitions (14.2469ms)
+✔ bot projections list user-scoped workspaces, sessions, approvals, and reject stale callback nonce (42.6044ms)
+✔ mini app launch validates initData, issues app session, and exposes action-first projections (65.7563ms)
+✔ proof task filesystem initialization runs outside the serialized store queue (19.045ms)
+✔ proof approval record failure fails session and closes the waiting approval (23.2767ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 588.5366
+ExitCode: 0

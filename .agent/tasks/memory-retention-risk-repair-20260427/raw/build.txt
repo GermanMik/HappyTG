@@ -1,0 +1,92 @@
+PS> pnpm build
+
+> happytg@0.4.6 build C:\Develop\Projects\HappyTG
+> turbo build
+
+• turbo 2.9.6
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running build in 15 packages
+   • Remote caching disabled
+
+@happytg/runtime-adapters:build: cache hit, replaying logs eb2ac13453c91fbc
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.4.6 build C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/api:build: cache miss, executing 0d92dce3d6e24795
+@happytg/protocol:build: cache hit, replaying logs d9e53cff4ced368f
+@happytg/hooks:build: cache hit, replaying logs 7dd3da72d5964059
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.4.6 build C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.4.6 build C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/host-daemon:build: cache hit, replaying logs 749d7c96aa469601
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.4.6 build C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/bot:build: cache hit, replaying logs f8ff3d5c4fe2ce57
+@happytg/session-engine:build: cache hit, replaying logs cdf720bbab6d650f
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.4.6 build C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+@happytg/session-engine:build: 
+@happytg/session-engine:build: > @happytg/session-engine@0.4.6 build C:\Develop\Projects\HappyTG\packages\session-engine
+@happytg/session-engine:build: > tsc -p tsconfig.json
+@happytg/session-engine:build: 
+@happytg/policy-engine:build: cache hit, replaying logs f925063e33e4a86f
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.4.6 build C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+@happytg/shared:build: cache hit, replaying logs bef1cbc1f300e88f
+@happytg/repo-proof:build: cache hit, replaying logs 0a9d6a52b1591a81
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.4.6 build C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.4.6 build C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build: 
+@happytg/approval-engine:build: cache hit, replaying logs 3462d64d5966ff33
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.4.6 build C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+@happytg/worker:build: cache hit, replaying logs 860f8a17c813d010
+@happytg/telegram-kit:build: cache hit, replaying logs 5d6a0c0229b5c545
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.4.6 build C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+@happytg/bootstrap:build: cache hit, replaying logs 7063b1392b237b03
+@happytg/telegram-kit:build: 
+@happytg/telegram-kit:build: > @happytg/telegram-kit@0.4.6 build C:\Develop\Projects\HappyTG\packages\telegram-kit
+@happytg/telegram-kit:build: > tsc -p tsconfig.json
+@happytg/telegram-kit:build: 
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.4.6 build C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+@happytg/miniapp:build: cache hit, replaying logs 3c62ceb9d89e3b1a
+@happytg/miniapp:build: 
+@happytg/miniapp:build: > @happytg/miniapp@0.4.6 build C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.4.6 build C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+
+ Tasks:    15 successful, 15 total
+Cached:    14 cached, 15 total
+  Time:    1.888s 
+
+ExitCode: 0

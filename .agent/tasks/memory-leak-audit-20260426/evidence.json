@@ -1,0 +1,95 @@
+{
+  "task_id": "memory-leak-audit-20260426",
+  "status": "completed",
+  "scope_frozen": true,
+  "production_code_modified": false,
+  "commands": [
+    {
+      "command": "pnpm lint",
+      "status": "pass",
+      "raw": ".agent/tasks/memory-leak-audit-20260426/raw/lint.txt"
+    },
+    {
+      "command": "pnpm typecheck",
+      "status": "pass",
+      "raw": ".agent/tasks/memory-leak-audit-20260426/raw/typecheck.txt"
+    },
+    {
+      "command": "pnpm test",
+      "status": "pass",
+      "raw": ".agent/tasks/memory-leak-audit-20260426/raw/test.txt"
+    },
+    {
+      "command": "pnpm happytg doctor",
+      "status": "pass_with_warning",
+      "raw": ".agent/tasks/memory-leak-audit-20260426/raw/happytg-doctor.txt"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "status": "blocked",
+      "exit_code": 3221226505,
+      "raw": ".agent/tasks/memory-leak-audit-20260426/raw/happytg-verify.txt"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "status": "pass_with_warning",
+      "exit_code": 0,
+      "raw": ".agent/tasks/memory-leak-audit-20260426/raw/happytg-verify-repeat-20260427.txt",
+      "notes": [
+        "Repeated on 2026-04-27 after user asked to repeat.",
+        "Codex websocket 403 fallback to HTTP.",
+        "Public Caddy Mini App route returned HTTP 502.",
+        "Repo services were not running, so pairing/API flow remains blocked operationally."
+      ]
+    },
+    {
+      "command": "lightweight /ready + /metrics memory smoke against running services",
+      "status": "inconclusive",
+      "raw": ".agent/tasks/memory-leak-audit-20260426/raw/memory-smoke.txt"
+    }
+  ],
+  "findings": [
+    {
+      "id": "H1",
+      "risk": "high",
+      "file": "packages/runtime-adapters/src/index.ts",
+      "line": 332,
+      "summary": "Child process timeout only sends SIGTERM and can wait forever for close."
+    },
+    {
+      "id": "M1",
+      "risk": "medium",
+      "file": "packages/runtime-adapters/src/index.ts",
+      "line": 337,
+      "summary": "Child process stdout/stderr are buffered without size caps."
+    },
+    {
+      "id": "M2",
+      "risk": "medium",
+      "file": "apps/api/src/service.ts",
+      "line": 428,
+      "summary": "Control-plane expired and terminal records are retained indefinitely."
+    },
+    {
+      "id": "M3",
+      "risk": "medium",
+      "file": "packages/shared/src/index.ts",
+      "line": 721,
+      "summary": "Serialized state queue can retain pending callers behind async filesystem work."
+    },
+    {
+      "id": "L1",
+      "risk": "low",
+      "file": "apps/bot/src/handlers.ts",
+      "line": 529,
+      "summary": "Telegram wizard draft Map only lazily removes expired drafts for returning users."
+    },
+    {
+      "id": "L2",
+      "risk": "low",
+      "file": "apps/miniapp/src/index.ts",
+      "line": 967,
+      "summary": "Mini App auth retry can create overlapping bounded timeout chains."
+    }
+  ]
+}

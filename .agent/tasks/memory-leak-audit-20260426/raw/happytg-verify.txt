@@ -1,0 +1,5 @@
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "verify"
+
+ ELIFECYCLE  Command failed with exit code 3221226505.

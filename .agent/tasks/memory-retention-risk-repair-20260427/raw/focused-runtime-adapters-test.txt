@@ -1,0 +1,31 @@
+PS> pnpm --filter @happytg/runtime-adapters test
+
+> @happytg/runtime-adapters@0.4.6 test C:\Develop\Projects\HappyTG\packages\runtime-adapters
+> tsx --test src/*.test.ts
+
+✔ checkCodexReadiness reports available Codex and captures smoke warnings (136.7416ms)
+✔ tool execution model classifies actions and serializes mutations (1.2923ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from Path (208.5633ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext (196.3936ms)
+✔ checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated (189.6183ms)
+✔ checkCodexReadiness closes stdin so smoke runs do not hang waiting for EOF (122.3177ms)
+✔ checkCodexReadiness preserves spaced prompts when it runs through a Windows cmd wrapper (182.3883ms)
+✔ checkCodexReadiness treats a Windows shell command-not-found result as missing (2.8404ms)
+✔ checkCodexReadiness marks only true ENOENT failures as missing (56.8595ms)
+✔ classifyCodexSmokeStderr ignores known benign Codex internal warnings only (1.0808ms)
+✔ summarizeCodexSmokeStderr extracts concise actionable root causes (1.1376ms)
+✔ codexCliMissingMessage explains PATH diagnosis and reinstall fallback (0.1499ms)
+✔ runCodexExec reads summary from the Codex output file (69.5432ms)
+✔ runCodexExec marks timeout and returns a timeout summary (26.7748ms)
+✔ runCodexExec settles timeout even when the child ignores normal termination (31.308ms)
+✔ runCodexExec caps stdout and stderr while reporting truncation metadata (62.5312ms)
+✔ runCodexExec returns actionable guidance when Codex CLI is missing (4.3256ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1610.84
+ExitCode: 0

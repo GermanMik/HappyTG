@@ -401,8 +401,23 @@ function scopedMiniAppStore(store: HappyTGStore, userId?: string) {
   };
 }
 
+interface RepoProofOperations {
+  initTaskBundle: typeof initTaskBundle;
+  recordTaskApproval: typeof recordTaskApproval;
+  advanceTaskPhase: typeof advanceTaskPhase;
+}
+
+const defaultRepoProofOperations: RepoProofOperations = {
+  initTaskBundle,
+  recordTaskApproval,
+  advanceTaskPhase
+};
+
 export class HappyTGControlPlaneService {
-  constructor(private readonly store: FileStateStore = new FileStateStore()) {}
+  constructor(
+    private readonly store: FileStateStore = new FileStateStore(),
+    private readonly repoProof: RepoProofOperations = defaultRepoProofOperations
+  ) {}
 
   async createMiniAppLaunchGrant(input: CreateMiniAppLaunchGrantRequest): Promise<CreateMiniAppLaunchGrantResponse> {
     return this.store.update((store) => {
@@ -651,7 +666,7 @@ export class HappyTGControlPlaneService {
   }
 
   async startPairing(input: CreatePairingRequest): Promise<CreatePairingResponse> {
-    return this.store.update(async (store) => {
+    return this.store.update((store) => {
       const now = nowIso();
       let host = store.hosts.find((item) => item.fingerprint === input.fingerprint);
       if (!host) {
@@ -692,7 +707,7 @@ export class HappyTGControlPlaneService {
   }
 
   async claimPairing(input: ClaimPairingRequest): Promise<{ user: User; host: Host; identity: TelegramIdentity }> {
-    return this.store.update(async (store) => {
+    return this.store.update((store) => {
       const registration = store.hostRegistrations.find((item) => item.pairingCode === input.pairingCode && item.status === "issued");
       if (!registration) {
         throw new Error("Pairing code not found");
@@ -784,7 +799,11 @@ export class HappyTGControlPlaneService {
   }
 
   async createSession(input: CreateSessionRequest): Promise<{ session: Session; task?: TaskBundle; approval?: ApprovalRequest; dispatch?: PendingDispatch }> {
-    return this.store.update(async (store) => {
+    if (input.mode === "proof") {
+      return this.createProofSession(input);
+    }
+
+    return this.store.update((store) => {
       ensurePolicies(store);
 
       const workspace = getHostWorkspace(store, input.hostId, input.workspaceId);
@@ -812,24 +831,7 @@ export class HappyTGControlPlaneService {
         sources: ["user", "host", "workspace", "policy", "runtime"]
       });
 
-      let task: TaskBundle | undefined;
-      if (input.mode === "proof") {
-        const taskId = `HTG-${String(store.tasks.length + 1).padStart(4, "0")}`;
-        task = await initTaskBundle({
-          repoRoot: workspace.path,
-          taskId,
-          sessionId: session.id,
-          workspaceId: workspace.id,
-          title: input.title,
-          acceptanceCriteria: input.acceptanceCriteria ?? ["Prompt satisfied", "Independent verifier passed"],
-          mode: "proof"
-        });
-        store.tasks.push(task);
-        session.taskId = task.id;
-        appendEvent(store, session.id, "TaskBundleInitialized", { taskId: task.id, phase: task.phase });
-      }
-
-      const actionKind = input.riskyAction ?? (input.mode === "proof" ? "workspace_write" : "workspace_read");
+      const actionKind = input.riskyAction ?? "workspace_read";
       const policyDecision = evaluatePolicies({
         actionKind,
         scopeRefs: {
@@ -852,7 +854,7 @@ export class HappyTGControlPlaneService {
         moveSession(session, "failed", { error: policyDecision.reason });
         appendEvent(store, session.id, "SessionFailed", { reason: policyDecision.reason });
         appendAudit(store, "user", input.userId, "session.denied", session.id, { actionKind, reason: policyDecision.reason });
-        return { session, task };
+        return { session };
       }
 
       if (policyDecision.outcome === "require_approval") {
@@ -863,9 +865,6 @@ export class HappyTGControlPlaneService {
           reason: policyDecision.reason
         });
         store.approvals.push(approval);
-        if (task) {
-          await recordTaskApproval(task, approval.id);
-        }
         session.approvalId = approval.id;
         moveSession(session, "needs_approval");
         appendEvent(store, session.id, "ApprovalRequested", {
@@ -876,15 +875,174 @@ export class HappyTGControlPlaneService {
           expiresAt: approval.expiresAt
         });
         appendAudit(store, "user", input.userId, "approval.requested", approval.id, { sessionId: session.id, actionKind });
-        return { session, task, approval };
+        return { session, approval };
       }
 
       const dispatch = makeDispatch(session, actionKind);
       store.pendingDispatches.push(dispatch);
       moveSession(session, "ready");
       appendAudit(store, "user", input.userId, "session.dispatched", session.id, { dispatchId: dispatch.id });
+      return { session, dispatch };
+    });
+  }
+
+  private async createProofSession(input: CreateSessionRequest): Promise<{ session: Session; task?: TaskBundle; approval?: ApprovalRequest; dispatch?: PendingDispatch }> {
+    const reserved = await this.store.update((store) => {
+      ensurePolicies(store);
+
+      const workspace = getHostWorkspace(store, input.hostId, input.workspaceId);
+      const host = getHostRecord(store, input.hostId);
+      assertHostUserAccess(host, input.userId);
+
+      const now = nowIso();
+      const taskId = `HTG-${String(store.tasks.length + 1).padStart(4, "0")}`;
+      const session: Session = {
+        id: createId("ses"),
+        userId: input.userId,
+        hostId: input.hostId,
+        workspaceId: input.workspaceId,
+        mode: "proof",
+        runtime: input.runtime,
+        state: "created",
+        title: input.title,
+        prompt: input.prompt,
+        taskId,
+        createdAt: now,
+        updatedAt: now
+      };
+      store.sessions.push(session);
+      appendEvent(store, session.id, "SessionCreated", { mode: input.mode, runtime: input.runtime });
+      moveSession(session, "preparing");
+      appendEvent(store, session.id, "PromptBuilt", {
+        sources: ["user", "host", "workspace", "policy", "runtime"]
+      });
+
+      return {
+        sessionId: session.id,
+        workspaceId: workspace.id,
+        workspacePath: workspace.path,
+        taskId,
+        acceptanceCriteria: input.acceptanceCriteria ?? ["Prompt satisfied", "Independent verifier passed"],
+        actionKind: input.riskyAction ?? "workspace_write"
+      };
+    });
+
+    let task: TaskBundle;
+    try {
+      task = await this.repoProof.initTaskBundle({
+        repoRoot: reserved.workspacePath,
+        taskId: reserved.taskId,
+        sessionId: reserved.sessionId,
+        workspaceId: reserved.workspaceId,
+        title: input.title,
+        acceptanceCriteria: reserved.acceptanceCriteria,
+        mode: "proof"
+      });
+    } catch (error) {
+      await this.store.update((store) => {
+        const session = store.sessions.find((item) => item.id === reserved.sessionId);
+        if (session) {
+          const message = error instanceof Error ? error.message : "Task bundle initialization failed.";
+          session.lastError = message;
+          moveSession(session, "failed", { error: message });
+          appendEvent(store, session.id, "SessionFailed", { reason: message });
+          appendAudit(store, "system", "repo-proof", "task.init.failed", reserved.taskId, { sessionId: session.id });
+        }
+      });
+      throw error;
+    }
+
+    const result = await this.store.update((store) => {
+      ensurePolicies(store);
+      const session = store.sessions.find((item) => item.id === reserved.sessionId);
+      if (!session) {
+        throw new Error("Session not found after task bundle initialization");
+      }
+
+      if (!store.tasks.some((item) => item.id === task.id)) {
+        store.tasks.push(task);
+      }
+      appendEvent(store, session.id, "TaskBundleInitialized", { taskId: task.id, phase: task.phase });
+
+      const policyDecision = evaluatePolicies({
+        actionKind: reserved.actionKind,
+        scopeRefs: {
+          global: "global",
+          workspace: reserved.workspaceId,
+          session: session.id,
+          command: reserved.actionKind
+        },
+        policies: store.policies
+      });
+
+      appendEvent(store, session.id, "PolicyEvaluated", {
+        outcome: policyDecision.outcome,
+        effectiveLayer: policyDecision.effectiveLayer,
+        reason: policyDecision.reason
+      });
+
+      if (policyDecision.outcome === "deny") {
+        session.lastError = policyDecision.reason;
+        moveSession(session, "failed", { error: policyDecision.reason });
+        appendEvent(store, session.id, "SessionFailed", { reason: policyDecision.reason });
+        appendAudit(store, "user", input.userId, "session.denied", session.id, { actionKind: reserved.actionKind, reason: policyDecision.reason });
+        return { session, task };
+      }
+
+      if (policyDecision.outcome === "require_approval") {
+        const approval = createApprovalRequest({
+          sessionId: session.id,
+          actionKind: reserved.actionKind,
+          risk: "high",
+          reason: policyDecision.reason
+        });
+        store.approvals.push(approval);
+        session.approvalId = approval.id;
+        moveSession(session, "needs_approval");
+        appendEvent(store, session.id, "ApprovalRequested", {
+          approvalId: approval.id,
+          risk: approval.risk,
+          scope: approval.scope,
+          reason: approval.reason,
+          expiresAt: approval.expiresAt
+        });
+        appendAudit(store, "user", input.userId, "approval.requested", approval.id, { sessionId: session.id, actionKind: reserved.actionKind });
+        return { session, task, approval };
+      }
+
+      const dispatch = makeDispatch(session, reserved.actionKind);
+      store.pendingDispatches.push(dispatch);
+      moveSession(session, "ready");
+      appendAudit(store, "user", input.userId, "session.dispatched", session.id, { dispatchId: dispatch.id });
       return { session, task, dispatch };
     });
+
+    if (result.approval) {
+      try {
+        await this.repoProof.recordTaskApproval(task, result.approval.id);
+      } catch (error) {
+        await this.store.update((store) => {
+          const session = store.sessions.find((item) => item.id === reserved.sessionId);
+          if (session) {
+            const message = error instanceof Error ? error.message : "Task approval recording failed.";
+            session.lastError = message;
+            moveSession(session, "failed", { error: message });
+            appendEvent(store, session.id, "SessionFailed", { reason: message, approvalId: result.approval?.id });
+            appendAudit(store, "system", "repo-proof", "task.approval_record.failed", task.id, { sessionId: session.id });
+          }
+          const approval = result.approval
+            ? store.approvals.find((item) => item.id === result.approval?.id)
+            : undefined;
+          if (approval && (approval.state === "pending" || approval.state === "waiting_human")) {
+            approval.state = "superseded";
+            approval.updatedAt = nowIso();
+          }
+        });
+        throw error;
+      }
+    }
+
+    return result;
   }
 
   async createBootstrapSession(input: {
@@ -892,7 +1050,7 @@ export class HappyTGControlPlaneService {
     hostId: string;
     command: "doctor" | "verify";
   }): Promise<{ session: Session; approval?: ApprovalRequest; dispatch?: PendingDispatch }> {
-    return this.store.update(async (store) => {
+    return this.store.update((store) => {
       ensurePolicies(store);
 
       const host = getHostRecord(store, input.hostId);
@@ -957,12 +1115,6 @@ export class HappyTGControlPlaneService {
           reason: policyDecision.reason
         });
         store.approvals.push(approval);
-        if (session.taskId) {
-          const task = store.tasks.find((item) => item.id === session.taskId);
-          if (task) {
-            await recordTaskApproval(task, approval.id);
-          }
-        }
         session.approvalId = approval.id;
         moveSession(session, "needs_approval");
         appendEvent(store, session.id, "ApprovalRequested", {
@@ -1115,15 +1267,21 @@ export class HappyTGControlPlaneService {
   }
 
   async updateTaskPhase(taskId: string, phase: TaskBundle["phase"], verificationState?: TaskBundle["verificationState"]): Promise<TaskBundle> {
-    return this.store.update(async (store) => {
+    const currentStore = await this.store.read();
+    const currentTask = currentStore.tasks.find((item) => item.id === taskId);
+    if (!currentTask) {
+      throw new Error("Task not found");
+    }
+
+    const nextVerificationState = verificationState
+      ?? ((phase === "build" || phase === "fix") && currentTask.verificationState === "passed" ? "stale" : currentTask.verificationState);
+    const updatedTask = await this.repoProof.advanceTaskPhase(currentTask, phase, "TaskBundleUpdated", nextVerificationState);
+
+    return this.store.update((store) => {
       const task = store.tasks.find((item) => item.id === taskId);
       if (!task) {
         throw new Error("Task not found");
       }
-
-      const nextVerificationState = verificationState
-        ?? ((phase === "build" || phase === "fix") && task.verificationState === "passed" ? "stale" : task.verificationState);
-      const updatedTask = await advanceTaskPhase(task, phase, "TaskBundleUpdated", nextVerificationState);
       Object.assign(task, updatedTask);
 
       const session = store.sessions.find((item) => item.id === task.sessionId);

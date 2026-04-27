@@ -1,0 +1,6 @@
+PS> pnpm --filter @happytg/runtime-adapters typecheck
+
+> @happytg/runtime-adapters@0.4.6 typecheck C:\Develop\Projects\HappyTG\packages\runtime-adapters
+> tsc -p tsconfig.json --noEmit
+
+ExitCode: 0

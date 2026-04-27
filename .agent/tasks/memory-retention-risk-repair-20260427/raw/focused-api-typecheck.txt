@@ -1,0 +1,6 @@
+PS> pnpm --filter @happytg/api typecheck
+
+> @happytg/api@0.4.6 typecheck C:\Develop\Projects\HappyTG\apps\api
+> tsc -p tsconfig.json --noEmit
+
+ExitCode: 0
