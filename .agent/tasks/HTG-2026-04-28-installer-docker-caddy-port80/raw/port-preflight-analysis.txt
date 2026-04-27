@@ -1,0 +1,6 @@
+Investigation summary:
+- infra/docker-compose.example.yml publishes host ports for Postgres, Redis, MinIO API/console, API, Bot, Mini App, Caddy HTTP/HTTPS, Prometheus, and Grafana.
+- packages/bootstrap/src/index.ts builds setup/doctor planned ports from criticalPortDefinitions -> plannedPortDefinitions -> detectCriticalPorts -> reportJson.ports/plannedPorts.
+- packages/bootstrap/src/install/index.ts reads those reports with bootstrapPortReports during the installer step labelled "Resolve planned ports".
+- Docker launch auto-remap currently filters dockerSharedInfraPortIds = redis/postgres/minio-api/minio-console only, so Caddy/Prometheus/Grafana cannot be auto-remapped before Compose startup.
+- Existing model can add Compose-published host ports as PortCheckDefinition entries; no separate Compose parser is necessary for this repair if the definitions match the Compose file.

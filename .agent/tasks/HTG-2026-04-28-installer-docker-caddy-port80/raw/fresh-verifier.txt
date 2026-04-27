@@ -1,0 +1,11 @@
+✔ setup treats legacy infra Compose MinIO containers as current stack instead of external conflicts (335.8104ms)
+✔ runHappyTGInstall launch-mode docker remaps occupied Compose host ports before Compose startup (47.1526ms)
+✔ runDockerLaunch reports Caddy bind failures with the failed port and override hint (2.8636ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 713.0649

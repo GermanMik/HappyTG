@@ -1,0 +1,6 @@
+{
+  "task_id": "HTG-2026-04-28-docker-happytg-naming",
+  "status": "complete",
+  "accepted": true,
+  "summary": "Docker Compose now uses stable HappyTG project naming. Config shows project happytg and dry-run launch shows happytg-* planned container names. Bootstrap typecheck/test passed; repo verify exited 0 with unrelated local environment warnings."
+}

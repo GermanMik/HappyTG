@@ -2,6 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+test("compose declares a stable HappyTG project name", async () => {
+  const compose = await readFile(new URL("../../../infra/docker-compose.example.yml", import.meta.url), "utf8");
+
+  assert.match(compose, /^name:\s*happytg/m);
+});
+
 test("compose keeps Mini App host port separate from container port for Caddy", async () => {
   const compose = await readFile(new URL("../../../infra/docker-compose.example.yml", import.meta.url), "utf8");
 

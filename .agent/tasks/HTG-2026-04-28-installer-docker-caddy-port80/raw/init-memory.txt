@@ -1,0 +1,15 @@
+memory context --project:
+Available memories included:
+- HappyTG installer Caddy port80 repair prompt added
+- HappyTG Docker launch remaps busy infra ports
+
+memory search "HappyTG installer docker compose caddy port 80 planned port preflight":
+Relevant memories:
+- cbb01734-7ba HappyTG installer Caddy port80 repair prompt added
+- 9cdcd533-137 HappyTG Docker launch remaps busy infra ports
+
+memory details cbb01734-7ba:
+Previous prompt task documented that Docker Compose failed on infra-caddy-1 because host port 80 was already allocated. Existing Docker remap repair covered Redis/Postgres/MinIO but not Caddy HTTP/HTTPS; Prometheus/Grafana were also suspected uncovered Compose-published ports.
+
+memory details 9cdcd533-137:
+Previous Docker launch repair remapped busy Redis/Postgres/MinIO host ports for --launch-mode docker and made Docker commands use repo .env values over shell env via docker compose --env-file .env.

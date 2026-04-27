@@ -1,0 +1,6 @@
+{
+  "task_id": "HTG-2026-04-28-release-docker-installer-compose",
+  "status": "ready-for-release",
+  "accepted": true,
+  "summary": "Release verification passed for the Docker/installer Compose work after rebasing onto origin/main. Environment-only doctor/verify warnings are documented. Ready for push and merge."
+}

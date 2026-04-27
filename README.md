@@ -136,7 +136,7 @@ flowchart LR
    docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
    ```
 
-   and still leaves `pnpm daemon:pair` plus the host daemon outside Compose.
+   The Compose project name is stable as `happytg`, so containers are named like `happytg-api-1`. The installer still leaves `pnpm daemon:pair` plus the host daemon outside Compose.
 
 6. If a port is already in use, override it explicitly. Example for the Mini App:
 

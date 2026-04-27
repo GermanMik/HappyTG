@@ -364,6 +364,84 @@ export function renderTelegramScreen(input: {
   ]);
 }
 
+export type ExistingEnvReuseChoice = "reuse" | "edit";
+
+export interface ExistingEnvValuePreview {
+  key: string;
+  value: string;
+  detail?: string;
+}
+
+export function renderExistingEnvConfirmationScreen(input: {
+  envFilePath: string;
+  telegram: TelegramSetup & { botUsername?: string };
+  values?: ExistingEnvValuePreview[];
+  activeChoice: ExistingEnvReuseChoice;
+}): string {
+  const valueRows: ExistingEnvValuePreview[] = [];
+  if (input.telegram.botToken) {
+    valueRows.push({
+      key: "TELEGRAM_BOT_TOKEN",
+      value: `${renderMaskedSecretPreview(input.telegram.botToken)} (masked secret)`,
+      detail: "Secret values are never shown raw."
+    });
+  }
+  if (input.telegram.allowedUserIds.length > 0) {
+    valueRows.push({
+      key: "TELEGRAM_ALLOWED_USER_IDS",
+      value: input.telegram.allowedUserIds.join(", ")
+    });
+  }
+  if (input.telegram.homeChannel) {
+    valueRows.push({
+      key: "TELEGRAM_HOME_CHANNEL",
+      value: input.telegram.homeChannel
+    });
+  }
+  if (input.telegram.botUsername) {
+    valueRows.push({
+      key: "TELEGRAM_BOT_USERNAME",
+      value: input.telegram.botUsername.startsWith("@") ? input.telegram.botUsername : `@${input.telegram.botUsername}`
+    });
+  }
+  valueRows.push(...(input.values ?? []));
+
+  const choices: Array<{ id: ExistingEnvReuseChoice; label: string; detail: string }> = [
+    {
+      id: "reuse",
+      label: "Reuse existing .env values",
+      detail: "Use the Telegram values above for this install and keep merging .env without re-entering them."
+    },
+    {
+      id: "edit",
+      label: "Edit Telegram setup",
+      detail: "Open the setup form with a blank token; .env and draft user IDs will not be prefilled."
+    }
+  ];
+
+  return renderFrame([
+    ...header("Existing .env Values", `Found ${input.envFilePath}. Confirm before reusing saved Telegram setup.`),
+    `${statusIcon("info")} ${bright("Values found")}`,
+    ...valueRows.flatMap((row) => [
+      `   ${row.key}=${row.value}`,
+      ...(row.detail ? [`   ${row.detail}`] : [])
+    ]),
+    "",
+    `${statusIcon("info")} ${bright("If you reuse")}`,
+    "   The installer carries these Telegram values into this run and the .env merge.",
+    `${statusIcon("info")} ${bright("If you edit")}`,
+    "   You will re-enter Telegram setup. Existing .env and draft IDs stay out of the editable form.",
+    "",
+    ...renderOptions(choices.map((choice) => ({
+      label: choice.label,
+      detail: choice.detail,
+      active: choice.id === input.activeChoice
+    }))),
+    "",
+    keyboardHints()
+  ]);
+}
+
 export function renderBackgroundModeScreen(input: {
   platformLabel: string;
   activeMode: BackgroundMode;

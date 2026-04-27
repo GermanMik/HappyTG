@@ -1,0 +1,26 @@
+{
+  "task": "HTG-2026-04-28-docker-infra-port-remap",
+  "phase": "complete",
+  "checks": [
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.runtime.test.ts --test-name-pattern \"docker\"",
+      "status": "passed",
+      "raw": ".agent/tasks/HTG-2026-04-28-docker-infra-port-remap/raw/test-runtime-docker.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run typecheck",
+      "status": "passed",
+      "raw": ".agent/tasks/HTG-2026-04-28-docker-infra-port-remap/raw/typecheck-bootstrap.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run test",
+      "status": "passed",
+      "raw": ".agent/tasks/HTG-2026-04-28-docker-infra-port-remap/raw/test-bootstrap.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run build",
+      "status": "passed",
+      "raw": ".agent/tasks/HTG-2026-04-28-docker-infra-port-remap/raw/build-bootstrap.txt"
+    }
+  ]
+}

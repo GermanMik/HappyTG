@@ -1,0 +1,18 @@
+Context:
+Docker Compose startup failed at infra-caddy-1 with Bind for 0.0.0.0:80 failed. Existing Docker launch remap only covered Redis/Postgres/MinIO. Compose also publishes Caddy HTTP/HTTPS, Prometheus, and Grafana.
+
+Options considered:
+- Separate Compose parser preflight.
+- Extend existing setup/doctor planned-port model.
+
+Decision:
+Extend existing planned-port model because every missing Compose host port maps cleanly to a HAPPYTG_*_PORT override. Add current-stack Docker attribution using Compose labels and support both current project name happytg and legacy infra containers.
+
+Tradeoffs:
+The fix intentionally keeps Caddy in Compose and does not treat arbitrary HTTP 200 on port 80 as valid HappyTG Caddy. Local remap starts containers but does not imply Telegram production readiness.
+
+Follow-up:
+If future Compose files add host ports, keep criticalPortDefinitions aligned or add a generated assertion from the Compose config.
+
+Verification:
+Focused Docker/Caddy tests, install script tests, bootstrap typecheck/build/lint, root typecheck/lint/test, doctor/verify, task validate, and fresh verifier focused tests all passed. Doctor/verify still report real local warnings for occupied 80/443/3000 and wrong-product public /miniapp, which is expected truthful diagnostics.

@@ -42,6 +42,7 @@ import {
   renderBackgroundModeScreen,
   renderFinalScreen,
   renderDirtyWorktreeScreen,
+  renderExistingEnvConfirmationScreen,
   renderLaunchModeScreen,
   renderPostCheckScreen,
   renderProgress,
@@ -50,6 +51,7 @@ import {
   renderWelcomeScreen,
   waitForEnter
 } from "./tui.js";
+import type { ExistingEnvReuseChoice, ExistingEnvValuePreview } from "./tui.js";
 import { evaluateInstallPairingDecision, fetchPairingHostStatus, pairingHandoffMessage } from "./pairing.js";
 import { fetchTelegramBotIdentity, normalizeTelegramAllowedUserIds, pairTargetLabel, telegramLookupDiagnostic, validateTelegramBotToken } from "./telegram.js";
 import type {
@@ -251,6 +253,17 @@ interface AppliedPortOverride {
   envFilePath: string;
 }
 
+const dockerComposePublishedPortIds = new Set([
+  "redis",
+  "postgres",
+  "minio-api",
+  "minio-console",
+  "caddy-http",
+  "caddy-https",
+  "prometheus",
+  "grafana"
+]);
+
 function isPlannedPortReport(value: unknown): value is PlannedPortReport {
   return Boolean(value)
     && typeof value === "object"
@@ -372,6 +385,15 @@ function unresolvedPortConflicts(ports: PlannedPortReport[]): PlannedPortReport[
   return ports.filter((port) => port.state === "occupied_external" && Boolean(port.overrideEnv));
 }
 
+function dockerComposePublishConflicts(ports: PlannedPortReport[]): PlannedPortReport[] {
+  return ports.filter((port) =>
+    dockerComposePublishedPortIds.has(port.id)
+    && port.state !== "free"
+    && port.state !== "occupied_expected"
+    && Boolean(port.overrideEnv)
+  );
+}
+
 function summarizePortPreflight(ports: PlannedPortReport[], appliedOverrides: AppliedPortOverride[]): string {
   const free = ports.filter((item) => item.state === "free").map((item) => `${item.label} ${item.port}`);
   const reuse = ports
@@ -398,17 +420,30 @@ function summarizePortPreflight(ports: PlannedPortReport[], appliedOverrides: Ap
 }
 
 function portPreflightAutomationItems(appliedOverrides: AppliedPortOverride[]): AutomationItem[] {
-  return appliedOverrides.map((item) => ({
+  const items: AutomationItem[] = appliedOverrides.map((item) => ({
     id: `port-preflight-${item.id}`,
     kind: "auto",
     message: `Saved \`${item.overrideEnv}=${item.toPort}\` in \`${item.envFilePath}\` so ${item.label} avoids occupied port ${item.fromPort}.`
   }));
+  const caddyOverrides = appliedOverrides.filter((item) => item.overrideEnv === "HAPPYTG_HTTP_PORT" || item.overrideEnv === "HAPPYTG_HTTPS_PORT");
+  if (caddyOverrides.length > 0) {
+    const httpsOverride = caddyOverrides.find((item) => item.overrideEnv === "HAPPYTG_HTTPS_PORT");
+    items.push({
+      id: "caddy-public-port-remap",
+      kind: "warning",
+      message: httpsOverride
+        ? `Caddy was remapped to HTTPS host port ${httpsOverride.toPort}. Local Docker startup can continue, but Telegram Mini App production routing still requires a public HTTPS URL; include the explicit port in \`HAPPYTG_PUBLIC_URL\` or \`HAPPYTG_MINIAPP_URL\` before running \`pnpm happytg telegram menu set\`.`
+        : "Caddy HTTP was remapped for local Docker startup. This does not prove Telegram Mini App production readiness; `pnpm happytg telegram menu set` still requires a public HTTPS `/miniapp` URL that reaches HappyTG Caddy."
+    });
+  }
+  return items;
 }
 
 async function resolvePortConflictsBeforePostChecks(input: {
   interactive: boolean;
   stdin: NodeJS.ReadStream;
   stdout: NodeJS.WriteStream;
+  launchMode: InstallLaunchMode;
   repoPath: string;
   repoEnv: NodeJS.ProcessEnv;
   installEnv: NodeJS.ProcessEnv;
@@ -436,6 +471,47 @@ async function resolvePortConflictsBeforePostChecks(input: {
     env: repoEnv,
     platform: input.platform
   });
+  const dockerAutoRemapped = new Set<string>();
+
+  while (input.launchMode === "docker") {
+    const ports = bootstrapPortReports(report);
+    const conflict = dockerComposePublishConflicts(ports)
+      .find((item) => item.overrideEnv && !dockerAutoRemapped.has(item.overrideEnv));
+    if (!conflict?.overrideEnv) {
+      break;
+    }
+
+    const selectedPort = suggestedPortsForReport(conflict)[0];
+    if (!selectedPort) {
+      break;
+    }
+
+    dockerAutoRemapped.add(conflict.overrideEnv);
+    input.updateProgressDetail?.(
+      `Saving \`${conflict.overrideEnv}=${selectedPort}\` in ${path.join(input.repoPath, ".env")} so Docker Compose does not publish ${conflict.label} on occupied port ${conflict.port}.\nRe-running planned port preflight so the installer can continue.`
+    );
+    const updates = portOverrideEnvUpdates(conflict, selectedPort, repoEnv);
+    const envWrite = await input.writeMergedEnvFileImpl({
+      repoRoot: input.repoPath,
+      env: input.installEnv,
+      platform: input.platform,
+      updates
+    });
+    appliedOverrides.push({
+      id: conflict.id,
+      label: conflict.label,
+      fromPort: conflict.port,
+      toPort: selectedPort,
+      overrideEnv: conflict.overrideEnv,
+      envFilePath: envWrite.envFilePath
+    });
+    Object.assign(repoEnv, updates);
+    report = await input.runBootstrapCheck("setup", {
+      cwd: input.repoPath,
+      env: repoEnv,
+      platform: input.platform
+    });
+  }
 
   while (input.interactive) {
     const ports = bootstrapPortReports(report);
@@ -762,15 +838,88 @@ async function addNpmGlobalBinToPath(input: {
   setPath(input.env, input.platform, [binDir, ...entries].join(delimiter));
 }
 
-async function readExistingTelegramSetup(repoPath: string): Promise<TelegramSetup & { botUsername?: string }> {
-  const envText = await readTextFileOrEmpty(path.join(repoPath, ".env"));
+const existingEnvLocalUrlKeys = [
+  "HAPPYTG_PUBLIC_URL",
+  "HAPPYTG_MINIAPP_URL",
+  "HAPPYTG_APP_URL",
+  "HAPPYTG_API_URL",
+  "HAPPYTG_BROWSER_API_URL"
+] as const;
+
+const existingEnvPortOverrideKeys = [
+  "HAPPYTG_MINIAPP_PORT",
+  "HAPPYTG_API_PORT",
+  "HAPPYTG_BOT_PORT",
+  "HAPPYTG_WORKER_PORT",
+  "HAPPYTG_POSTGRES_HOST_PORT",
+  "HAPPYTG_REDIS_HOST_PORT",
+  "HAPPYTG_MINIO_PORT",
+  "HAPPYTG_MINIO_CONSOLE_PORT",
+  "HAPPYTG_HTTP_PORT",
+  "HAPPYTG_HTTPS_PORT"
+] as const;
+
+interface ExistingInstallEnvSetup {
+  envFilePath: string;
+  telegram: TelegramSetup & { botUsername?: string };
+  previewValues: ExistingEnvValuePreview[];
+}
+
+function isLocalUrlPreviewValue(rawValue: string): boolean {
+  try {
+    const url = new URL(rawValue);
+    return url.hostname === "localhost"
+      || url.hostname.endsWith(".localhost")
+      || url.hostname === "127.0.0.1"
+      || url.hostname === "0.0.0.0"
+      || url.hostname === "::1"
+      || url.hostname === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
+function existingEnvHasReusableTelegramValues(input: ExistingInstallEnvSetup): boolean {
+  return Boolean(input.telegram.botToken);
+}
+
+async function readExistingInstallEnvSetup(repoPath: string): Promise<ExistingInstallEnvSetup> {
+  const envFilePath = path.join(repoPath, ".env");
+  const envText = await readTextFileOrEmpty(envFilePath);
   const parsed = envText ? parseDotEnv(envText) : {};
+  const previewValues: ExistingEnvValuePreview[] = [];
+
+  for (const key of existingEnvLocalUrlKeys) {
+    const value = parsed[key]?.trim() ?? "";
+    if (value && isLocalUrlPreviewValue(value)) {
+      previewValues.push({
+        key,
+        value,
+        detail: "Local URL."
+      });
+    }
+  }
+
+  for (const key of existingEnvPortOverrideKeys) {
+    const value = parsed[key]?.trim() ?? "";
+    if (value) {
+      previewValues.push({
+        key,
+        value,
+        detail: "Port override."
+      });
+    }
+  }
 
   return {
-    botToken: parsed.TELEGRAM_BOT_TOKEN ?? "",
-    allowedUserIds: normalizeTelegramAllowedUserIds([parsed.TELEGRAM_ALLOWED_USER_IDS ?? ""]),
-    homeChannel: parsed.TELEGRAM_HOME_CHANNEL ?? "",
-    botUsername: parsed.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/u, "") || undefined
+    envFilePath,
+    telegram: {
+      botToken: parsed.TELEGRAM_BOT_TOKEN ?? "",
+      allowedUserIds: normalizeTelegramAllowedUserIds([parsed.TELEGRAM_ALLOWED_USER_IDS ?? ""]),
+      homeChannel: parsed.TELEGRAM_HOME_CHANNEL ?? "",
+      botUsername: parsed.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/u, "") || undefined
+    },
+    previewValues
   };
 }
 
@@ -1456,21 +1605,31 @@ export async function runHappyTGInstall(
   let relevantInspection = repoMode === "current" ? repoChoices.currentInspection : repoChoices.updateInspection;
   let dirtyStrategy = defaultDirtyWorktreeStrategy(relevantInspection.dirty, options.dirtyWorktreeStrategy ?? draft?.repo?.dirtyStrategy);
 
-  const repoTelegramDefaults = await readExistingTelegramSetup(selectedChoice?.path ?? repoChoices.clonePath).catch(() => ({
-    botToken: "",
-    allowedUserIds: [],
-    homeChannel: "",
-    botUsername: undefined
+  const repoExistingEnv = await readExistingInstallEnvSetup(selectedChoice?.path ?? repoChoices.clonePath).catch(() => ({
+    envFilePath: path.join(selectedChoice?.path ?? repoChoices.clonePath, ".env"),
+    telegram: {
+      botToken: "",
+      allowedUserIds: [],
+      homeChannel: "",
+      botUsername: undefined
+    },
+    previewValues: []
   }));
-  const knownBotUsername = repoTelegramDefaults.botUsername ?? "";
+  const repoTelegramDefaults = repoExistingEnv.telegram;
+  let knownBotUsername = "";
+  const cliTelegramAllowedUserIds = options.telegramAllowedUserIds.length > 0
+    ? normalizeTelegramAllowedUserIds(options.telegramAllowedUserIds)
+    : undefined;
   const telegramInitial: TelegramSetup = {
     botToken: interactive
       ? options.telegramBotToken ?? ""
       : options.telegramBotToken ?? draft?.telegram?.botToken ?? repoTelegramDefaults.botToken,
-    allowedUserIds: options.telegramAllowedUserIds.length > 0
-      ? normalizeTelegramAllowedUserIds(options.telegramAllowedUserIds)
-      : draft?.telegram?.allowedUserIds ?? repoTelegramDefaults.allowedUserIds,
-    homeChannel: options.telegramHomeChannel ?? draft?.telegram?.homeChannel ?? repoTelegramDefaults.homeChannel
+    allowedUserIds: interactive
+      ? cliTelegramAllowedUserIds ?? []
+      : cliTelegramAllowedUserIds ?? draft?.telegram?.allowedUserIds ?? repoTelegramDefaults.allowedUserIds,
+    homeChannel: interactive
+      ? options.telegramHomeChannel ?? ""
+      : options.telegramHomeChannel ?? draft?.telegram?.homeChannel ?? repoTelegramDefaults.homeChannel
   };
   let telegramSetup = telegramInitial;
   const backgroundModes = backgroundOptionsForPlatform(platform.platform.platform);
@@ -1621,13 +1780,40 @@ export async function runHappyTGInstall(
         })
         : defaultDirtyWorktreeStrategy(true, options.dirtyWorktreeStrategy ?? draft?.repo?.dirtyStrategy)
       : "keep";
-    telegramSetup = interactive
-      ? await promptTelegramForm({
-        stdin,
-        stdout,
-        initial: telegramInitial
-      })
-      : telegramInitial;
+    if (interactive) {
+      const existingEnvChoice: ExistingEnvReuseChoice = existingEnvHasReusableTelegramValues(repoExistingEnv)
+        ? await promptSelect({
+          stdin,
+          stdout,
+          items: ["reuse", "edit"],
+          initial: "reuse",
+          render: (active) => renderExistingEnvConfirmationScreen({
+            envFilePath: repoExistingEnv.envFilePath,
+            telegram: repoTelegramDefaults,
+            values: repoExistingEnv.previewValues,
+            activeChoice: active
+          })
+        })
+        : "edit";
+
+      if (existingEnvChoice === "reuse") {
+        telegramSetup = {
+          botToken: repoTelegramDefaults.botToken,
+          allowedUserIds: [...repoTelegramDefaults.allowedUserIds],
+          homeChannel: repoTelegramDefaults.homeChannel
+        };
+        knownBotUsername = repoTelegramDefaults.botUsername ?? "";
+      } else {
+        telegramSetup = await promptTelegramForm({
+          stdin,
+          stdout,
+          initial: telegramInitial
+        });
+      }
+    } else {
+      telegramSetup = telegramInitial;
+      knownBotUsername = repoTelegramDefaults.botUsername ?? "";
+    }
     if (!interactive) {
       const tokenValidationMessage = validateTelegramBotToken(telegramSetup.botToken);
       if (tokenValidationMessage) {
@@ -1967,18 +2153,19 @@ export async function runHappyTGInstall(
         interactive,
         stdin,
         stdout,
-      repoPath: repoSyncResult.path,
-      repoEnv,
-      installEnv,
-      platform: platform.platform.platform,
-      runBootstrapCheck: input.runBootstrapCheck,
-      updateProgressDetail: (detail) => updateStep({
-        ...steps.find((step) => step.id === "port-preflight")!,
-        status: "running",
-        detail
-      }),
-      writeMergedEnvFileImpl: deps.writeMergedEnvFile
-    });
+        launchMode,
+        repoPath: repoSyncResult.path,
+        repoEnv,
+        installEnv,
+        platform: platform.platform.platform,
+        runBootstrapCheck: input.runBootstrapCheck,
+        updateProgressDetail: (detail) => updateStep({
+          ...steps.find((step) => step.id === "port-preflight")!,
+          status: "running",
+          detail
+        }),
+        writeMergedEnvFileImpl: deps.writeMergedEnvFile
+      });
       repoEnv = portPreflight.repoEnv;
       preflightSetupReport = portPreflight.report;
       appliedPortOverrides = portPreflight.appliedOverrides;

@@ -1,0 +1,31 @@
+{
+  "task_id": "HTG-2026-04-28-release-docker-installer-compose",
+  "status": "verified",
+  "commands": [
+    { "command": "pnpm lint", "raw": "raw/lint.txt", "status": "passed" },
+    { "command": "pnpm typecheck", "raw": "raw/typecheck.txt", "status": "passed" },
+    { "command": "pnpm test", "raw": "raw/test.txt", "status": "passed" },
+    { "command": "pnpm build", "raw": "raw/build.txt", "status": "passed" },
+    { "command": "docker compose --env-file .env -f infra/docker-compose.example.yml config", "raw": "raw/docker-compose-config.txt", "status": "passed" },
+    { "command": "docker compose --dry-run --env-file .env -f infra/docker-compose.example.yml up --build -d", "raw": "raw/docker-compose-dry-run-up.txt", "status": "passed" },
+    { "command": "pnpm happytg doctor", "raw": "raw/happytg-doctor.txt", "status": "warn", "exit_code": 0 },
+    { "command": "pnpm happytg verify", "raw": "raw/happytg-verify.txt", "status": "warn", "exit_code": 0 },
+    { "command": "pnpm happytg task validate for included task bundles", "raw": "raw/task-validate-included-final.txt", "status": "passed" },
+    { "command": "git diff --check", "raw": "raw/git-diff-check.txt", "status": "passed" },
+    { "command": "pnpm release:check -- --version 0.4.6", "raw": "raw/release-check-versioned.txt", "status": "passed" },
+    { "command": "pnpm happytg task validate --repo . --task HTG-2026-04-28-release-docker-installer-compose", "raw": "raw/task-validate.txt", "status": "passed" },
+    { "command": "pnpm install --frozen-lockfile", "raw": "raw/post-rebase-install.txt", "status": "passed" },
+    { "command": "pnpm --filter @happytg/bootstrap typecheck", "raw": "raw/post-rebase-bootstrap-typecheck.txt", "status": "passed" },
+    { "command": "pnpm --filter @happytg/bootstrap test", "raw": "raw/post-rebase-bootstrap-test.txt", "status": "passed" },
+    { "command": "docker compose --env-file .env -f infra/docker-compose.example.yml config", "raw": "raw/post-rebase-docker-compose-config.txt", "status": "passed" },
+    { "command": "docker compose --dry-run --env-file .env -f infra/docker-compose.example.yml up --build -d", "raw": "raw/post-rebase-docker-compose-dry-run-up.txt", "status": "passed" },
+    { "command": "pnpm happytg doctor", "raw": "raw/post-rebase-happytg-doctor.txt", "status": "warn", "exit_code": 0 },
+    { "command": "pnpm happytg verify", "raw": "raw/post-rebase-happytg-verify.txt", "status": "warn", "exit_code": 0 },
+    { "command": "pnpm release:check -- --version 0.4.6", "raw": "raw/post-rebase-release-check-versioned.txt", "status": "passed" },
+    { "command": "pnpm happytg task validate --repo . --task HTG-2026-04-28-release-docker-installer-compose", "raw": "raw/post-rebase-task-validate.txt", "status": "passed" }
+  ],
+  "rebased_onto": "origin/main@5cf11a7",
+  "excluded_untracked": [
+    ".agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/"
+  ]
+}
