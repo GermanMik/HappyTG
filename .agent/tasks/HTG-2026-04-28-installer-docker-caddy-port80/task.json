@@ -1,0 +1,7 @@
+{
+  "id": "HTG-2026-04-28-installer-docker-caddy-port80",
+  "title": "Installer Docker Caddy port 80 repair",
+  "phase": "complete",
+  "scopeFrozen": true,
+  "branch": "codex/installer-docker-caddy-port80-repair"
+}

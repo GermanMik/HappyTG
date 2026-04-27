@@ -1,0 +1,70 @@
+Exact focused regression checks:
+
+> pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern "remaps occupied Compose host ports|Caddy bind failures" src/install.runtime.test.ts
+✔ runHappyTGInstall launch-mode docker remaps occupied Compose host ports before Compose startup (37.4269ms)
+✔ runDockerLaunch reports Caddy bind failures with the failed port and override hint (2.6213ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 409.4063
+
+> pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern "legacy infra Compose MinIO" src/index.test.ts
+✔ setup treats legacy infra Compose MinIO containers as current stack instead of external conflicts (285.6018ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 540.6398
+
+> pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern "warning-only Telegram getMe|transport-probe-validated Telegram identity|interactive existing env confirmation" src/install.runtime.test.ts
+✔ runHappyTGInstall reports warning-only Telegram getMe failures as success-with-warnings without dropping configured Telegram state (23.6664ms)
+✔ runHappyTGInstall treats a transport-probe-validated Telegram identity as a normal success path (9.7267ms)
+✔ runHappyTGInstall interactive existing env confirmation can reuse Telegram values (117.0208ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 478.9115
+
+> pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern "stable HappyTG project name" src/infra-config.test.ts
+✔ compose declares a stable HappyTG project name (6.9241ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 285.2466
+
+> pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern "pnpm.cmd" src/install.scripts.test.ts
+✔ install.ps1 prefers pnpm.cmd over the PowerShell pnpm shim (919.6537ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1246.4514
+
+> pnpm --filter @happytg/bootstrap exec tsx --test --test-name-pattern "existing env confirmation" src/install.test.ts
+✔ existing env confirmation masks Telegram token and shows safe existing values (1.9955ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 293.5854

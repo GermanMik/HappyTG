@@ -11,6 +11,7 @@ import type {
 } from "./types.js";
 
 const COMPOSE_FILE = "infra/docker-compose.example.yml";
+const COMPOSE_PROJECT_NAME = "happytg";
 const DOCKER_COMPOSE_PREFIX = `docker compose --env-file .env -f ${COMPOSE_FILE}`;
 const DOCKER_UP_COMMAND = `${DOCKER_COMPOSE_PREFIX} up --build -d`;
 const DOCKER_CONFIG_COMMAND = `${DOCKER_COMPOSE_PREFIX} config`;
@@ -18,6 +19,19 @@ const DOCKER_PS_COMMAND = `${DOCKER_COMPOSE_PREFIX} ps`;
 const DOCKER_PS_JSON_COMMAND = `${DOCKER_COMPOSE_PREFIX} ps --format json`;
 const DEFAULT_HEALTH_TIMEOUT_MS = 20_000;
 const DEFAULT_HEALTH_INTERVAL_MS = 1_000;
+const COMPOSE_PORT_OVERRIDES = new Map<number, { env: string; suggested: number }>([
+  [80, { env: "HAPPYTG_HTTP_PORT", suggested: 8080 }],
+  [443, { env: "HAPPYTG_HTTPS_PORT", suggested: 8443 }],
+  [3000, { env: "HAPPYTG_GRAFANA_PORT", suggested: 3002 }],
+  [3001, { env: "HAPPYTG_MINIAPP_PORT", suggested: 3002 }],
+  [4000, { env: "HAPPYTG_API_PORT", suggested: 4001 }],
+  [4100, { env: "HAPPYTG_BOT_PORT", suggested: 4101 }],
+  [5432, { env: "HAPPYTG_POSTGRES_HOST_PORT", suggested: 5433 }],
+  [6379, { env: "HAPPYTG_REDIS_HOST_PORT", suggested: 6380 }],
+  [9000, { env: "HAPPYTG_MINIO_PORT", suggested: 9002 }],
+  [9001, { env: "HAPPYTG_MINIO_CONSOLE_PORT", suggested: 9003 }],
+  [9090, { env: "HAPPYTG_PROMETHEUS_PORT", suggested: 9091 }]
+]);
 
 interface ComposeServiceSummary {
   service: string;
@@ -52,6 +66,23 @@ function outputIncludes(output: string, patterns: RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(output));
 }
 
+function dockerBindFailureHint(output: string): string | undefined {
+  const match = output.match(/(?:0\.0\.0\.0|\[::\]|127\.0\.0\.1|\[::1\]):(\d+)/iu)
+    ?? output.match(/port\s+(\d+)\s+is\s+already\s+(?:allocated|in use)/iu)
+    ?? output.match(/bind[^.\n\r]*:(\d+)[^.\n\r]*(?:address already in use|port is already allocated)/iu);
+  const port = match?.[1] ? Number(match[1]) : undefined;
+  if (!port || !Number.isInteger(port)) {
+    return undefined;
+  }
+
+  const override = COMPOSE_PORT_OVERRIDES.get(port);
+  if (!override) {
+    return `Port ${port} is occupied; free the listener or set the matching HAPPYTG_*_PORT override in \`.env\`.`;
+  }
+
+  return `Port ${port} is occupied; set ${override.env}=${override.suggested} in \`.env\` or free the listener.`;
+}
+
 function dockerFailureNextSteps(output: string, fallbackCommand: string): string[] {
   if (outputIncludes(output, [
     /cannot connect to the docker daemon/iu,
@@ -82,8 +113,9 @@ function dockerFailureNextSteps(output: string, fallbackCommand: string): string
     /port is already allocated/iu,
     /ports are not available/iu
   ])) {
+    const bindHint = dockerBindFailureHint(output);
     return [
-      "Free the reported port or set the matching HAPPYTG_*_PORT override in `.env`.",
+      bindHint ?? "Free the reported port or set the matching HAPPYTG_*_PORT override in `.env`.",
       `Validate again with \`${DOCKER_CONFIG_COMMAND}\`, then start with \`${fallbackCommand}\`.`
     ];
   }
@@ -436,7 +468,11 @@ export async function runDockerLaunch(input: {
       command: dockerPath,
       args,
       cwd: input.repoPath,
-      env: input.installEnv,
+      env: {
+        ...input.installEnv,
+        ...input.repoEnv,
+        COMPOSE_PROJECT_NAME
+      },
       platform: input.platform
     }).catch((error) => ({
       stdout: "",
@@ -505,6 +541,7 @@ export async function runDockerLaunch(input: {
   const up = await runDocker("compose-up", DOCKER_UP_COMMAND, ["compose", "--env-file", ".env", "-f", COMPOSE_FILE, "up", "--build", "-d"]);
   if (up.exitCode !== 0) {
     const output = commandOutput(up);
+    const bindHint = dockerBindFailureHint(output);
     return {
       mode: "docker",
       status: "failed",
@@ -512,7 +549,7 @@ export async function runDockerLaunch(input: {
       command: DOCKER_UP_COMMAND,
       commands,
       health: [],
-      detail: "Docker Compose startup failed.",
+      detail: bindHint ? `Docker Compose startup failed. ${bindHint}` : "Docker Compose startup failed.",
       warnings: [output || "Compose startup failed."],
       nextSteps: dockerFailureNextSteps(output, DOCKER_UP_COMMAND)
     };

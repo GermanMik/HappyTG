@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-28-installer-env-existing-values-confirmation",
+  "status": "implemented",
+  "commands": [
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.test.ts --test-name-pattern \"Telegram|env|existing|prefill\"",
+      "status": "pass",
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.runtime.test.ts --test-name-pattern \"Telegram|env|existing|prefill|draft\"",
+      "status": "pass",
+      "raw": "raw/test-integration.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap build",
+      "status": "pass",
+      "raw": "raw/build.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap lint",
+      "status": "pass",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-04-28-installer-env-existing-values-confirmation",
+      "status": "pass",
+      "raw": "raw/task-validate.txt"
+    }
+  ],
+  "artifacts": {
+    "raw": [
+      "raw/build.txt",
+      "raw/test-unit.txt",
+      "raw/test-integration.txt",
+      "raw/lint.txt",
+      "raw/task-validate.txt"
+    ]
+  },
+  "sanitized": true
+}

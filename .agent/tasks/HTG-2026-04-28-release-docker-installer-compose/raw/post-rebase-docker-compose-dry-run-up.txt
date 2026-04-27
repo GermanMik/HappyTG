@@ -1,0 +1,64 @@
+ Image happytg-api Building
+ Image happytg-miniapp Building
+ Image happytg-bot Building
+ Image happytg-worker Building
+ api ==> ==> writing image dryRun-a033a528b603fed46f861d4b3542c417b99d41c8
+ api ==> ==> naming to happytg-api
+ miniapp ==> ==> writing image dryRun-589900c95b20caabe6a85b80568b899031069123
+ miniapp ==> ==> naming to happytg-miniapp
+ bot ==> ==> writing image dryRun-c71e7261d37a4f6ae4cfb0cbd79081310a237e67
+ bot ==> ==> naming to happytg-bot
+ worker ==> ==> writing image dryRun-10f5ebe6acb4467b71602be4c4fdb44c44fa26b6
+ worker ==> ==> naming to happytg-worker
+ Image worker Built
+ Image api Built
+ Image miniapp Built
+ Image bot Built
+ Network happytg_default Creating
+ Network happytg_default Created
+ Volume happytg_caddy_data Creating
+ Volume happytg_caddy_data Created
+ Volume happytg_caddy_config Creating
+ Volume happytg_caddy_config Created
+ Volume happytg_grafana_data Creating
+ Volume happytg_grafana_data Created
+ Volume happytg_prometheus_data Creating
+ Volume happytg_prometheus_data Created
+ Container happytg-postgres-1 Creating
+ Container happytg-minio-1 Creating
+ Container happytg-redis-1 Creating
+ Container happytg-redis-1 Created
+ Container happytg-postgres-1 Created
+ Container happytg-minio-1 Created
+ Container happytg-api-1 Creating
+ Container happytg-api-1 Created
+ Container happytg-prometheus-1 Creating
+ Container happytg-bot-1 Creating
+ Container happytg-miniapp-1 Creating
+ Container happytg-worker-1 Creating
+ Container happytg-miniapp-1 Created
+ Container happytg-bot-1 Created
+ Container happytg-prometheus-1 Created
+ Container happytg-caddy-1 Creating
+ Container happytg-grafana-1 Creating
+ Container happytg-worker-1 Created
+ Container happytg-grafana-1 Created
+ Container happytg-caddy-1 Created
+ Container happytg-redis-1 Starting
+ Container happytg-redis-1 Started
+ Container happytg-minio-1 Starting
+ Container happytg-minio-1 Started
+ Container happytg-api-1 Starting
+ Container happytg-api-1 Started
+ Container happytg-prometheus-1 Starting
+ Container happytg-prometheus-1 Started
+ Container happytg-bot-1 Starting
+ Container happytg-grafana-1 Starting
+ Container happytg-grafana-1 Started
+ Container happytg-worker-1 Starting
+ Container happytg-worker-1 Started
+ Container happytg-miniapp-1 Starting
+ Container happytg-miniapp-1 Started
+ Container happytg-bot-1 Started
+ Container happytg-caddy-1 Starting
+ Container happytg-caddy-1 Started

@@ -62,21 +62,24 @@ flowchart TD
 5. Runs `pnpm install`.
    If `pnpm install` reports ignored build scripts, the installer now validates the critical repo-local `tsx` + `esbuild` bootstrap path before it decides between warning-only continuation and install failure.
 6. Merges `.env.example` into `.env` without losing existing values and creates a backup before edits.
-7. Prompts for Telegram-first settings:
+7. If the selected repo already has Telegram values in `.env`, shows them first on an explicit reuse/edit confirmation screen. Bot tokens are masked; allowed IDs, home channel, and bot username are shown only there instead of silently filling the edit form.
+8. Prompts for Telegram-first settings when values are not explicitly reused:
    - bot token
    - allowed user IDs
    - home channel
-8. Validates the bot token when possible and stores `TELEGRAM_BOT_USERNAME` so later pairing instructions can point at the configured bot directly.
-9. Offers a background daemon mode:
+9. Validates the bot token when possible and stores `TELEGRAM_BOT_USERNAME` so later pairing instructions can point at the configured bot directly.
+10. Offers a background daemon mode:
    - macOS: `LaunchAgent`, `manual`, `skip`
    - Windows: `Scheduled Task`, `Startup`, `manual`, `skip`
    - Linux: current service flow remains supported, plus installer-safe user-service/manual options
-10. Offers a launch mode for the control-plane stack:
+11. Offers a launch mode for the control-plane stack:
    - `local`: do not start containers; final guidance uses `pnpm dev`
    - `docker`: validate and start `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d`
    - `manual`: do not start anything; print exact local and Docker commands
    - `skip`: no startup action beyond install and selected post-checks
-11. Can run `setup`, `doctor`, and `verify` in one unified flow.
+12. Can run `setup`, `doctor`, and `verify` in one unified flow.
+
+Docker Compose uses the stable project name `happytg`; a clean Docker launch creates container names such as `happytg-api-1`, `happytg-bot-1`, and `happytg-miniapp-1`. The host daemon remains outside Compose.
 
 When pnpm reports ignored build scripts, HappyTG does not silently suppress that state:
 
@@ -290,6 +293,8 @@ $env:HAPPYTG_REDIS_HOST_PORT=6380; docker compose --env-file .env -f infra/docke
    ```bash
    docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
    ```
+
+   Compose uses project name `happytg`, so `docker compose ps` and `docker ps` show names like `happytg-api-1`.
 
 4. Put a reverse proxy with TLS in front of the API and Mini App.
 5. For `happytg.gerta.crazedns.ru`, expose `/miniapp`, the allowed public Mini App API routes, and `/telegram/webhook` through Caddy, then verify the public URL you will send to Telegram.

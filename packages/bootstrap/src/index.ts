@@ -25,6 +25,8 @@ export type BootstrapCommand = "doctor" | "setup" | "repair" | "verify" | "statu
 
 const INFRA_COMPOSE_FILE = "infra/docker-compose.example.yml";
 const INFRA_COMPOSE_PREFIX = `docker compose --env-file .env -f ${INFRA_COMPOSE_FILE}`;
+const DOCKER_UP_COMMAND = `${INFRA_COMPOSE_PREFIX} up --build -d`;
+const HAPPYTG_COMPOSE_PROJECT_NAMES = new Set(["happytg", "infra"]);
 
 interface DoctorContext {
   command: BootstrapCommand;
@@ -49,6 +51,7 @@ interface PortCheckDefinition {
   command?: string;
   overrideEnv?: string;
   expectedService?: string;
+  composeService?: string;
   probe: "http" | "redis" | "tcp";
 }
 
@@ -84,6 +87,9 @@ interface PortCheckResult {
 interface DockerPublishedPort {
   containerName: string;
   image: string;
+  composeProject?: string;
+  composeService?: string;
+  composeWorkingDir?: string;
 }
 
 type RedisState = "absent" | "installed_stopped" | "running" | "port_conflict" | "remote";
@@ -129,6 +135,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     defaultPort: 3001,
     probe: "http",
     expectedService: "miniapp",
+    composeService: "miniapp",
     command: "pnpm dev:miniapp",
     overrideEnv: "HAPPYTG_MINIAPP_PORT"
   },
@@ -139,6 +146,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     defaultPort: 4000,
     probe: "http",
     expectedService: "api",
+    composeService: "api",
     command: "pnpm dev:api",
     overrideEnv: "HAPPYTG_API_PORT"
   },
@@ -149,6 +157,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     defaultPort: 4100,
     probe: "http",
     expectedService: "bot",
+    composeService: "bot",
     command: "pnpm dev:bot",
     overrideEnv: "HAPPYTG_BOT_PORT"
   },
@@ -168,6 +177,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     envKeys: ["HAPPYTG_REDIS_HOST_PORT"],
     defaultPort: 6379,
     probe: "redis",
+    composeService: "redis",
     overrideEnv: "HAPPYTG_REDIS_HOST_PORT",
     command: `${INFRA_COMPOSE_PREFIX} up redis`
   },
@@ -177,6 +187,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     envKeys: ["HAPPYTG_POSTGRES_HOST_PORT"],
     defaultPort: 5432,
     probe: "tcp",
+    composeService: "postgres",
     overrideEnv: "HAPPYTG_POSTGRES_HOST_PORT",
     command: `${INFRA_COMPOSE_PREFIX} up postgres`
   },
@@ -186,6 +197,7 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     envKeys: ["HAPPYTG_MINIO_PORT"],
     defaultPort: 9000,
     probe: "tcp",
+    composeService: "minio",
     overrideEnv: "HAPPYTG_MINIO_PORT",
     command: `${INFRA_COMPOSE_PREFIX} up minio`
   },
@@ -195,8 +207,49 @@ const criticalPortDefinitions: PortCheckDefinition[] = [
     envKeys: ["HAPPYTG_MINIO_CONSOLE_PORT"],
     defaultPort: 9001,
     probe: "tcp",
+    composeService: "minio",
     overrideEnv: "HAPPYTG_MINIO_CONSOLE_PORT",
     command: `${INFRA_COMPOSE_PREFIX} up minio`
+  },
+  {
+    id: "caddy-http",
+    label: "Caddy HTTP host port",
+    envKeys: ["HAPPYTG_HTTP_PORT"],
+    defaultPort: 80,
+    probe: "http",
+    composeService: "caddy",
+    overrideEnv: "HAPPYTG_HTTP_PORT",
+    command: DOCKER_UP_COMMAND
+  },
+  {
+    id: "caddy-https",
+    label: "Caddy HTTPS host port",
+    envKeys: ["HAPPYTG_HTTPS_PORT"],
+    defaultPort: 443,
+    probe: "tcp",
+    composeService: "caddy",
+    overrideEnv: "HAPPYTG_HTTPS_PORT",
+    command: DOCKER_UP_COMMAND
+  },
+  {
+    id: "prometheus",
+    label: "Prometheus host port",
+    envKeys: ["HAPPYTG_PROMETHEUS_PORT"],
+    defaultPort: 9090,
+    probe: "http",
+    composeService: "prometheus",
+    overrideEnv: "HAPPYTG_PROMETHEUS_PORT",
+    command: `${INFRA_COMPOSE_PREFIX} up prometheus`
+  },
+  {
+    id: "grafana",
+    label: "Grafana host port",
+    envKeys: ["HAPPYTG_GRAFANA_PORT"],
+    defaultPort: 3000,
+    probe: "http",
+    composeService: "grafana",
+    overrideEnv: "HAPPYTG_GRAFANA_PORT",
+    command: `${INFRA_COMPOSE_PREFIX} up grafana`
   }
 ] as const;
 
@@ -672,15 +725,6 @@ function safeUrlPort(url: URL, fallback: number): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function appendDockerPortRange(portMap: Map<number, DockerPublishedPort>, hostStart: number, hostEnd: number, containerName: string, image: string): void {
-  for (let port = hostStart; port <= hostEnd; port += 1) {
-    portMap.set(port, {
-      containerName,
-      image
-    });
-  }
-}
-
 function parseDockerPublishedPorts(stdout: string): Map<number, DockerPublishedPort> {
   const portMap = new Map<number, DockerPublishedPort>();
 
@@ -690,7 +734,7 @@ function parseDockerPublishedPorts(stdout: string): Map<number, DockerPublishedP
       continue;
     }
 
-    const [containerName, portsField, image] = line.split("\t");
+    const [containerName, portsField, image, composeProject, composeService, composeWorkingDir] = line.split("\t");
     if (!containerName || !portsField || !image) {
       continue;
     }
@@ -703,7 +747,15 @@ function parseDockerPublishedPorts(stdout: string): Map<number, DockerPublishedP
 
       const hostStart = Number(match[1]);
       const hostEnd = Number(match[2] ?? match[1]);
-      appendDockerPortRange(portMap, hostStart, hostEnd, containerName, image);
+      for (let port = hostStart; port <= hostEnd; port += 1) {
+        portMap.set(port, {
+          containerName,
+          image,
+          composeProject: composeProject || undefined,
+          composeService: composeService || undefined,
+          composeWorkingDir: composeWorkingDir || undefined
+        });
+      }
     }
   }
 
@@ -717,7 +769,11 @@ async function detectDockerPublishedPorts(context: {
 }): Promise<Map<number, DockerPublishedPort>> {
   const dockerRun = await runResolvedToolCommand({
     command: "docker",
-    args: ["ps", "--format", "{{.Names}}\t{{.Ports}}\t{{.Image}}"],
+    args: [
+      "ps",
+      "--format",
+      "{{.Names}}\t{{.Ports}}\t{{.Image}}\t{{.Label \"com.docker.compose.project\"}}\t{{.Label \"com.docker.compose.service\"}}\t{{.Label \"com.docker.compose.project.working_dir\"}}"
+    ],
     cwd: context.cwd,
     env: context.env,
     platform: context.platform,
@@ -728,6 +784,36 @@ async function detectDockerPublishedPorts(context: {
   }
 
   return parseDockerPublishedPorts(dockerRun.stdout);
+}
+
+function normalizePathForCompare(value: string): string {
+  return path.resolve(value).replace(/\\/g, "/").toLowerCase();
+}
+
+function isHappyTGComposeContainerName(containerName: string, service: string): boolean {
+  const normalized = containerName.toLowerCase();
+  return [...HAPPYTG_COMPOSE_PROJECT_NAMES].some((projectName) => normalized.startsWith(`${projectName}-${service.toLowerCase()}-`));
+}
+
+function isCurrentHappyTGComposePort(dockerPort: DockerPublishedPort | undefined, definition: PortCheckDefinition, cwd: string): boolean {
+  if (!dockerPort || !definition.composeService) {
+    return false;
+  }
+
+  if (dockerPort.composeService !== definition.composeService) {
+    return false;
+  }
+
+  if (dockerPort.composeProject) {
+    return HAPPYTG_COMPOSE_PROJECT_NAMES.has(dockerPort.composeProject);
+  }
+
+  if (dockerPort.composeWorkingDir) {
+    return normalizePathForCompare(dockerPort.composeWorkingDir) === normalizePathForCompare(path.join(cwd, "infra"))
+      && isHappyTGComposeContainerName(dockerPort.containerName, definition.composeService);
+  }
+
+  return isHappyTGComposeContainerName(dockerPort.containerName, definition.composeService);
 }
 
 async function canConnect(host: string, port: number, timeoutMs = 400): Promise<boolean> {
@@ -909,7 +995,8 @@ async function detectPortCheck(
   port: number,
   suggestedPorts: number[],
   env: NodeJS.ProcessEnv,
-  dockerPorts: Map<number, DockerPublishedPort>
+  dockerPorts: Map<number, DockerPublishedPort>,
+  cwd: string
 ): Promise<PortCheckResult> {
   const suggestedPort = suggestedPorts[0] ?? (port + 1);
   const dockerListener = dockerPorts.get(port);
@@ -924,6 +1011,25 @@ async function detectPortCheck(
       detail: `${definition.label} plans to use port ${port}; it is free.`,
       overrideEnv: definition.overrideEnv,
       command: definition.command,
+      suggestedPort,
+      suggestedPorts,
+      planned: true
+    };
+  }
+
+  if (isCurrentHappyTGComposePort(dockerListener, definition, cwd)) {
+    const listener = withDockerAttribution(undefined, dockerListener);
+    return {
+      id: definition.id,
+      label: definition.label,
+      port,
+      probe: definition.probe,
+      state: "occupied_expected",
+      detail: `${definition.label} plans to use port ${port}, and the current HappyTG Compose service \`${definition.composeService}\` already publishes it via Docker container \`${dockerListener?.containerName}\`.`,
+      overrideEnv: definition.overrideEnv,
+      command: definition.command,
+      service: definition.composeService,
+      listener,
       suggestedPort,
       suggestedPorts,
       planned: true
@@ -1127,7 +1233,8 @@ async function detectCriticalPorts(context: {
     plannedPort.port,
     suggestedPorts.get(plannedPort.definition.id) ?? [plannedPort.port + 1],
     context.env,
-    dockerPorts
+    dockerPorts,
+    context.cwd
   )));
 }
 

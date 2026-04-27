@@ -1,0 +1,3 @@
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "verify"

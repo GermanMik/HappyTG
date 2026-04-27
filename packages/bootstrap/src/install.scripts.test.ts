@@ -369,6 +369,99 @@ test("install.ps1 normalizes ignored build script bootstrap warnings before hand
   }
 });
 
+test("install.ps1 prefers pnpm.cmd over the PowerShell pnpm shim", async () => {
+  const powershellPath = await resolvePowerShell();
+  if (!powershellPath) {
+    return;
+  }
+
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-ps1-pnpm-cmd-"));
+
+  try {
+    const { binDir, bootstrapDir, logPath } = await makeWindowsBootstrapHarness(tempDir, path.join(tempDir, "external", "missing-preload.cjs"));
+    await writeFile(
+      path.join(binDir, "pnpm.ps1"),
+      `
+        Add-Content -LiteralPath '${logPath.replace(/'/g, "''")}' -Value "PNPM_PS1 $args"
+        Write-Error "node.exe : Progress: resolved 1, reused 0, downloaded 0, added 0"
+        exit 1
+      `.trim().replace(/\n/g, "\r\n"),
+      "utf8"
+    );
+    await writeWindowsCommand(
+      path.join(binDir, "pnpm.cmd"),
+      `
+        @echo off
+        >>"${batchQuote(logPath)}" echo PNPM_CMD %*
+        if "%1"=="help" (
+          if "%2"=="approve-builds" (
+            echo Version 10.0.0
+            echo No results for "approve-builds"
+            exit /b 0
+          )
+        )
+        if "%1"=="dlx" (
+          if "%2"=="tsx" (
+            if "%3"=="--eval" (
+              >&2 echo Progress: resolved 1, reused 0, downloaded 0, added 0
+              echo HTG_INSTALLER_BOOTSTRAP_OK:1
+              exit /b 0
+            )
+          )
+        )
+        echo fake pnpm handoff ok
+        exit /b 0
+      `
+    );
+
+    const result = await runCommand({
+      command: powershellPath,
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        path.join(REPO_ROOT, "scripts", "install", "install.ps1"),
+        "--json",
+        "--non-interactive",
+        "--repo-mode",
+        "current",
+        "--repo-dir",
+        ".",
+        "--background",
+        "skip",
+        "--post-check",
+        "setup"
+      ],
+      cwd: REPO_ROOT,
+      env: {
+        ...process.env,
+        PATH: binDir,
+        Path: binDir,
+        PATHEXT: ".PS1;.CMD;.EXE",
+        HOME: tempDir,
+        USERPROFILE: tempDir,
+        APPDATA: tempDir,
+        HAPPYTG_BOOTSTRAP_DIR: bootstrapDir,
+        HAPPYTG_REPO_URL: "https://example.invalid/HappyTG.git"
+      },
+      platform: "win32"
+    });
+
+    const combined = `${result.stdout}\n${result.stderr}`;
+    const log = await readFile(logPath, "utf8");
+
+    assert.equal(result.exitCode, 0);
+    assert.match(combined, /fake pnpm handoff ok/i);
+    assert.match(log, /^PNPM_CMD dlx tsx --eval/m);
+    assert.match(log, /^PNPM_CMD --silent dlx tsx packages\/bootstrap\/src\/cli\.ts install/m);
+    assert.doesNotMatch(log, /^PNPM_PS1 /m);
+    assert.doesNotMatch(combined, /NativeCommandError/i);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("install.sh mirrors the external NODE_OPTIONS preload sanitization without a false Node-missing diagnosis", async () => {
   const bashPath = await resolveBash();
   if (!bashPath) {

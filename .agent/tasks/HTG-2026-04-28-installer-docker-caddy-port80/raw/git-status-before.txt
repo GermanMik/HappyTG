@@ -1,0 +1,19 @@
+## codex/installer-docker-caddy-port80-repair
+ M apps/api/src/index.test.ts
+ M apps/api/src/index.ts
+ M apps/api/src/service.test.ts
+ M apps/api/src/service.ts
+ M apps/bot/src/handlers.test.ts
+ M apps/bot/src/handlers.ts
+ M docs/architecture/bot-first-ux.md
+ M packages/bootstrap/src/install.runtime.test.ts
+ M packages/bootstrap/src/install.scripts.test.ts
+ M packages/bootstrap/src/install/index.ts
+ M packages/bootstrap/src/install/launch.ts
+ M packages/protocol/src/index.ts
+ M scripts/install/install.ps1
+?? .agent/prompts/installer-docker-caddy-port80-repair.md
+?? .agent/prompts/installer-env-existing-values-confirmation.md
+?? .agent/tasks/HTG-2026-04-28-docker-infra-port-remap/
+?? .agent/tasks/HTG-2026-04-28-pnpm-ps1-native-error/
+?? .agent/tasks/HTG-2026-04-28-session-cancel-from-bot/

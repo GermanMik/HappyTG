@@ -15,6 +15,55 @@ function Have-Cmd([string]$Name) {
   return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
+function Get-PnpmExecutable {
+  foreach ($candidate in @("pnpm.cmd", "pnpm.exe", "pnpm")) {
+    $command = Get-Command $candidate -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($command) {
+      if ($command.Path) {
+        return $command.Path
+      }
+      return $command.Source
+    }
+  }
+
+  $fallback = Get-Command "pnpm" -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($fallback) {
+    if ($fallback.Path) {
+      return $fallback.Path
+    }
+    return $fallback.Source
+  }
+
+  return "pnpm"
+}
+
+function Invoke-PnpmCaptured([string[]]$PnpmArgs) {
+  $pnpm = Get-PnpmExecutable
+  $previousErrorActionPreference = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    $output = @(& $pnpm @PnpmArgs 2>&1) | Out-String
+    $exitCode = if ($null -ne $LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
+    return [pscustomobject]@{
+      Output = $output
+      ExitCode = $exitCode
+    }
+  } finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+}
+
+function Invoke-PnpmPassthrough([string[]]$PnpmArgs) {
+  $pnpm = Get-PnpmExecutable
+  $previousErrorActionPreference = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    & $pnpm @PnpmArgs
+  } finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+}
+
 function Refresh-Path {
   $machine = [Environment]::GetEnvironmentVariable("Path", "Machine")
   $user = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -256,28 +305,27 @@ function Test-IgnoredBuildScriptsWarning([string]$Output) {
 }
 
 function Test-PnpmApproveBuildsSupport {
-  $helpOutput = @(& pnpm help approve-builds 2>&1) | Out-String
-  return $helpOutput -notmatch 'No results for "approve-builds"'
+  $result = Invoke-PnpmCaptured @("help", "approve-builds")
+  return $result.Output -notmatch 'No results for "approve-builds"'
 }
 
 function Invoke-SharedInstallerBootstrapPreflight {
-  $preflightOutput = @(& pnpm dlx tsx --eval "const value: number = 1; console.log('$BootstrapToolchainMarker')" 2>&1) | Out-String
-  $exitCode = if ($null -ne $LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
-  if ($exitCode -ne 0) {
-    if ($preflightOutput.Trim()) {
-      Write-Host $preflightOutput.TrimEnd()
+  $result = Invoke-PnpmCaptured @("dlx", "tsx", "--eval", "const value: number = 1; console.log('$BootstrapToolchainMarker')")
+  if ($result.ExitCode -ne 0) {
+    if ($result.Output.Trim()) {
+      Write-Host $result.Output.TrimEnd()
     }
     Fail "HappyTG installer bootstrap could not start through pnpm dlx tsx. Fix pnpm/tsx in this shell, then rerun the installer."
   }
 
-  if ($preflightOutput -notmatch [regex]::Escape($BootstrapToolchainMarker)) {
-    if ($preflightOutput.Trim()) {
-      Write-Host $preflightOutput.TrimEnd()
+  if ($result.Output -notmatch [regex]::Escape($BootstrapToolchainMarker)) {
+    if ($result.Output.Trim()) {
+      Write-Host $result.Output.TrimEnd()
     }
     Fail "HappyTG installer bootstrap did not confirm the repo-local tsx/esbuild preflight."
   }
 
-  if (Test-IgnoredBuildScriptsWarning $preflightOutput) {
+  if (Test-IgnoredBuildScriptsWarning $result.Output) {
     if (Test-PnpmApproveBuildsSupport) {
       Write-Warning "pnpm ignored build scripts while preparing the shared installer bootstrap, but the repo-local tsx/esbuild preflight passed. Continuing with the installer. If a later bootstrap dlx run fails, review the blocked scripts with `pnpm approve-builds` and rerun."
     } else {
@@ -291,12 +339,26 @@ function Run-SharedInstaller {
   Push-Location $BootstrapDir
   try {
     Invoke-SharedInstallerBootstrapPreflight
-    & pnpm --silent dlx tsx packages/bootstrap/src/cli.ts install `
-      --launch-cwd $OriginalCwd `
-      --bootstrap-repo-root $BootstrapDir `
-      --repo-url $RepoUrl `
-      --branch $Branch `
-      @args
+    $pnpmArgs = @(
+      "--silent",
+      "dlx",
+      "tsx",
+      "packages/bootstrap/src/cli.ts",
+      "install",
+      "--launch-cwd",
+      $OriginalCwd,
+      "--bootstrap-repo-root",
+      $BootstrapDir,
+      "--repo-url",
+      $RepoUrl,
+      "--branch",
+      $Branch
+    ) + $args
+    Invoke-PnpmPassthrough $pnpmArgs
+    $exitCode = if ($null -ne $LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
+    if ($exitCode -ne 0) {
+      exit $exitCode
+    }
   } finally {
     Pop-Location
   }

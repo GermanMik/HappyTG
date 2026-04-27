@@ -1,0 +1,59 @@
+{
+  "task_id": "HTG-2026-04-28-docker-happytg-naming",
+  "status": "verified",
+  "commands": [
+    {
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml config",
+      "raw": "raw/docker-compose-config.txt",
+      "status": "passed"
+    },
+    {
+      "command": "docker compose --dry-run --env-file .env -f infra/docker-compose.example.yml up --build -d",
+      "raw": "raw/docker-compose-dry-run-up.txt",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap typecheck",
+      "raw": "raw/bootstrap-typecheck.txt",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap test",
+      "raw": "raw/bootstrap-test.txt",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "raw": "raw/happytg-verify.txt",
+      "status": "warn",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "raw": "raw/git-diff-check.txt",
+      "status": "passed"
+    }
+  ],
+  "observed_names": {
+    "compose_project": "happytg",
+    "network": "happytg_default",
+    "volumes": [
+      "happytg_caddy_config",
+      "happytg_caddy_data",
+      "happytg_grafana_data",
+      "happytg_prometheus_data"
+    ],
+    "planned_containers": [
+      "happytg-postgres-1",
+      "happytg-redis-1",
+      "happytg-minio-1",
+      "happytg-api-1",
+      "happytg-worker-1",
+      "happytg-prometheus-1",
+      "happytg-bot-1",
+      "happytg-miniapp-1",
+      "happytg-grafana-1",
+      "happytg-caddy-1"
+    ]
+  }
+}

@@ -14,6 +14,7 @@ import {
   promptSelect,
   promptPortValue,
   promptTelegramForm,
+  renderExistingEnvConfirmationScreen,
   renderFinalScreen,
   renderLaunchModeScreen,
   renderProgressScreen,
@@ -323,6 +324,43 @@ test("Telegram screen renders a masked preview instead of the raw bot token", ()
 
   assert.match(screen, /1234\*+QRST/);
   assert.doesNotMatch(screen, /123456789:ABCDEFghijklmnopQRST/);
+});
+
+test("existing env confirmation masks Telegram token and shows safe existing values", () => {
+  const token = "123456:abcdefghijklmnopqrstuvwx";
+  const screen = renderExistingEnvConfirmationScreen({
+    envFilePath: "C:\\HappyTG\\.env",
+    telegram: {
+      botToken: token,
+      allowedUserIds: ["1001", "1002"],
+      homeChannel: "@home",
+      botUsername: "happytg_bot"
+    },
+    values: [
+      {
+        key: "HAPPYTG_APP_URL",
+        value: "http://localhost:3001",
+        detail: "Local URL."
+      },
+      {
+        key: "HAPPYTG_MINIAPP_PORT",
+        value: "3001",
+        detail: "Port override."
+      }
+    ],
+    activeChoice: "reuse"
+  });
+
+  assert.match(screen, /Existing \.env Values/);
+  assert.match(screen, /TELEGRAM_BOT_TOKEN=1234\*+uvwx \(masked secret\)/);
+  assert.doesNotMatch(screen, new RegExp(token));
+  assert.match(screen, /TELEGRAM_ALLOWED_USER_IDS=1001, 1002/);
+  assert.match(screen, /TELEGRAM_HOME_CHANNEL=@home/);
+  assert.match(screen, /TELEGRAM_BOT_USERNAME=@happytg_bot/);
+  assert.match(screen, /HAPPYTG_APP_URL=http:\/\/localhost:3001/);
+  assert.match(screen, /HAPPYTG_MINIAPP_PORT=3001/);
+  assert.match(screen, /Reuse existing \.env values/);
+  assert.match(screen, /Edit Telegram setup/);
 });
 
 test("final screen groups structured finalization items and dedupes warning text", () => {

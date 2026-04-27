@@ -1,0 +1,7 @@
+{
+  "id": "HTG-2026-04-28-release-docker-installer-compose",
+  "title": "Release Docker installer Compose repairs",
+  "phase": "build",
+  "scopeFrozen": true,
+  "branch": "codex/installer-docker-caddy-port80-repair"
+}

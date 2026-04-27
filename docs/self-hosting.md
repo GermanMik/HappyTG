@@ -81,6 +81,8 @@ Leave `HAPPYTG_BROWSER_API_URL` empty for the public Telegram Mini App path. Whe
    docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
    ```
 
+   The Compose project name is `happytg`; expected container names use the `happytg-<service>-1` format.
+
    The installer can make this an explicit first-start choice with:
 
    ```bash
