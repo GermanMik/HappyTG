@@ -1,0 +1,29 @@
+✔ detectLinuxFamily classifies Debian and Fedora os-release content (9.6543ms)
+✔ detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path (794.9945ms)
+✔ inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe (396.2424ms)
+✔ mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun (9.8643ms)
+✔ retro installer renderers include active cursor and keyboard hints (0.6125ms)
+✔ progress screen uses a readable ASCII running indicator instead of a unicode ellipsis (0.5498ms)
+✔ progress screen renders an aggregate ASCII progress bar from terminal step states (0.2522ms)
+✔ progress screen renders explicit per-step progress when a step reports subprogress (0.1604ms)
+✔ Telegram screen renders a masked preview instead of the raw bot token (0.3761ms)
+✔ existing env confirmation masks Telegram token and shows safe existing values (0.4345ms)
+✔ existing env confirmation still renders when only optional Telegram values exist (0.1455ms)
+✔ final screen groups structured finalization items and dedupes warning text (0.5245ms)
+✔ waitForEnter resolves when ENTER close is pressed on the final screen (1.0394ms)
+✔ waitForEnter does not render the same final screen twice when ENTER closes it (0.2691ms)
+✔ promptSelect resolves on enter for single-select menus (0.3297ms)
+✔ promptPortValue keeps validation visible after invalid input and accepts a later enter-confirmed retry (0.8154ms)
+✔ promptTelegramForm accepts pasted token and allowed user IDs with trailing CRLF in the interactive keypress path (1.788ms)
+✔ fetchTelegramBotIdentity separates invalid-token API rejections from recoverable network lookups (2.5203ms)
+✔ fetchTelegramBotIdentity classifies DNS-style fetch failures and non-JSON responses (2.2797ms)
+✔ fetchTelegramBotIdentity accepts Windows PowerShell validation as a success fallback after a Node timeout (0.5252ms)
+✔ fetchTelegramBotIdentity promotes invalid tokens when a Windows follow-up probe reaches Telegram (0.3393ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1541.8469

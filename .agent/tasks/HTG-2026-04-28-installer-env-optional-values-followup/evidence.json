@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-04-28-installer-env-optional-values-followup",
+  "status": "verified",
+  "commands": [
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.test.ts --test-name-pattern \"existing env confirmation\"",
+      "status": "passed",
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.runtime.test.ts --test-name-pattern \"Telegram|env|existing|prefill|draft\"",
+      "status": "passed",
+      "raw": "raw/test-integration.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run build",
+      "status": "passed",
+      "raw": "raw/build.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run lint",
+      "status": "passed",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-04-28-installer-env-optional-values-followup",
+      "status": "passed",
+      "raw": "raw/task-validate.txt"
+    }
+  ]
+}

@@ -363,6 +363,26 @@ test("existing env confirmation masks Telegram token and shows safe existing val
   assert.match(screen, /Edit Telegram setup/);
 });
 
+test("existing env confirmation still renders when only optional Telegram values exist", () => {
+  const screen = renderExistingEnvConfirmationScreen({
+    envFilePath: "C:\\HappyTG\\.env",
+    telegram: {
+      botToken: "",
+      allowedUserIds: ["1001"],
+      homeChannel: "",
+      botUsername: undefined
+    },
+    activeChoice: "edit",
+    canReuse: false
+  });
+
+  assert.match(screen, /Existing \.env Values/);
+  assert.match(screen, /TELEGRAM_ALLOWED_USER_IDS=1001/);
+  assert.match(screen, /Reuse is unavailable because TELEGRAM_BOT_TOKEN was not found/);
+  assert.doesNotMatch(screen, /Reuse existing \.env values/);
+  assert.match(screen, /Edit Telegram setup/);
+});
+
 test("final screen groups structured finalization items and dedupes warning text", () => {
   const screen = renderFinalScreen({
     outcome: "success-with-warnings",
