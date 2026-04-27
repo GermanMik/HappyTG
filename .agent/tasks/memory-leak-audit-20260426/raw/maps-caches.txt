@@ -1,0 +1,140 @@
+apps\host-daemon\src\index.test.ts:105:  const cache = new Map<string, number>();
+apps\host-daemon\src\index.test.ts:151:    assert.equal(shouldEmitStartupNotice(cache, "codex", 0, 60_000), true);
+apps\host-daemon\src\index.test.ts:152:    assert.equal(shouldEmitStartupNotice(cache, "codex", 1_000, 60_000), false);
+apps\host-daemon\src\index.test.ts:153:    assert.equal(shouldEmitStartupNotice(cache, "codex", 61_000, 60_000), true);
+apps\api\src\index.ts:400:        cleanup();
+apps\api\src\index.ts:404:        cleanup();
+apps\api\src\index.ts:412:      const cleanup = () => {
+apps\host-daemon\src\index.ts:37:const startupNotices = new Map<string, number>();
+apps\host-daemon\src\index.ts:134:  startupNotices.delete(key);
+apps\miniapp\src\index.test.ts:19:  const previous = new Map<string, string | undefined>();
+packages\repo-proof\src\index.ts:282:    approvals: [...new Set([...(state?.approvals ?? []), approvalId])]
+packages\repo-proof\src\index.ts:336:    artifactManifest: [...new Set([...defaultArtifactManifest(task.rootPath), ...artifacts])]
+packages\protocol\src\index.ts:682:  ttlSeconds?: number;
+packages\protocol\src\index.test.ts:64:  const names = new Set(EVENT_CONTRACTS.map((contract) => contract.name));
+packages\approval-engine\src\index.ts:10:  ttlSeconds?: number;
+packages\approval-engine\src\index.ts:58:  const expiresAt = new Date(Date.now() + (input.ttlSeconds ?? 600) * 1000).toISOString();
+packages\approval-engine\src\index.test.ts:12:    ttlSeconds: 60
+packages\approval-engine\src\index.test.ts:43:    ttlSeconds: 1
+apps\worker\src\index.ts:298:        cleanup();
+apps\worker\src\index.ts:302:        cleanup();
+apps\worker\src\index.ts:309:      const cleanup = () => {
+apps\bot\src\handlers.ts:82:const TERMINAL_SESSION_STATES = new Set(["completed", "failed", "cancelled"]);
+apps\bot\src\handlers.ts:83:const WAITING_APPROVAL_STATES = new Set(["pending", "waiting_human"]);
+apps\bot\src\handlers.ts:529:  const wizardDrafts = new Map<string, TaskWizardDraft>();
+apps\bot\src\handlers.ts:551:      wizardDrafts.delete(key);
+apps\bot\src\handlers.ts:888:    wizardDrafts.delete(draftKey(user));
+apps\bot\src\handlers.ts:1200:        wizardDrafts.delete(draftKey(callback.from));
+apps\miniapp\src\index.ts:731:        var ttlMs = 24 * 60 * 60 * 1000;
+apps\miniapp\src\index.ts:782:            if (!parsed || !parsed.savedAt || Date.now() - parsed.savedAt > ttlMs) {
+apps\miniapp\src\index.ts:1363:        cleanup();
+apps\miniapp\src\index.ts:1367:        cleanup();
+apps\miniapp\src\index.ts:1374:      const cleanup = () => {
+apps\api\src\service.ts:367:  const sessionIds = new Set(sessions.map((item) => item.id));
+apps\api\src\service.ts:392:  const hostIds = new Set(store.hosts.filter((item) => !userId || item.pairedUserId === userId).map((item) => item.id));
+apps\api\src\service.ts:394:  const sessionIds = new Set(sessions.map((item) => item.id));
+apps\api\src\service.ts:411:      const ttlSeconds = Math.min(input.ttlSeconds ?? secondsFromEnv("MINIAPP_LAUNCH_GRANT_TTL_SECONDS", 600), 24 * 60 * 60);
+apps\api\src\service.ts:422:        expiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
+apps\api\src\service.ts:621:    const hostIds = new Set(store.hosts.filter((item) => !userId || item.pairedUserId === userId).map((item) => item.id));
+apps\api\src\service.ts:629:    const hostIds = new Set(store.hosts.filter((item) => !userId || item.pairedUserId === userId).map((item) => item.id));
+apps\api\src\service.ts:630:    const sessionIds = new Set(store.sessions.filter((item) => hostIds.has(item.hostId)).map((item) => item.id));
+apps\api\src\service.ts:631:    const stateFilter = new Set(states?.filter(Boolean));
+apps\worker\src\reconcile.ts:55:  const staleHostIds = new Set(
+apps\worker\src\reconcile.ts:116:export function cleanupDaemonLikeJournalEntries<T extends { state: string; lastUpdatedAt: string }>(
+packages\runtime-adapters\src\index.ts:255:      || /plugins::manager: failed to warm featured plugin ids cache/iu.test(line))) {
+packages\bootstrap\src\cli.ts:142:  const seen = new Set<string>();
+packages\bootstrap\src\cli.ts:232:  const values = new Map<string, string[]>();
+packages\shared\src\index.ts:160:  const delimiter = pathDelimiterForPlatform(platform);
+packages\shared\src\index.ts:161:  const seen = new Set<string>();
+packages\shared\src\index.ts:164:    for (const entry of rawValue.split(delimiter)) {
+packages\shared\src\index.ts:180:  return mergedEntries.join(delimiter);
+packages\shared\src\index.ts:184:  const seen = new Set<string>();
+packages\shared\src\index.ts:209:function pathDelimiterForPlatform(platform: NodeJS.Platform): string {
+packages\shared\src\index.ts:210:  return platform === "win32" ? ";" : path.delimiter;
+packages\shared\src\index.ts:257:      .split(pathDelimiterForPlatform(platform))
+packages\shared\src\index.ts:815:  return [...new Set((value ?? "")
+packages\bootstrap\src\finalization.ts:54:  const kinds = new Set(includeKinds);
+apps\bot\src\index.ts:357:        transportPreference: "cached",
+apps\bot\src\index.ts:427:      cleanup();
+apps\bot\src\index.ts:431:      cleanup();
+apps\bot\src\index.ts:434:    const cleanup = () => {
+apps\bot\src\index.ts:721:    let settled = false;
+apps\bot\src\index.ts:723:      if (settled) {
+apps\bot\src\index.ts:726:      settled = true;
+apps\bot\src\index.ts:742:      if (settled) {
+apps\bot\src\index.ts:745:      settled = true;
+apps\bot\src\index.ts:753:      if (settled) {
+apps\bot\src\index.ts:756:      settled = true;
+apps\bot\src\index.ts:849:    let settled = false;
+apps\bot\src\index.ts:851:      if (settled) {
+apps\bot\src\index.ts:854:      settled = true;
+apps\bot\src\index.ts:870:      if (settled) {
+apps\bot\src\index.ts:873:      settled = true;
+apps\bot\src\index.ts:881:      if (settled) {
+apps\bot\src\index.ts:884:      settled = true;
+apps\bot\src\index.ts:1035:  ttlMs: number
+apps\bot\src\index.ts:1037:  if (!preference || ttlMs <= 0) {
+apps\bot\src\index.ts:1040:  preference.preferWindowsPowerShellUntilMs = Date.now() + ttlMs;
+apps\bot\src\index.ts:1218:  const settleReady = (snapshot: Partial<TelegramDeliverySnapshot>) => {
+apps\bot\src\index.ts:1249:          settleReady(readySnapshot);
+apps\bot\src\index.ts:1300:        settleReady(degradedSnapshot);
+apps\bot\src\index.ts:1310:    settleReady({
+apps\bot\src\index.ts:1475:        cleanup();
+apps\bot\src\index.ts:1483:        cleanup();
+apps\bot\src\index.ts:1486:      const cleanup = () => {
+packages\bootstrap\src\index.ts:355:  const dirs = new Set<string>();
+packages\bootstrap\src\index.ts:566:  const candidateSet = new Set<string>();
+packages\bootstrap\src\index.ts:682:  const portMap = new Map<number, DockerPublishedPort>();
+packages\bootstrap\src\index.ts:724:    return new Map();
+packages\bootstrap\src\index.ts:826:    let settled = false;
+packages\bootstrap\src\index.ts:828:      if (settled) {
+packages\bootstrap\src\index.ts:832:      settled = true;
+packages\bootstrap\src\index.ts:856:    let settled = false;
+packages\bootstrap\src\index.ts:858:      if (settled) {
+packages\bootstrap\src\index.ts:862:      settled = true;
+packages\bootstrap\src\index.ts:1112:  const blockedPorts = new Set(plannedPorts.map((item) => item.port));
+packages\bootstrap\src\index.ts:1113:  const suggestedPorts = new Map<string, number[]>();
+packages\bootstrap\src\index.ts:1270:  const suggestedPorts = [...new Set([
+packages\bootstrap\src\install\commands.ts:250:    let settled = false;
+packages\bootstrap\src\install\commands.ts:259:      if (settled) {
+packages\bootstrap\src\install\commands.ts:263:      settled = true;
+packages\bootstrap\src\install\commands.ts:289:      if (settled) {
+packages\bootstrap\src\install\commands.ts:293:      settled = true;
+packages\bootstrap\src\install\env.ts:45:  const templateKeys = new Set(parseTemplateKeys(input.templateText));
+packages\bootstrap\src\install\env.ts:48:  const seenKeys = new Set<string>();
+packages\bootstrap\src\install\env.ts:85:    addedKeys: [...new Set(addedKeys)],
+packages\bootstrap\src\install\env.ts:86:    preservedKeys: [...new Set(preservedKeys)]
+packages\bootstrap\src\install\index.ts:142:  const nonWarningMessages = new Set(
+packages\bootstrap\src\install\index.ts:277:  return [...new Set(
+packages\bootstrap\src\install\index.ts:753:  const delimiter = input.platform === "win32" ? ";" : ":";
+packages\bootstrap\src\install\index.ts:757:  const entries = currentPath.split(delimiter).filter(Boolean);
+packages\bootstrap\src\install\index.ts:762:  setPath(input.env, input.platform, [binDir, ...entries].join(delimiter));
+packages\bootstrap\src\install\index.ts:1025:  const rebuildTargets = [...new Set(input.packages.map(stripPackageVersion).filter(Boolean))];
+packages\bootstrap\src\install\index.ts:2076:    const cachedPostCheckReports = new Map<PostInstallCheck, BootstrapReport>();
+packages\bootstrap\src\install\index.ts:2078:      cachedPostCheckReports.set("setup", preflightSetupReport);
+packages\bootstrap\src\install\index.ts:2080:    const repeatedPostCheckSignatures = new Map<string, PostInstallCheck>();
+packages\bootstrap\src\install\index.ts:2097:      const report = cachedPostCheckReports.get(check) ?? await input.runBootstrapCheck(check, {
+packages\bootstrap\src\install\manifest.ts:9:const cachedManifests = new Map<string, InstallerManifest>();
+packages\bootstrap\src\install\manifest.ts:67:  const cachedManifest = cachedManifests.get(manifestPath);
+packages\bootstrap\src\install\manifest.ts:68:  if (cachedManifest) {
+packages\bootstrap\src\install\manifest.ts:69:    return cachedManifest;
+packages\bootstrap\src\install\manifest.ts:73:  cachedManifests.set(manifestPath, manifest);
+packages\bootstrap\src\telegram-menu.ts:365:    let settled = false;
+packages\bootstrap\src\telegram-menu.ts:367:      if (settled) {
+packages\bootstrap\src\telegram-menu.ts:370:      settled = true;
+packages\bootstrap\src\telegram-menu.ts:386:      if (settled) {
+packages\bootstrap\src\telegram-menu.ts:389:      settled = true;
+packages\bootstrap\src\telegram-menu.ts:397:      if (settled) {
+packages\bootstrap\src\telegram-menu.ts:400:      settled = true;
+packages\bootstrap\src\install\status.ts:3:const RECOVERABLE_ERROR_CODES = new Set<InstallRuntimeErrorDetail["code"]>([
+packages\bootstrap\src\install\telegram.ts:219:    let settled = false;
+packages\bootstrap\src\install\telegram.ts:221:      if (settled) {
+packages\bootstrap\src\install\telegram.ts:224:      settled = true;
+packages\bootstrap\src\install\telegram.ts:240:      if (settled) {
+packages\bootstrap\src\install\telegram.ts:243:      settled = true;
+packages\bootstrap\src\install\telegram.ts:251:      if (settled) {
+packages\bootstrap\src\install\telegram.ts:254:      settled = true;
+packages\bootstrap\src\install\tui.ts:90:const TERMINAL_STEP_STATUSES = new Set<InstallStepRecord["status"]>(["passed", "warn", "failed", "skipped"]);
+packages\bootstrap\src\install\tui.ts:186:  const seen = new Set<string>();
+packages\bootstrap\src\install\tui.ts:940:  const selected = new Set(input.initial);
+packages\bootstrap\src\install\tui.ts:954:        selected.delete(item);

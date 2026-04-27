@@ -1,0 +1,171 @@
+packages\repo-proof\src\index.ts:282:    approvals: [...new Set([...(state?.approvals ?? []), approvalId])]
+packages\repo-proof\src\index.ts:336:    artifactManifest: [...new Set([...defaultArtifactManifest(task.rootPath), ...artifacts])]
+packages\runtime-adapters\src\index.test.ts:564:        await new Promise((resolve) => setTimeout(resolve, 1_000));
+apps\api\src\index.test.ts:396:  setTimeout(() => {
+apps\host-daemon\src\index.test.ts:105:  const cache = new Map<string, number>();
+apps\host-daemon\src\index.test.ts:151:    assert.equal(shouldEmitStartupNotice(cache, "codex", 0, 60_000), true);
+apps\host-daemon\src\index.test.ts:152:    assert.equal(shouldEmitStartupNotice(cache, "codex", 1_000, 60_000), false);
+apps\host-daemon\src\index.test.ts:153:    assert.equal(shouldEmitStartupNotice(cache, "codex", 61_000, 60_000), true);
+apps\api\src\index.ts:354:    setTimeout(resolve, ms);
+packages\protocol\src\index.test.ts:64:  const names = new Set(EVENT_CONTRACTS.map((contract) => contract.name));
+packages\shared\src\index.test.ts:291:        await new Promise((resolve) => setTimeout(resolve, 20));
+apps\miniapp\src\index.test.ts:19:  const previous = new Map<string, string | undefined>();
+apps\miniapp\src\index.test.ts:306:    assert.match(html, /window\.setTimeout\(waitForTelegramInitData, initDataPollMs\)/);
+apps\worker\src\index.ts:160:    interval = setInterval(() => {
+apps\worker\src\index.ts:171:    clearInterval(interval);
+apps\worker\src\index.ts:234:    setTimeout(resolve, ms);
+apps\host-daemon\src\index.ts:37:const startupNotices = new Map<string, number>();
+apps\host-daemon\src\index.ts:640:    await new Promise((resolve) => setTimeout(resolve, heartbeatMs));
+apps\bot\src\handlers.ts:82:const TERMINAL_SESSION_STATES = new Set(["completed", "failed", "cancelled"]);
+apps\bot\src\handlers.ts:83:const WAITING_APPROVAL_STATES = new Set(["pending", "waiting_human"]);
+apps\bot\src\handlers.ts:529:  const wizardDrafts = new Map<string, TaskWizardDraft>();
+apps\miniapp\src\index.ts:267:    setTimeout(resolve, ms);
+apps\miniapp\src\index.ts:820:          input.addEventListener("input", function () {
+apps\miniapp\src\index.ts:828:        document.querySelector("[data-draft-restore]")?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:834:        document.querySelector("[data-draft-clear]")?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:838:        authReload?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:965:          window.setTimeout(waitForTelegramInitData, initDataPollMs);
+apps\miniapp\src\index.ts:967:        authRetry?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:977:          button.addEventListener("click", function () {
+apps\miniapp\src\index.ts:1016:        document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
+apps\api\src\service.ts:367:  const sessionIds = new Set(sessions.map((item) => item.id));
+apps\api\src\service.ts:392:  const hostIds = new Set(store.hosts.filter((item) => !userId || item.pairedUserId === userId).map((item) => item.id));
+apps\api\src\service.ts:394:  const sessionIds = new Set(sessions.map((item) => item.id));
+apps\api\src\service.ts:621:    const hostIds = new Set(store.hosts.filter((item) => !userId || item.pairedUserId === userId).map((item) => item.id));
+apps\api\src\service.ts:629:    const hostIds = new Set(store.hosts.filter((item) => !userId || item.pairedUserId === userId).map((item) => item.id));
+apps\api\src\service.ts:630:    const sessionIds = new Set(store.sessions.filter((item) => hostIds.has(item.hostId)).map((item) => item.id));
+apps\api\src\service.ts:631:    const stateFilter = new Set(states?.filter(Boolean));
+apps\worker\src\reconcile.ts:55:  const staleHostIds = new Set(
+packages\runtime-adapters\src\index.ts:255:      || /plugins::manager: failed to warm featured plugin ids cache/iu.test(line))) {
+packages\runtime-adapters\src\index.ts:322:    const child = spawn(spawnCommand, useWindowsShell ? [] : invocation.args, {
+packages\runtime-adapters\src\index.ts:332:    const timer = setTimeout(() => {
+packages\runtime-adapters\src\index.ts:337:    child.stdout.on("data", (chunk) => {
+packages\runtime-adapters\src\index.ts:341:    child.stderr.on("data", (chunk) => {
+packages\runtime-adapters\src\index.ts:345:    child.on("error", (error) => {
+packages\runtime-adapters\src\index.ts:346:      clearTimeout(timer);
+packages\runtime-adapters\src\index.ts:349:    child.on("close", (code) => {
+packages\runtime-adapters\src\index.ts:350:      clearTimeout(timer);
+packages\bootstrap\src\cli.ts:142:  const seen = new Set<string>();
+packages\bootstrap\src\cli.ts:232:  const values = new Map<string, string[]>();
+apps\bot\src\index.test.ts:43:    await new Promise((resolve) => setTimeout(resolve, 10));
+apps\bot\src\index.test.ts:529:        await new Promise((resolve) => setTimeout(resolve, 10));
+apps\bot\src\index.test.ts:638:        await new Promise((resolve) => setTimeout(resolve, 25));
+apps\bot\src\index.test.ts:707:        await new Promise((resolve) => setTimeout(resolve, 25));
+apps\bot\src\index.test.ts:791:        await new Promise((resolve) => setTimeout(resolve, 25));
+apps\bot\src\index.test.ts:875:        await new Promise((resolve) => setTimeout(resolve, 25));
+apps\bot\src\index.test.ts:925:      await new Promise((resolve) => setTimeout(resolve, 5));
+apps\bot\src\index.test.ts:977:        await new Promise((resolve) => setTimeout(resolve, getUpdatesCalls === 1 ? 50 : 5));
+apps\bot\src\index.test.ts:1207:        await new Promise((resolve) => setTimeout(resolve, getUpdatesCalls === 1 ? 1 : 25));
+packages\shared\src\index.ts:161:  const seen = new Set<string>();
+packages\shared\src\index.ts:184:  const seen = new Set<string>();
+packages\shared\src\index.ts:815:  return [...new Set((value ?? "")
+packages\shared\src\index.ts:842:  const memory = process.memoryUsage();
+packages\shared\src\index.ts:940:      const match = routeMatch.pattern.exec(url.pathname);
+packages\bootstrap\src\finalization.ts:54:  const kinds = new Set(includeKinds);
+apps\bot\src\index.ts:357:        transportPreference: "cached",
+apps\bot\src\index.ts:426:    const timer = setTimeout(() => {
+apps\bot\src\index.ts:435:      clearTimeout(timer);
+apps\bot\src\index.ts:436:      signal.removeEventListener("abort", onAbort);
+apps\bot\src\index.ts:439:    signal.addEventListener("abort", onAbort, { once: true });
+apps\bot\src\index.ts:596:  const controller = new AbortController();
+apps\bot\src\index.ts:607:    parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+apps\bot\src\index.ts:615:    timer = setTimeout(() => {
+apps\bot\src\index.ts:631:    parentSignal?.removeEventListener("abort", abortFromParent);
+apps\bot\src\index.ts:633:      clearTimeout(timer);
+apps\bot\src\index.ts:702:    const child = spawn(windowsPowerShellPath(), [
+apps\bot\src\index.ts:722:    const timer = setTimeout(() => {
+apps\bot\src\index.ts:734:    child.stdout.on("data", (chunk) => {
+apps\bot\src\index.ts:737:    child.stderr.on("data", (chunk) => {
+apps\bot\src\index.ts:740:    child.on("error", (error) => {
+apps\bot\src\index.ts:741:      clearTimeout(timer);
+apps\bot\src\index.ts:751:    child.on("close", (code) => {
+apps\bot\src\index.ts:752:      clearTimeout(timer);
+apps\bot\src\index.ts:832:    const child = spawn(windowsPowerShellPath(), [
+apps\bot\src\index.ts:850:    const timer = setTimeout(() => {
+apps\bot\src\index.ts:862:    child.stdout.on("data", (chunk) => {
+apps\bot\src\index.ts:865:    child.stderr.on("data", (chunk) => {
+apps\bot\src\index.ts:868:    child.on("error", (error) => {
+apps\bot\src\index.ts:869:      clearTimeout(timer);
+apps\bot\src\index.ts:879:    child.on("close", (code) => {
+apps\bot\src\index.ts:880:      clearTimeout(timer);
+apps\bot\src\index.ts:1204:  const abortController = new AbortController();
+apps\bot\src\index.ts:1360:    setTimeout(resolve, ms);
+packages\bootstrap\src\index.test.ts:193:    socket.on("data", () => {
+packages\bootstrap\src\index.ts:355:  const dirs = new Set<string>();
+packages\bootstrap\src\index.ts:511:    const child = spawn(spawnCommand, useShell ? [] : args, {
+packages\bootstrap\src\index.ts:520:    const timer = setTimeout(() => {
+packages\bootstrap\src\index.ts:524:    child.stdout.on("data", (chunk) => {
+packages\bootstrap\src\index.ts:527:    child.stderr.on("data", (chunk) => {
+packages\bootstrap\src\index.ts:530:    child.on("error", (error) => {
+packages\bootstrap\src\index.ts:531:      clearTimeout(timer);
+packages\bootstrap\src\index.ts:534:    child.on("close", (code) => {
+packages\bootstrap\src\index.ts:535:      clearTimeout(timer);
+packages\bootstrap\src\index.ts:566:  const candidateSet = new Set<string>();
+packages\bootstrap\src\index.ts:682:  const portMap = new Map<number, DockerPublishedPort>();
+packages\bootstrap\src\index.ts:724:    return new Map();
+packages\bootstrap\src\index.ts:742:    socket.setTimeout(timeoutMs);
+packages\bootstrap\src\index.ts:838:    socket.setTimeout(timeoutMs);
+packages\bootstrap\src\index.ts:842:    socket.on("data", (chunk) => {
+packages\bootstrap\src\index.ts:868:    socket.setTimeout(timeoutMs);
+packages\bootstrap\src\index.ts:872:    socket.on("data", (chunk) => {
+packages\bootstrap\src\index.ts:1112:  const blockedPorts = new Set(plannedPorts.map((item) => item.port));
+packages\bootstrap\src\index.ts:1113:  const suggestedPorts = new Map<string, number[]>();
+packages\bootstrap\src\index.ts:1270:  const suggestedPorts = [...new Set([
+packages\bootstrap\src\install.runtime.test.ts:198:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\install.runtime.test.ts:219:        await new Promise((resolve) => setTimeout(resolve, 10));
+packages\bootstrap\src\install.runtime.test.ts:1991:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\install.runtime.test.ts:2009:      await new Promise((resolve) => setTimeout(resolve, 10));
+packages\bootstrap\src\install.runtime.test.ts:2167:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\install.runtime.test.ts:2185:      await new Promise((resolve) => setTimeout(resolve, 10));
+packages\bootstrap\src\install\commands.ts:241:    const child = spawn(spawnCommandValue, plan.shell ? [] : plan.commandArgs, {
+packages\bootstrap\src\install\commands.ts:252:    child.stdout.on("data", (chunk) => {
+packages\bootstrap\src\install\commands.ts:255:    child.stderr.on("data", (chunk) => {
+packages\bootstrap\src\install\commands.ts:258:    child.on("error", async (error: NodeJS.ErrnoException) => {
+packages\bootstrap\src\install\commands.ts:288:    child.on("close", (code) => {
+packages\bootstrap\src\install\env.ts:45:  const templateKeys = new Set(parseTemplateKeys(input.templateText));
+packages\bootstrap\src\install\env.ts:48:  const seenKeys = new Set<string>();
+packages\bootstrap\src\install\env.ts:85:    addedKeys: [...new Set(addedKeys)],
+packages\bootstrap\src\install\env.ts:86:    preservedKeys: [...new Set(preservedKeys)]
+packages\bootstrap\src\install.test.ts:433:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\install.test.ts:478:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\install\index.ts:142:  const nonWarningMessages = new Set(
+packages\bootstrap\src\install\index.ts:277:  return [...new Set(
+packages\bootstrap\src\install\index.ts:969:    const match = /ignored build scripts:\s*(.+)$/iu.exec(line)
+packages\bootstrap\src\install\index.ts:970:      ?? /dependencies have build scripts that were ignored:\s*(.+)$/iu.exec(line);
+packages\bootstrap\src\install\index.ts:1025:  const rebuildTargets = [...new Set(input.packages.map(stripPackageVersion).filter(Boolean))];
+packages\bootstrap\src\install\index.ts:2076:    const cachedPostCheckReports = new Map<PostInstallCheck, BootstrapReport>();
+packages\bootstrap\src\install\index.ts:2078:      cachedPostCheckReports.set("setup", preflightSetupReport);
+packages\bootstrap\src\install\index.ts:2080:    const repeatedPostCheckSignatures = new Map<string, PostInstallCheck>();
+packages\bootstrap\src\install\index.ts:2097:      const report = cachedPostCheckReports.get(check) ?? await input.runBootstrapCheck(check, {
+packages\bootstrap\src\install\launch.ts:208:  await new Promise((resolve) => setTimeout(resolve, ms));
+packages\bootstrap\src\install\launch.ts:222:    const controller = new AbortController();
+packages\bootstrap\src\install\launch.ts:223:    const timeout = setTimeout(() => controller.abort(), Math.min(2_000, remaining));
+packages\bootstrap\src\install\launch.ts:229:        clearTimeout(timeout);
+packages\bootstrap\src\install\launch.ts:239:      clearTimeout(timeout);
+packages\bootstrap\src\install\manifest.ts:9:const cachedManifests = new Map<string, InstallerManifest>();
+packages\bootstrap\src\install\manifest.ts:67:  const cachedManifest = cachedManifests.get(manifestPath);
+packages\bootstrap\src\install\manifest.ts:68:  if (cachedManifest) {
+packages\bootstrap\src\install\manifest.ts:69:    return cachedManifest;
+packages\bootstrap\src\install\manifest.ts:73:  cachedManifests.set(manifestPath, manifest);
+packages\bootstrap\src\telegram-menu.ts:346:    const child = spawn(windowsPowerShellPath(), [
+packages\bootstrap\src\telegram-menu.ts:366:    const timer = setTimeout(() => {
+packages\bootstrap\src\telegram-menu.ts:378:    child.stdout.on("data", (chunk) => {
+packages\bootstrap\src\telegram-menu.ts:381:    child.stderr.on("data", (chunk) => {
+packages\bootstrap\src\telegram-menu.ts:384:    child.on("error", (error) => {
+packages\bootstrap\src\telegram-menu.ts:385:      clearTimeout(timer);
+packages\bootstrap\src\telegram-menu.ts:395:    child.on("close", (code) => {
+packages\bootstrap\src\telegram-menu.ts:396:      clearTimeout(timer);
+packages\bootstrap\src\install\repo.ts:42:  await new Promise<void>((resolve) => setTimeout(resolve, ms));
+packages\bootstrap\src\install\status.ts:3:const RECOVERABLE_ERROR_CODES = new Set<InstallRuntimeErrorDetail["code"]>([
+packages\bootstrap\src\install\telegram.ts:203:    const child = spawn(powershellPath, [
+packages\bootstrap\src\install\telegram.ts:220:    const timer = setTimeout(() => {
+packages\bootstrap\src\install\telegram.ts:232:    child.stdout.on("data", (chunk) => {
+packages\bootstrap\src\install\telegram.ts:235:    child.stderr.on("data", (chunk) => {
+packages\bootstrap\src\install\telegram.ts:238:    child.on("error", (error) => {
+packages\bootstrap\src\install\telegram.ts:239:      clearTimeout(timer);
+packages\bootstrap\src\install\telegram.ts:249:    child.on("close", (code) => {
+packages\bootstrap\src\install\telegram.ts:250:      clearTimeout(timer);
+packages\bootstrap\src\install\tui.ts:90:const TERMINAL_STEP_STATUSES = new Set<InstallStepRecord["status"]>(["passed", "warn", "failed", "skipped"]);
+packages\bootstrap\src\install\tui.ts:186:  const seen = new Set<string>();
+packages\bootstrap\src\install\tui.ts:888:    stdin.on("keypress", handler);
+packages\bootstrap\src\install\tui.ts:940:  const selected = new Set(input.initial);

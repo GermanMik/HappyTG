@@ -1,0 +1,10 @@
+apps\bot\src\index.ts:702:    const child = spawn(windowsPowerShellPath(), [
+apps\bot\src\index.ts:832:    const child = spawn(windowsPowerShellPath(), [
+packages\bootstrap\src\index.ts:511:    const child = spawn(spawnCommand, useShell ? [] : args, {
+packages\bootstrap\src\telegram-menu.ts:346:    const child = spawn(windowsPowerShellPath(), [
+packages\shared\src\index.ts:940:      const match = routeMatch.pattern.exec(url.pathname);
+packages\bootstrap\src\install\commands.ts:241:    const child = spawn(spawnCommandValue, plan.shell ? [] : plan.commandArgs, {
+packages\runtime-adapters\src\index.ts:322:    const child = spawn(spawnCommand, useWindowsShell ? [] : invocation.args, {
+packages\bootstrap\src\install\index.ts:969:    const match = /ignored build scripts:\s*(.+)$/iu.exec(line)
+packages\bootstrap\src\install\index.ts:970:      ?? /dependencies have build scripts that were ignored:\s*(.+)$/iu.exec(line);
+packages\bootstrap\src\install\telegram.ts:203:    const child = spawn(powershellPath, [

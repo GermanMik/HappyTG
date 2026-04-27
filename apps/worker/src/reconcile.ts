@@ -1,5 +1,9 @@
 import type {
+  ApprovalRequest,
   HappyTGStore,
+  HostRegistration,
+  MiniAppLaunchGrant,
+  MiniAppSession,
   PendingDispatch,
   Session,
   SessionEvent
@@ -17,6 +21,19 @@ export interface ReconcileResult {
   sessionsMovedToReconnecting: number;
   sessionsFailed: number;
   dispatchesFailed: number;
+}
+
+export interface ControlPlaneCompactionConfig {
+  terminalRecordRetentionMs: number;
+  hostRegistrationRetentionMs: number;
+}
+
+export interface ControlPlaneCompactionResult {
+  miniAppLaunchGrantsRemoved: number;
+  miniAppSessionsRemoved: number;
+  hostRegistrationsRemoved: number;
+  approvalsRemoved: number;
+  dispatchesRemoved: number;
 }
 
 function nextSequence(store: HappyTGStore, sessionId: string): number {
@@ -47,6 +64,108 @@ function findLatestDispatch(store: HappyTGStore, sessionId: string): PendingDisp
 
 function isActiveSessionState(state: Session["state"]): boolean {
   return state === "ready" || state === "running" || state === "verifying";
+}
+
+function isTerminalSessionState(state: Session["state"]): boolean {
+  return state === "completed" || state === "failed" || state === "cancelled";
+}
+
+function isTerminalApprovalState(state: ApprovalRequest["state"]): boolean {
+  return state !== "pending" && state !== "waiting_human";
+}
+
+function recordAgeMs(currentTimeMs: number, timestamp?: string): number {
+  return timestamp ? currentTimeMs - new Date(timestamp).getTime() : 0;
+}
+
+function hasRetentionElapsed(currentTimeMs: number, timestamp: string | undefined, retentionMs: number): boolean {
+  return recordAgeMs(currentTimeMs, timestamp) > retentionMs;
+}
+
+function compactArray<T>(items: T[], keep: (item: T) => boolean): { compacted: T[]; removed: number } {
+  const compacted = items.filter(keep);
+  return {
+    compacted,
+    removed: items.length - compacted.length
+  };
+}
+
+function shouldKeepMiniAppLaunchGrant(grant: MiniAppLaunchGrant, currentTimeMs: number): boolean {
+  return !grant.revokedAt && Date.parse(grant.expiresAt) > currentTimeMs;
+}
+
+function shouldKeepMiniAppSession(session: MiniAppSession, currentTimeMs: number): boolean {
+  return !session.revokedAt && Date.parse(session.expiresAt) > currentTimeMs;
+}
+
+function shouldKeepHostRegistration(registration: HostRegistration, currentTimeMs: number, retentionMs: number): boolean {
+  if (registration.status === "issued" && Date.parse(registration.expiresAt) > currentTimeMs) {
+    return true;
+  }
+
+  const terminalAt = registration.status === "issued" ? registration.expiresAt : registration.expiresAt;
+  return !hasRetentionElapsed(currentTimeMs, terminalAt, retentionMs);
+}
+
+function shouldKeepApproval(approval: ApprovalRequest, store: HappyTGStore, currentTimeMs: number, retentionMs: number): boolean {
+  if (!isTerminalApprovalState(approval.state)) {
+    return true;
+  }
+
+  const session = store.sessions.find((item) => item.id === approval.sessionId);
+  if (session && !isTerminalSessionState(session.state)) {
+    return true;
+  }
+
+  return !hasRetentionElapsed(currentTimeMs, approval.updatedAt || approval.expiresAt, retentionMs);
+}
+
+function shouldKeepDispatch(dispatch: PendingDispatch, store: HappyTGStore, currentTimeMs: number, retentionMs: number): boolean {
+  if (dispatch.status !== "completed" && dispatch.status !== "failed" && dispatch.status !== "cancelled") {
+    return true;
+  }
+
+  const session = store.sessions.find((item) => item.id === dispatch.sessionId);
+  if (session && !isTerminalSessionState(session.state)) {
+    return true;
+  }
+
+  return !hasRetentionElapsed(currentTimeMs, dispatch.updatedAt, retentionMs);
+}
+
+export function compactControlPlaneRecords(
+  store: HappyTGStore,
+  currentTimeMs: number,
+  config: ControlPlaneCompactionConfig
+): ControlPlaneCompactionResult {
+  const grants = compactArray(store.miniAppLaunchGrants ?? [], (grant) => shouldKeepMiniAppLaunchGrant(grant, currentTimeMs));
+  store.miniAppLaunchGrants = grants.compacted;
+
+  const miniAppSessions = compactArray(store.miniAppSessions ?? [], (session) => shouldKeepMiniAppSession(session, currentTimeMs));
+  store.miniAppSessions = miniAppSessions.compacted;
+
+  const hostRegistrations = compactArray(store.hostRegistrations, (registration) => (
+    shouldKeepHostRegistration(registration, currentTimeMs, config.hostRegistrationRetentionMs)
+  ));
+  store.hostRegistrations = hostRegistrations.compacted;
+
+  const approvals = compactArray(store.approvals, (approval) => (
+    shouldKeepApproval(approval, store, currentTimeMs, config.terminalRecordRetentionMs)
+  ));
+  store.approvals = approvals.compacted;
+
+  const dispatches = compactArray(store.pendingDispatches, (dispatch) => (
+    shouldKeepDispatch(dispatch, store, currentTimeMs, config.terminalRecordRetentionMs)
+  ));
+  store.pendingDispatches = dispatches.compacted;
+
+  return {
+    miniAppLaunchGrantsRemoved: grants.removed,
+    miniAppSessionsRemoved: miniAppSessions.removed,
+    hostRegistrationsRemoved: hostRegistrations.removed,
+    approvalsRemoved: approvals.removed,
+    dispatchesRemoved: dispatches.removed
+  };
 }
 
 export function reconcileSessionsAndDispatches(store: HappyTGStore, currentTimeMs: number, config: ReconcileConfig): ReconcileResult {
@@ -180,7 +299,7 @@ export function markExpiredApprovalSessions(store: HappyTGStore, currentTimeMs: 
   return updatedSessions;
 }
 
-export function summarizeReconcileResult(base: Omit<ReconcileResult, "updatedHosts" | "updatedApprovals"> & { updatedHosts: number; updatedApprovals: number; pausedSessions: number }): string | undefined {
+export function summarizeReconcileResult(base: Record<string, number>): string | undefined {
   const changed = Object.entries(base).filter(([, value]) => value > 0);
   if (changed.length === 0) {
     return undefined;

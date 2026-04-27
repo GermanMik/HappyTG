@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
+import type { TaskBundle } from "../../../packages/protocol/src/index.js";
 import { FileStateStore } from "../../../packages/shared/src/index.js";
 
 import { HappyTGControlPlaneService } from "./service.js";
@@ -404,5 +405,199 @@ test("mini app launch validates initData, issues app session, and exposes action
     } else {
       process.env.HAPPYTG_MINIAPP_LAUNCH_SECRET = previousSecret;
     }
+  }
+});
+
+test("proof task filesystem initialization runs outside the serialized store queue", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-api-proof-queue-"));
+  let releaseInit!: () => void;
+  let initStarted!: () => void;
+  const initStartedPromise = new Promise<void>((resolve) => {
+    initStarted = resolve;
+  });
+  const releaseInitPromise = new Promise<void>((resolve) => {
+    releaseInit = resolve;
+  });
+  const service = new HappyTGControlPlaneService(
+    new FileStateStore(path.join(tempDir, "control-plane.json")),
+    {
+      async initTaskBundle(input) {
+        initStarted();
+        await releaseInitPromise;
+        const now = "2026-04-27T12:00:00.000Z";
+        return {
+          id: input.taskId,
+          sessionId: input.sessionId,
+          workspaceId: input.workspaceId,
+          rootPath: path.join(input.repoRoot, ".agent", "tasks", input.taskId),
+          phase: "freeze",
+          mode: "proof",
+          title: input.title,
+          acceptanceCriteria: input.acceptanceCriteria,
+          verificationState: "not_started",
+          createdAt: now,
+          updatedAt: now
+        } satisfies TaskBundle;
+      },
+      async recordTaskApproval(task) {
+        return task;
+      },
+      async advanceTaskPhase(task, phase, _event, verificationState) {
+        return {
+          ...task,
+          phase,
+          verificationState: verificationState ?? task.verificationState,
+          updatedAt: "2026-04-27T12:00:01.000Z"
+        };
+      }
+    }
+  );
+  const workspaceDir = await mkdtemp(path.join(tempDir, "workspace-"));
+
+  try {
+    const pairing = await service.startPairing({
+      hostLabel: "proof-host",
+      fingerprint: "fp-proof-queue"
+    });
+    const claim = await service.claimPairing({
+      pairingCode: pairing.pairingCode,
+      telegramUserId: "777",
+      chatId: "777",
+      displayName: "Queue User"
+    });
+    const hello = await service.hostHello({
+      hostId: pairing.hostId,
+      fingerprint: "fp-proof-queue",
+      capabilities: ["codex-cli"],
+      workspaces: [
+        {
+          path: workspaceDir,
+          repoName: "queue-repo"
+        }
+      ]
+    });
+
+    const proofSession = service.createSession({
+      userId: claim.user.id,
+      hostId: pairing.hostId,
+      workspaceId: hello.workspaces[0]!.id,
+      mode: "proof",
+      runtime: "codex-cli",
+      title: "queue proof",
+      prompt: "prove queue is free",
+      acceptanceCriteria: ["store queue remains free"]
+    });
+    await initStartedPromise;
+
+    const unrelatedMutation = service.startPairing({
+      hostLabel: "other-host",
+      fingerprint: "fp-unblocked"
+    });
+    const completedWhileInitWasPending = await Promise.race([
+      unrelatedMutation.then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 100))
+    ]);
+
+    assert.equal(completedWhileInitWasPending, true);
+    releaseInit();
+
+    const result = await proofSession;
+    assert.equal(result.session.state, "needs_approval");
+    assert.ok(result.task);
+    assert.ok(result.approval);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("proof approval record failure fails session and closes the waiting approval", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-api-proof-approval-failure-"));
+  const service = new HappyTGControlPlaneService(
+    new FileStateStore(path.join(tempDir, "control-plane.json")),
+    {
+      async initTaskBundle(input) {
+        const now = "2026-04-27T12:00:00.000Z";
+        return {
+          id: input.taskId,
+          sessionId: input.sessionId,
+          workspaceId: input.workspaceId,
+          rootPath: path.join(input.repoRoot, ".agent", "tasks", input.taskId),
+          phase: "freeze",
+          mode: "proof",
+          title: input.title,
+          acceptanceCriteria: input.acceptanceCriteria,
+          verificationState: "not_started",
+          createdAt: now,
+          updatedAt: now
+        } satisfies TaskBundle;
+      },
+      async recordTaskApproval() {
+        throw new Error("repo-proof write failed");
+      },
+      async advanceTaskPhase(task, phase, _event, verificationState) {
+        return {
+          ...task,
+          phase,
+          verificationState: verificationState ?? task.verificationState,
+          updatedAt: "2026-04-27T12:00:01.000Z"
+        };
+      }
+    }
+  );
+  const workspaceDir = await mkdtemp(path.join(tempDir, "workspace-"));
+
+  try {
+    const pairing = await service.startPairing({
+      hostLabel: "proof-host",
+      fingerprint: "fp-proof-approval-failure"
+    });
+    const claim = await service.claimPairing({
+      pairingCode: pairing.pairingCode,
+      telegramUserId: "778",
+      chatId: "778",
+      displayName: "Approval Failure User"
+    });
+    const hello = await service.hostHello({
+      hostId: pairing.hostId,
+      fingerprint: "fp-proof-approval-failure",
+      capabilities: ["codex-cli"],
+      workspaces: [
+        {
+          path: workspaceDir,
+          repoName: "approval-failure-repo"
+        }
+      ]
+    });
+
+    await assert.rejects(
+      () => service.createSession({
+        userId: claim.user.id,
+        hostId: pairing.hostId,
+        workspaceId: hello.workspaces[0]!.id,
+        mode: "proof",
+        runtime: "codex-cli",
+        title: "approval record failure",
+        prompt: "fail approval record",
+        acceptanceCriteria: ["approval is closed"]
+      }),
+      /repo-proof write failed/
+    );
+
+    const sessions = await service.listSessions(claim.user.id);
+    const failed = sessions.find((item) => item.title === "approval record failure");
+    assert.equal(failed?.state, "failed");
+    const approvals = await service.listApprovals(claim.user.id);
+    assert.equal(approvals.length, 1);
+    assert.equal(approvals[0]?.state, "superseded");
+    const replay = await service.resolveApproval(approvals[0]!.id, {
+      userId: claim.user.id,
+      decision: "approved",
+      nonce: approvals[0]!.nonce
+    });
+    assert.equal(replay.approval.state, "superseded");
+    assert.equal(replay.session.state, "failed");
+    assert.equal(replay.dispatch, undefined);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
   }
 });

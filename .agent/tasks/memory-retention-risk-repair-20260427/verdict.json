@@ -1,0 +1,20 @@
+{
+  "status": "warn",
+  "summary": "Retention repair is implemented and verified. H1, M2, M3, L1, and L2 are fixed; M1 is reduced for the primary runCodexExec path with bounded output and truncation metadata. A fresh verifier edge-case finding in proof approval-record failure was fixed by superseding the waiting approval. Overall verdict is WARN because bootstrap/Telegram helper output buffering remains a documented residual risk and pnpm happytg verify reports environment warnings with exit code 0.",
+  "fixed_findings": ["H1", "M2", "M3", "L1", "L2"],
+  "reduced_findings": ["M1"],
+  "residual_risks": [
+    "Bootstrap and Telegram helper command wrappers still use local stdout/stderr strings outside the primary runCodexExec daemon path.",
+    "pnpm happytg verify is WARN due to Codex websocket 403 fallback, public Caddy Mini App identity mismatch, and pairing/daemon flow not completed while local services are already running."
+  ],
+  "verification": [
+    { "command": "pnpm build", "status": "pass", "exitCode": 0 },
+    { "command": "pnpm lint", "status": "pass", "exitCode": 0 },
+    { "command": "pnpm typecheck", "status": "pass", "exitCode": 0 },
+    { "command": "pnpm test", "status": "pass", "exitCode": 0 },
+    { "command": "pnpm happytg doctor", "status": "warn", "exitCode": 0 },
+    { "command": "pnpm happytg verify", "status": "warn", "exitCode": 0 },
+    { "command": "focused package tests and typechecks", "status": "pass", "exitCode": 0 },
+    { "command": "memory/resource smoke", "status": "pass", "exitCode": 0 }
+  ]
+}

@@ -13,6 +13,7 @@ import {
 } from "../../../packages/shared/src/index.js";
 
 import {
+  compactControlPlaneRecords,
   markExpiredApprovalSessions,
   reconcileSessionsAndDispatches,
   summarizeReconcileResult,
@@ -24,6 +25,8 @@ export interface WorkerRuntimeOptions {
   logger?: Logger;
   staleAfterMs?: number;
   orphanAfterMs?: number;
+  terminalRecordRetentionMs?: number;
+  hostRegistrationRetentionMs?: number;
   tickMs?: number;
   readyMaxLagMs?: number;
 }
@@ -49,6 +52,8 @@ export function createWorkerRuntime(options: WorkerRuntimeOptions = {}) {
   const store = options.store ?? new FileStateStore();
   const staleAfterMs = options.staleAfterMs ?? Number(process.env.HOST_STALE_AFTER_MS ?? 20_000);
   const orphanAfterMs = options.orphanAfterMs ?? Number(process.env.DISPATCH_ORPHAN_AFTER_MS ?? 300_000);
+  const terminalRecordRetentionMs = options.terminalRecordRetentionMs ?? Number(process.env.CONTROL_PLANE_TERMINAL_RETENTION_MS ?? 7 * 24 * 60 * 60 * 1000);
+  const hostRegistrationRetentionMs = options.hostRegistrationRetentionMs ?? Number(process.env.CONTROL_PLANE_HOST_REGISTRATION_RETENTION_MS ?? 24 * 60 * 60 * 1000);
   const tickMs = options.tickMs ?? Number(process.env.WORKER_TICK_MS ?? 5_000);
   const readyMaxLagMs = options.readyMaxLagMs ?? Number(process.env.WORKER_READY_MAX_LAG_MS ?? tickMs * 3);
 
@@ -81,6 +86,10 @@ export function createWorkerRuntime(options: WorkerRuntimeOptions = {}) {
           staleAfterMs,
           orphanAfterMs
         });
+        const compactionResult = compactControlPlaneRecords(state, now, {
+          terminalRecordRetentionMs,
+          hostRegistrationRetentionMs
+        });
 
         const summary = summarizeReconcileResult({
           updatedHosts,
@@ -88,7 +97,8 @@ export function createWorkerRuntime(options: WorkerRuntimeOptions = {}) {
           pausedSessions,
           sessionsMovedToReconnecting: reconcileResult.sessionsMovedToReconnecting,
           sessionsFailed: reconcileResult.sessionsFailed,
-          dispatchesFailed: reconcileResult.dispatchesFailed
+          dispatchesFailed: reconcileResult.dispatchesFailed,
+          compactedRecords: Object.values(compactionResult).reduce((total, count) => total + count, 0)
         });
 
         if (summary) {

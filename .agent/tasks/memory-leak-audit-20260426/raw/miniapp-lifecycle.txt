@@ -1,0 +1,20 @@
+apps\miniapp\src\index.test.ts:306:    assert.match(html, /window\.setTimeout\(waitForTelegramInitData, initDataPollMs\)/);
+apps\miniapp\src\index.ts:267:    setTimeout(resolve, ms);
+apps\miniapp\src\index.ts:781:            var parsed = JSON.parse(localStorage.getItem(key) || "null");
+apps\miniapp\src\index.ts:783:              localStorage.removeItem(key);
+apps\miniapp\src\index.ts:788:            localStorage.removeItem(key);
+apps\miniapp\src\index.ts:794:            var parsed = JSON.parse(localStorage.getItem(sessionKey) || "null");
+apps\miniapp\src\index.ts:796:              localStorage.removeItem(sessionKey);
+apps\miniapp\src\index.ts:801:            localStorage.removeItem(sessionKey);
+apps\miniapp\src\index.ts:806:          localStorage.setItem(sessionKey, JSON.stringify(session));
+apps\miniapp\src\index.ts:820:          input.addEventListener("input", function () {
+apps\miniapp\src\index.ts:821:            localStorage.setItem(key, JSON.stringify({
+apps\miniapp\src\index.ts:828:        document.querySelector("[data-draft-restore]")?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:834:        document.querySelector("[data-draft-clear]")?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:835:          localStorage.removeItem(key);
+apps\miniapp\src\index.ts:838:        authReload?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:965:          window.setTimeout(waitForTelegramInitData, initDataPollMs);
+apps\miniapp\src\index.ts:967:        authRetry?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:977:          button.addEventListener("click", function () {
+apps\miniapp\src\index.ts:1016:        document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
+apps\miniapp\src\index.ts:1048:            localStorage.removeItem(key);

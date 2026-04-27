@@ -1,0 +1,126 @@
+packages\shared\src\index.ts:900:export function createJsonServer(routes: RouteDefinition[], logger: Logger, options?: { cors?: CorsOptions }) {
+packages\shared\src\index.test.ts:329:  await new Promise<void>((resolve) => server.listen(0, resolve));
+packages\shared\src\index.test.ts:336:    const response = await fetch(`http://127.0.0.1:${address.port}/items/abc?filter=recent`);
+packages\shared\src\index.test.ts:345:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+packages\shared\src\index.test.ts:359:  await new Promise<void>((resolve) => server.listen(0, resolve));
+packages\shared\src\index.test.ts:366:    const response = await fetch(`http://127.0.0.1:${address.port}/boom`);
+packages\shared\src\index.test.ts:375:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\worker\src\index.ts:242:        signal: AbortSignal.timeout(750)
+apps\worker\src\index.ts:314:      server.once("listening", onListening);
+apps\worker\src\index.ts:315:      server.once("error", onError);
+apps\worker\src\index.ts:316:      server.listen(listenPort);
+packages\shared\src\index.test.ts:329:  await new Promise<void>((resolve) => server.listen(0, resolve));
+packages\shared\src\index.test.ts:336:    const response = await fetch(`http://127.0.0.1:${address.port}/items/abc?filter=recent`);
+packages\shared\src\index.test.ts:345:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+packages\shared\src\index.test.ts:359:  await new Promise<void>((resolve) => server.listen(0, resolve));
+packages\shared\src\index.test.ts:366:    const response = await fetch(`http://127.0.0.1:${address.port}/boom`);
+packages\shared\src\index.test.ts:375:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+packages\shared\src\index.ts:900:export function createJsonServer(routes: RouteDefinition[], logger: Logger, options?: { cors?: CorsOptions }) {
+apps\worker\src\index.test.ts:16:  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\worker\src\index.test.ts:49:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\worker\src\index.test.ts:56:    const before = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\worker\src\index.test.ts:64:    const after = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\worker\src\index.test.ts:71:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\worker\src\index.test.ts:98:    if (server.listening) {
+apps\worker\src\index.test.ts:140:    if (server.listening) {
+apps\worker\src\index.test.ts:173:    if (server.listening) {
+apps\worker\src\index.test.ts:206:    if (server.listening) {
+apps\host-daemon\src\index.ts:187:  const response = await fetch(new URL(pathname, apiBaseUrl), {
+apps\api\src\index.ts:362:        signal: AbortSignal.timeout(750)
+apps\api\src\index.ts:417:      server.once("listening", onListening);
+apps\api\src\index.ts:418:      server.once("error", onError);
+apps\api\src\index.ts:419:      server.listen(listenPort);
+apps\api\src\index.test.ts:14:  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\api\src\index.test.ts:19:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:26:    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\api\src\index.test.ts:40:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:47:    const versionResponse = await fetch(`http://127.0.0.1:${address.port}/version`);
+apps\api\src\index.test.ts:52:    const metricsResponse = await fetch(`http://127.0.0.1:${address.port}/metrics`);
+apps\api\src\index.test.ts:66:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:73:    const allowed = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/dashboard`, {
+apps\api\src\index.test.ts:82:    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/dashboard`, {
+apps\api\src\index.test.ts:101:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:108:    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/dashboard`);
+apps\api\src\index.test.ts:134:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:141:    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/approvals/apr_1/resolve`, {
+apps\api\src\index.test.ts:150:    const allowed = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/approvals/apr_1/resolve`, {
+apps\api\src\index.test.ts:220:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\api\src\index.test.ts:227:    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/projects`);
+apps\api\src\index.test.ts:230:    const projects = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/projects`, {
+apps\api\src\index.test.ts:237:    const created = await fetch(`http://127.0.0.1:${address.port}/api/v1/miniapp/sessions`, {
+apps\miniapp\src\index.ts:43:  const response = await fetch(new URL(pathname, apiBaseUrl), init);
+apps\miniapp\src\index.ts:275:        signal: AbortSignal.timeout(750)
+apps\miniapp\src\index.ts:885:          fetch(apiUrl("/api/v1/miniapp/auth/session"), {
+apps\miniapp\src\index.ts:988:            fetch(apiUrl("/api/v1/miniapp/approvals/" + encodeURIComponent(button.getAttribute("data-approval-id") || "") + "/resolve"), {
+apps\miniapp\src\index.ts:1025:          fetch(location.pathname + location.search, {
+apps\miniapp\src\index.ts:1379:      server.once("listening", onListening);
+apps\miniapp\src\index.ts:1380:      server.once("error", onError);
+apps\miniapp\src\index.ts:1381:      server.listen(listenPort);
+apps\bot\src\index.ts:515:    const response = await fetch(new URL(pathname, apiBaseUrl), {
+apps\bot\src\index.ts:1368:        signal: AbortSignal.timeout(750)
+apps\bot\src\index.ts:1406:    server.close((error) => {
+apps\bot\src\index.ts:1491:      server.once("error", onError);
+apps\bot\src\index.ts:1492:      server.once("listening", onListening);
+apps\bot\src\index.ts:1493:      server.listen(listenPort);
+apps\miniapp\src\index.test.ts:15:  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\miniapp\src\index.test.ts:50:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:57:    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\miniapp\src\index.test.ts:64:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\miniapp\src\index.test.ts:123:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:130:    const response = await fetch(`http://127.0.0.1:${address.port}/?userId=usr_1`);
+apps\miniapp\src\index.test.ts:143:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\miniapp\src\index.test.ts:189:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:196:    const response = await fetch(`http://127.0.0.1:${address.port}/?userId=usr_1`, {
+apps\miniapp\src\index.test.ts:241:    await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:248:      const response = await fetch(`http://127.0.0.1:${address.port}/?userId=usr_1`, {
+apps\miniapp\src\index.test.ts:284:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:291:    const response = await fetch(`http://127.0.0.1:${address.port}/`, {
+apps\miniapp\src\index.test.ts:333:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:340:    const response = await fetch(`http://127.0.0.1:${address.port}/sessions`, {
+apps\miniapp\src\index.test.ts:394:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:401:    const response = await fetch(`http://127.0.0.1:${address.port}/task/HTG-0001?userId=usr_1`);
+apps\miniapp\src\index.test.ts:412:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\miniapp\src\index.test.ts:471:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:478:    const projectsResponse = await fetch(`http://127.0.0.1:${address.port}/projects?userId=usr_1`);
+apps\miniapp\src\index.test.ts:488:    const taskResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+apps\miniapp\src\index.test.ts:574:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:581:    const response = await fetch(`http://127.0.0.1:${address.port}/session/ses_2?userId=usr_1`);
+apps\miniapp\src\index.test.ts:592:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\miniapp\src\index.test.ts:630:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\miniapp\src\index.test.ts:637:    const response = await fetch(`http://127.0.0.1:${address.port}/approval/apr_1?userId=usr_1`);
+apps\miniapp\src\index.test.ts:674:    if (server.listening) {
+apps\miniapp\src\index.test.ts:723:    if (server.listening) {
+apps\miniapp\src\index.test.ts:760:    if (server.listening) {
+apps\miniapp\src\index.test.ts:797:    if (server.listening) {
+apps\bot\src\index.test.ts:48:  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\bot\src\index.test.ts:61:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\bot\src\index.test.ts:68:    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\bot\src\index.test.ts:75:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\bot\src\index.test.ts:88:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\bot\src\index.test.ts:95:    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\bot\src\index.test.ts:102:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\bot\src\index.test.ts:137:    if (server.listening) {
+apps\bot\src\index.test.ts:170:    if (server.listening) {
+apps\bot\src\index.test.ts:203:    if (server.listening) {
+apps\bot\src\index.test.ts:543:    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\bot\src\index.test.ts:571:  await new Promise<void>((resolve) => server.listen(0, resolve));
+apps\bot\src\index.test.ts:578:    const response = await fetch(`http://127.0.0.1:${address.port}/telegram/webhook`, {
+apps\bot\src\index.test.ts:598:    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+apps\bot\src\index.test.ts:1113:    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\bot\src\index.test.ts:1173:    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\bot\src\index.test.ts:1221:    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+apps\bot\src\index.test.ts:1281:    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+packages\bootstrap\src\index.ts:759:      const response = await fetch(url, {
+packages\bootstrap\src\index.ts:760:        signal: AbortSignal.timeout(750)
+packages\bootstrap\src\index.test.ts:178:  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+packages\bootstrap\src\index.test.ts:184:  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+packages\bootstrap\src\index.test.ts:197:  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+packages\bootstrap\src\index.test.ts:222:  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+packages\bootstrap\src\index.test.ts:254:  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+packages\bootstrap\src\index.test.ts:279:  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+packages\bootstrap\src\index.test.ts:299:  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+packages\bootstrap\src\index.test.ts:311:  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+packages\bootstrap\src\telegram-menu.ts:180:      signal: AbortSignal.timeout(timeoutMs)
+packages\bootstrap\src\install.runtime.test.ts:84:  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+packages\bootstrap\src\install.runtime.test.ts:90:  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+packages\bootstrap\src\install\pairing.ts:139:      signal: AbortSignal.timeout(1_500)

@@ -371,6 +371,57 @@ test("task wizard uses smart defaults and creates a proof session from callback 
   assert.equal(calls.some((call) => call.pathname === "/api/v1/sessions" && call.init?.method === "POST"), true);
 });
 
+test("task wizard opportunistically sweeps expired drafts on unrelated updates", async () => {
+  let currentTime = 0;
+  const apiFetch: BotDependencies["apiFetch"] = async (pathname) => {
+    if (pathname === "/api/v1/users/by-telegram/42") {
+      return { id: "usr_42" } as never;
+    }
+    if (pathname === "/api/v1/users/by-telegram/43") {
+      return { id: "usr_43" } as never;
+    }
+    if (pathname === "/api/v1/hosts?userId=usr_42") {
+      return { hosts: [host()] } as never;
+    }
+    if (pathname === "/api/v1/hosts/host_1/workspaces?userId=usr_42") {
+      return { workspaces: [workspace()] } as never;
+    }
+    if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_43") {
+      return {
+        hosts: [],
+        workspaces: [],
+        sessions: [],
+        approvals: [],
+        tasks: []
+      } as never;
+    }
+    throw new Error(`Unexpected path ${pathname}`);
+  };
+  const handlers = createBotHandlers({
+    apiFetch,
+    now: () => currentTime,
+    async sendTelegramMessage() {}
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/task",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+  assert.equal(handlers.wizardDraftCount(), 1);
+
+  currentTime = 31 * 60 * 1000;
+  await handlers.handleMessage({
+    message_id: 2,
+    text: "/menu",
+    chat: { id: 101 },
+    from: { id: 43, username: "other" }
+  });
+
+  assert.equal(handlers.wizardDraftCount(), 0);
+});
+
 test("verify command surfaces scoped approval keyboard with nonce", async () => {
   const messages: CapturedMessage[] = [];
   const apiFetch: BotDependencies["apiFetch"] = async (pathname) => {

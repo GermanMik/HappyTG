@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -11,6 +12,66 @@ export interface RuntimeAdapter {
   kind: "codex-cli" | "secondary";
   supportsProofLoop: boolean;
   supportsResumableSessions: boolean;
+}
+
+const DEFAULT_COMMAND_OUTPUT_MAX_BYTES = 1024 * 1024;
+const DEFAULT_COMMAND_TIMEOUT_GRACE_MS = 2_000;
+
+class BoundedOutputBuffer {
+  private readonly chunks: Buffer[] = [];
+  private retainedBytes = 0;
+  totalBytes = 0;
+
+  constructor(private readonly maxBytes: number) {}
+
+  append(chunk: Buffer | string): void {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    this.totalBytes += buffer.byteLength;
+    if (this.maxBytes <= 0) {
+      return;
+    }
+
+    if (buffer.byteLength >= this.maxBytes) {
+      this.chunks.length = 0;
+      this.chunks.push(buffer.subarray(buffer.byteLength - this.maxBytes));
+      this.retainedBytes = this.maxBytes;
+      return;
+    }
+
+    this.chunks.push(buffer);
+    this.retainedBytes += buffer.byteLength;
+
+    while (this.retainedBytes > this.maxBytes && this.chunks.length > 0) {
+      const first = this.chunks[0]!;
+      const overflow = this.retainedBytes - this.maxBytes;
+      if (first.byteLength <= overflow) {
+        this.chunks.shift();
+        this.retainedBytes -= first.byteLength;
+        continue;
+      }
+
+      this.chunks[0] = first.subarray(overflow);
+      this.retainedBytes -= overflow;
+    }
+  }
+
+  text(): string {
+    return Buffer.concat(this.chunks, this.retainedBytes).toString("utf8");
+  }
+
+  truncated(): boolean {
+    return this.totalBytes > this.retainedBytes;
+  }
+}
+
+function outputMaxBytesFromEnv(env: NodeJS.ProcessEnv): number {
+  const parsed = Number(env.HAPPYTG_COMMAND_OUTPUT_MAX_BYTES ?? env.HAPPYTG_CODEX_EXEC_OUTPUT_MAX_BYTES);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : DEFAULT_COMMAND_OUTPUT_MAX_BYTES;
+}
+
+function timeoutGraceMsFromEnv(env: NodeJS.ProcessEnv): number {
+  const parsed = Number(env.HAPPYTG_COMMAND_TIMEOUT_GRACE_MS ?? env.HAPPYTG_CODEX_EXEC_TIMEOUT_GRACE_MS);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : DEFAULT_COMMAND_TIMEOUT_GRACE_MS;
 }
 
 export const primaryRuntimeAdapter: RuntimeAdapter = {
@@ -301,12 +362,26 @@ async function runCommand(
     env?: NodeJS.ProcessEnv;
     platform?: NodeJS.Platform;
     timeoutMs?: number;
+    outputMaxBytes?: number;
+    timeoutGraceMs?: number;
   }
-): Promise<{ stdout: string; stderr: string; exitCode: number; timedOut: boolean }> {
+): Promise<{
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  timedOut: boolean;
+  stdoutBytes: number;
+  stderrBytes: number;
+  stdoutTruncated: boolean;
+  stderrTruncated: boolean;
+  outputRetentionBytes: number;
+}> {
   const cwd = options?.cwd;
   const env = options?.env ?? process.env;
   const platform = options?.platform ?? process.platform;
   const timeoutMs = options?.timeoutMs ?? Number(env.HAPPYTG_CODEX_EXEC_TIMEOUT_MS ?? 120_000);
+  const outputRetentionBytes = options?.outputMaxBytes ?? outputMaxBytesFromEnv(env);
+  const timeoutGraceMs = options?.timeoutGraceMs ?? timeoutGraceMsFromEnv(env);
   const invocation = await resolveCommandInvocation(command, args, {
     cwd,
     env,
@@ -318,6 +393,24 @@ async function runCommand(
   const spawnCommand = useWindowsShell
     ? buildWindowsShellCommand(invocation.command, invocation.args)
     : invocation.command;
+
+  function forceKill(child: ChildProcess): void {
+    if (!child.pid) {
+      return;
+    }
+
+    if (platform === "win32") {
+      const taskkill = spawn("taskkill", ["/pid", String(child.pid), "/t", "/f"], {
+        windowsHide: true,
+        stdio: "ignore"
+      });
+      taskkill.on("error", () => undefined);
+      return;
+    }
+
+    child.kill("SIGKILL");
+  }
+
   return new Promise((resolve, reject) => {
     const child = spawn(spawnCommand, useWindowsShell ? [] : invocation.args, {
       cwd,
@@ -326,34 +419,73 @@ async function runCommand(
       stdio: ["ignore", "pipe", "pipe"]
     });
 
-    let stdout = "";
-    let stderr = "";
+    const stdout = new BoundedOutputBuffer(outputRetentionBytes);
+    const stderr = new BoundedOutputBuffer(outputRetentionBytes);
     let timedOut = false;
+    let settled = false;
+    let graceTimer: NodeJS.Timeout | undefined;
+
+    const finish = (code: number | null): void => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      if (graceTimer) {
+        clearTimeout(graceTimer);
+      }
+
+      const timeoutSuffix = timedOut ? `Process timed out after ${timeoutMs}ms.` : "";
+      const stderrText = [stderr.text(), timeoutSuffix].filter(Boolean).join("\n").trim();
+      resolve({
+        stdout: stdout.text(),
+        stderr: stderrText,
+        exitCode: timedOut ? 124 : code ?? 1,
+        timedOut,
+        stdoutBytes: stdout.totalBytes,
+        stderrBytes: stderr.totalBytes + Buffer.byteLength(timeoutSuffix),
+        stdoutTruncated: stdout.truncated(),
+        stderrTruncated: stderr.truncated(),
+        outputRetentionBytes
+      });
+    };
+
     const timer = setTimeout(() => {
+      if (settled) {
+        return;
+      }
       timedOut = true;
       child.kill("SIGTERM");
+      graceTimer = setTimeout(() => {
+        if (settled) {
+          return;
+        }
+        forceKill(child);
+        finish(124);
+      }, timeoutGraceMs);
     }, timeoutMs);
 
     child.stdout.on("data", (chunk) => {
-      stdout += chunk.toString();
+      stdout.append(chunk);
     });
 
     child.stderr.on("data", (chunk) => {
-      stderr += chunk.toString();
+      stderr.append(chunk);
     });
 
     child.on("error", (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
       clearTimeout(timer);
+      if (graceTimer) {
+        clearTimeout(graceTimer);
+      }
       reject(error);
     });
     child.on("close", (code) => {
-      clearTimeout(timer);
-      resolve({
-        stdout,
-        stderr: timedOut ? `${stderr}\nProcess timed out after ${timeoutMs}ms.`.trim() : stderr,
-        exitCode: timedOut ? 124 : code ?? 1,
-        timedOut
-      });
+      finish(code);
     });
   });
 }
@@ -488,6 +620,11 @@ export async function runCodexExec(input: {
         : lastMessage.trim() || result.stdout.trim().split("\n").slice(-5).join("\n") || "Codex run completed",
       stdout: result.stdout,
       stderr: result.stderr,
+      stdoutBytes: result.stdoutBytes,
+      stderrBytes: result.stderrBytes,
+      stdoutTruncated: result.stdoutTruncated,
+      stderrTruncated: result.stderrTruncated,
+      outputRetentionBytes: result.outputRetentionBytes,
       exitCode: result.exitCode,
       startedAt,
       finishedAt,

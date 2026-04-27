@@ -1,0 +1,72 @@
+PS> node --expose-gc --import tsx .agent/tasks/memory-retention-risk-repair-20260427/raw/memory-smoke.mjs
+{
+  "ok": true,
+  "compaction": {
+    "miniAppLaunchGrantsRemoved": 250,
+    "miniAppSessionsRemoved": 250,
+    "hostRegistrationsRemoved": 0,
+    "approvalsRemoved": 0,
+    "dispatchesRemoved": 0
+  },
+  "remainingLaunchGrants": 0,
+  "remainingMiniAppSessions": 0,
+  "samples": [
+    {
+      "label": "start",
+      "rss": 95313920,
+      "heapTotal": 19070976,
+      "heapUsed": 9207160,
+      "external": 4104299,
+      "arrayBuffers": 32135
+    },
+    {
+      "label": "child-iteration-0",
+      "rss": 95473664,
+      "heapTotal": 19333120,
+      "heapUsed": 9395368,
+      "external": 4628815,
+      "arrayBuffers": 41339
+    },
+    {
+      "label": "child-iteration-1",
+      "rss": 95518720,
+      "heapTotal": 19333120,
+      "heapUsed": 9458360,
+      "external": 4629015,
+      "arrayBuffers": 41539
+    },
+    {
+      "label": "child-iteration-2",
+      "rss": 95670272,
+      "heapTotal": 19333120,
+      "heapUsed": 9518736,
+      "external": 4629015,
+      "arrayBuffers": 41539
+    },
+    {
+      "label": "child-iteration-3",
+      "rss": 95866880,
+      "heapTotal": 19333120,
+      "heapUsed": 9529568,
+      "external": 4629015,
+      "arrayBuffers": 41539
+    },
+    {
+      "label": "child-iteration-4",
+      "rss": 96194560,
+      "heapTotal": 19333120,
+      "heapUsed": 9611928,
+      "external": 4629015,
+      "arrayBuffers": 32335
+    },
+    {
+      "label": "after-compaction",
+      "rss": 95719424,
+      "heapTotal": 19595264,
+      "heapUsed": 9632944,
+      "external": 4094911,
+      "arrayBuffers": 32335
+    }
+  ]
+}
+ExitCode: 0

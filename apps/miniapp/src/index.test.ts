@@ -302,6 +302,10 @@ test("auth-pending shell exposes retry-safe auth feedback controls", async () =>
     assert.match(html, /Повторить подключение/);
     assert.match(html, /data-auth-step="telegram"/);
     assert.match(html, /window\.HAPPYTgNeedsAuth = true/);
+    assert.match(html, /https:\/\/telegram\.org\/js\/telegram-web-app\.js/);
+    assert.match(html, /var initDataWaitTimer = 0/);
+    assert.match(html, /if \(!initDataWaitTimer\) \{\s+initDataWaitTimer = window\.setTimeout\(waitForTelegramInitData, initDataPollMs\);/);
+    assert.match(html, /initDataWaitTimeoutMs = 5000/);
   } finally {
     await closeServer(server);
   }

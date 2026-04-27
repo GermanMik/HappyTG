@@ -1,0 +1,33 @@
+{
+  "task_id": "memory-retention-risk-repair-20260427",
+  "status": "warn",
+  "spec_frozen": "2026-04-27",
+  "source_task": ".agent/tasks/memory-leak-audit-20260426",
+  "findings": {
+    "H1": "fixed",
+    "M1": "reduced",
+    "M2": "fixed",
+    "M3": "fixed",
+    "L1": "fixed",
+    "L2": "fixed"
+  },
+  "commands": [
+    { "command": "pnpm --filter @happytg/runtime-adapters test", "status": "pass", "raw": "raw/focused-runtime-adapters-test.txt" },
+    { "command": "pnpm --filter @happytg/api test", "status": "pass", "raw": "raw/focused-api-test.txt" },
+    { "command": "pnpm --filter @happytg/worker test", "status": "pass", "raw": "raw/focused-worker-test.txt" },
+    { "command": "pnpm --filter @happytg/bot test", "status": "pass", "raw": "raw/focused-bot-test.txt" },
+    { "command": "pnpm --filter @happytg/miniapp test", "status": "pass", "raw": "raw/focused-miniapp-test.txt" },
+    { "command": "pnpm build", "status": "pass", "raw": "raw/build.txt" },
+    { "command": "pnpm lint", "status": "pass", "raw": "raw/lint.txt" },
+    { "command": "pnpm typecheck", "status": "pass", "raw": "raw/typecheck.txt" },
+    { "command": "pnpm test", "status": "pass", "raw": "raw/test-unit.txt" },
+    { "command": "pnpm happytg doctor", "status": "warn", "exitCode": 0, "raw": "raw/happytg-doctor.txt" },
+    { "command": "pnpm happytg verify", "status": "warn", "exitCode": 0, "raw": "raw/happytg-verify.txt" },
+    { "command": "pnpm release:check -- --version 0.4.6", "status": "pass", "exitCode": 0, "raw": "raw/release-check-versioned.txt" },
+    { "command": "node --expose-gc --import tsx .agent/tasks/memory-retention-risk-repair-20260427/raw/memory-smoke.mjs", "status": "pass", "raw": "raw/memory-smoke.txt" }
+  ],
+  "residual_risks": [
+    "Bootstrap and Telegram helper command wrappers still have local unbounded stdout/stderr buffers outside the primary runCodexExec daemon path.",
+    "happytg verify is WARN because of environment/service warnings unrelated to retention fixes."
+  ]
+}

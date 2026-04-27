@@ -1,0 +1,48 @@
+packages\runtime-adapters\src\index.ts:337:    child.stdout.on("data", (chunk) => {
+packages\runtime-adapters\src\index.ts:341:    child.stderr.on("data", (chunk) => {
+packages\runtime-adapters\src\index.ts:345:    child.on("error", (error) => {
+packages\runtime-adapters\src\index.ts:349:    child.on("close", (code) => {
+apps\miniapp\src\index.ts:820:          input.addEventListener("input", function () {
+apps\miniapp\src\index.ts:828:        document.querySelector("[data-draft-restore]")?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:834:        document.querySelector("[data-draft-clear]")?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:838:        authReload?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:967:        authRetry?.addEventListener("click", function () {
+apps\miniapp\src\index.ts:977:          button.addEventListener("click", function () {
+apps\miniapp\src\index.ts:1016:        document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
+apps\bot\src\index.ts:436:      signal.removeEventListener("abort", onAbort);
+apps\bot\src\index.ts:439:    signal.addEventListener("abort", onAbort, { once: true });
+apps\bot\src\index.ts:607:    parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+apps\bot\src\index.ts:631:    parentSignal?.removeEventListener("abort", abortFromParent);
+apps\bot\src\index.ts:734:    child.stdout.on("data", (chunk) => {
+apps\bot\src\index.ts:737:    child.stderr.on("data", (chunk) => {
+apps\bot\src\index.ts:740:    child.on("error", (error) => {
+apps\bot\src\index.ts:751:    child.on("close", (code) => {
+apps\bot\src\index.ts:862:    child.stdout.on("data", (chunk) => {
+apps\bot\src\index.ts:865:    child.stderr.on("data", (chunk) => {
+apps\bot\src\index.ts:868:    child.on("error", (error) => {
+apps\bot\src\index.ts:879:    child.on("close", (code) => {
+packages\bootstrap\src\index.test.ts:193:    socket.on("data", () => {
+packages\bootstrap\src\index.ts:524:    child.stdout.on("data", (chunk) => {
+packages\bootstrap\src\index.ts:527:    child.stderr.on("data", (chunk) => {
+packages\bootstrap\src\index.ts:530:    child.on("error", (error) => {
+packages\bootstrap\src\index.ts:534:    child.on("close", (code) => {
+packages\bootstrap\src\index.ts:842:    socket.on("data", (chunk) => {
+packages\bootstrap\src\index.ts:872:    socket.on("data", (chunk) => {
+packages\bootstrap\src\install.runtime.test.ts:198:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\install.runtime.test.ts:1991:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\install.runtime.test.ts:2167:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\install\commands.ts:252:    child.stdout.on("data", (chunk) => {
+packages\bootstrap\src\install\commands.ts:255:    child.stderr.on("data", (chunk) => {
+packages\bootstrap\src\install\commands.ts:258:    child.on("error", async (error: NodeJS.ErrnoException) => {
+packages\bootstrap\src\install\commands.ts:288:    child.on("close", (code) => {
+packages\bootstrap\src\install.test.ts:433:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\install.test.ts:478:  stdout.on("data", (chunk) => {
+packages\bootstrap\src\telegram-menu.ts:378:    child.stdout.on("data", (chunk) => {
+packages\bootstrap\src\telegram-menu.ts:381:    child.stderr.on("data", (chunk) => {
+packages\bootstrap\src\telegram-menu.ts:384:    child.on("error", (error) => {
+packages\bootstrap\src\telegram-menu.ts:395:    child.on("close", (code) => {
+packages\bootstrap\src\install\telegram.ts:232:    child.stdout.on("data", (chunk) => {
+packages\bootstrap\src\install\telegram.ts:235:    child.stderr.on("data", (chunk) => {
+packages\bootstrap\src\install\telegram.ts:238:    child.on("error", (error) => {
+packages\bootstrap\src\install\telegram.ts:249:    child.on("close", (code) => {
+packages\bootstrap\src\install\tui.ts:888:    stdin.on("keypress", handler);
