@@ -397,6 +397,9 @@ function formatSessionCard(session: SessionDetail, overview?: MiniAppOverview): 
 
 function sessionCardKeyboard(session: Session, miniBaseUrl: string | undefined): Record<string, unknown> {
   const miniAppButton = telegramWebAppButton("Mini App", miniBaseUrl, "session", { id: session.id });
+  const cancelButton = isActiveSession(session)
+    ? [{ text: "Остановить", callback_data: `s:c:${session.id}` }]
+    : [];
   return inlineKeyboard([
       [
         { text: "Кратко", callback_data: `s:u:${session.id}` },
@@ -406,6 +409,7 @@ function sessionCardKeyboard(session: Session, miniBaseUrl: string | undefined):
         { text: "Diff", callback_data: `s:d:${session.id}` },
         { text: "Verify", callback_data: `s:v:${session.id}` }
       ],
+      cancelButton,
       miniAppButton ? [miniAppButton] : []
   ]);
 }
@@ -701,7 +705,8 @@ export function createBotHandlers(dependencies: BotDependencies) {
       ["Активные сессии", ...sessions.map((session, index) => `${index + 1}. ${trimLine(session.title, 70)} - ${session.state}`)].join("\n"),
       inlineKeyboard([
         ...sessions.map((session) => [
-          { text: `Открыть ${shortId(session.id)}`, callback_data: `s:u:${session.id}` }
+          { text: `Открыть ${shortId(session.id)}`, callback_data: `s:u:${session.id}` },
+          { text: "Остановить", callback_data: `s:c:${session.id}` }
         ]),
         miniAppButton ? [miniAppButton] : []
       ])
@@ -1140,6 +1145,9 @@ export function createBotHandlers(dependencies: BotDependencies) {
     const chatId = callback.message?.chat.id ?? callback.from.id;
     if (action === "r") {
       await dependencies.apiFetch(`/api/v1/sessions/${encodeURIComponent(sessionId)}/resume`, { method: "POST" });
+    }
+    if (action === "c") {
+      await dependencies.apiFetch(`/api/v1/sessions/${encodeURIComponent(sessionId)}/cancel`, { method: "POST" });
     }
 
     if (action === "d" || action === "v") {

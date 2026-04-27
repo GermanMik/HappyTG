@@ -1,0 +1,15 @@
+
+> @happytg/protocol@0.4.6 test C:\Develop\Projects\HappyTG\packages\protocol
+> tsx --test src/*.test.ts
+
+✔ createEmptyStore returns the canonical empty control-plane shape (1.3671ms)
+✔ protocol enums include resumability, proof, and bootstrap contracts (0.3346ms)
+✔ event contracts document producers, consumers, payloads, and idempotency (0.2641ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 311.8879

@@ -1,0 +1,16 @@
+
+> @happytg/session-engine@0.4.6 test C:\Develop\Projects\HappyTG\packages\session-engine
+> tsx --test src/*.test.ts
+
+✔ transitionSession allows the canonical proof happy path (2.5004ms)
+✔ transitionSession rejects illegal terminal transitions (0.708ms)
+✔ nextResumeState preserves terminal sessions and resumes active sessions (0.2622ms)
+✔ reduceSessionEvents replays typed event state changes in sequence order (0.5097ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 355.8405
