@@ -182,6 +182,9 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
       route("POST", "/api/v1/sessions/:id/resume", async ({ res, params }) => {
         json(res, 200, await service.resumeSession(params.id));
       }),
+      route("POST", "/api/v1/sessions/:id/cancel", async ({ res, params }) => {
+        json(res, 200, await service.cancelSession(params.id));
+      }),
       route("GET", "/api/v1/codex-desktop/projects", async ({ req, res, url }) => {
         const userId = await requireCodexDesktopUserId(req, res, url);
         if (!userId) {

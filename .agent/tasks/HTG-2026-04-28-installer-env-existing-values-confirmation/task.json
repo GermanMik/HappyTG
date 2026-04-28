@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-04-28-installer-env-existing-values-confirmation",
+  "title": "Installer existing env values confirmation",
+  "branch": "codex/installer-env-existing-values-confirmation",
+  "phase": "fresh verify",
+  "scopeFrozen": true,
+  "builder": "codex",
+  "verifier": "fresh verifier",
+  "productionEditsStarted": true
+}

@@ -1,0 +1,11 @@
+{
+  "taskId": "HTG-2026-04-28-session-cancel-from-bot",
+  "phase": "complete",
+  "verificationState": "passed",
+  "verdict": "pass",
+  "notes": [
+    "Acceptance criteria satisfied for control-plane cancel and Telegram bot callback.",
+    "Stop button is available in both the session card and active sessions list.",
+    "pnpm happytg verify exited 0 with pre-existing environment WARN findings."
+  ]
+}

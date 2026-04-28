@@ -1,0 +1,6 @@
+{
+  "task": "HTG-2026-04-28-docker-infra-port-remap",
+  "phase": "complete",
+  "verdict": "passed",
+  "findings": []
+}

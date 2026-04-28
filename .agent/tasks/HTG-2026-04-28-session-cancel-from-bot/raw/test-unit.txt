@@ -1,0 +1,6 @@
+Unit test evidence is split by package:
+
+- test-api.txt: @happytg/api service and route tests.
+- test-bot.txt: @happytg/bot handler and callback tests.
+- test-session-engine.txt: @happytg/session-engine transition tests.
+- test-protocol.txt: @happytg/protocol contract tests.

@@ -173,6 +173,48 @@ async function createWindowsNpmPrefixShim(tempDir: string, prefix: string): Prom
   return shimPath;
 }
 
+async function createDockerPsShim(tempDir: string, stdout: string): Promise<string> {
+  const scriptName = "docker-ps-shim.mjs";
+  const scriptPath = path.join(tempDir, scriptName);
+  await writeExecutable(
+    scriptPath,
+    `
+      const args = process.argv.slice(2);
+      if (args[0] === "ps") {
+        process.stdout.write(${JSON.stringify(stdout)});
+        process.exit(0);
+      }
+      process.exit(1);
+    `
+  );
+
+  const shimPath = path.join(tempDir, "docker.cmd");
+  if (process.platform === "win32") {
+    await Promise.all([
+      writeFile(
+        path.join(tempDir, "node.cmd"),
+        `@echo off\r\n"${batchQuote(process.execPath)}" %*\r\n`,
+        "utf8"
+      ),
+      writeFile(
+        shimPath,
+        `@echo off\r\nsetlocal\r\nnode "%~dp0${scriptName}" %*\r\n`,
+        "utf8"
+      )
+    ]);
+    return shimPath;
+  }
+
+  await writeExecutable(
+    path.join(tempDir, "docker"),
+    `
+      #!/bin/sh
+      exec "${shellQuote(process.execPath)}" "${shellQuote(scriptPath)}" "$@"
+    `
+  );
+  return path.join(tempDir, "docker");
+}
+
 async function reserveFreePort(): Promise<number> {
   const server = net.createServer();
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -1021,6 +1063,85 @@ test("setup treats compatible Redis, PostgreSQL, and MinIO listeners as supporte
       closeServer(minioApi.server),
       closeServer(minioConsole.server)
     ]);
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("setup treats legacy infra Compose MinIO containers as current stack instead of external conflicts", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-compose-minio-"));
+  const minioApi = await createGenericHttpService();
+  const configPath = path.join(tempDir, "config.toml");
+  const codexPath = path.join(tempDir, "codex.mjs");
+  const gitPath = path.join(tempDir, process.platform === "win32" ? "git.cmd" : "git");
+  const composeWorkingDir = path.join(tempDir, "infra");
+  const dockerPs = [
+    `infra-minio-1\t0.0.0.0:${minioApi.port}->9000/tcp\tminio/minio:latest\tinfra\tminio\t${composeWorkingDir}`,
+    ""
+  ].join("\n");
+
+  try {
+    await mkdir(composeWorkingDir, { recursive: true });
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeExecutable(
+        codexPath,
+        `
+          #!/usr/bin/env node
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex 0.115.0");
+            process.exit(0);
+          }
+          if (args[0] === "exec") {
+            console.log('{"type":"message","text":"OK"}');
+            process.exit(0);
+          }
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitPath),
+      createDockerPsShim(tempDir, dockerPs)
+    ]);
+
+    const report = await runBootstrapCommand("setup", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: codexPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_HTTP_PORT: String(await reserveFreePort()),
+        HAPPYTG_HTTPS_PORT: String(await reserveFreePort()),
+        HAPPYTG_PROMETHEUS_PORT: String(await reserveFreePort()),
+        HAPPYTG_GRAFANA_PORT: String(await reserveFreePort()),
+        HAPPYTG_MINIO_PORT: String(minioApi.port),
+        HAPPYTG_MINIO_CONSOLE_PORT: String(await reserveFreePort()),
+        REDIS_URL: "redis://redis.example:6379",
+        DATABASE_URL: "postgres://postgres.example:5432/happytg",
+        S3_ENDPOINT: `http://127.0.0.1:${minioApi.port}`,
+        PATH: tempDir,
+        PATHEXT: "",
+        pathext: ".cmd;.exe"
+      }
+    });
+
+    const minioPort = (report.reportJson.ports as Array<{
+      id: string;
+      state: string;
+      detail: string;
+      listener?: { containerName?: string };
+    }>).find((item) => item.id === "minio-api");
+    assert.equal(minioPort?.state, "occupied_expected");
+    assert.match(minioPort?.detail ?? "", /current HappyTG Compose service `minio`/);
+    assert.equal(minioPort?.listener?.containerName, "infra-minio-1");
+    assert.ok(!report.findings.some((item) => item.code === "MINIO-API_PORT_BUSY"));
+  } finally {
+    await closeServer(minioApi.server);
     await rm(tempDir, { recursive: true, force: true });
   }
 });

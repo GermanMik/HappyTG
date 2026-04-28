@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import type { TaskBundle } from "../../../packages/protocol/src/index.js";
+import type { HappyTGStore, TaskBundle } from "../../../packages/protocol/src/index.js";
 import { CodexDesktopStateAdapter } from "../../../packages/runtime-adapters/src/index.js";
 import { FileStateStore } from "../../../packages/shared/src/index.js";
 
@@ -28,6 +28,7 @@ async function createServiceWithTempStore(codexDesktop?: CodexDesktopStateAdapte
   const store = new FileStateStore(storePath);
   return {
     tempDir,
+    storePath,
     store,
     service: new HappyTGControlPlaneService(store, undefined, codexDesktop)
   };
@@ -170,6 +171,65 @@ test("quick session dispatches immediately without approval", async () => {
   assert.equal(sessionResult.session.state, "ready");
   assert.ok(sessionResult.dispatch);
   assert.equal(sessionResult.approval, undefined);
+});
+
+test("cancelSession cancels active sessions, dispatch records, event, and audit", async () => {
+  const { tempDir, storePath, service } = await createServiceWithTempStore();
+  const workspaceDir = await mkdtemp(path.join(tempDir, "workspace-"));
+
+  try {
+    const pairing = await service.startPairing({
+      hostLabel: "cancel-host",
+      fingerprint: "fp-cancel"
+    });
+    const claim = await service.claimPairing({
+      pairingCode: pairing.pairingCode,
+      telegramUserId: "1012",
+      chatId: "2012",
+      displayName: "Cancel User"
+    });
+    const hello = await service.hostHello({
+      hostId: pairing.hostId,
+      fingerprint: "fp-cancel",
+      capabilities: ["codex-cli"],
+      workspaces: [
+        {
+          path: workspaceDir,
+          repoName: "workspace"
+        }
+      ]
+    });
+    const created = await service.createSession({
+      userId: claim.user.id,
+      hostId: pairing.hostId,
+      workspaceId: hello.workspaces[0]!.id,
+      mode: "quick",
+      runtime: "codex-cli",
+      title: "cancel me",
+      prompt: "read status"
+    });
+
+    assert.equal((await service.hostPoll({ hostId: pairing.hostId })).dispatches.length, 1);
+
+    const cancelled = await service.cancelSession(created.session.id);
+    const timeline = await service.getSessionTimeline(created.session.id);
+    const store = JSON.parse(await readFile(storePath, "utf8")) as HappyTGStore;
+
+    assert.equal(cancelled.state, "cancelled");
+    assert.equal((await service.hostPoll({ hostId: pairing.hostId })).dispatches.length, 0);
+    assert.equal(store.pendingDispatches.find((item) => item.sessionId === created.session.id)?.status, "cancelled");
+    assert.equal(timeline.events.at(-1)?.type, "SessionCancelled");
+    assert.equal(store.auditRecords.some((item) => item.action === "session.cancelled" && item.targetRef === created.session.id), true);
+
+    const eventCount = timeline.events.length;
+    const replay = await service.cancelSession(created.session.id);
+    const replayTimeline = await service.getSessionTimeline(created.session.id);
+
+    assert.equal(replay.state, "cancelled");
+    assert.equal(replayTimeline.events.length, eventCount);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
 });
 
 test("session timeline and task artifact reads are available for mini app inspection", async () => {

@@ -1,0 +1,21 @@
+{
+  "task": "HTG-2026-04-28-pnpm-ps1-native-error",
+  "phase": "complete",
+  "checks": [
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.scripts.test.ts",
+      "status": "passed",
+      "raw": ".agent/tasks/HTG-2026-04-28-pnpm-ps1-native-error/raw/test-install-scripts.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run typecheck",
+      "status": "passed",
+      "raw": ".agent/tasks/HTG-2026-04-28-pnpm-ps1-native-error/raw/typecheck-bootstrap.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run test",
+      "status": "passed",
+      "raw": ".agent/tasks/HTG-2026-04-28-pnpm-ps1-native-error/raw/test-bootstrap.txt"
+    }
+  ]
+}

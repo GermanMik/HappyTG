@@ -724,6 +724,119 @@ test("resume command posts resume and then renders a session card", async () => 
   assert.match(messages[0]?.text ?? "", /resuming/);
 });
 
+test("session card shows cancel only for active sessions", async () => {
+  const messages: CapturedMessage[] = [];
+  const handlers = createBotHandlers({
+    async apiFetch(pathname) {
+      if (pathname === "/api/v1/sessions/ses_active") {
+        return session({ id: "ses_active", state: "running" }) as never;
+      }
+      if (pathname === "/api/v1/sessions/ses_done") {
+        return session({ id: "ses_done", state: "completed" }) as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    },
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/status ses_active",
+    chat: { id: 100 }
+  });
+  await handlers.handleMessage({
+    message_id: 2,
+    text: "/status ses_done",
+    chat: { id: 100 }
+  });
+
+  assert.match(JSON.stringify(messages[0]?.replyMarkup ?? {}), /s:c:ses_active/);
+  assert.match(JSON.stringify(messages[0]?.replyMarkup ?? {}), /Остановить/);
+  assert.doesNotMatch(JSON.stringify(messages[1]?.replyMarkup ?? {}), /s:c:ses_done/);
+});
+
+test("active sessions list includes a stop button for each active session", async () => {
+  const messages: CapturedMessage[] = [];
+  const handlers = createBotHandlers({
+    async apiFetch(pathname) {
+      if (pathname === "/api/v1/users/by-telegram/42") {
+        return { id: "usr_42" } as never;
+      }
+      if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_42") {
+        return {
+          hosts: [host()],
+          workspaces: [workspace()],
+          sessions: [session({ id: "ses_active", state: "running" })],
+          approvals: [],
+          tasks: []
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    },
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/sessions",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+
+  assert.match(JSON.stringify(messages[0]?.replyMarkup ?? {}), /s:u:ses_active/);
+  assert.match(JSON.stringify(messages[0]?.replyMarkup ?? {}), /s:c:ses_active/);
+  assert.match(JSON.stringify(messages[0]?.replyMarkup ?? {}), /Остановить/);
+});
+
+test("session cancel callback posts cancel and renders updated card", async () => {
+  const messages: CapturedMessage[] = [];
+  const calls: Array<{ pathname: string; init?: RequestInit }> = [];
+  const apiFetch: BotDependencies["apiFetch"] = async (pathname, init) => {
+    calls.push({ pathname, init });
+    if (pathname === "/api/v1/sessions/ses_1/cancel") {
+      return session({ id: "ses_1", state: "cancelled" }) as never;
+    }
+    if (pathname === "/api/v1/sessions/ses_1") {
+      return session({ id: "ses_1", state: "cancelled" }) as never;
+    }
+    if (pathname === "/api/v1/users/by-telegram/42") {
+      return { id: "usr_42" } as never;
+    }
+    if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_42") {
+      return {
+        hosts: [host()],
+        workspaces: [workspace()],
+        sessions: [session({ id: "ses_1", state: "cancelled" })],
+        approvals: [],
+        tasks: []
+      } as never;
+    }
+    throw new Error(`Unexpected path ${pathname}`);
+  };
+  const handlers = createBotHandlers({
+    apiFetch,
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleCallbackQuery({
+    id: "cb_cancel",
+    data: "s:c:ses_1",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 1, chat: { id: 100 }, text: "session" }
+  });
+
+  assert.equal(calls[0]?.pathname, "/api/v1/sessions/ses_1/cancel");
+  assert.equal(calls[0]?.init?.method, "POST");
+  assert.match(messages[0]?.text ?? "", /cancelled/);
+  assert.doesNotMatch(JSON.stringify(messages[0]?.replyMarkup ?? {}), /s:c:ses_1/);
+});
+
 test("session approval report and callback detail flows never emit local HTTP web_app buttons", async () => {
   const messages: CapturedMessage[] = [];
   const apiFetch: BotDependencies["apiFetch"] = async (pathname) => {

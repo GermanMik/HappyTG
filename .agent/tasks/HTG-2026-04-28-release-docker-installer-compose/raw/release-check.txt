@@ -1,0 +1,7 @@
+
+> happytg@0.4.6 release:check C:\Develop\Projects\HappyTG
+> node scripts/release/validate-release.mjs
+
+Missing required `--version` argument.
+Release version `<empty>` is not a supported semver value.
+ ELIFECYCLE  Command failed with exit code 1.

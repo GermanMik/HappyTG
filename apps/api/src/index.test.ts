@@ -387,6 +387,38 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
   }
 });
 
+test("session cancel endpoint delegates to the control-plane service", async () => {
+  const calls: string[] = [];
+  const service = {
+    async cancelSession(sessionId: string) {
+      calls.push(sessionId);
+      return {
+        id: sessionId,
+        state: "cancelled"
+      };
+    }
+  } as unknown as HappyTGControlPlaneService;
+  const server = createApiServer(service);
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("API server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/sessions/ses_1/cancel`, {
+      method: "POST"
+    });
+    const payload = await response.json() as { id: string; state: string };
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(calls, ["ses_1"]);
+    assert.deepEqual(payload, { id: "ses_1", state: "cancelled" });
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("startApiServer reuses an already-running HappyTG API on the same port", async () => {
   const occupied = createHttpServer((req, res) => {
     res.writeHead(200, {

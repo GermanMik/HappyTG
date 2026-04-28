@@ -1,0 +1,15 @@
+warning: in the working copy of '.env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/installation.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/self-hosting.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'infra/docker-compose.example.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/infra-config.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install.runtime.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install.scripts.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install/launch.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install/tui.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/install/install.ps1', LF will be replaced by CRLF the next time Git touches it

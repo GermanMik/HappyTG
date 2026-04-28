@@ -11,6 +11,7 @@ import { renderText } from "./cli.js";
 import { CommandExecutionError, runCommand } from "./install/commands.js";
 import { createInstallRuntimeError } from "./install/errors.js";
 import { runHappyTGInstall } from "./install/index.js";
+import { runDockerLaunch } from "./install/launch.js";
 import { syncRepository } from "./install/repo.js";
 import { writeInstallDraft as persistInstallDraft } from "./install/state.js";
 import { createTelegramFormController, reduceTelegramFormKeypress, renderMaskedSecretPreview } from "./install/tui.js";
@@ -404,8 +405,13 @@ test("runHappyTGInstall defaults to local launch and does not start Docker", asy
       telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
       telegramAllowedUserIds: ["1001"],
       backgroundMode: "manual",
+      launchMode: "local",
       postChecks: []
     }, {
+      runBootstrapCheck: async () => setupReportWithPorts({
+        status: "pass",
+        ports: []
+      }),
       deps: {
         detectInstallerEnvironment: async () => baseEnvironment(),
         readInstallDraft: async () => undefined,
@@ -477,7 +483,7 @@ test("runHappyTGInstall launch-mode docker validates config, starts Compose, and
   const repoPath = path.join(tempDir, "HappyTG");
   const pnpmPath = path.join(tempDir, "pnpm");
   const dockerPath = path.join(tempDir, "docker");
-  const dockerCalls: Array<{ args: string[]; cwd?: string }> = [];
+  const dockerCalls: Array<{ args: string[]; cwd?: string; env?: NodeJS.ProcessEnv }> = [];
   const readyUrls: string[] = [];
 
   try {
@@ -531,10 +537,10 @@ test("runHappyTGInstall launch-mode docker validates config, starts Compose, and
           fallbackUsed: false
         }),
         resolveExecutable: async (command) => command === "pnpm" ? pnpmPath : command === "docker" ? dockerPath : undefined,
-        runCommand: async ({ command, args, cwd }) => {
+        runCommand: async ({ command, args, cwd, env }) => {
           const normalizedArgs = [...(args ?? [])];
           if (command === dockerPath) {
-            dockerCalls.push({ args: normalizedArgs, cwd });
+            dockerCalls.push({ args: normalizedArgs, cwd, env });
             if (normalizedArgs[0] === "compose" && normalizedArgs[1] === "version") {
               return { stdout: "Docker Compose version v2.29.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
             }
@@ -595,6 +601,7 @@ test("runHappyTGInstall launch-mode docker validates config, starts Compose, and
       ["compose", "--env-file", ".env", "-f", "infra/docker-compose.example.yml", "ps", "--format", "json"]
     ]);
     assert.equal(dockerCalls.every((call) => call.cwd === repoPath), true);
+    assert.equal(dockerCalls.every((call) => call.env?.COMPOSE_PROJECT_NAME === "happytg"), true);
     assert.deepEqual(readyUrls, [
       "http://127.0.0.1:4000/ready",
       "http://127.0.0.1:4100/ready",
@@ -602,6 +609,230 @@ test("runHappyTGInstall launch-mode docker validates config, starts Compose, and
     ]);
     assert.equal(result.finalization?.items.find((item) => item.id === "start-repo-services")?.kind, "auto");
     assert.match(JSON.stringify(result.reportJson.launch), /docker compose --env-file \.env -f infra\/docker-compose\.example\.yml up --build -d/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall launch-mode docker remaps occupied Compose host ports before Compose startup", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-docker-infra-remap-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const pnpmPath = path.join(tempDir, "pnpm");
+  const dockerPath = path.join(tempDir, "docker");
+  const envValues: Record<string, string> = {};
+  let composeUpEnv: NodeJS.ProcessEnv | undefined;
+
+  const infraPort = (input: {
+    id: string;
+    label: string;
+    envKey: string;
+    defaultPort: number;
+    suggestedPort: number;
+  }, env?: NodeJS.ProcessEnv): Record<string, unknown> => {
+    const currentPort = Number(env?.[input.envKey] ?? input.defaultPort);
+    if (currentPort === input.defaultPort) {
+      return {
+        id: input.id,
+        label: input.label,
+        port: input.defaultPort,
+        state: "occupied_supported",
+        detail: `${input.label} plans to use port ${input.defaultPort}, and a local service is already available there.`,
+        overrideEnv: input.envKey,
+        suggestedPort: input.suggestedPort,
+        suggestedPorts: [input.suggestedPort, input.suggestedPort + 1, input.suggestedPort + 2],
+        listener: {
+          kind: input.id === "postgres" ? "postgres" : input.id === "redis" ? "redis" : "minio",
+          description: "local service"
+        }
+      };
+    }
+
+    return {
+      id: input.id,
+      label: input.label,
+      port: currentPort,
+      state: "free",
+      detail: `${input.label} plans to use port ${currentPort}; it is free.`,
+      overrideEnv: input.envKey
+    };
+  };
+  const composePort = (input: {
+    id: string;
+    label: string;
+    envKey: string;
+    defaultPort: number;
+    suggestedPort: number;
+  }, env?: NodeJS.ProcessEnv): Record<string, unknown> => {
+    const currentPort = Number(env?.[input.envKey] ?? input.defaultPort);
+    if (currentPort === input.defaultPort) {
+      return {
+        id: input.id,
+        label: input.label,
+        port: input.defaultPort,
+        state: "occupied_external",
+        detail: `${input.label} plans to use port ${input.defaultPort}, but another process or listener is already there.`,
+        overrideEnv: input.envKey,
+        suggestedPort: input.suggestedPort,
+        suggestedPorts: [input.suggestedPort, input.suggestedPort + 1, input.suggestedPort + 2],
+        listener: {
+          kind: "tcp",
+          description: "external listener"
+        }
+      };
+    }
+
+    return {
+      id: input.id,
+      label: input.label,
+      port: currentPort,
+      state: "free",
+      detail: `${input.label} plans to use port ${currentPort}; it is free.`,
+      overrideEnv: input.envKey
+    };
+  };
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "skip",
+      launchMode: "docker",
+      postChecks: []
+    }, {
+      fetchImpl: async () => new Response("ok", { status: 200 }),
+      runBootstrapCheck: async (_command, context) => setupReportWithPorts({
+        status: "pass",
+        ports: [
+          { id: "miniapp", label: "Mini App", port: 3001, state: "free", detail: "Mini App port is free.", overrideEnv: "HAPPYTG_MINIAPP_PORT" },
+          { id: "api", label: "API", port: 4000, state: "free", detail: "API port is free.", overrideEnv: "HAPPYTG_API_PORT" },
+          { id: "bot", label: "Bot", port: 4100, state: "free", detail: "Bot port is free.", overrideEnv: "HAPPYTG_BOT_PORT" },
+          { id: "worker", label: "Worker probe", port: 4200, state: "free", detail: "Worker port is free.", overrideEnv: "HAPPYTG_WORKER_PORT" },
+          infraPort({ id: "redis", label: "Redis host port", envKey: "HAPPYTG_REDIS_HOST_PORT", defaultPort: 6379, suggestedPort: 6380 }, context?.env),
+          infraPort({ id: "postgres", label: "Postgres host port", envKey: "HAPPYTG_POSTGRES_HOST_PORT", defaultPort: 5432, suggestedPort: 5433 }, context?.env),
+          infraPort({ id: "minio-api", label: "MinIO API host port", envKey: "HAPPYTG_MINIO_PORT", defaultPort: 9000, suggestedPort: 9002 }, context?.env),
+          infraPort({ id: "minio-console", label: "MinIO console host port", envKey: "HAPPYTG_MINIO_CONSOLE_PORT", defaultPort: 9001, suggestedPort: 9003 }, context?.env),
+          composePort({ id: "caddy-http", label: "Caddy HTTP host port", envKey: "HAPPYTG_HTTP_PORT", defaultPort: 80, suggestedPort: 8080 }, context?.env),
+          composePort({ id: "caddy-https", label: "Caddy HTTPS host port", envKey: "HAPPYTG_HTTPS_PORT", defaultPort: 443, suggestedPort: 8443 }, context?.env),
+          composePort({ id: "prometheus", label: "Prometheus host port", envKey: "HAPPYTG_PROMETHEUS_PORT", defaultPort: 9090, suggestedPort: 9091 }, context?.env),
+          composePort({ id: "grafana", label: "Grafana host port", envKey: "HAPPYTG_GRAFANA_PORT", defaultPort: 3000, suggestedPort: 3002 }, context?.env)
+        ]
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? pnpmPath : command === "docker" ? dockerPath : undefined,
+        runCommand: async ({ command, args, env }) => {
+          const normalizedArgs = [...(args ?? [])];
+          if (command === dockerPath) {
+            if (normalizedArgs[0] === "compose" && normalizedArgs[1] === "version") {
+              return { stdout: "Docker Compose version v2.29.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs[0] === "info") {
+              return { stdout: "Server Version: 27.0.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.at(-1) === "config") {
+              return { stdout: "services:\n  api: {}\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.includes("up")) {
+              composeUpEnv = env;
+              return { stdout: "Container happytg-api Started\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.includes("ps")) {
+              return {
+                stdout: JSON.stringify([
+                  { Service: "api", State: "running", Health: "healthy" },
+                  { Service: "bot", State: "running", Health: "healthy" },
+                  { Service: "miniapp", State: "running", Health: "healthy" },
+                  { Service: "worker", State: "running", Health: "healthy" }
+                ]),
+                stderr: "",
+                exitCode: 0,
+                binaryPath: dockerPath,
+                shell: false,
+                fallbackUsed: false
+              };
+            }
+          }
+
+          return { stdout: "", stderr: "", exitCode: 0, binaryPath: pnpmPath, shell: false, fallbackUsed: false };
+        },
+        writeMergedEnvFile: async ({ repoRoot, updates }) => {
+          for (const [key, value] of Object.entries(updates)) {
+            if (value !== undefined) {
+              envValues[key] = value;
+            }
+          }
+          const envFilePath = path.join(repoRoot, ".env");
+          await writeFile(
+            envFilePath,
+            `${Object.entries(envValues).map(([key, value]) => `${key}=${value}`).join("\n")}\n`,
+            "utf8"
+          );
+          return {
+            envFilePath,
+            created: false,
+            changed: true,
+            addedKeys: Object.keys(updates),
+            preservedKeys: []
+          };
+        },
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background daemon setup was skipped."
+        })
+      }
+    });
+
+    assert.equal(result.launch.status, "started");
+    assert.equal(composeUpEnv?.COMPOSE_PROJECT_NAME, "happytg");
+    assert.equal(composeUpEnv?.HAPPYTG_REDIS_HOST_PORT, "6380");
+    assert.equal(composeUpEnv?.HAPPYTG_POSTGRES_HOST_PORT, "5433");
+    assert.equal(composeUpEnv?.HAPPYTG_MINIO_PORT, "9002");
+    assert.equal(composeUpEnv?.HAPPYTG_MINIO_CONSOLE_PORT, "9003");
+    assert.equal(composeUpEnv?.HAPPYTG_HTTP_PORT, "8080");
+    assert.equal(composeUpEnv?.HAPPYTG_HTTPS_PORT, "8443");
+    assert.equal(composeUpEnv?.HAPPYTG_PROMETHEUS_PORT, "9091");
+    assert.equal(composeUpEnv?.HAPPYTG_GRAFANA_PORT, "3002");
+    assert.match(await readFile(path.join(repoPath, ".env"), "utf8"), /HAPPYTG_POSTGRES_HOST_PORT=5433/);
+    assert.match(await readFile(path.join(repoPath, ".env"), "utf8"), /HAPPYTG_HTTP_PORT=8080/);
+    assert.match(result.finalization?.items.find((item) => item.id === "caddy-public-port-remap")?.message ?? "", /public HTTPS URL/);
+    assert.equal(result.finalization?.items.some((item) => item.id === "port-preflight-postgres" && item.kind === "auto"), true);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -628,6 +859,10 @@ test("runHappyTGInstall launch-mode docker reports missing Docker as recoverable
       launchMode: "docker",
       postChecks: []
     }, {
+      runBootstrapCheck: async () => setupReportWithPorts({
+        status: "pass",
+        ports: []
+      }),
       deps: {
         detectInstallerEnvironment: async () => baseEnvironment(),
         readInstallDraft: async () => undefined,
@@ -745,6 +980,54 @@ test("runHappyTGInstall launch-mode docker reports daemon unavailable separately
     assert.equal(result.launch.status, "failed");
     assert.match(result.launch.detail, /daemon\/Desktop is unavailable/);
     assert.match(result.launch.nextSteps.join("\n"), /Start Docker Desktop|docker info/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runDockerLaunch reports Caddy bind failures with the failed port and override hint", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-docker-caddy-bind-"));
+  const dockerPath = path.join(tempDir, "docker");
+
+  try {
+    await mkdir(tempDir, { recursive: true });
+    const result = await runDockerLaunch({
+      repoPath: tempDir,
+      repoEnv: {},
+      installEnv: {},
+      platform: "linux",
+      healthTimeoutMs: 1,
+      healthIntervalMs: 1,
+      resolveExecutableImpl: async (command) => command === "docker" ? dockerPath : undefined,
+      runCommandImpl: async ({ args }) => {
+        const normalizedArgs = [...(args ?? [])];
+        if (normalizedArgs[0] === "compose" && normalizedArgs[1] === "version") {
+          return { stdout: "Docker Compose version v2.29.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+        }
+        if (normalizedArgs[0] === "info") {
+          return { stdout: "Server Version: 27.0.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+        }
+        if (normalizedArgs.at(-1) === "config") {
+          return { stdout: "services:\n  caddy: {}\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+        }
+        if (normalizedArgs.includes("up")) {
+          return {
+            stdout: "",
+            stderr: "Bind for 0.0.0.0:80 failed: port is already allocated",
+            exitCode: 1,
+            binaryPath: dockerPath,
+            shell: false,
+            fallbackUsed: false
+          };
+        }
+        return { stdout: "", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+      }
+    });
+
+    assert.equal(result.status, "failed");
+    assert.match(result.detail, /Port 80 is occupied/);
+    assert.match(result.detail, /HAPPYTG_HTTP_PORT=8080/);
+    assert.match(result.nextSteps.join("\n"), /HAPPYTG_HTTP_PORT=8080/);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -1728,8 +2011,13 @@ test("runHappyTGInstall reports warning-only Telegram getMe failures as success-
       telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
       telegramAllowedUserIds: ["1001"],
       backgroundMode: "manual",
+      launchMode: "local",
       postChecks: []
     }, {
+      runBootstrapCheck: async () => setupReportWithPorts({
+        status: "pass",
+        ports: []
+      }),
       deps: {
         detectInstallerEnvironment: async () => baseEnvironment(),
         detectRepoModeChoices: async () => ({
@@ -1816,6 +2104,10 @@ test("runHappyTGInstall treats a transport-probe-validated Telegram identity as 
       backgroundMode: "manual",
       postChecks: []
     }, {
+      runBootstrapCheck: async () => setupReportWithPorts({
+        status: "pass",
+        ports: []
+      }),
       deps: {
         detectInstallerEnvironment: async () => baseEnvironment(),
         detectRepoModeChoices: async () => ({
@@ -2015,7 +2307,14 @@ test("runHappyTGInstall interactive Telegram form starts blank even when draft a
     await mkdir(repoPath, { recursive: true });
     await writeFile(
       path.join(repoPath, ".env"),
-      `TELEGRAM_BOT_TOKEN=${envToken}\nTELEGRAM_HOME_CHANNEL=@existing\n`,
+      [
+        `TELEGRAM_BOT_TOKEN=${envToken}`,
+        "TELEGRAM_ALLOWED_USER_IDS=1001,1002",
+        "TELEGRAM_HOME_CHANNEL=@existing",
+        "TELEGRAM_BOT_USERNAME=happytg_bot",
+        "HAPPYTG_APP_URL=http://localhost:3001",
+        "HAPPYTG_MINIAPP_PORT=3001"
+      ].join("\n"),
       "utf8"
     );
 
@@ -2113,10 +2412,27 @@ test("runHappyTGInstall interactive Telegram form starts blank even when draft a
     await emitKeypress("\r", { name: "return" });
     await waitForOutput("Repo Mode");
     await emitKeypress("\r", { name: "return" });
+    const existingEnvScreen = await waitForOutput("Existing .env Values");
+    assert.match(existingEnvScreen, /TELEGRAM_BOT_TOKEN=9999\*+hijk \(masked secret\)/);
+    assert.doesNotMatch(existingEnvScreen, new RegExp(envToken));
+    assert.match(existingEnvScreen, /TELEGRAM_ALLOWED_USER_IDS=1001, 1002/);
+    assert.match(existingEnvScreen, /TELEGRAM_HOME_CHANNEL=@existing/);
+    assert.match(existingEnvScreen, /TELEGRAM_BOT_USERNAME=@happytg_bot/);
+    assert.match(existingEnvScreen, /HAPPYTG_APP_URL=http:\/\/localhost:3001/);
+    assert.match(existingEnvScreen, /HAPPYTG_MINIAPP_PORT=3001/);
+    transcript.length = 0;
+    await emitKeypress("", { name: "down" });
+    await emitKeypress("\r", { name: "return" });
     const telegramScreen = await waitForOutput("Telegram Setup");
-    assert.match(telegramScreen, /<required>/);
-    assert.doesNotMatch(telegramScreen, new RegExp(renderMaskedSecretPreview(envToken).replace(/\*/g, "\\*")));
-    assert.doesNotMatch(telegramScreen, new RegExp(renderMaskedSecretPreview(draftToken).replace(/\*/g, "\\*")));
+    const telegramFormOnly = telegramScreen.slice(telegramScreen.lastIndexOf("Telegram Setup"));
+    assert.match(telegramFormOnly, /<required>/);
+    assert.doesNotMatch(telegramFormOnly, new RegExp(renderMaskedSecretPreview(envToken).replace(/\*/g, "\\*")));
+    assert.doesNotMatch(telegramFormOnly, new RegExp(renderMaskedSecretPreview(draftToken).replace(/\*/g, "\\*")));
+    assert.doesNotMatch(telegramFormOnly, /1001/);
+    assert.doesNotMatch(telegramFormOnly, /1002/);
+    assert.doesNotMatch(telegramFormOnly, /42/);
+    assert.doesNotMatch(telegramFormOnly, /@existing/);
+    assert.doesNotMatch(telegramFormOnly, /@draft/);
 
     await emitKeypress("\r", { name: "return" });
     await emitKeypress(`\u001B[200~${newToken}\r\n\u001B[201~`);
@@ -2136,7 +2452,294 @@ test("runHappyTGInstall interactive Telegram form starts blank even when draft a
     const result = await install;
     assert.equal(result.status, "warn");
     assert.equal(result.telegram.configured, true);
+    assert.deepEqual(result.telegram.allowedUserIds, []);
     assert.equal(envUpdates?.TELEGRAM_BOT_TOKEN, newToken);
+    assert.equal(envUpdates?.TELEGRAM_ALLOWED_USER_IDS, "");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall interactive existing env confirmation can reuse Telegram values", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-interactive-env-reuse-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const token = "123456:abcdefghijklmnopqrstuvwx";
+  const harness = createInteractiveHarness();
+  let envUpdates: Record<string, string | undefined> | undefined;
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(
+      path.join(repoPath, ".env"),
+      [
+        `TELEGRAM_BOT_TOKEN=${token}`,
+        "TELEGRAM_ALLOWED_USER_IDS=1001,1002",
+        "TELEGRAM_HOME_CHANNEL=@home",
+        "TELEGRAM_BOT_USERNAME=happytg_bot"
+      ].join("\n"),
+      "utf8"
+    );
+
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramAllowedUserIds: [],
+      backgroundMode: "manual",
+      postChecks: []
+    }, {
+      stdin: harness.stdin,
+      stdout: harness.stdout,
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: {
+            ...baseEnvironment().platform,
+            isInteractiveTerminal: true
+          }
+        }),
+        readInstallDraft: async () => ({
+          version: 1,
+          telegram: {
+            botToken: "888888:drafttokenvalueqrstuvw",
+            allowedUserIds: ["42"],
+            homeChannel: "@draft"
+          },
+          updatedAt: "2026-04-28T00:00:00.000Z"
+        }),
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, {
+            exists: true,
+            isRepo: true,
+            emptyDirectory: false,
+            rootPath: repoPath
+          }),
+          choices: [
+            {
+              mode: "update" as const,
+              label: "Update existing checkout",
+              path: repoPath,
+              available: true,
+              detail: "Existing checkout is ready to update."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "updated",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async ({ updates }) => {
+          envUpdates = updates;
+          return {
+            envFilePath: path.join(repoPath, ".env"),
+            created: false,
+            changed: true,
+            addedKeys: Object.keys(updates),
+            preservedKeys: []
+          };
+        },
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: mode === "manual" ? "manual" : "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    await harness.waitForOutput("Welcome / Preflight");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Repo Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    const existingEnvScreen = await harness.waitForOutput("Existing .env Values");
+    assert.match(existingEnvScreen, /TELEGRAM_ALLOWED_USER_IDS=1001, 1002/);
+    assert.doesNotMatch(existingEnvScreen, new RegExp(token));
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Background Run Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Launch Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Post-Install Checks");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Final Summary");
+    await harness.emitKeypress("\r", { name: "enter" });
+
+    const result = await install;
+    assert.notEqual(result.status, "fail");
+    assert.equal(result.telegram.configured, true);
+    assert.deepEqual(result.telegram.allowedUserIds, ["1001", "1002"]);
+    assert.equal(result.telegram.homeChannel, "@home");
+    assert.equal(envUpdates?.TELEGRAM_BOT_TOKEN, token);
+    assert.equal(envUpdates?.TELEGRAM_ALLOWED_USER_IDS, "1001,1002");
+    assert.equal(envUpdates?.TELEGRAM_HOME_CHANNEL, "@home");
+    assert.doesNotMatch(harness.transcriptText(), /Telegram Setup/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall interactive existing env confirmation appears for optional Telegram IDs without prefill", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-interactive-env-ids-only-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const newToken = "123456:abcdefghijklmnopqrstuvwx";
+  const harness = createInteractiveHarness();
+  let envUpdates: Record<string, string | undefined> | undefined;
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(path.join(repoPath, ".env"), "TELEGRAM_ALLOWED_USER_IDS=1001,1002\n", "utf8");
+
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramAllowedUserIds: [],
+      backgroundMode: "manual",
+      launchMode: "local",
+      postChecks: []
+    }, {
+      stdin: harness.stdin,
+      stdout: harness.stdout,
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: {
+            ...baseEnvironment().platform,
+            isInteractiveTerminal: true
+          }
+        }),
+        readInstallDraft: async () => ({
+          version: 1,
+          telegram: {
+            botToken: "888888:drafttokenvalueqrstuvw",
+            allowedUserIds: ["42"],
+            homeChannel: "@draft"
+          },
+          updatedAt: "2026-04-28T00:00:00.000Z"
+        }),
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, {
+            exists: true,
+            isRepo: true,
+            emptyDirectory: false,
+            rootPath: repoPath
+          }),
+          choices: [
+            {
+              mode: "update" as const,
+              label: "Update existing checkout",
+              path: repoPath,
+              available: true,
+              detail: "Existing checkout is ready to update."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "updated",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({
+          stdout: "",
+          stderr: "",
+          exitCode: 0,
+          binaryPath: path.join(tempDir, "pnpm"),
+          shell: false,
+          fallbackUsed: false
+        }),
+        writeMergedEnvFile: async ({ updates }) => {
+          envUpdates = updates;
+          return {
+            envFilePath: path.join(repoPath, ".env"),
+            created: false,
+            changed: true,
+            addedKeys: Object.keys(updates),
+            preservedKeys: []
+          };
+        },
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: mode === "manual" ? "manual" : "configured",
+          detail: "Configured by test."
+        })
+      }
+    });
+
+    await harness.waitForOutput("Welcome / Preflight");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Repo Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    const existingEnvScreen = await harness.waitForOutput("Existing .env Values");
+    assert.match(existingEnvScreen, /TELEGRAM_ALLOWED_USER_IDS=1001, 1002/);
+    assert.match(existingEnvScreen, /Reuse is unavailable because TELEGRAM_BOT_TOKEN was not found/);
+    assert.doesNotMatch(existingEnvScreen, /Reuse existing \.env values/);
+    await harness.emitKeypress("\r", { name: "enter" });
+    const telegramScreen = await harness.waitForOutput("Telegram Setup");
+    const telegramFormOnly = telegramScreen.slice(telegramScreen.lastIndexOf("Telegram Setup"));
+    assert.match(telegramFormOnly, /<required>/);
+    assert.doesNotMatch(telegramFormOnly, /1001/);
+    assert.doesNotMatch(telegramFormOnly, /1002/);
+    assert.doesNotMatch(telegramFormOnly, /42/);
+    assert.doesNotMatch(telegramFormOnly, /@draft/);
+
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.emitKeypress(`\u001B[200~${newToken}\r\n\u001B[201~`);
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("", { name: "down" });
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Background Run Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Launch Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Post-Install Checks");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Final Summary");
+    await harness.emitKeypress("\r", { name: "enter" });
+
+    const result = await install;
+    assert.notEqual(result.status, "fail");
+    assert.deepEqual(result.telegram.allowedUserIds, []);
+    assert.equal(envUpdates?.TELEGRAM_BOT_TOKEN, newToken);
+    assert.equal(envUpdates?.TELEGRAM_ALLOWED_USER_IDS, "");
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -4824,6 +5427,10 @@ test("runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning lev
     HAPPYTG_BOT_PORT: process.env.HAPPYTG_BOT_PORT,
     HAPPYTG_WORKER_PORT: process.env.HAPPYTG_WORKER_PORT,
     HAPPYTG_REDIS_HOST_PORT: process.env.HAPPYTG_REDIS_HOST_PORT,
+    HAPPYTG_HTTP_PORT: process.env.HAPPYTG_HTTP_PORT,
+    HAPPYTG_HTTPS_PORT: process.env.HAPPYTG_HTTPS_PORT,
+    HAPPYTG_PROMETHEUS_PORT: process.env.HAPPYTG_PROMETHEUS_PORT,
+    HAPPYTG_GRAFANA_PORT: process.env.HAPPYTG_GRAFANA_PORT,
     REDIS_URL: process.env.REDIS_URL
   };
 
@@ -4847,6 +5454,10 @@ test("runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning lev
     process.env.HAPPYTG_BOT_PORT = String(await reserveFreePort());
     process.env.HAPPYTG_WORKER_PORT = String(await reserveFreePort());
     process.env.HAPPYTG_REDIS_HOST_PORT = String(await reserveFreePort());
+    process.env.HAPPYTG_HTTP_PORT = String(await reserveFreePort());
+    process.env.HAPPYTG_HTTPS_PORT = String(await reserveFreePort());
+    process.env.HAPPYTG_PROMETHEUS_PORT = String(await reserveFreePort());
+    process.env.HAPPYTG_GRAFANA_PORT = String(await reserveFreePort());
     process.env.REDIS_URL = "redis://example.com:6379";
 
     const result = await runHappyTGInstall({

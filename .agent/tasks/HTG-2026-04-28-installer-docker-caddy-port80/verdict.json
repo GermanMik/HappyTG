@@ -1,0 +1,6 @@
+{
+  "taskId": "HTG-2026-04-28-installer-docker-caddy-port80",
+  "status": "passed",
+  "verdict": "Docker launch preflight now covers Caddy HTTP/HTTPS plus Prometheus/Grafana, remaps Caddy/observability conflicts before Compose startup, preserves current Compose stack attribution, and keeps Telegram/Caddy public-readiness guidance truthful.",
+  "blockingProblems": []
+}

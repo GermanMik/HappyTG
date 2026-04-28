@@ -1,0 +1,61 @@
+{
+  "taskId": "HTG-2026-04-28-installer-docker-caddy-port80",
+  "status": "verified",
+  "evidence": [
+    {
+      "kind": "investigation",
+      "path": "raw/compose-published-ports.txt",
+      "summary": "Compose publishes Caddy, Prometheus, and Grafana ports in addition to existing app and infra ports."
+    },
+    {
+      "kind": "test",
+      "path": "raw/test-unit.txt",
+      "summary": "Focused Docker/port/Caddy runtime tests passed."
+    },
+    {
+      "kind": "test",
+      "path": "raw/test-integration.txt",
+      "summary": "Installer script tests passed."
+    },
+    {
+      "kind": "verification",
+      "path": "raw/typecheck.txt",
+      "summary": "Bootstrap typecheck passed."
+    },
+    {
+      "kind": "verification",
+      "path": "raw/build.txt",
+      "summary": "Bootstrap build passed."
+    },
+    {
+      "kind": "verification",
+      "path": "raw/lint.txt",
+      "summary": "Bootstrap lint passed."
+    },
+    {
+      "kind": "verification",
+      "path": "raw/test-root.txt",
+      "summary": "Full pnpm test passed with bootstrap 124 tests."
+    },
+    {
+      "kind": "diagnostic",
+      "path": "raw/doctor-json.txt",
+      "summary": "Doctor exits 0 and reports local port conflicts for Caddy/Grafana truthfully."
+    },
+    {
+      "kind": "diagnostic",
+      "path": "raw/verify.txt",
+      "summary": "Verify exits 0 and reports wrong-product public Caddy Mini App route as a warning."
+    },
+    {
+      "kind": "fresh-verifier",
+      "path": "raw/fresh-verifier.txt",
+      "summary": "Fresh verifier pass reviewed mapping and reran focused Caddy and legacy Compose MinIO attribution tests."
+    },
+    {
+      "kind": "task-validate",
+      "path": "raw/task-validate.txt",
+      "summary": "Task proof bundle validation passed."
+    }
+  ]
+}

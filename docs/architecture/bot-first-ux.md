@@ -21,7 +21,7 @@ Wave 2 turns the Telegram bot into a concise control surface. The bot remains a 
 5. User sends one instruction message.
 6. Bot renders a confirmation card.
 7. On `Запустить`, API creates the session and returns either a session card or an approval dialog.
-8. Session cards expose `Кратко`, `Resume`, `Diff`, `Verify`, and `Mini App`.
+8. Session cards expose `Кратко`, `Resume`, `Diff`, `Verify`, `Mini App`, and `Остановить` for non-terminal sessions.
 9. Approval dialogs expose one-time, phase, session, deny, and details actions.
 
 ## Main Menu
@@ -41,7 +41,7 @@ The text shows active sessions, pending approvals, sessions requiring attention,
 
 - Menu: `m:t`, `m:s`, `m:a`, `m:h`, `m:r`
 - Wizard: `w:h:<hostId>`, `w:w:<workspaceId>`, `w:m:q`, `w:m:p`, `w:c`, `w:b`, `w:x`
-- Session: `s:u:<sessionId>`, `s:r:<sessionId>`, `s:d:<sessionId>`, `s:v:<sessionId>`
+- Session: `s:u:<sessionId>`, `s:r:<sessionId>`, `s:d:<sessionId>`, `s:v:<sessionId>`, `s:c:<sessionId>`
 - Approval: `a:o:<approvalId>:<nonce>`, `a:p:<approvalId>:<nonce>`, `a:s:<approvalId>:<nonce>`, `a:d:<approvalId>:<nonce>`, `a:x:<approvalId>`
 - Legacy approval callbacks `approval:approve:<approvalId>` and `approval:reject:<approvalId>` remain accepted for compatibility.
 
@@ -119,6 +119,7 @@ Wave 2 bot UX uses existing control-plane service plus these projection routes:
 - `GET /api/v1/hosts?userId=...`
 - `GET /api/v1/hosts/:id/workspaces?userId=...`
 - `GET /api/v1/sessions?userId=...`
+- `POST /api/v1/sessions/:id/cancel`
 - `GET /api/v1/approvals?userId=...&state=waiting_human,pending`
 - `GET /api/v1/miniapp/bootstrap?userId=...`
 - `POST /api/v1/approvals/:id/resolve` with optional `scope` and `nonce`

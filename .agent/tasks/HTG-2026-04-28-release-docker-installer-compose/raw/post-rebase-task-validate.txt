@@ -1,0 +1,9 @@
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG-release-docker-installer-compose
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-28-release-docker-installer-compose"
+
+Task: HTG-2026-04-28-release-docker-installer-compose
+Bundle: C:\Develop\Projects\HappyTG-release-docker-installer-compose\.agent\tasks\HTG-2026-04-28-release-docker-installer-compose
+Validation: ok
+Phase: build
+Verification: unknown

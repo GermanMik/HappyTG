@@ -1,0 +1,50 @@
+== HTG-2026-04-28-installer-docker-caddy-port80 ==
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-28-installer-docker-caddy-port80"
+
+Task: HTG-2026-04-28-installer-docker-caddy-port80
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-28-installer-docker-caddy-port80
+Validation: ok
+Phase: complete
+Verification: unknown
+== HTG-2026-04-28-installer-env-existing-values-confirmation ==
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-28-installer-env-existing-values-confirmation"
+
+Task: HTG-2026-04-28-installer-env-existing-values-confirmation
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-28-installer-env-existing-values-confirmation
+Validation: ok
+Phase: fresh verify
+Verification: unknown
+== HTG-2026-04-28-pnpm-ps1-native-error ==
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-28-pnpm-ps1-native-error"
+
+Task: HTG-2026-04-28-pnpm-ps1-native-error
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-28-pnpm-ps1-native-error
+Validation: ok
+Phase: unknown
+Verification: unknown
+== HTG-2026-04-28-docker-infra-port-remap ==
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-28-docker-infra-port-remap"
+
+Task: HTG-2026-04-28-docker-infra-port-remap
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-28-docker-infra-port-remap
+Validation: ok
+Phase: unknown
+Verification: unknown
+== HTG-2026-04-28-docker-happytg-naming ==
+
+> happytg@0.4.6 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-04-28-docker-happytg-naming"
+
+Task: HTG-2026-04-28-docker-happytg-naming
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-04-28-docker-happytg-naming
+Validation: ok
+Phase: unknown
+Verification: unknown

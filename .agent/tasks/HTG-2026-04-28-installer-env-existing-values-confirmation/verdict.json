@@ -1,0 +1,52 @@
+{
+  "taskId": "HTG-2026-04-28-installer-env-existing-values-confirmation",
+  "status": "failed",
+  "verdict": "fail",
+  "verifiedBy": "task-verifier",
+  "generatedAt": "2026-04-28T01:11:54+03:00",
+  "checks": [
+    {
+      "name": "existing-env-confirmation",
+      "ok": true,
+      "detail": "Interactive install reads the selected repo .env, shows an Existing .env Values confirmation screen before Telegram setup when an existing token is present, and masks the bot token."
+    },
+    {
+      "name": "safe-preview-values",
+      "ok": true,
+      "detail": "The confirmation screen displays safe non-secret existing values plainly, including fake allowed user IDs, home channel, bot username, local URLs, and port overrides."
+    },
+    {
+      "name": "edit-path-blank-form",
+      "ok": true,
+      "detail": "Choosing edit opens Telegram setup with a blank token and without allowed user IDs or home channel from .env or saved draft state."
+    },
+    {
+      "name": "reuse-path-carries-values",
+      "ok": true,
+      "detail": "Choosing reuse carries existing Telegram token, allowed user IDs, and home channel into the install result and env merge."
+    },
+    {
+      "name": "non-interactive-and-cli-compatibility",
+      "ok": true,
+      "detail": "Non-interactive fallback still uses CLI, draft, then existing .env values; CLI --allowed-user remains operator-provided input in interactive mode."
+    },
+    {
+      "name": "fresh-verification-commands",
+      "ok": true,
+      "detail": "Fresh verifier reruns passed: targeted install unit tests, targeted install runtime tests, pnpm --filter @happytg/bootstrap build, pnpm --filter @happytg/bootstrap lint, and pnpm happytg task validate."
+    },
+    {
+      "name": "scope-boundary",
+      "ok": false,
+      "detail": "Current workspace changes include out-of-scope Docker/launch/port/docs/policy/runtime surfaces, so the task cannot pass as an isolated implementation of the frozen spec."
+    }
+  ],
+  "findings": [
+    {
+      "id": "scope-contamination",
+      "severity": "P1",
+      "status": "fail",
+      "detail": "The frozen spec excludes unrelated installer launch, Docker, port-preflight, doctor, and verify behavior, but the current workspace diff includes those surfaces and additional unrelated package changes."
+    }
+  ]
+}

@@ -200,6 +200,13 @@ export const EVENT_CONTRACTS: EventContract[] = [
     idempotencyNotes: "Dispatch id prevents duplicate starts after reconnect."
   },
   {
+    name: "SessionCancelled",
+    payloadShape: "{ reason, previousState?, dispatchIds? }",
+    producer: "control-plane",
+    consumers: ["worker", "bot", "miniapp", "audit"],
+    idempotencyNotes: "Terminal cancelled sessions ignore repeated cancel requests."
+  },
+  {
     name: "ApprovalRequested",
     payloadShape: "{ approvalId, risk, scope, reason, expiresAt }",
     producer: "approval-engine",

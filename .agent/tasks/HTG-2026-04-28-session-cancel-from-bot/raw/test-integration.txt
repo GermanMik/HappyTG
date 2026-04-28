@@ -1,0 +1,7 @@
+No separate integration suite was required for this scoped change.
+
+The relevant cross-boundary behavior is covered by:
+
+- test-api.txt for the HTTP route delegating to control-plane service.
+- test-bot.txt for Telegram callback -> API cancel -> updated session card rendering.
+- verify.txt for repository-level HappyTG verification.
