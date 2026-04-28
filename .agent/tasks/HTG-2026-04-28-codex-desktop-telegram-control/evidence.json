@@ -1,6 +1,6 @@
 {
   "taskId": "HTG-2026-04-28-codex-desktop-telegram-control",
-  "phase": "fresh_verify",
+  "phase": "release_closeout",
   "implementationStatus": "pass",
   "controls": {
     "resume": {
@@ -34,15 +34,15 @@
     },
     {
       "name": "pnpm happytg doctor",
-      "status": "fail_environment",
+      "status": "pass_with_warnings",
       "raw": "raw/doctor.txt",
-      "reason": "Missing .env/TELEGRAM_BOT_TOKEN and local Mini App port conflict."
+      "reason": "Exit code 0 after using local ignored .env and non-conflicting port overrides; warnings remain for Codex websocket fallback and public Caddy Mini App route identity."
     },
     {
       "name": "pnpm happytg verify",
-      "status": "fail_environment",
+      "status": "pass_with_warnings",
       "raw": "raw/verify.txt",
-      "reason": "Missing .env/TELEGRAM_BOT_TOKEN and local Mini App port conflict."
+      "reason": "Exit code 0 after using local ignored .env and non-conflicting port overrides; warnings remain for Codex smoke timeout and public Caddy Mini App route identity."
     },
     {
       "name": "smoke Telegram Codex",
@@ -77,8 +77,8 @@
     "branch": "codex/codex-desktop-telegram-control-20260428",
     "pr": "https://github.com/GermanMik/HappyTG/pull/40",
     "ci": "pass",
-    "prState": "open_draft",
+    "prState": "open_draft_pending_ready",
     "mergeStateStatus": "CLEAN",
-    "merge": "blocked"
+    "merge": "ready_after_final_green_ci"
   }
 }

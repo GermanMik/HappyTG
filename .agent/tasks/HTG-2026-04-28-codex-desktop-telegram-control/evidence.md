@@ -40,12 +40,12 @@ Supported-control tests use an injectable adapter fixture only; production defau
 - `raw/smoke-telegram.txt`: targeted Telegram Codex/task-wizard smoke passed.
 - `raw/smoke-miniapp.txt`: targeted Mini App Codex/Desktop smoke passed.
 - `raw/fresh-verifier.txt`: fresh read-only verifier pass recorded; verifier made no production edits.
-- `raw/doctor.txt`: `pnpm happytg doctor` completed but reported FAIL due local environment: missing `.env`/`TELEGRAM_BOT_TOKEN` and Mini App port conflict.
-- `raw/verify.txt`: `pnpm happytg verify` completed but reported FAIL for the same environment blockers.
+- `raw/doctor.txt`: `pnpm happytg doctor` completed with exit code 0 and WARN status after using the local ignored `.env` and non-conflicting port overrides. Warnings remain for Codex websocket fallback and the public Caddy Mini App route identity.
+- `raw/verify.txt`: `pnpm happytg verify` completed with exit code 0 and WARN status after using the local ignored `.env` and non-conflicting port overrides. Warnings remain for Codex smoke timeout and the public Caddy Mini App route identity.
 - Release PR: https://github.com/GermanMik/HappyTG/pull/40
 - GitHub check `verify`: PASS on PR #40 after the pushed release commits.
 - Branch was updated from `origin/main`; API merge conflicts were resolved preserving both session cancel and Codex Desktop endpoints.
-- GitHub PR #40 remains draft and reports `mergeStateStatus=CLEAN`.
+- GitHub PR #40 remains draft before release transition and reports `mergeStateStatus=CLEAN`.
 
 ## Security / Privacy Evidence
 
@@ -58,5 +58,5 @@ Supported-control tests use an injectable adapter fixture only; production defau
 ## Release Closeout
 
 - Commit pushed to `origin/codex/codex-desktop-telegram-control-20260428`.
-- Draft PR opened as #40 because local release verification is blocked.
-- Merge was not attempted because `verdict.json` is BLOCKED until required local `doctor/verify` can pass and PR is no longer draft.
+- Draft PR opened as #40 and is ready to be moved out of draft for merge after final proof refresh.
+- Merge may proceed once the final pushed proof commit is green in CI and PR #40 remains mergeable.

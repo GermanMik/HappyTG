@@ -1,36 +1,31 @@
 {
   "taskId": "HTG-2026-04-28-codex-desktop-telegram-control",
-  "status": "BLOCKED",
+  "status": "PASS",
   "implementationStatus": "PASS",
-  "reason": "Implemented scoped read-only Codex Desktop visibility and source-aware Telegram/Mini App/API controls. Release/merge is blocked because required HappyTG doctor/verify reports fail in this local environment and Desktop mutating contracts are not proven for production.",
-  "blockers": [
+  "reason": "Implemented scoped read-only Codex Desktop visibility and source-aware Telegram/Mini App/API controls. Production Desktop Resume/Stop/New Task remain honestly unsupported because stable Desktop control contracts were not proven.",
+  "findings": [
     {
-      "kind": "environment",
+      "kind": "warning",
       "scope": "release",
-      "detail": "`pnpm happytg doctor` and `pnpm happytg verify` report FAIL because `.env`/`TELEGRAM_BOT_TOKEN` are missing. Secrets cannot be invented or committed."
+      "detail": "`pnpm happytg doctor` exits 0 with WARN after using the local ignored `.env` and non-conflicting port overrides. Warnings remain for Codex websocket fallback and public Caddy Mini App route identity."
     },
     {
-      "kind": "environment",
+      "kind": "warning",
       "scope": "release",
-      "detail": "Mini App port 3001 is occupied by an unrelated Contacts container, so local doctor/verify reports a port conflict."
+      "detail": "`pnpm happytg verify` exits 0 with WARN after using the local ignored `.env` and non-conflicting port overrides. Warnings remain for Codex smoke timeout and public Caddy Mini App route identity."
     },
     {
-      "kind": "release",
-      "scope": "pull-request",
-      "detail": "PR #40 is still open as a draft; it must be marked ready before merge."
-    },
-    {
-      "kind": "contract",
+      "kind": "unsupported_contract",
       "scope": "codex-desktop-resume",
       "detail": "No stable Desktop/API-safe Resume contract was proven; production Resume remains unsupported."
     },
     {
-      "kind": "contract",
+      "kind": "unsupported_contract",
       "scope": "codex-desktop-stop",
       "detail": "No stable session-to-process/control handle was proven; Stop remains unsupported and no process-kill workaround was implemented."
     },
     {
-      "kind": "contract",
+      "kind": "unsupported_contract",
       "scope": "codex-desktop-new-task",
       "detail": "No stable Desktop task creation contract was proven; New Desktop Task remains unsupported."
     }
@@ -39,8 +34,8 @@
     "lint": "PASS",
     "typecheck": "PASS",
     "test": "PASS",
-    "doctor": "FAIL_ENVIRONMENT",
-    "verify": "FAIL_ENVIRONMENT",
+    "doctor": "PASS_WITH_WARNINGS",
+    "verify": "PASS_WITH_WARNINGS",
     "smokeTelegram": "PASS",
     "smokeMiniApp": "PASS",
     "freshVerifier": "PASS",
@@ -50,8 +45,8 @@
     "branch": "codex/codex-desktop-telegram-control-20260428",
     "pr": "https://github.com/GermanMik/HappyTG/pull/40",
     "ci": "PASS",
-    "prState": "OPEN_DRAFT",
+    "prState": "OPEN_DRAFT_PENDING_READY",
     "mergeStateStatus": "CLEAN",
-    "merge": "BLOCKED_UNTIL_LOCAL_VERIFICATION_AND_RELEASE_CHECKS_PASS"
+    "merge": "READY_AFTER_FINAL_GREEN_CI"
   }
 }

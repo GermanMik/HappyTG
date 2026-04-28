@@ -3,8 +3,7 @@
 - Desktop Resume is unsupported in production for this task: no stable Desktop/API-safe control handle was proven.
 - Desktop Stop is unsupported in production for this task: no stable session-to-process/control handle was proven.
 - New Desktop Task is unsupported in production for this task: no stable Desktop task creation contract was proven.
-- `pnpm happytg doctor` reports FAIL in this local environment because `.env`/`TELEGRAM_BOT_TOKEN` are missing and the Mini App port is occupied by an unrelated Contacts container.
-- `pnpm happytg verify` reports FAIL for the same environment blockers.
-- Draft PR #40 exists, GitHub `verify` passed, and GitHub reports `mergeStateStatus=CLEAN`, but release merge is still blocked until the required local verification can pass with a valid Telegram bot configuration and non-conflicting ports.
-- PR #40 is still a draft; it must be marked ready before merge after local release gates pass.
-- I did not create fake secrets, commit `.env`, stop unrelated services, force a non-green merge, or bypass these blockers.
+- `pnpm happytg doctor` now exits 0 with WARN after using the local ignored `.env` and non-conflicting port overrides. Remaining warning: Codex websocket fallback and public Caddy Mini App route identity.
+- `pnpm happytg verify` now exits 0 with WARN after using the local ignored `.env` and non-conflicting port overrides. Remaining warning: Codex smoke timeout and public Caddy Mini App route identity.
+- PR #40 is still a draft before release transition; it must be marked ready immediately before merge after the final proof commit is pushed and CI remains green.
+- I did not create fake secrets, commit `.env`, stop unrelated services, force a non-green merge, or bypass branch protection.
