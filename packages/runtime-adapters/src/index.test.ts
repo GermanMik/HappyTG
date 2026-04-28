@@ -8,6 +8,7 @@ import {
   checkCodexReadiness,
   classifyActionKind,
   classifyCodexSmokeStderr,
+  CodexDesktopStateAdapter,
   codexCliMissingMessage,
   planToolExecutionBatches,
   runCodexExec,
@@ -226,6 +227,103 @@ test("tool execution model classifies actions and serializes mutations", () => {
     "parallel:verify-1",
     "serial:push-1"
   ]);
+});
+
+test("Codex Desktop adapter parses projects from global state without private payloads", async () => {
+  const codexHome = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-global-"));
+  try {
+    await writeFile(
+      path.join(codexHome, ".codex-global-state.json"),
+      JSON.stringify({
+        "electron-saved-workspace-roots": ["C:/Develop/Projects/HappyTG"],
+        "active-workspace-roots": ["C:/Develop/Projects/HappyTG"],
+        "thread-workspace-root-hints": {
+          "session-1": "C:/Develop/Projects/HappyTG"
+        },
+        "private-token-like-field": "SECRET_TOKEN_SHOULD_NOT_APPEAR"
+      }),
+      "utf8"
+    );
+
+    const adapter = new CodexDesktopStateAdapter({ codexHome });
+    const projects = await adapter.listProjects();
+
+    assert.equal(projects.length, 1);
+    assert.equal(projects[0]?.label, "HappyTG");
+    assert.equal(projects[0]?.source, "codex-desktop");
+    assert.equal(projects[0]?.active, true);
+    assert.doesNotMatch(JSON.stringify(projects), /SECRET_TOKEN_SHOULD_NOT_APPEAR/);
+  } finally {
+    await rm(codexHome, { recursive: true, force: true });
+  }
+});
+
+test("Codex Desktop adapter parses session_index and session files as sanitized sessions", async () => {
+  const codexHome = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-sessions-"));
+  try {
+    const sessionDir = path.join(codexHome, "sessions", "2026", "04", "28");
+    await mkdir(sessionDir, { recursive: true });
+    await writeFile(
+      path.join(codexHome, ".codex-global-state.json"),
+      JSON.stringify({
+        "electron-saved-workspace-roots": ["C:/Develop/Projects/HappyTG"],
+        "thread-workspace-root-hints": {
+          "session-1": "C:/Develop/Projects/HappyTG"
+        }
+      }),
+      "utf8"
+    );
+    await writeFile(
+      path.join(codexHome, "session_index.jsonl"),
+      `${JSON.stringify({ id: "session-1", thread_name: "Desktop release check", updated_at: "2026-04-28T08:00:00.000Z" })}\n`,
+      "utf8"
+    );
+    await writeFile(
+      path.join(sessionDir, "session-1.jsonl"),
+      `${JSON.stringify({ timestamp: "2026-04-28T09:00:00.000Z", payload: { id: "session-1", cwd: "C:/Develop/Projects/HappyTG", content: "RAW_PROMPT_SECRET" } })}\n`,
+      "utf8"
+    );
+
+    const sessions = await new CodexDesktopStateAdapter({ codexHome }).listSessions();
+
+    assert.equal(sessions.length, 1);
+    assert.equal(sessions[0]?.id, "session-1");
+    assert.equal(sessions[0]?.title, "Desktop release check");
+    assert.equal(sessions[0]?.source, "codex-desktop");
+    assert.equal(sessions[0]?.status, "recent");
+    assert.equal(sessions[0]?.canResume, false);
+    assert.equal(sessions[0]?.canStop, false);
+    assert.match(sessions[0]?.unsupportedReason ?? "", /unsupported/i);
+    assert.doesNotMatch(JSON.stringify(sessions), /RAW_PROMPT_SECRET/);
+  } finally {
+    await rm(codexHome, { recursive: true, force: true });
+  }
+});
+
+test("Codex Desktop adapter tolerates missing and corrupt state", async () => {
+  const codexHome = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-corrupt-"));
+  try {
+    const sessionDir = path.join(codexHome, "sessions", "2026");
+    const archivedDir = path.join(codexHome, "archived_sessions", "2026");
+    await mkdir(sessionDir, { recursive: true });
+    await mkdir(archivedDir, { recursive: true });
+    await writeFile(path.join(codexHome, ".codex-global-state.json"), "{not json", "utf8");
+    await writeFile(path.join(codexHome, "session_index.jsonl"), "{\"id\":\"ok-session\",\"thread_name\":\"Recovered\"}\n{bad json\n", "utf8");
+    await writeFile(path.join(sessionDir, "unknown-session.jsonl"), "{bad json\n", "utf8");
+    await writeFile(path.join(archivedDir, "archived-session.jsonl"), "{bad json\n", "utf8");
+    await writeFile(path.join(codexHome, "auth.json"), "{\"token\":\"AUTH_SECRET_SHOULD_NOT_APPEAR\"}", "utf8");
+
+    const adapter = new CodexDesktopStateAdapter({ codexHome });
+    const projects = await adapter.listProjects();
+    const sessions = await adapter.listSessions();
+
+    assert.deepEqual(projects, []);
+    assert.equal(sessions.some((session) => session.id === "ok-session"), true);
+    assert.equal(sessions.some((session) => session.status === "unknown"), true);
+    assert.doesNotMatch(JSON.stringify(sessions), /AUTH_SECRET_SHOULD_NOT_APPEAR/);
+  } finally {
+    await rm(codexHome, { recursive: true, force: true });
+  }
 });
 
 test("checkCodexReadiness resolves a Windows-style codex.cmd shim from Path", async () => {

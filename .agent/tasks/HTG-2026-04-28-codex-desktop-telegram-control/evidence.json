@@ -1,0 +1,84 @@
+{
+  "taskId": "HTG-2026-04-28-codex-desktop-telegram-control",
+  "phase": "release_closeout",
+  "implementationStatus": "pass",
+  "controls": {
+    "resume": {
+      "production": "unsupported",
+      "reason": "No stable Codex Desktop daemon/API-safe resume contract was proven."
+    },
+    "stop": {
+      "production": "unsupported",
+      "reason": "No stable session-to-process/control handle was proven."
+    },
+    "newDesktopTask": {
+      "production": "unsupported",
+      "reason": "No stable Codex Desktop task creation contract was proven."
+    }
+  },
+  "checks": [
+    {
+      "name": "pnpm lint",
+      "status": "pass",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "name": "pnpm typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "name": "pnpm test",
+      "status": "pass",
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "name": "pnpm happytg doctor",
+      "status": "pass_with_warnings",
+      "raw": "raw/doctor.txt",
+      "reason": "Exit code 0 after using local ignored .env and non-conflicting port overrides; warnings remain for Codex websocket fallback and public Caddy Mini App route identity."
+    },
+    {
+      "name": "pnpm happytg verify",
+      "status": "pass_with_warnings",
+      "raw": "raw/verify.txt",
+      "reason": "Exit code 0 after using local ignored .env and non-conflicting port overrides; warnings remain for Codex smoke timeout and public Caddy Mini App route identity."
+    },
+    {
+      "name": "smoke Telegram Codex",
+      "status": "pass",
+      "raw": "raw/smoke-telegram.txt"
+    },
+    {
+      "name": "smoke Mini App Codex",
+      "status": "pass",
+      "raw": "raw/smoke-miniapp.txt"
+    },
+    {
+      "name": "fresh verifier",
+      "status": "pass",
+      "raw": "raw/fresh-verifier.txt"
+    },
+    {
+      "name": "GitHub PR verify",
+      "status": "pass",
+      "url": "https://github.com/GermanMik/HappyTG/pull/40"
+    }
+  ],
+  "privacy": {
+    "botReadsCodexHome": false,
+    "miniAppReadsCodexHome": false,
+    "adapterReadsAuthJson": false,
+    "rawPayloadsProjected": false,
+    "desktopStopUsesProcessKillWorkaround": false,
+    "successfulNoopDesktopControls": false
+  },
+  "release": {
+    "branch": "codex/codex-desktop-telegram-control-20260428",
+    "pr": "https://github.com/GermanMik/HappyTG/pull/40",
+    "ci": "pass",
+    "prState": "open_draft_pending_ready",
+    "mergeStateStatus": "CLEAN",
+    "merge": "ready_after_final_green_ci"
+  }
+}

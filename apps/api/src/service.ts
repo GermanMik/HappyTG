@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { createApprovalRequest, resolveApprovalRequestIdempotent } from "../../../packages/approval-engine/src/index.js";
 import { createDefaultPolicies, evaluatePolicies } from "../../../packages/policy-engine/src/index.js";
 import { advanceTaskPhase, initTaskBundle, recordTaskApproval, validateTaskBundle } from "../../../packages/repo-proof/src/index.js";
+import { defaultCodexDesktopStateAdapter, type CodexDesktopStateAdapter } from "../../../packages/runtime-adapters/src/index.js";
 import { canTransitionSession, nextResumeState, transitionSession } from "../../../packages/session-engine/src/index.js";
 import {
   makeLaunchGrantId,
@@ -16,7 +17,12 @@ import {
 import type {
   ApprovalDecision,
   ApprovalRequest,
+  ActionKind,
+  CodexDesktopControlResult,
+  CodexDesktopProject,
+  CodexDesktopSession,
   ClaimPairingRequest,
+  CreateCodexDesktopTaskRequest,
   CreateMiniAppLaunchGrantRequest,
   CreateMiniAppLaunchGrantResponse,
   CreateMiniAppSessionRequest,
@@ -413,10 +419,22 @@ const defaultRepoProofOperations: RepoProofOperations = {
   advanceTaskPhase
 };
 
+export class CodexDesktopControlError extends Error {
+  constructor(
+    readonly statusCode: 404 | 409 | 501,
+    message: string,
+    readonly reason = message
+  ) {
+    super(message);
+    this.name = "CodexDesktopControlError";
+  }
+}
+
 export class HappyTGControlPlaneService {
   constructor(
     private readonly store: FileStateStore = new FileStateStore(),
-    private readonly repoProof: RepoProofOperations = defaultRepoProofOperations
+    private readonly repoProof: RepoProofOperations = defaultRepoProofOperations,
+    private readonly codexDesktop: CodexDesktopStateAdapter = defaultCodexDesktopStateAdapter
   ) {}
 
   async createMiniAppLaunchGrant(input: CreateMiniAppLaunchGrantRequest): Promise<CreateMiniAppLaunchGrantResponse> {
@@ -648,6 +666,170 @@ export class HappyTGControlPlaneService {
       .filter((item) => sessionIds.has(item.sessionId))
       .filter((item) => stateFilter.size === 0 || stateFilter.has(item.state))
       .sort((left, right) => left.expiresAt.localeCompare(right.expiresAt));
+  }
+
+  private assertKnownUser(store: HappyTGStore, userId: string): User {
+    const user = store.users.find((item) => item.id === userId && item.status === "active");
+    if (!user) {
+      throw new CodexDesktopControlError(404, "User not found for Codex Desktop projection");
+    }
+
+    return user;
+  }
+
+  private async assertCodexDesktopUser(userId: string): Promise<void> {
+    const store = await this.store.read();
+    this.assertKnownUser(store, userId);
+  }
+
+  async listCodexDesktopProjects(userId: string): Promise<{ projects: CodexDesktopProject[] }> {
+    await this.assertCodexDesktopUser(userId);
+    try {
+      return {
+        projects: await this.codexDesktop.listProjects()
+      };
+    } catch {
+      return {
+        projects: []
+      };
+    }
+  }
+
+  async listCodexDesktopSessions(userId: string): Promise<{ sessions: CodexDesktopSession[] }> {
+    await this.assertCodexDesktopUser(userId);
+    try {
+      return {
+        sessions: await this.codexDesktop.listSessions()
+      };
+    } catch {
+      return {
+        sessions: []
+      };
+    }
+  }
+
+  private async authorizeCodexDesktopAction(input: {
+    userId: string;
+    actionKind: ActionKind;
+    auditAction: string;
+    targetRef: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<void> {
+    return this.store.update((store) => {
+      ensurePolicies(store);
+      this.assertKnownUser(store, input.userId);
+      const policyDecision = evaluatePolicies({
+        actionKind: input.actionKind,
+        scopeRefs: {
+          global: "global",
+          command: input.actionKind
+        },
+        policies: store.policies
+      });
+
+      appendAudit(store, "user", input.userId, `${input.auditAction}.attempt`, input.targetRef, {
+        actionKind: input.actionKind,
+        policyOutcome: policyDecision.outcome,
+        reason: policyDecision.reason,
+        ...(input.metadata ?? {})
+      });
+
+      if (policyDecision.outcome === "deny") {
+        appendAudit(store, "system", "policy", `${input.auditAction}.denied`, input.targetRef, {
+          userId: input.userId,
+          reason: policyDecision.reason
+        });
+        throw new CodexDesktopControlError(409, policyDecision.reason);
+      }
+
+      if (policyDecision.outcome === "require_approval") {
+        appendAudit(store, "system", "policy", `${input.auditAction}.approval_required`, input.targetRef, {
+          userId: input.userId,
+          reason: policyDecision.reason
+        });
+        throw new CodexDesktopControlError(409, "Codex Desktop action requires approval, but no stable Desktop approval control contract is available.");
+      }
+    });
+  }
+
+  private async auditCodexDesktopResult(userId: string, action: string, targetRef: string, metadata: Record<string, unknown>): Promise<void> {
+    await this.store.update((store) => {
+      appendAudit(store, "user", userId, action, targetRef, metadata);
+    });
+  }
+
+  async resumeCodexDesktopSession(userId: string, sessionId: string): Promise<CodexDesktopControlResult> {
+    const session = await this.codexDesktop.getSession(sessionId);
+    if (!session) {
+      throw new CodexDesktopControlError(404, "Codex Desktop session not found");
+    }
+
+    await this.authorizeCodexDesktopAction({
+      userId,
+      actionKind: "codex_desktop_resume",
+      auditAction: "codex_desktop.resume",
+      targetRef: session.id,
+      metadata: { source: session.source }
+    });
+
+    if (!session.canResume) {
+      const reason = session.unsupportedReason ?? this.codexDesktop.controlUnsupportedReason();
+      await this.auditCodexDesktopResult(userId, "codex_desktop.resume.unsupported", session.id, { reason });
+      throw new CodexDesktopControlError(501, reason);
+    }
+
+    const result = await this.codexDesktop.resumeSession(session);
+    await this.auditCodexDesktopResult(userId, "codex_desktop.resume.completed", session.id, { ok: result.ok });
+    return result;
+  }
+
+  async stopCodexDesktopSession(userId: string, sessionId: string): Promise<CodexDesktopControlResult> {
+    const session = await this.codexDesktop.getSession(sessionId);
+    if (!session) {
+      throw new CodexDesktopControlError(404, "Codex Desktop session not found");
+    }
+
+    await this.authorizeCodexDesktopAction({
+      userId,
+      actionKind: "codex_desktop_stop",
+      auditAction: "codex_desktop.stop",
+      targetRef: session.id,
+      metadata: { source: session.source }
+    });
+
+    if (!session.canStop) {
+      const reason = session.unsupportedReason ?? this.codexDesktop.controlUnsupportedReason();
+      await this.auditCodexDesktopResult(userId, "codex_desktop.stop.unsupported", session.id, { reason });
+      throw new CodexDesktopControlError(501, reason);
+    }
+
+    const result = await this.codexDesktop.stopSession(session);
+    await this.auditCodexDesktopResult(userId, "codex_desktop.stop.completed", session.id, { ok: result.ok });
+    return result;
+  }
+
+  async createCodexDesktopTask(input: CreateCodexDesktopTaskRequest): Promise<CodexDesktopControlResult> {
+    await this.authorizeCodexDesktopAction({
+      userId: input.userId,
+      actionKind: "codex_desktop_new_task",
+      auditAction: "codex_desktop.new_task",
+      targetRef: input.projectId ?? input.projectPath ?? "codex-desktop",
+      metadata: {
+        source: "codex-desktop",
+        projectId: input.projectId,
+        hasPrompt: Boolean(input.prompt)
+      }
+    });
+
+    if (!this.codexDesktop.canCreateTask()) {
+      const reason = this.codexDesktop.controlUnsupportedReason();
+      await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.unsupported", input.projectId ?? input.projectPath ?? "codex-desktop", { reason });
+      throw new CodexDesktopControlError(501, reason);
+    }
+
+    const result = await this.codexDesktop.createTask(input);
+    await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.completed", result.task?.id ?? "codex-desktop", { ok: result.ok });
+    return result;
   }
 
   async getUserByTelegram(telegramUserId: string): Promise<User | undefined> {

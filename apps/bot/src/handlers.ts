@@ -1,6 +1,11 @@
+import { createHash } from "node:crypto";
+
 import type {
   ApprovalRequest,
   ApprovalScope,
+  CodexDesktopProject,
+  CodexDesktopSession,
+  CodexRuntimeSource,
   CreateSessionRequest,
   Host,
   ResolveApprovalRequest,
@@ -69,6 +74,7 @@ interface SessionDetail extends Session {
 interface TaskWizardDraft {
   userId: string;
   chatId: number;
+  runtime?: CodexRuntimeSource;
   hostId?: string;
   hostLabel?: string;
   workspaceId?: string;
@@ -104,6 +110,18 @@ function userDisplayName(user: TelegramUser): string {
 
 function shortId(id: string): string {
   return id.length <= 10 ? id : `${id.slice(0, 8)}...`;
+}
+
+function desktopSessionCallbackRef(sessionId: string): string {
+  if (sessionId.length <= 48) {
+    return sessionId;
+  }
+
+  return `cds_${createHash("sha256").update(sessionId).digest("hex").slice(0, 24)}`;
+}
+
+function desktopSessionMatchesRef(session: CodexDesktopSession, ref: string): boolean {
+  return session.id === ref || desktopSessionCallbackRef(session.id) === ref;
 }
 
 function trimLine(value: string, max = 90): string {
@@ -245,8 +263,12 @@ function mainMenuKeyboard(miniBaseUrl: string | undefined): Record<string, unkno
   const miniAppButton = telegramWebAppButton("Открыть Mini App", miniBaseUrl, "home");
   return inlineKeyboard([
       [
-        { text: "Новая задача", callback_data: "m:t" },
-        { text: "Активные сессии", callback_data: "m:s" }
+        { text: "Codex", callback_data: "cx:m" },
+        { text: "Новая задача", callback_data: "m:t" }
+      ],
+      [
+        { text: "Активные сессии", callback_data: "m:s" },
+        { text: "Codex CLI", callback_data: "cc:s" }
       ],
       [
         { text: "Подтверждения", callback_data: "m:a" },
@@ -261,6 +283,37 @@ function mainMenuKeyboard(miniBaseUrl: string | undefined): Record<string, unkno
 
 function approvalCallbackData(code: "o" | "p" | "s" | "d", approvalId: string, nonce?: string): string {
   return nonce ? `a:${code}:${approvalId}:${nonce}` : `a:${code}:${approvalId}`;
+}
+
+function codexMenuKeyboard(miniBaseUrl: string | undefined): Record<string, unknown> {
+  const miniAppButton = telegramWebAppButton("Открыть Mini App", miniBaseUrl, "codex");
+  return inlineKeyboard([
+    [
+      { text: "Codex Desktop", callback_data: "cx:d" },
+      { text: "Codex CLI", callback_data: "cx:c" }
+    ],
+    [
+      { text: "Новая CLI задача", callback_data: "cx:ns:c" },
+      { text: "Новая Desktop задача", callback_data: "cx:ns:d" }
+    ],
+    [
+      { text: "Desktop projects", callback_data: "cd:p" },
+      { text: "Desktop sessions", callback_data: "cd:s" }
+    ],
+    miniAppButton ? [miniAppButton] : []
+  ]);
+}
+
+function runtimeSelectionKeyboard(): Record<string, unknown> {
+  return inlineKeyboard([
+    [
+      { text: "Codex Desktop", callback_data: "cx:ns:d" },
+      { text: "Codex CLI", callback_data: "cx:ns:c" }
+    ],
+    [
+      { text: "Отмена", callback_data: "w:x" }
+    ]
+  ]);
 }
 
 export function inlineApprovalKeyboard(approvalId: string, nonce?: string) {
@@ -393,6 +446,86 @@ function formatSessionCard(session: SessionDetail, overview?: MiniAppOverview): 
     session.currentSummary ? `\nКратко: ${trimLine(session.currentSummary, 160)}` : undefined,
     session.lastError ? `\nОшибка: ${trimLine(session.lastError, 160)}` : undefined
   ].filter(Boolean).join("\n");
+}
+
+function formatCodexMenuText(): string {
+  return [
+    "Codex",
+    "Выберите источник задач и сессий.",
+    "",
+    "Codex CLI: HappyTG sessions через paired host.",
+    "Codex Desktop: read-only local Desktop state через API adapter."
+  ].join("\n");
+}
+
+function formatDesktopProjects(projects: CodexDesktopProject[]): string {
+  if (projects.length === 0) {
+    return "Codex Desktop projects не найдены или локальный Desktop state недоступен.";
+  }
+
+  return [
+    "Codex Desktop projects",
+    ...projects.slice(0, 8).map((project, index) => `${index + 1}. ${project.label}${project.active ? " (active)" : ""}\n   ${trimLine(project.path, 100)}`)
+  ].join("\n");
+}
+
+function formatDesktopSessions(sessions: CodexDesktopSession[]): string {
+  if (sessions.length === 0) {
+    return "Codex Desktop sessions не найдены или локальный Desktop state недоступен.";
+  }
+
+  return [
+    "Codex Desktop sessions",
+    ...sessions.slice(0, 8).map((session, index) => `${index + 1}. ${trimLine(session.title, 70)} - ${session.status}`)
+  ].join("\n");
+}
+
+function formatDesktopSessionCard(session: CodexDesktopSession): string {
+  return [
+    `Codex Desktop session ${shortId(session.id)}`,
+    trimLine(session.title, 80),
+    "",
+    "Источник: Codex Desktop",
+    `Статус: ${session.status}`,
+    `Project: ${session.projectPath ? trimLine(session.projectPath, 110) : "unknown"}`,
+    `Обновлено: ${session.updatedAt}`,
+    `Resume: ${session.canResume ? "supported" : "unsupported"}`,
+    `Stop: ${session.canStop ? "supported" : "unsupported"}`,
+    !session.canResume || !session.canStop || !session.canCreateTask ? `Причина: ${trimLine(session.unsupportedReason ?? "contract unavailable", 160)}` : undefined
+  ].filter(Boolean).join("\n");
+}
+
+function desktopProjectsKeyboard(projects: CodexDesktopProject[], miniBaseUrl: string | undefined): Record<string, unknown> {
+  const miniAppButton = telegramWebAppButton("Mini App", miniBaseUrl, "codex", { source: "codex-desktop" });
+  return inlineKeyboard([
+    ...projects.slice(0, 8).map((project) => [
+      { text: project.label, callback_data: "cd:s" }
+    ]),
+    miniAppButton ? [miniAppButton] : [],
+    [{ text: "Назад", callback_data: "cx:m" }]
+  ]);
+}
+
+function desktopSessionsKeyboard(sessions: CodexDesktopSession[], miniBaseUrl: string | undefined): Record<string, unknown> {
+  const miniAppButton = telegramWebAppButton("Mini App", miniBaseUrl, "codex", { source: "codex-desktop" });
+  return inlineKeyboard([
+    ...sessions.slice(0, 8).map((session) => [
+      { text: `Открыть ${shortId(session.id)}`, callback_data: `cd:u:${desktopSessionCallbackRef(session.id)}` }
+    ]),
+    miniAppButton ? [miniAppButton] : [],
+    [{ text: "Назад", callback_data: "cx:m" }]
+  ]);
+}
+
+function desktopSessionKeyboard(session: CodexDesktopSession, miniBaseUrl: string | undefined): Record<string, unknown> {
+  const miniAppButton = telegramWebAppButton("Открыть Mini App", miniBaseUrl, "codex-session", { id: session.id });
+  const callbackRef = desktopSessionCallbackRef(session.id);
+  return inlineKeyboard([
+    session.canResume ? [{ text: "Resume", callback_data: `cd:r:${callbackRef}` }] : [],
+    session.canStop ? [{ text: "Stop", callback_data: `cd:x:${callbackRef}` }] : [],
+    miniAppButton ? [miniAppButton] : [],
+    [{ text: "Desktop sessions", callback_data: "cd:s" }, { text: "Назад", callback_data: "cx:m" }]
+  ]);
 }
 
 function sessionCardKeyboard(session: Session, miniBaseUrl: string | undefined): Record<string, unknown> {
@@ -608,6 +741,16 @@ export function createBotHandlers(dependencies: BotDependencies) {
     return result.workspaces;
   }
 
+  async function fetchDesktopProjects(userId: string): Promise<CodexDesktopProject[]> {
+    const result = await dependencies.apiFetch<{ projects: CodexDesktopProject[] }>(`/api/v1/codex-desktop/projects?userId=${encodeURIComponent(userId)}`);
+    return result.projects;
+  }
+
+  async function fetchDesktopSessions(userId: string): Promise<CodexDesktopSession[]> {
+    const result = await dependencies.apiFetch<{ sessions: CodexDesktopSession[] }>(`/api/v1/codex-desktop/sessions?userId=${encodeURIComponent(userId)}`);
+    return result.sessions;
+  }
+
   async function handleMenu(message: TelegramMessage): Promise<void> {
     if (!message.from) {
       await dependencies.sendTelegramMessage(message.chat.id, formatFirstUseText(), mainMenuKeyboard(miniBaseUrl));
@@ -713,6 +856,49 @@ export function createBotHandlers(dependencies: BotDependencies) {
     );
   }
 
+  async function handleCodexMenu(chatId: number): Promise<void> {
+    await dependencies.sendTelegramMessage(chatId, formatCodexMenuText(), codexMenuKeyboard(miniBaseUrl));
+  }
+
+  async function handleDesktopProjects(message: TelegramMessage): Promise<void> {
+    const userId = await resolveUserOrPrompt(message.chat.id, message.from);
+    if (!userId) {
+      return;
+    }
+
+    const projects = await fetchDesktopProjects(userId);
+    await dependencies.sendTelegramMessage(message.chat.id, formatDesktopProjects(projects), desktopProjectsKeyboard(projects, miniBaseUrl));
+  }
+
+  async function handleDesktopSessions(message: TelegramMessage): Promise<void> {
+    const userId = await resolveUserOrPrompt(message.chat.id, message.from);
+    if (!userId) {
+      return;
+    }
+
+    const sessions = await fetchDesktopSessions(userId);
+    await dependencies.sendTelegramMessage(message.chat.id, formatDesktopSessions(sessions), desktopSessionsKeyboard(sessions, miniBaseUrl));
+  }
+
+  async function findDesktopSessionByRef(userId: string, sessionRef: string): Promise<CodexDesktopSession | undefined> {
+    return (await fetchDesktopSessions(userId)).find((item) => desktopSessionMatchesRef(item, sessionRef));
+  }
+
+  async function sendDesktopSessionCard(chatId: number, sessionRef: string, user?: TelegramUser): Promise<void> {
+    const userId = await resolveUserOrPrompt(chatId, user);
+    if (!userId) {
+      return;
+    }
+
+    const session = await findDesktopSessionByRef(userId, sessionRef);
+    if (!session) {
+      await dependencies.sendTelegramMessage(chatId, "Codex Desktop session не найдена.", codexMenuKeyboard(miniBaseUrl));
+      return;
+    }
+
+    await dependencies.sendTelegramMessage(chatId, formatDesktopSessionCard(session), desktopSessionKeyboard(session, miniBaseUrl));
+  }
+
   async function sendSessionCard(chatId: number, sessionId: string, user?: TelegramUser): Promise<void> {
     const session = await dependencies.apiFetch<SessionDetail>(`/api/v1/sessions/${encodeURIComponent(sessionId)}`);
     const userId = user ? await resolveInternalUserId(user) : undefined;
@@ -760,6 +946,22 @@ export function createBotHandlers(dependencies: BotDependencies) {
       return;
     }
 
+    wizardDrafts.set(draftKey(user), {
+      userId,
+      chatId,
+      updatedAt: now()
+    });
+
+    await dependencies.sendTelegramMessage(chatId, "Выберите runtime/source для новой задачи.", runtimeSelectionKeyboard());
+  }
+
+  async function startCliTaskWizard(chatId: number, user?: TelegramUser): Promise<void> {
+    sweepExpiredDrafts();
+    const userId = await resolveUserOrPrompt(chatId, user);
+    if (!userId || !user) {
+      return;
+    }
+
     const hosts = await fetchHosts(userId);
     if (hosts.length === 0) {
       await dependencies.sendTelegramMessage(chatId, "Сначала подключите host через `pnpm daemon:pair` и `/pair CODE`.", mainMenuKeyboard(miniBaseUrl));
@@ -769,6 +971,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
     wizardDrafts.set(draftKey(user), {
       userId,
       chatId,
+      runtime: "codex-cli",
       updatedAt: now()
     });
 
@@ -778,6 +981,38 @@ export function createBotHandlers(dependencies: BotDependencies) {
     }
 
     await dependencies.sendTelegramMessage(chatId, "Выберите host для новой задачи.", hostSelectionKeyboard(hosts));
+  }
+
+  async function startDesktopTaskWizard(chatId: number, user?: TelegramUser): Promise<void> {
+    const userId = await resolveUserOrPrompt(chatId, user);
+    if (!userId) {
+      return;
+    }
+
+    const [projects, sessions] = await Promise.all([
+      fetchDesktopProjects(userId),
+      fetchDesktopSessions(userId)
+    ]);
+    const canCreateTask = sessions.some((session) => session.canCreateTask);
+    if (!canCreateTask) {
+      const reason = sessions[0]?.unsupportedReason ?? "Stable Codex Desktop New Task contract is unavailable.";
+      await dependencies.sendTelegramMessage(
+        chatId,
+        [
+          "New Desktop Task сейчас недоступен.",
+          trimLine(reason, 180),
+          "",
+          projects.length > 0 ? `Desktop projects видны: ${projects.length}.` : "Desktop projects не найдены."
+        ].join("\n"),
+        inlineKeyboard([
+          [{ text: "Desktop sessions", callback_data: "cd:s" }],
+          [{ text: "Назад", callback_data: "cx:m" }]
+        ])
+      );
+      return;
+    }
+
+    await dependencies.sendTelegramMessage(chatId, "Codex Desktop New Task поддержан adapter contract. Откройте Mini App для выбора проекта и подтверждения.", codexMenuKeyboard(miniBaseUrl));
   }
 
   async function chooseWizardHost(chatId: number, user: TelegramUser, hostId: string, knownHost?: Host): Promise<void> {
@@ -870,7 +1105,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
 
   async function confirmWizard(chatId: number, user: TelegramUser): Promise<void> {
     const draft = getFreshDraft(user);
-    if (!draft?.hostId || !draft.workspaceId || !draft.mode || !draft.prompt) {
+    if (!draft?.hostId || !draft.workspaceId || !draft.mode || !draft.prompt || draft.runtime !== "codex-cli") {
       await dependencies.sendTelegramMessage(chatId, "Черновик задачи устарел. Начните заново через /task.", mainMenuKeyboard(miniBaseUrl));
       return;
     }
@@ -1028,6 +1263,9 @@ export function createBotHandlers(dependencies: BotDependencies) {
       case "/task":
         await startTaskWizard(message.chat.id, message.from);
         return;
+      case "/codex":
+        await handleCodexMenu(message.chat.id);
+        return;
       case "/pair":
         if (!rest[0]) {
           await dependencies.sendTelegramMessage(message.chat.id, "Пришлите pairing code так: `/pair CODE`.");
@@ -1182,12 +1420,73 @@ export function createBotHandlers(dependencies: BotDependencies) {
     sweepExpiredDrafts();
     const data = callback.data ?? "";
     const chatId = callback.message?.chat.id ?? callback.from.id;
-    const [prefix, action, value] = data.split(":");
+    const [prefix, action, ...rest] = data.split(":");
+    const value = rest.join(":");
 
     const approvalCallback = parseApprovalCallback(data);
     if (approvalCallback) {
       await handleApprovalCallback(callback, approvalCallback);
       return;
+    }
+
+    if (prefix === "cx") {
+      if (action === "m") {
+        await sendOrEdit(callback, formatCodexMenuText(), codexMenuKeyboard(miniBaseUrl));
+        return;
+      }
+      if (action === "c") {
+        await handleSessions({ message_id: callback.message?.message_id ?? 0, chat: { id: chatId }, from: callback.from });
+        return;
+      }
+      if (action === "d") {
+        await handleDesktopSessions({ message_id: callback.message?.message_id ?? 0, chat: { id: chatId }, from: callback.from });
+        return;
+      }
+      if (action === "ns" && value === "c") {
+        await startCliTaskWizard(chatId, callback.from);
+        return;
+      }
+      if (action === "ns" && value === "d") {
+        await startDesktopTaskWizard(chatId, callback.from);
+        return;
+      }
+    }
+
+    if (prefix === "cc" && action === "s") {
+      await handleSessions({ message_id: callback.message?.message_id ?? 0, chat: { id: chatId }, from: callback.from });
+      return;
+    }
+
+    if (prefix === "cd") {
+      if (action === "p") {
+        await handleDesktopProjects({ message_id: callback.message?.message_id ?? 0, chat: { id: chatId }, from: callback.from });
+        return;
+      }
+      if (action === "s") {
+        await handleDesktopSessions({ message_id: callback.message?.message_id ?? 0, chat: { id: chatId }, from: callback.from });
+        return;
+      }
+      if (action === "u" && value) {
+        await sendDesktopSessionCard(chatId, value, callback.from);
+        return;
+      }
+      if ((action === "r" || action === "x") && value) {
+        const userId = await resolveUserOrPrompt(chatId, callback.from);
+        if (!userId) {
+          return;
+        }
+        const session = await findDesktopSessionByRef(userId, value);
+        if (!session) {
+          await sendOrEdit(callback, "Codex Desktop session не найдена.", codexMenuKeyboard(miniBaseUrl));
+          return;
+        }
+        await dependencies.apiFetch(`/api/v1/codex-desktop/sessions/${encodeURIComponent(session.id)}/${action === "r" ? "resume" : "stop"}`, {
+          method: "POST",
+          body: JSON.stringify({ userId })
+        });
+        await sendDesktopSessionCard(chatId, desktopSessionCallbackRef(session.id), callback.from);
+        return;
+      }
     }
 
     if (prefix === "m") {

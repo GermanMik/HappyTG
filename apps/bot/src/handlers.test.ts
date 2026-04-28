@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { ApprovalRequest, Host, Session, TaskBundle, Workspace } from "../../../packages/protocol/src/index.js";
+import type { ApprovalRequest, CodexDesktopProject, CodexDesktopSession, Host, Session, TaskBundle, Workspace } from "../../../packages/protocol/src/index.js";
 
 import type { BotDependencies } from "./handlers.js";
 import { createBotHandlers, inspectTelegramMiniAppLaunch, resolveMiniAppBaseUrl } from "./handlers.js";
@@ -96,6 +96,34 @@ function task(overrides: Partial<TaskBundle> = {}): TaskBundle {
   };
 }
 
+function desktopProject(overrides: Partial<CodexDesktopProject> = {}): CodexDesktopProject {
+  return {
+    id: "cdp_1",
+    label: "HappyTG",
+    path: "C:/Develop/Projects/HappyTG",
+    source: "codex-desktop",
+    active: true,
+    ...overrides
+  };
+}
+
+function desktopSession(overrides: Partial<CodexDesktopSession> = {}): CodexDesktopSession {
+  return {
+    id: "desktop-session-1",
+    title: "Desktop fixture",
+    projectPath: "C:/Develop/Projects/HappyTG",
+    projectId: "cdp_1",
+    updatedAt: now,
+    status: "recent",
+    source: "codex-desktop",
+    canResume: false,
+    canStop: false,
+    canCreateTask: false,
+    unsupportedReason: "contract missing",
+    ...overrides
+  };
+}
+
 function collectWebAppUrls(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value.flatMap((item) => collectWebAppUrls(item));
@@ -155,7 +183,7 @@ test("menu command renders a concise action-first main menu", async () => {
   ]);
   assert.match(messages[0]?.text ?? "", /Активные сессии: 1/);
   assert.match(messages[0]?.text ?? "", /Ждут подтверждения: 1/);
-  assert.deepEqual((messages[0]?.replyMarkup as { inline_keyboard: unknown[] })?.inline_keyboard.length, 3);
+  assert.deepEqual((messages[0]?.replyMarkup as { inline_keyboard: unknown[] })?.inline_keyboard.length, 4);
   assert.deepEqual(collectWebAppUrls(messages[0]?.replyMarkup), ["https://happy.example/miniapp?screen=home"]);
 });
 
@@ -346,13 +374,19 @@ test("task wizard uses smart defaults and creates a proof session from callback 
     from: { id: 42, username: "dev" }
   });
   await handlers.handleCallbackQuery({
+    id: "cb_runtime",
+    data: "cx:ns:c",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 2, chat: { id: 100 }, text: "runtime" }
+  });
+  await handlers.handleCallbackQuery({
     id: "cb_mode",
     data: "w:m:p",
     from: { id: 42, username: "dev" },
-    message: { message_id: 2, chat: { id: 100 }, text: "mode" }
+    message: { message_id: 3, chat: { id: 100 }, text: "mode" }
   });
   await handlers.handleMessage({
-    message_id: 3,
+    message_id: 4,
     text: "Build the dashboard",
     chat: { id: 100 },
     from: { id: 42, username: "dev" }
@@ -361,14 +395,140 @@ test("task wizard uses smart defaults and creates a proof session from callback 
     id: "cb_confirm",
     data: "w:c",
     from: { id: 42, username: "dev" },
-    message: { message_id: 4, chat: { id: 100 }, text: "confirm" }
+    message: { message_id: 5, chat: { id: 100 }, text: "confirm" }
   });
 
-  assert.match(messages[0]?.text ?? "", /Repo: repo/);
-  assert.match(messages[1]?.text ?? "", /proof-loop/);
-  assert.match(messages[2]?.text ?? "", /Проверим перед запуском/);
+  assert.match(messages[0]?.text ?? "", /runtime\/source/);
+  assert.match(messages[1]?.text ?? "", /Repo: repo/);
+  assert.match(messages[2]?.text ?? "", /proof-loop/);
+  assert.match(messages[3]?.text ?? "", /Проверим перед запуском/);
   assert.match(messages.at(-1)?.text ?? "", /Подтверждение apr_1/);
   assert.equal(calls.some((call) => call.pathname === "/api/v1/sessions" && call.init?.method === "POST"), true);
+});
+
+test("codex menu separates Desktop and CLI sessions and hides unsupported Desktop actions", async () => {
+  const messages: CapturedMessage[] = [];
+  const calls: Array<{ pathname: string; init?: RequestInit }> = [];
+  const apiFetch: BotDependencies["apiFetch"] = async (pathname, init) => {
+    calls.push({ pathname, init });
+    if (pathname === "/api/v1/users/by-telegram/42") {
+      return { id: "usr_42" } as never;
+    }
+    if (pathname === "/api/v1/miniapp/bootstrap?userId=usr_42") {
+      return {
+        hosts: [host()],
+        workspaces: [workspace()],
+        sessions: [session({ id: "ses_cli", title: "CLI fixture" })],
+        approvals: [],
+        tasks: []
+      } as never;
+    }
+    if (pathname === "/api/v1/codex-desktop/projects?userId=usr_42") {
+      return { projects: [desktopProject()] } as never;
+    }
+    if (pathname === "/api/v1/codex-desktop/sessions?userId=usr_42") {
+      return { sessions: [desktopSession()] } as never;
+    }
+    throw new Error(`Unexpected path ${pathname}`);
+  };
+  const handlers = createBotHandlers({
+    apiFetch,
+    miniAppBaseUrl: "https://happy.example/miniapp",
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleMessage({
+    message_id: 1,
+    text: "/codex",
+    chat: { id: 100 },
+    from: { id: 42, username: "dev" }
+  });
+  await handlers.handleCallbackQuery({
+    id: "cb_desktop",
+    data: "cx:d",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 2, chat: { id: 100 }, text: "codex" }
+  });
+  await handlers.handleCallbackQuery({
+    id: "cb_projects",
+    data: "cd:p",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 3, chat: { id: 100 }, text: "desktop" }
+  });
+  await handlers.handleCallbackQuery({
+    id: "cb_card",
+    data: "cd:u:desktop-session-1",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 4, chat: { id: 100 }, text: "desktop" }
+  });
+  await handlers.handleCallbackQuery({
+    id: "cb_cli",
+    data: "cc:s",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 5, chat: { id: 100 }, text: "codex" }
+  });
+  await handlers.handleCallbackQuery({
+    id: "cb_desktop_new",
+    data: "cx:ns:d",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 6, chat: { id: 100 }, text: "codex" }
+  });
+
+  assert.match(messages[0]?.text ?? "", /Codex Desktop/);
+  assert.match(messages[0]?.text ?? "", /Codex CLI/);
+  assert.match(messages[1]?.text ?? "", /Codex Desktop sessions/);
+  assert.match(messages[2]?.text ?? "", /Codex Desktop projects/);
+  assert.match(messages[2]?.text ?? "", /HappyTG/);
+  assert.match(messages[3]?.text ?? "", /Источник: Codex Desktop/);
+  assert.match(messages[3]?.text ?? "", /Resume: unsupported/);
+  assert.match(messages[4]?.text ?? "", /Активные сессии/);
+  assert.match(messages[4]?.text ?? "", /CLI fixture/);
+  assert.match(messages[5]?.text ?? "", /New Desktop Task сейчас недоступен/);
+  assert.doesNotMatch(JSON.stringify(messages[3]?.replyMarkup ?? {}), /cd:[rx]:desktop-session-1/);
+  assert.equal(calls.some((call) => call.pathname === "/api/v1/sessions" && call.init?.method === "POST"), false);
+});
+
+test("desktop session callbacks use short stable refs for long Desktop ids", async () => {
+  const messages: CapturedMessage[] = [];
+  const longSessionId = `desktop-session-${"x".repeat(80)}`;
+  const apiFetch: BotDependencies["apiFetch"] = async (pathname) => {
+    if (pathname === "/api/v1/users/by-telegram/42") {
+      return { id: "usr_42" } as never;
+    }
+    if (pathname === "/api/v1/codex-desktop/sessions?userId=usr_42") {
+      return { sessions: [desktopSession({ id: longSessionId })] } as never;
+    }
+    throw new Error(`Unexpected path ${pathname}`);
+  };
+  const handlers = createBotHandlers({
+    apiFetch,
+    async sendTelegramMessage(chatId, text, replyMarkup) {
+      messages.push({ chatId, text, replyMarkup });
+    }
+  });
+
+  await handlers.handleCallbackQuery({
+    id: "cb_desktop_sessions",
+    data: "cd:s",
+    from: { id: 42, username: "dev" },
+    message: { message_id: 1, chat: { id: 100 }, text: "desktop" }
+  });
+
+  const markup = JSON.stringify(messages[0]?.replyMarkup ?? {});
+  assert.doesNotMatch(markup, new RegExp(longSessionId));
+  const callbackRef = markup.match(/cd:u:([^"}]+)/)?.[1];
+  assert.match(callbackRef ?? "", /^cds_[0-9a-f]{24}$/);
+
+  await handlers.handleCallbackQuery({
+    id: "cb_desktop_card",
+    data: `cd:u:${callbackRef}`,
+    from: { id: 42, username: "dev" },
+    message: { message_id: 2, chat: { id: 100 }, text: "desktop" }
+  });
+
+  assert.match(messages[1]?.text ?? "", /Источник: Codex Desktop/);
 });
 
 test("task wizard opportunistically sweeps expired drafts on unrelated updates", async () => {

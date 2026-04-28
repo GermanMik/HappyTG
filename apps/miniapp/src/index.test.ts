@@ -327,6 +327,12 @@ test("mini app forwards browser session cookie as bearer auth", async () => {
       if (pathname === "/api/v1/miniapp/sessions") {
         return { sessions: [] } as never;
       }
+      if (pathname === "/api/v1/codex-desktop/projects") {
+        return { projects: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions") {
+        return { sessions: [] } as never;
+      }
       throw new Error(`Unexpected path ${pathname}`);
     }
   });
@@ -349,8 +355,203 @@ test("mini app forwards browser session cookie as bearer auth", async () => {
       {
         pathname: "/api/v1/miniapp/sessions",
         authorization: "Bearer mas_token"
+      },
+      {
+        pathname: "/api/v1/codex-desktop/projects",
+        authorization: "Bearer mas_token"
+      },
+      {
+        pathname: "/api/v1/codex-desktop/sessions",
+        authorization: "Bearer mas_token"
       }
     ]);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("codex panel renders source-aware Desktop and CLI sessions with disabled unsupported actions", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "ses_cli",
+              title: "CLI fixture",
+              state: "ready",
+              runtime: "codex-cli",
+              repoName: "HappyTG",
+              hostLabel: "devbox",
+              lastUpdatedAt: "2026-04-28T08:00:00.000Z",
+              href: "/session/ses_cli",
+              nextAction: "open"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "HappyTG",
+              path: "C:/Develop/Projects/HappyTG",
+              source: "codex-desktop",
+              active: true
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "desktop-session-1",
+              title: "Desktop fixture",
+              projectPath: "C:/Develop/Projects/HappyTG",
+              projectId: "cdp_1",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canStop: false,
+              canCreateTask: false,
+              unsupportedReason: "contract missing",
+              rawPayload: "RAW_PROMPT_SECRET"
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=all&state=recent&q=Desktop`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /Codex Desktop \/ CLI/);
+    assert.match(html, /Codex Desktop/);
+    assert.match(html, /Codex CLI/);
+    assert.match(html, /Desktop fixture/);
+    assert.match(html, /recent/);
+    assert.match(html, /contract missing/);
+    assert.doesNotMatch(html, /CLI fixture/);
+    assert.doesNotMatch(html, /RAW_PROMPT_SECRET/);
+
+    const detailResponse = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-session?id=desktop-session-1&userId=usr_1`);
+    const detailHtml = await detailResponse.text();
+    assert.equal(detailResponse.status, 200);
+    assert.match(detailHtml, /Resume/);
+    assert.match(detailHtml, /Stop/);
+    assert.match(detailHtml, /New Desktop Task/);
+    assert.match(detailHtml, /disabled/);
+    assert.doesNotMatch(detailHtml, /data-desktop-action="resume"/);
+    assert.doesNotMatch(detailHtml, /RAW_PROMPT_SECRET/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("mini app renders supported Desktop actions and forwards new Desktop task to API", async () => {
+  const calls: Array<{ pathname: string; init?: RequestInit }> = [];
+  const desktopSession = {
+    id: "desktop-supported",
+    title: "Desktop supported",
+    projectPath: "C:/Develop/Projects/HappyTG",
+    projectId: "cdp_1",
+    updatedAt: "2026-04-28T09:00:00.000Z",
+    status: "active",
+    source: "codex-desktop",
+    canResume: true,
+    canStop: true,
+    canCreateTask: true
+  };
+  const server = createMiniAppServer({
+    async fetchJson(pathname, init) {
+      calls.push({ pathname, init });
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "HappyTG",
+              path: "C:/Develop/Projects/HappyTG",
+              source: "codex-desktop"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?userId=usr_1") {
+        return { sessions: [desktopSession] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/tasks?userId=usr_1") {
+        assert.equal(init?.method, "POST");
+        assert.deepEqual(JSON.parse(String(init?.body)), {
+          runtime: "codex-desktop",
+          projectPath: "C:/Develop/Projects/HappyTG",
+          prompt: "Run Desktop task"
+        });
+        return {
+          task: {
+            id: "cdt_1",
+            title: "Desktop task",
+            status: "created"
+          }
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const detailResponse = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-session?id=desktop-supported&userId=usr_1`);
+    const detailHtml = await detailResponse.text();
+    assert.equal(detailResponse.status, 200);
+    assert.match(detailHtml, /data-desktop-action="resume"/);
+    assert.match(detailHtml, /data-desktop-action="stop"/);
+    assert.match(detailHtml, /New Desktop Task/);
+
+    const created = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        runtime: "codex-desktop",
+        projectPath: "C:/Develop/Projects/HappyTG",
+        prompt: "Run Desktop task"
+      })
+    });
+    const payload = await created.json() as { task: { id: string }; sessionHref: string };
+
+    assert.equal(created.status, 200);
+    assert.equal(payload.task.id, "cdt_1");
+    assert.equal(payload.sessionHref, "/codex?source=codex-desktop");
+    assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/tasks?userId=usr_1"), true);
   } finally {
     await closeServer(server);
   }

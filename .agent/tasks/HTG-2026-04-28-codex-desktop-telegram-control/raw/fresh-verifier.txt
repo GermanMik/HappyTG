@@ -1,0 +1,54 @@
+Fresh verifier pass for HTG-2026-04-28-codex-desktop-telegram-control
+Timestamp: 2026-04-28T21:25:12.5470816+03:00
+Role: verifier (read-only against production code; production code was not edited in this pass)
+
+## git status
+## codex/codex-desktop-telegram-control-20260428...origin/codex/codex-desktop-telegram-control-20260428
+ M .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/evidence.json
+ M .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/evidence.md
+ M .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/problems.md
+ M .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/raw/doctor.txt
+ M .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/raw/fresh-verifier.txt
+ M .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/raw/verify.txt
+ M .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/verdict.json
+exit=0
+
+## production diff check
+changed_files=.agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/evidence.json, .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/evidence.md, .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/problems.md, .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/raw/doctor.txt, .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/raw/fresh-verifier.txt, .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/raw/verify.txt, .agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/verdict.json
+PASS: only proof artifacts changed since the last pushed commit.
+
+## git diff --check
+warning: in the working copy of '.agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/evidence.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/evidence.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/problems.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/verdict.json', LF will be replaced by CRLF the next time Git touches it
+exit=0
+
+## conflict marker scan
+exit=1
+Note: conflict marker scan exit=1 means no matches from ripgrep.
+
+## secret value scan in changed proof files
+warning: in the working copy of '.agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/evidence.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/evidence.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/problems.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-04-28-codex-desktop-telegram-control/verdict.json', LF will be replaced by CRLF the next time Git touches it
+exit=1
+Note: secret scan exit=1 means no secret-value patterns were found.
+
+## bot/miniapp direct codex-home scan
+apps/miniapp\src\index.ts:1723:            ...codex,
+apps/miniapp\src\index.ts:1781:          ...codex,
+apps/miniapp\src\index.ts:1794:          ...codex,
+exit=0
+Note: bot/miniapp scan matches only TypeScript object spreads named codex, not filesystem reads.
+
+## desktop control process-kill workaround targeted scan
+exit=1
+Note: targeted Desktop control kill scan exit=1 means no process-kill workaround exists in Desktop adapter/API/Bot/Mini App control paths.
+
+## doctor/verify raw status
+HappyTG doctor [WARN]
+HappyTG verify [WARN]
+
+Verdict: PASS. Production Desktop Resume/Stop/New Desktop Task remain unsupported; no Desktop process-kill Stop workaround found. Remaining doctor/verify WARN findings are non-fatal environment/service warnings. Verifier did not edit production code.
