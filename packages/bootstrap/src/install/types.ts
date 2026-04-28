@@ -5,6 +5,7 @@ export type DirtyWorktreeStrategy = "cancel" | "stash" | "keep";
 export type BackgroundMode = "launchagent" | "scheduled-task" | "startup" | "systemd-user" | "manual" | "skip";
 export type InstallLaunchMode = "local" | "docker" | "manual" | "skip";
 export type InstallLaunchStatus = "not-started" | "started" | "skipped" | "failed";
+export const DEFAULT_WINDOWS_DAEMON_TASK_NAME = "HappyTG Host Daemon";
 export type PostInstallCheck = "setup" | "doctor" | "verify";
 export type InstallStatus = "pass" | "warn" | "fail";
 export type InstallOutcome = "success" | "success-with-warnings" | "recoverable-failure" | "fatal-failure";
@@ -172,12 +173,27 @@ export interface EnvWriteResult {
   preservedKeys: string[];
 }
 
+export type OwnedBackgroundArtifactKind =
+  | "launcher"
+  | "launchagent"
+  | "scheduled-task"
+  | "startup-shortcut"
+  | "systemd-user-unit";
+
+export interface OwnedBackgroundArtifact {
+  kind: OwnedBackgroundArtifactKind;
+  mode: BackgroundMode;
+  path?: string;
+  taskName?: string;
+}
+
 export interface BackgroundSetupResult {
   mode: BackgroundMode;
   status: "configured" | "manual" | "skipped" | "failed";
   detail: string;
   artifactPath?: string;
   launcherPath?: string;
+  ownedArtifacts?: OwnedBackgroundArtifact[];
 }
 
 export interface InstallLaunchCommandResult {

@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-04-19-uninstall-multi-artifact-cleanup",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Bootstrap uninstall multi-artifact cleanup",
+  "acceptanceCriteria": [
+    "Repeated installs with different background modes keep enough ownership metadata for truthful uninstall cleanup.",
+    "Uninstall removes all recorded launcher artifacts for the current local state scope without deleting unowned global launchers.",
+    "Windows regressions cover scheduled-task plus startup leftovers across repeated installs and docs stay truthful."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-04-19T18:09:04.110Z",
+  "updatedAt": "2026-04-19T21:27:17.8524093+03:00"
+}

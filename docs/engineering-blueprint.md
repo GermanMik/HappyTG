@@ -190,6 +190,7 @@ Delivery is not split into MVP/V2/Later. Capabilities are grouped by domain and 
 | Setup planner | show plan before install | confidence before change | High | rule engine, manifests | incomplete plans | 2 |
 | Repair from previous reports | deterministic repair path | fast recovery | High | state store, reports | repeated loops | 6 |
 | Codex smoke verify | prove Codex-ready path | trust in runtime | Medium | codex cli, config | brittle smoke prompt | 3 |
+| Uninstall cleanup | remove installer-owned local launcher/state artifacts without deleting the repo checkout by default | safe rollback and host retirement | Medium | bootstrap package, local state layout | over-deleting user data if scope is unclear | 6 |
 
 ### Observability & Audit
 

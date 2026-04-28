@@ -1,0 +1,55 @@
+{
+  "taskId": "HTG-2026-04-19-uninstall-multi-artifact-cleanup",
+  "criteria": [
+    {
+      "criterion": "Repeated installs with different background modes keep enough ownership metadata for truthful uninstall cleanup.",
+      "artifacts": [
+        "C:\\Develop\\Projects\\HappyTG\\packages\\bootstrap\\src\\install\\types.ts",
+        "C:\\Develop\\Projects\\HappyTG\\packages\\bootstrap\\src\\install\\background.ts",
+        "C:\\Develop\\Projects\\HappyTG\\packages\\bootstrap\\src\\install\\state.ts",
+        "C:\\Develop\\Projects\\HappyTG\\packages\\bootstrap\\src\\install.state.test.ts",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\test-unit.txt"
+      ]
+    },
+    {
+      "criterion": "Uninstall removes all recorded launcher artifacts for the current local state scope without deleting unowned global launchers.",
+      "artifacts": [
+        "C:\\Develop\\Projects\\HappyTG\\packages\\bootstrap\\src\\uninstall\\index.ts",
+        "C:\\Develop\\Projects\\HappyTG\\packages\\bootstrap\\src\\uninstall.test.ts",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\uninstall.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\test-unit.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\build.txt"
+      ]
+    },
+    {
+      "criterion": "Windows regressions cover scheduled-task plus startup leftovers across repeated installs and docs stay truthful.",
+      "artifacts": [
+        "C:\\Develop\\Projects\\HappyTG\\packages\\bootstrap\\src\\cli.ts",
+        "C:\\Develop\\Projects\\HappyTG\\packages\\bootstrap\\src\\cli.test.ts",
+        "C:\\Develop\\Projects\\HappyTG\\packages\\bootstrap\\package.json",
+        "C:\\Develop\\Projects\\HappyTG\\package.json",
+        "C:\\Develop\\Projects\\HappyTG\\docs\\installation.md",
+        "C:\\Develop\\Projects\\HappyTG\\docs\\quickstart.md",
+        "C:\\Develop\\Projects\\HappyTG\\docs\\self-hosting.md",
+        "C:\\Develop\\Projects\\HappyTG\\docs\\troubleshooting.md",
+        "C:\\Develop\\Projects\\HappyTG\\docs\\engineering-blueprint.md",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\test-unit.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\lint.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\typecheck.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\spec.md",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\build.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\test-unit.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\uninstall.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\lint.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\typecheck.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\test-integration.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\doctor.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\verify.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-04-19-uninstall-multi-artifact-cleanup\\raw\\task-validate.txt"
+  ],
+  "generatedAt": "2026-04-19T21:27:17.8524093+03:00"
+}

@@ -11,7 +11,11 @@ import {
 } from "../../../shared/src/index.js";
 
 import { runCommand } from "./commands.js";
-import type { BackgroundMode, BackgroundSetupResult } from "./types.js";
+import {
+  DEFAULT_WINDOWS_DAEMON_TASK_NAME,
+  type BackgroundMode,
+  type BackgroundSetupResult
+} from "./types.js";
 
 function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\"'\"'`)}'`;
@@ -114,7 +118,19 @@ async function configureLaunchAgent(input: {
     status: "configured",
     detail: `LaunchAgent configured at ${plistPath}.`,
     artifactPath: plistPath,
-    launcherPath
+    launcherPath,
+    ownedArtifacts: [
+      {
+        kind: "launcher",
+        mode: "launchagent",
+        path: launcherPath
+      },
+      {
+        kind: "launchagent",
+        mode: "launchagent",
+        path: plistPath
+      }
+    ]
   };
 }
 
@@ -133,7 +149,14 @@ async function configureScheduledTask(input: {
       mode: "scheduled-task",
       status: "manual",
       detail: "schtasks.exe was not found. Create a logon task manually after install.",
-      launcherPath
+      launcherPath,
+      ownedArtifacts: [
+        {
+          kind: "launcher",
+          mode: "scheduled-task",
+          path: launcherPath
+        }
+      ]
     };
   }
 
@@ -148,7 +171,19 @@ async function configureScheduledTask(input: {
     mode: "scheduled-task",
     status: "configured",
     detail: "Scheduled Task configured for HappyTG Host Daemon.",
-    launcherPath
+    launcherPath,
+    ownedArtifacts: [
+      {
+        kind: "launcher",
+        mode: "scheduled-task",
+        path: launcherPath
+      },
+      {
+        kind: "scheduled-task",
+        mode: "scheduled-task",
+        taskName: DEFAULT_WINDOWS_DAEMON_TASK_NAME
+      }
+    ]
   };
 }
 
@@ -180,7 +215,19 @@ async function configureStartupShortcut(input: {
     status: "configured",
     detail: `Startup shortcut created at ${shortcutPath}.`,
     artifactPath: shortcutPath,
-    launcherPath
+    launcherPath,
+    ownedArtifacts: [
+      {
+        kind: "launcher",
+        mode: "startup",
+        path: launcherPath
+      },
+      {
+        kind: "startup-shortcut",
+        mode: "startup",
+        path: shortcutPath
+      }
+    ]
   };
 }
 
@@ -234,7 +281,19 @@ async function configureSystemdUser(input: {
     status: "configured",
     detail: `systemd user service written to ${unitPath}.`,
     artifactPath: unitPath,
-    launcherPath
+    launcherPath,
+    ownedArtifacts: [
+      {
+        kind: "launcher",
+        mode: "systemd-user",
+        path: launcherPath
+      },
+      {
+        kind: "systemd-user-unit",
+        mode: "systemd-user",
+        path: unitPath
+      }
+    ]
   };
 }
 

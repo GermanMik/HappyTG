@@ -17,6 +17,7 @@ import { createInstallFailureResult, runHappyTGInstall } from "./install/index.j
 import type { InstallCommandOptions, InstallResult } from "./install/types.js";
 import { runBootstrapCommand, type BootstrapCommand } from "./index.js";
 import { runTelegramMenuReset, runTelegramMenuSet, type TelegramMenuCommandResult } from "./telegram-menu.js";
+import { createUninstallFailureResult, runHappyTGUninstall, type UninstallResult } from "./uninstall/index.js";
 
 export class CliUsageError extends Error {
   constructor(message: string) {
@@ -30,6 +31,7 @@ type CliRequest =
   | { kind: "install"; json: boolean; options: InstallCommandOptions }
   | { kind: "telegram-menu-set"; json: boolean; dryRun: boolean }
   | { kind: "telegram-menu-reset"; json: boolean }
+  | { kind: "uninstall"; json: boolean }
   | { kind: "task-init"; json: boolean; repoRoot: string; taskId: string; sessionId: string; workspaceId: string; title: string; mode: "quick" | "proof"; acceptanceCriteria: string[] }
   | { kind: "task-validate"; json: boolean; repoRoot: string; taskId: string }
   | { kind: "task-status"; json: boolean; repoRoot: string; taskId: string };
@@ -220,6 +222,7 @@ function usage(): string {
     "  happytg telegram menu set [--dry-run] [--json]",
     "  happytg telegram menu reset [--json]",
     "  happytg install [--repo-mode clone|update|current] [--repo-dir <path>] [--repo-url <url>] [--branch <name>] [--telegram-bot-token <token>] [--allowed-user <id>]... [--home-channel <value>] [--background launchagent|scheduled-task|startup|systemd-user|manual|skip] [--launch-mode local|docker|manual|skip] [--post-check setup|doctor|verify]... [--non-interactive] [--json]",
+    "  happytg uninstall [--json]",
     "  happytg config init [--json]",
     "  happytg env snapshot [--json]",
     "  happytg task init --repo <path> --task <TASK_ID> [--session <id>] [--workspace <id>] [--title <title>] [--mode quick|proof] [--criterion <text>]... [--json]",
@@ -322,6 +325,13 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
     };
   }
 
+  if (scope === "uninstall") {
+    return {
+      kind: "uninstall",
+      json
+    };
+  }
+
   if (scope === "config" && action === "init") {
     return { kind: "bootstrap", command: "config-init", json };
   }
@@ -411,7 +421,7 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
   throw new CliUsageError(`Unsupported command: ${scope}`);
 }
 
-export function renderText(result: BootstrapReport | InstallResult | TelegramMenuCommandResult | TaskBundle | TaskStatusResponse): string {
+export function renderText(result: BootstrapReport | InstallResult | TelegramMenuCommandResult | UninstallResult | TaskBundle | TaskStatusResponse): string {
   if ("kind" in result && result.kind === "install") {
     const finalizationItems = result.finalization?.items ?? [];
     const groupedFinalization = groupAutomationItems(finalizationItems);
@@ -442,6 +452,36 @@ export function renderText(result: BootstrapReport | InstallResult | TelegramMen
       lines.push("");
       lines.push("Next steps:");
       lines.push(...result.nextSteps.map((step) => `- ${step}`));
+    }
+
+    return lines.join("\n");
+  }
+
+  if ("kind" in result && result.kind === "uninstall") {
+    const lines = [
+      `HappyTG uninstall ${statusBadge(result.status)}`,
+      `State dir: ${result.scope.stateDir}`,
+      `Bootstrap repo: ${result.scope.bootstrapRepoPath}`,
+      `Removed: ${result.removedPaths.length}`,
+      `Warnings: ${result.warnings.length}`
+    ];
+
+    if (result.kept.length > 0) {
+      lines.push("");
+      lines.push("Kept:");
+      lines.push(...result.kept.map((item) => `- ${item}`));
+    }
+
+    if (result.removedPaths.length > 0) {
+      lines.push("");
+      lines.push("Removed paths:");
+      lines.push(...result.removedPaths.map((item) => `- ${item}`));
+    }
+
+    if (result.warnings.length > 0) {
+      lines.push("");
+      lines.push("Warnings:");
+      lines.push(...result.warnings.map((item) => `- ${item}`));
     }
 
     return lines.join("\n");
@@ -540,13 +580,15 @@ export async function executeHappyTG(
     runHappyTGInstallImpl?: typeof runHappyTGInstall;
     runTelegramMenuSetImpl?: typeof runTelegramMenuSet;
     runTelegramMenuResetImpl?: typeof runTelegramMenuReset;
+    runHappyTGUninstallImpl?: typeof runHappyTGUninstall;
   }
-): Promise<BootstrapReport | InstallResult | TelegramMenuCommandResult | TaskBundle | TaskStatusResponse> {
+): Promise<BootstrapReport | InstallResult | TelegramMenuCommandResult | UninstallResult | TaskBundle | TaskStatusResponse> {
   const request = parseHappyTGArgs(argv, cwd);
   const runBootstrapCommandImpl = runtime?.runBootstrapCommandImpl ?? runBootstrapCommand;
   const runHappyTGInstallImpl = runtime?.runHappyTGInstallImpl ?? runHappyTGInstall;
   const runTelegramMenuSetImpl = runtime?.runTelegramMenuSetImpl ?? runTelegramMenuSet;
   const runTelegramMenuResetImpl = runtime?.runTelegramMenuResetImpl ?? runTelegramMenuReset;
+  const runHappyTGUninstallImpl = runtime?.runHappyTGUninstallImpl ?? runHappyTGUninstall;
 
   switch (request.kind) {
     case "bootstrap":
@@ -571,6 +613,18 @@ export async function executeHappyTG(
       return runTelegramMenuResetImpl({
         cwd
       });
+    case "uninstall":
+      try {
+        return await runHappyTGUninstallImpl({
+          json: request.json,
+          cwd
+        });
+      } catch (error) {
+        return createUninstallFailureResult({
+          cwd,
+          error
+        });
+      }
     case "task-init":
       return initTaskBundle({
         repoRoot: request.repoRoot,
@@ -612,7 +666,7 @@ async function main(argv: string[]): Promise<void> {
   const result = await executeHappyTG(argv);
   if (request.json) {
     console.log(JSON.stringify(result, null, 2));
-    if ("kind" in result && result.kind === "install" && result.status === "fail") {
+    if ("kind" in result && (result.kind === "install" || result.kind === "uninstall") && result.status === "fail") {
       process.exitCode = 1;
     }
     return;
@@ -626,7 +680,7 @@ async function main(argv: string[]): Promise<void> {
   }
 
   console.log(renderText(result));
-  if ("kind" in result && result.kind === "install" && result.status === "fail") {
+  if ("kind" in result && (result.kind === "install" || result.kind === "uninstall") && result.status === "fail") {
     process.exitCode = 1;
   }
 }

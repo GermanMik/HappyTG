@@ -3,13 +3,11 @@ import path from "node:path";
 import type { BootstrapReport } from "../../../protocol/src/index.js";
 import {
   findUpwardFile,
-  getLocalStateDir,
   normalizeSpawnEnv,
   nowIso,
   parseDotEnv,
   readTextFileOrEmpty,
-  resolveExecutable,
-  writeJsonFileAtomic
+  resolveExecutable
 } from "../../../shared/src/index.js";
 import {
   legacyNextStepsFromAutomation,
@@ -33,7 +31,7 @@ import {
   syncRepository
 } from "./repo.js";
 import { createPartialFailureDetail, deriveInstallOutcome, installStatusFromOutcome } from "./status.js";
-import { readInstallDraft, writeInstallDraft } from "./state.js";
+import { readInstallDraft, writeInstallDraft, writeInstallState } from "./state.js";
 import {
   promptMultiSelect,
   promptPortConflictResolution,
@@ -1029,14 +1027,6 @@ function createStep(id: string, label: string, detail: string): InstallStepRecor
   };
 }
 
-async function writeInstallState(result: InstallResult, env: NodeJS.ProcessEnv, platform: NodeJS.Platform): Promise<void> {
-  const statePath = path.join(getLocalStateDir(env, platform), "state", "install-last.json");
-  await writeJsonFileAtomic(statePath, {
-    ...result,
-    generatedAt: nowIso()
-  });
-}
-
 function replaceStep(steps: InstallStepRecord[], next: InstallStepRecord): InstallStepRecord[] {
   return steps.map((step) => step.id === next.id ? next : step);
 }
@@ -1745,7 +1735,11 @@ export async function runHappyTGInstall(
         repoUrl: repoSyncResult?.repoUrl ?? detail.repoUrl ?? repoSources.primary.url
       }
     };
-    await writeInstallState(failureResult, installEnv, platform.platform.platform);
+    await writeInstallState({
+      result: failureResult,
+      env: installEnv,
+      platform: platform.platform.platform
+    });
 
     if (interactive) {
       await waitForEnter(stdin, stdout, renderFinalScreen({
@@ -2441,7 +2435,11 @@ export async function runHappyTGInstall(
         repoUrl: repoSyncResult.repoUrl
       }
     };
-    await writeInstallState(result, installEnv, platform.platform.platform);
+    await writeInstallState({
+      result,
+      env: installEnv,
+      platform: platform.platform.platform
+    });
     await saveDraft({
       repo: {
         mode: repoMode,

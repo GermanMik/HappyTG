@@ -14,6 +14,7 @@
     "repair": "tsx src/cli.ts repair",
     "verify": "tsx src/cli.ts verify",
     "status": "tsx src/cli.ts status",
+    "uninstall:command": "tsx src/cli.ts uninstall",
     "config:init": "tsx src/cli.ts config init",
     "env:snapshot": "tsx src/cli.ts env snapshot",
     "build": "tsc -p tsconfig.json",

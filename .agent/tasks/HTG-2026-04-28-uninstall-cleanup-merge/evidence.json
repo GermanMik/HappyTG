@@ -1,0 +1,52 @@
+{
+  "taskId": "HTG-2026-04-28-uninstall-cleanup-merge",
+  "phase": "fresh verify",
+  "commands": [
+    {
+      "command": "pnpm --filter @happytg/bootstrap typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck-bootstrap.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap test",
+      "status": "pass",
+      "raw": "raw/test-bootstrap.txt",
+      "summary": "132 tests passed"
+    },
+    {
+      "command": "pnpm lint",
+      "status": "pass",
+      "raw": "raw/lint.txt",
+      "summary": "15/15 tasks passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck.txt",
+      "summary": "15/15 tasks passed"
+    },
+    {
+      "command": "pnpm test",
+      "status": "pass",
+      "raw": "raw/test.txt",
+      "summary": "15/15 tasks passed"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "status": "warn",
+      "raw": "raw/verify.txt",
+      "summary": "Exit 0; environment warnings for Mini App identity and occupied non-HappyTG ports"
+    }
+  ],
+  "branchAudit": {
+    "neededMerge": ["codex/uninstall-multi-artifact-cleanup"],
+    "noMergeNeeded": [
+      "origin/codex/installer-docker-launch-mode",
+      "origin/codex/installer-env-optional-values-followup",
+      "codex/HTG-2026-04-23-enable-miniapp-launch-buttons",
+      "origin/codex/release-0.3.10-warning-triage",
+      "origin/codex/one-command-installer",
+      "origin/codex/htg-2026-04-18-dev-port-conflict-triage"
+    ]
+  }
+}
