@@ -1,0 +1,56 @@
+{
+  "taskId": "HTG-2026-04-19-uninstall-multi-artifact-cleanup",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "local-2026-04-19T21:27:17.8524093+03:00"
+  },
+  "checks": [
+    {
+      "name": "pnpm --filter @happytg/bootstrap build",
+      "ok": true,
+      "detail": "Passed; see raw/build.txt."
+    },
+    {
+      "name": "pnpm --filter @happytg/bootstrap test",
+      "ok": true,
+      "detail": "Passed with uninstall CLI/runtime regressions plus repeated-install install-state coverage; see raw/test-unit.txt."
+    },
+    {
+      "name": "isolated uninstall proof run",
+      "ok": true,
+      "detail": "Custom HAPPYTG_STATE_DIR cleanup removed the recorded startup shortcut and launcher from an isolated temp state scope without touching external global launchers; see raw/uninstall.txt."
+    },
+    {
+      "name": "pnpm lint",
+      "ok": true,
+      "detail": "Passed; see raw/lint.txt."
+    },
+    {
+      "name": "pnpm typecheck",
+      "ok": true,
+      "detail": "Passed; see raw/typecheck.txt."
+    },
+    {
+      "name": "pnpm test",
+      "ok": true,
+      "detail": "Passed; see raw/test-integration.txt."
+    },
+    {
+      "name": "pnpm happytg doctor",
+      "ok": true,
+      "detail": "Exited 0 with warning-level environment findings only (Codex websocket 403 fallback and already-running HappyTG services); see raw/doctor.txt."
+    },
+    {
+      "name": "pnpm happytg verify",
+      "ok": true,
+      "detail": "Exited 0 with the same warning-level environment findings only; see raw/verify.txt."
+    },
+    {
+      "name": "pnpm happytg task validate --repo . --task HTG-2026-04-19-uninstall-multi-artifact-cleanup",
+      "ok": true,
+      "detail": "Passed after bundle metadata sync; see raw/task-validate.txt."
+    }
+  ],
+  "generatedAt": "2026-04-19T21:27:17.8524093+03:00"
+}

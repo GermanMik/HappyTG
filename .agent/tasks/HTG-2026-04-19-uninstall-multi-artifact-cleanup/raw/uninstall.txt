@@ -1,0 +1,77 @@
+
+> happytg@0.3.18 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "uninstall" "--json"
+
+{
+  "kind": "uninstall",
+  "status": "pass",
+  "interactive": false,
+  "scope": {
+    "stateDir": "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state",
+    "bootstrapRepoPath": "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\bootstrap-repo",
+    "repoRoot": "C:\\Develop\\Projects\\HappyTG"
+  },
+  "removedPaths": [
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\HappyTG Host Daemon.cmd",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\bin\\happytg-daemon-launch.cmd",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\daemon-state.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\install-last.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\bootstrap-repo",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\bin",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state"
+  ],
+  "missingPaths": [
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\daemon-journal.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\install-draft.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\doctor-last.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\setup-last.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\repair-last.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\verify-last.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\status-last.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\config-init-last.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\env-snapshot-last.json",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\logs",
+    "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\backups"
+  ],
+  "kept": [
+    "Repository checkout kept by design: C:\\Develop\\Projects\\HappyTG",
+    "Repo `.env`, Docker Compose services, and remote control-plane data were not touched.",
+    "Skipped default Scheduled Task cleanup because custom HAPPYTG_STATE_DIR had no recorded scheduled-task ownership."
+  ],
+  "warnings": [],
+  "reportJson": {
+    "commands": [],
+    "removedPaths": [
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\HappyTG Host Daemon.cmd",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\bin\\happytg-daemon-launch.cmd",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\daemon-state.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\install-last.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\bootstrap-repo",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\bin",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state"
+    ],
+    "missingPaths": [
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\daemon-journal.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\install-draft.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\doctor-last.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\setup-last.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\repair-last.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\verify-last.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\status-last.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\config-init-last.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\state\\env-snapshot-last.json",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\logs",
+      "C:\\Users\\tikta\\AppData\\Local\\Temp\\happytg-uninstall-proof-c94f7fee889842f38baf2ecd57e7fb51\\.happytg-state\\backups"
+    ],
+    "kept": [
+      "Repository checkout kept by design: C:\\Develop\\Projects\\HappyTG",
+      "Repo `.env`, Docker Compose services, and remote control-plane data were not touched.",
+      "Skipped default Scheduled Task cleanup because custom HAPPYTG_STATE_DIR had no recorded scheduled-task ownership."
+    ]
+  }
+}
+POST_STARTUP_EXISTS=false
+POST_LAUNCHER_EXISTS=false
+POST_STATE_DIR_EXISTS=false
