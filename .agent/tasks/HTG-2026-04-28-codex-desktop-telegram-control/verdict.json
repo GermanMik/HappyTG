@@ -17,7 +17,7 @@
     {
       "kind": "release",
       "scope": "pull-request",
-      "detail": "PR #40 is open as a draft and GitHub reports mergeStateStatus=DIRTY; mergeability must be resolved before merge."
+      "detail": "PR #40 is still open as a draft; it must be marked ready before merge."
     },
     {
       "kind": "contract",
@@ -51,7 +51,7 @@
     "pr": "https://github.com/GermanMik/HappyTG/pull/40",
     "ci": "PASS",
     "prState": "OPEN_DRAFT",
-    "mergeStateStatus": "DIRTY",
+    "mergeStateStatus": "CLEAN",
     "merge": "BLOCKED_UNTIL_LOCAL_VERIFICATION_AND_RELEASE_CHECKS_PASS"
   }
 }

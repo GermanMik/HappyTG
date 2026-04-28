@@ -44,7 +44,8 @@ Supported-control tests use an injectable adapter fixture only; production defau
 - `raw/verify.txt`: `pnpm happytg verify` completed but reported FAIL for the same environment blockers.
 - Release PR: https://github.com/GermanMik/HappyTG/pull/40
 - GitHub check `verify`: PASS on PR #40 after the pushed release commits.
-- GitHub PR #40 remains draft and reports `mergeStateStatus=DIRTY`.
+- Branch was updated from `origin/main`; API merge conflicts were resolved preserving both session cancel and Codex Desktop endpoints.
+- GitHub PR #40 remains draft and reports `mergeStateStatus=CLEAN`.
 
 ## Security / Privacy Evidence
 
@@ -58,4 +59,4 @@ Supported-control tests use an injectable adapter fixture only; production defau
 
 - Commit pushed to `origin/codex/codex-desktop-telegram-control-20260428`.
 - Draft PR opened as #40 because local release verification is blocked.
-- Merge was not attempted because `verdict.json` is BLOCKED until required local `doctor/verify` can pass and PR mergeability is resolved.
+- Merge was not attempted because `verdict.json` is BLOCKED until required local `doctor/verify` can pass and PR is no longer draft.

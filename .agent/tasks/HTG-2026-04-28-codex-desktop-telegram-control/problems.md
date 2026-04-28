@@ -5,6 +5,6 @@
 - New Desktop Task is unsupported in production for this task: no stable Desktop task creation contract was proven.
 - `pnpm happytg doctor` reports FAIL in this local environment because `.env`/`TELEGRAM_BOT_TOKEN` are missing and the Mini App port is occupied by an unrelated Contacts container.
 - `pnpm happytg verify` reports FAIL for the same environment blockers.
-- Draft PR #40 exists and GitHub `verify` passed, but release merge is still blocked until the required local verification can pass with a valid Telegram bot configuration and a non-conflicting Mini App port.
-- GitHub reports PR #40 `mergeStateStatus=DIRTY`; mergeability must be resolved before merge.
+- Draft PR #40 exists, GitHub `verify` passed, and GitHub reports `mergeStateStatus=CLEAN`, but release merge is still blocked until the required local verification can pass with a valid Telegram bot configuration and non-conflicting ports.
+- PR #40 is still a draft; it must be marked ready before merge after local release gates pass.
 - I did not create fake secrets, commit `.env`, stop unrelated services, force a non-green merge, or bypass these blockers.
