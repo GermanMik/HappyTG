@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-04-29-release-047-uninstall-desktop-control",
+  "phase": "fresh verify",
+  "commands": [
+    {
+      "command": "pnpm release:check --version 0.4.7",
+      "status": "pass",
+      "raw": "raw/release-check.txt"
+    },
+    {
+      "command": "pnpm lint",
+      "status": "pass",
+      "raw": "raw/lint.txt",
+      "summary": "15/15 tasks passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck.txt",
+      "summary": "15/15 tasks passed"
+    },
+    {
+      "command": "pnpm test",
+      "status": "pass",
+      "raw": "raw/test.txt",
+      "summary": "15/15 tasks passed"
+    },
+    {
+      "command": "pnpm build",
+      "status": "pass",
+      "raw": "raw/build.txt",
+      "summary": "15/15 tasks passed"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "status": "warn",
+      "raw": "raw/verify.txt",
+      "summary": "Exit 0; environment warnings for Mini App identity and occupied non-HappyTG ports"
+    }
+  ]
+}
