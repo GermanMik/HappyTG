@@ -36,6 +36,46 @@
       "status": "warn",
       "raw": "raw/verify.txt",
       "summary": "Exit 0; environment warnings for Mini App identity and occupied non-HappyTG ports"
+    },
+    {
+      "command": "gh pr checks 42 --watch --interval 10",
+      "status": "pass",
+      "summary": "Two CI verify checks passed"
+    },
+    {
+      "command": "gh pr merge 42 --merge --delete-branch",
+      "status": "pass",
+      "summary": "Release metadata merged to main at 22f1e49"
+    },
+    {
+      "command": "gh workflow run release.yml --ref main -f version=0.4.7 -f draft=false -f prerelease=false",
+      "status": "pass",
+      "summary": "Started Release workflow run 25112208566"
+    },
+    {
+      "command": "gh run watch 25112208566 --interval 15 --exit-status",
+      "status": "pass",
+      "summary": "Release workflow completed successfully"
+    },
+    {
+      "command": "gh release view v0.4.7 --json tagName,name,isDraft,isPrerelease,publishedAt,targetCommitish,url",
+      "status": "pass",
+      "summary": "HappyTG 0.4.7 published at https://github.com/GermanMik/HappyTG/releases/tag/v0.4.7"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-04-29-release-047-uninstall-desktop-control",
+      "status": "pass",
+      "raw": "raw/task-validate.txt"
     }
-  ]
+  ],
+  "release": {
+    "version": "0.4.7",
+    "tag": "v0.4.7",
+    "url": "https://github.com/GermanMik/HappyTG/releases/tag/v0.4.7",
+    "targetCommit": "22f1e49c8d9c7c0fef27fb7294747bccb382e1ce",
+    "workflowRun": "https://github.com/GermanMik/HappyTG/actions/runs/25112208566",
+    "draft": false,
+    "prerelease": false,
+    "publishedAt": "2026-04-29T13:39:33Z"
+  }
 }
