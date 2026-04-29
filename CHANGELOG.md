@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v0.4.7
+
+### Added
+
+- Telegram session cards now expose an `Остановить` action for active sessions, backed by `POST /api/v1/sessions/:id/cancel`, session events, audit records, and control-plane cancellation.
+- `pnpm happytg uninstall` now removes HappyTG-owned daemon launchers, scheduled tasks, startup shortcuts, systemd user units, local state, logs, and bootstrap artifacts while keeping the repository checkout by design.
+- Codex Desktop control surfaces now expose Desktop-aware sessions, runtime adapter discovery, and Mini App/Bot affordances for supported Desktop actions.
+
+### Fixed
+
+- Docker installer launch mode now preflights and remaps published Caddy, Prometheus, and Grafana host ports before Compose startup instead of failing late on occupied ports.
+- Docker Compose startup now keeps the HappyTG project name stable and reports Caddy bind failures with concrete override guidance.
+- Existing `.env` confirmation now shows optional Telegram values even when the bot token still needs to be supplied.
+
+### Verification
+
+- Release validation covers session cancellation, Codex Desktop control surfaces, Docker installer Compose repairs, uninstall owned-artifact cleanup, repo checks, and canonical task evidence.
+
 ## v0.4.6
 
 ### Changed

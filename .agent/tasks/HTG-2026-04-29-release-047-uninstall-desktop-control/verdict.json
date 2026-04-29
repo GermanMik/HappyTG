@@ -1,0 +1,11 @@
+{
+  "taskId": "HTG-2026-04-29-release-047-uninstall-desktop-control",
+  "phase": "fresh verify",
+  "verificationState": "fresh",
+  "verdict": "release-prep-pass-with-environment-warnings",
+  "notes": [
+    "Release metadata is prepared for 0.4.7.",
+    "Local release validation, lint, typecheck, test, and build passed.",
+    "pnpm happytg verify exited 0 with unrelated local environment warnings."
+  ]
+}
