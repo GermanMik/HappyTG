@@ -1,10 +1,11 @@
 {
   "taskId": "HTG-2026-04-29-release-047-uninstall-desktop-control",
-  "phase": "fresh verify",
+  "phase": "complete",
   "verificationState": "fresh",
-  "verdict": "release-prep-pass-with-environment-warnings",
+  "verdict": "published",
   "notes": [
-    "Release metadata is prepared for 0.4.7.",
+    "HappyTG 0.4.7 is published at https://github.com/GermanMik/HappyTG/releases/tag/v0.4.7.",
+    "Release workflow 25112208566 completed successfully from main commit 22f1e49.",
     "Local release validation, lint, typecheck, test, and build passed.",
     "pnpm happytg verify exited 0 with unrelated local environment warnings."
   ]

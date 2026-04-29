@@ -1,0 +1,7 @@
+Full repo test evidence is recorded in raw/test.txt.
+
+Command:
+pnpm test
+
+Result:
+pass, 15/15 tasks.
