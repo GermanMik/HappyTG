@@ -1,0 +1,13 @@
+✔ install.ps1 clears only broken external NODE_OPTIONS preload and does not misdiagnose Node as missing (977.1717ms)
+✔ install.ps1 keeps missing preload failures inside HAPPYTG_BOOTSTRAP_DIR as a hard error (670.5172ms)
+✔ install.ps1 normalizes ignored build script bootstrap warnings before handing off to the shared installer (753.257ms)
+✔ install.ps1 prefers pnpm.cmd over the PowerShell pnpm shim (854.7476ms)
+✔ install.sh mirrors the external NODE_OPTIONS preload sanitization without a false Node-missing diagnosis (30184.1507ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33718.6881

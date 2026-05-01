@@ -1,0 +1,12 @@
+Command: pnpm happytg doctor --json
+Result: exit 0, status warn
+Sanitized: yes
+
+Findings:
+- WARN CODEX_SMOKE_WARNINGS: Codex CLI websocket returned 403 Forbidden and fell back to HTTP.
+- WARN CADDY_MINIAPP_ROUTE_UNAVAILABLE: public Mini App route responded HTTP 200 but did not return HappyTG Mini App identity.
+- INFO SERVICES_ALREADY_RUNNING: HappyTG services already appear to be running on local ports.
+
+Notes:
+- Private public URLs, bot names, thread ids, and verbose remote diagnostic HTML were redacted from this proof artifact.
+- No installer-code failure was reported by doctor; warnings are operator-environment findings.

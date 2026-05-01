@@ -1,0 +1,146 @@
+{
+  "taskId": "HTG-2026-05-01-installer-bootstrap-warning-background-reset",
+  "phase": "init",
+  "verification": "pending",
+  "evidence": []
+}
+{
+  "taskId": "HTG-2026-05-01-installer-bootstrap-warning-background-reset",
+  "phase": "complete",
+  "branch": "codex/installer-bootstrap-warning-background-reset",
+  "builder": "codex",
+  "verifier": "passed",
+  "status": "complete",
+  "changedAreas": [
+    "installer bootstrap scripts",
+    "bootstrap install runtime",
+    "background artifact reset",
+    "Docker launch/service strategy",
+    "system Caddy safety",
+    "CLI flags",
+    "docs and release metadata",
+    "targeted regression tests"
+  ],
+  "raw": {
+    "memory": "raw/init-memory.txt",
+    "gitStatusBefore": "raw/git-status-before.txt",
+    "installScripts": "raw/test-install-scripts.txt",
+    "installRuntime": "raw/test-install-runtime.txt",
+    "dockerReuseRuntime": "raw/test-install-runtime-docker-reuse.txt",
+    "cli": "raw/test-cli.txt",
+    "infraConfig": "raw/test-infra-config.txt",
+    "installState": "raw/test-install-state.txt",
+    "uninstall": "raw/test-uninstall.txt",
+    "unit": "raw/test-unit.txt",
+    "typecheck": "raw/typecheck.txt",
+    "build": "raw/build.txt",
+    "lint": "raw/lint.txt",
+    "rootLint": "raw/root-lint.txt",
+    "rootTypecheck": "raw/root-typecheck.txt",
+    "rootTest": "raw/root-test.txt",
+    "rootBuild": "raw/root-build.txt",
+    "doctor": "raw/doctor-json.txt",
+    "verify": "raw/verify.txt",
+    "releaseCheck": "raw/release-check.txt"
+  },
+  "checks": [
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.scripts.test.ts",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.runtime.test.ts --test-name-pattern \"pnpm|approve-builds|ignored build scripts|Docker|background|Scheduled Task|Startup|launch mode\"",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.runtime.test.ts --test-name-pattern \"Docker|reuse|Redis|Postgres|MinIO|Caddy|snippet|patch\"",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/cli.test.ts --test-name-pattern \"Docker|launch|finalization|next steps|warnings\"",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/infra-config.test.ts",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.state.test.ts",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/uninstall.test.ts --test-name-pattern \"background|owned|Scheduled Task|Startup|custom\"",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run typecheck",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run build",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap run lint",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap test",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm lint",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm test",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm build",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm release:check --version 0.4.8",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm happytg doctor --json",
+      "status": "warn",
+      "notes": "environment warnings: Codex websocket fallback, public Mini App route identity mismatch, already-running services"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "status": "warn",
+      "notes": "same environment warnings as doctor"
+    }
+  ],
+  "notes": [
+    "No live host Scheduled Task, Startup shortcut, Docker Desktop, or system Caddy mutation was performed.",
+    "System Caddy patch safety is covered by temp-file and injected-runner tests.",
+    "Fresh verifier pass 1 found Caddy blockers. Minimal fixes were applied and targeted tests were added.",
+    "Docker endpoint container reachability is handled by static loopback translation plus Linux host-gateway override and verified through command/env tests."
+  ],
+  "freshVerifierPasses": [
+    {
+      "agent": "019de30c-a663-7563-8f8d-78acdb0bb8ff",
+      "status": "blocked",
+      "findings": [
+        "Repo starter Caddyfile treated as active system Caddy.",
+        "System Caddy snippets could be generated before final port remaps.",
+        "Caddy reuse detection did not prove the full route surface."
+      ],
+      "resolution": "Minimal Caddy fixes applied; second pass pending."
+    },
+    {
+      "agent": "019de31b-207a-74e0-b7da-7ed4a9cf1f2d",
+      "status": "passed",
+      "findings": [],
+      "resolution": "No blocking findings after minimal Caddy fixes."
+    }
+  ]
+}

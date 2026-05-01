@@ -260,13 +260,6 @@ has_ignored_build_scripts_warning() {
   printf '%s\n' "$1" | grep -Eiq 'ignored build scripts:|build scripts that were ignored:'
 }
 
-pnpm_supports_approve_builds() {
-  local help_output
-  help_output="$(pnpm help approve-builds 2>&1 || true)"
-  printf '%s\n' "$help_output" | grep -Fq 'No results for "approve-builds"' && return 1
-  return 0
-}
-
 shared_installer_bootstrap_preflight() {
   local preflight_output status
   set +e
@@ -285,11 +278,7 @@ shared_installer_bootstrap_preflight() {
   }
 
   if has_ignored_build_scripts_warning "$preflight_output"; then
-    if pnpm_supports_approve_builds; then
-      log 'pnpm ignored build scripts while preparing the shared installer bootstrap, but the repo-local tsx/esbuild preflight passed. Continuing with the installer. If a later bootstrap dlx run fails, review the blocked scripts with `pnpm approve-builds` and rerun.'
-    else
-      log 'pnpm ignored build scripts while preparing the shared installer bootstrap, but the repo-local tsx/esbuild preflight passed. Continuing with the installer. This pnpm runtime does not support `pnpm approve-builds`; if a later bootstrap dlx run fails, allow the blocked packages in your pnpm build-script policy and rerun.'
-    fi
+    log 'pnpm reported ignored build scripts during temporary bootstrap, but HappyTG verified the required tsx/esbuild path. Continuing; repo install will re-check.'
   fi
 }
 

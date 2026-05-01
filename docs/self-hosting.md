@@ -89,7 +89,11 @@ Leave `HAPPYTG_BROWSER_API_URL` empty for the public Telegram Mini App path. Whe
    pnpm happytg install --launch-mode docker
    ```
 
-   This starts API, worker, bot, Mini App, Caddy, and observability through Compose, but it does not start `apps/host-daemon`.
+   Interactive Docker install asks whether to reuse healthy system services or run an isolated Docker stack. Isolated mode starts API, worker, bot, Mini App, Caddy, Redis/Postgres/MinIO, and observability through Compose. Reuse mode starts only the app/observability services with `--no-deps`, passes container-reachable `COMPOSE_REDIS_URL`, `COMPOSE_DATABASE_URL`, and `COMPOSE_S3_ENDPOINT`, and skips duplicate reused `redis`, `postgres`, `minio`, and `caddy` containers.
+
+   System Caddy remains operator-owned. If valid HappyTG routes already exist and `caddy validate` passes, the installer reports reuse. If routes are missing, the default is to print a snippet; patching a Caddyfile requires a second confirmation, backup, validation, and reload.
+
+   Docker install does not start `apps/host-daemon`.
 
 4. Confirm API, bot, worker, and Mini App logs are healthy. The installer's Docker launch path validates:
    - `docker compose --env-file .env -f infra/docker-compose.example.yml config`
@@ -123,10 +127,12 @@ pnpm happytg uninstall
 
 That command removes local daemon state, install reports, logs, backups, the default bootstrap checkout, and installer-managed background launchers recorded for that host state scope. If the installer was run multiple times with different background modes, uninstall removes every recorded launcher artifact for that scope. It does not delete the repo checkout, `.env`, or the packaged control-plane containers and volumes.
 
+Repeated installer runs now reset HappyTG-owned host-daemon launchers before applying the selected mode, so choosing `manual` or `skip` removes stale HappyTG autostart entries for the current safe state scope.
+
 If you also want to stop the packaged control plane on its own host, do that separately:
 
 ```bash
-docker compose -f infra/docker-compose.example.yml down
+docker compose --env-file .env -f infra/docker-compose.example.yml down
 ```
 
 ## Telegram Delivery

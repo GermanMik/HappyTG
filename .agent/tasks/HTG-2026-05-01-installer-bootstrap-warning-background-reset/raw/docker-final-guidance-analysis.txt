@@ -1,0 +1,1 @@
+Docker success finalization now emits docker-compose-stack as an automatic completed item with inspect/log/restart/stop commands. Host daemon guidance is produced by the background mode finalizer and names pnpm dev:daemon only for the host daemon. Docker success no longer tells operators to run pnpm dev for the control-plane stack.

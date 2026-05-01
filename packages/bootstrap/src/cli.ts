@@ -221,7 +221,7 @@ function usage(): string {
     "  happytg doctor|setup|repair|verify|status [--json]",
     "  happytg telegram menu set [--dry-run] [--json]",
     "  happytg telegram menu reset [--json]",
-    "  happytg install [--repo-mode clone|update|current] [--repo-dir <path>] [--repo-url <url>] [--branch <name>] [--telegram-bot-token <token>] [--allowed-user <id>]... [--home-channel <value>] [--background launchagent|scheduled-task|startup|systemd-user|manual|skip] [--launch-mode local|docker|manual|skip] [--post-check setup|doctor|verify]... [--non-interactive] [--json]",
+    "  happytg install [--repo-mode clone|update|current] [--repo-dir <path>] [--repo-url <url>] [--branch <name>] [--telegram-bot-token <token>] [--allowed-user <id>]... [--home-channel <value>] [--background launchagent|scheduled-task|startup|systemd-user|manual|skip] [--launch-mode local|docker|manual|skip] [--docker-services isolated|reuse] [--docker-caddy compose|reuse-system|print-snippet|skip] [--caddyfile <path>] [--post-check setup|doctor|verify]... [--non-interactive] [--json]",
     "  happytg uninstall [--json]",
     "  happytg config init [--json]",
     "  happytg env snapshot [--json]",
@@ -288,6 +288,8 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
       .filter((value): value is InstallCommandOptions["postChecks"][number] => ["setup", "doctor", "verify"].includes(value));
     const background = takeOption(options, "background");
     const launchMode = takeOption(options, "launch-mode");
+    const dockerServices = takeOption(options, "docker-services");
+    const dockerCaddy = takeOption(options, "docker-caddy");
     const repoMode = takeOption(options, "repo-mode");
 
     return {
@@ -320,6 +322,13 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
         launchMode: launchMode === "local" || launchMode === "docker" || launchMode === "manual" || launchMode === "skip"
           ? launchMode
           : undefined,
+        dockerServiceStrategy: dockerServices === "isolated" || dockerServices === "reuse"
+          ? dockerServices
+          : undefined,
+        dockerCaddyAction: dockerCaddy === "compose" || dockerCaddy === "reuse-system" || dockerCaddy === "print-snippet" || dockerCaddy === "skip"
+          ? dockerCaddy
+          : undefined,
+        caddyfilePath: takeOption(options, "caddyfile") ? path.resolve(cwd, takeOption(options, "caddyfile")) : undefined,
         postChecks: postChecks.length > 0 ? postChecks : ["setup", "doctor", "verify"]
       }
     };

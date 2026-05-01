@@ -238,9 +238,9 @@ async function advanceInteractiveInstallToPortPreflight(input: {
   await input.emitKeypress("", { name: "down" });
   await input.emitKeypress("", { name: "down" });
   await input.emitKeypress("\r", { name: "enter" });
-  await input.waitForOutput("Background Run Mode");
-  await input.emitKeypress("\r", { name: "enter" });
   await input.waitForOutput("Launch Mode");
+  await input.emitKeypress("\r", { name: "enter" });
+  await input.waitForOutput("Host Daemon Startup");
   await input.emitKeypress("\r", { name: "enter" });
   await input.waitForOutput("Post-Install Checks");
   await input.emitKeypress("\r", { name: "enter" });
@@ -607,8 +607,156 @@ test("runHappyTGInstall launch-mode docker validates config, starts Compose, and
       "http://127.0.0.1:4100/ready",
       "http://127.0.0.1:3001/ready"
     ]);
-    assert.equal(result.finalization?.items.find((item) => item.id === "start-repo-services")?.kind, "auto");
+    const dockerItem = result.finalization?.items.find((item) => item.id === "docker-compose-stack");
+    assert.equal(dockerItem?.kind, "auto");
+    assert.match(dockerItem?.solutions?.join("\n") ?? "", /Inspect: `docker compose --env-file \.env -f infra\/docker-compose\.example\.yml ps`/);
+    assert.match(dockerItem?.solutions?.join("\n") ?? "", /Logs: `docker compose --env-file \.env -f infra\/docker-compose\.example\.yml logs -f`/);
+    assert.equal(result.nextSteps.some((step) => step.includes("pnpm dev`")), false);
+    assert.match(result.finalization?.items.find((item) => item.id === "start-daemon")?.message ?? "", /No host-daemon autostart was configured/);
+    assert.equal(result.finalization?.items.some((item) => item.message.includes("Start repo services: `pnpm dev`")), false);
     assert.match(JSON.stringify(result.reportJson.launch), /docker compose --env-file \.env -f infra\/docker-compose\.example\.yml up --build -d/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall Docker reuse mode skips reused infra/Caddy services and passes host endpoints", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-docker-reuse-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const pnpmPath = path.join(tempDir, "pnpm");
+  const dockerPath = path.join(tempDir, "docker");
+  const dockerCalls: Array<{ args: string[]; env?: NodeJS.ProcessEnv }> = [];
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(
+      path.join(repoPath, ".env"),
+      [
+        "REDIS_URL=redis://localhost:6379",
+        "DATABASE_URL=postgres://postgres:postgres@localhost:5432/happytg",
+        "S3_ENDPOINT=http://localhost:9000"
+      ].join("\n"),
+      "utf8"
+    );
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "skip",
+      launchMode: "docker",
+      dockerServiceStrategy: "reuse",
+      dockerCaddyAction: "skip",
+      postChecks: []
+    }, {
+      fetchImpl: async () => new Response("ok", { status: 200 }),
+      runBootstrapCheck: async () => setupReportWithPorts({
+        status: "pass",
+        ports: [
+          { id: "redis", label: "Redis", port: 6379, state: "occupied_supported", detail: "System Redis is reachable.", overrideEnv: "HAPPYTG_REDIS_HOST_PORT" },
+          { id: "postgres", label: "Postgres", port: 5432, state: "occupied_supported", detail: "System Postgres is reachable.", overrideEnv: "HAPPYTG_POSTGRES_HOST_PORT" },
+          { id: "minio-api", label: "MinIO API", port: 9000, state: "occupied_supported", detail: "System S3 is reachable.", overrideEnv: "HAPPYTG_MINIO_PORT" },
+          { id: "caddy-http", label: "Caddy HTTP", port: 80, state: "occupied_supported", detail: "System Caddy is reachable.", overrideEnv: "HAPPYTG_HTTP_PORT" }
+        ]
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? pnpmPath : command === "docker" ? dockerPath : undefined,
+        runCommand: async ({ command, args, env }) => {
+          const normalizedArgs = [...(args ?? [])];
+          if (command === dockerPath) {
+            dockerCalls.push({ args: normalizedArgs, env });
+            if (normalizedArgs[0] === "compose" && normalizedArgs[1] === "version") {
+              return { stdout: "Docker Compose version v2.29.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs[0] === "info") {
+              return { stdout: "Server Version: 27.0.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.at(-1) === "config") {
+              return { stdout: "services:\n  api: {}\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.includes("up")) {
+              return { stdout: "Container happytg-api Started\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.includes("ps")) {
+              return {
+                stdout: JSON.stringify([
+                  { Service: "api", State: "running", Health: "healthy" },
+                  { Service: "bot", State: "running", Health: "healthy" },
+                  { Service: "miniapp", State: "running", Health: "healthy" },
+                  { Service: "worker", State: "running", Health: "healthy" }
+                ]),
+                stderr: "",
+                exitCode: 0,
+                binaryPath: dockerPath,
+                shell: false,
+                fallbackUsed: false
+              };
+            }
+          }
+          return { stdout: "", stderr: "", exitCode: 0, binaryPath: pnpmPath, shell: false, fallbackUsed: false };
+        },
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: false,
+          changed: false,
+          addedKeys: [],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background daemon setup was skipped."
+        })
+      }
+    });
+
+    const upCall = dockerCalls.find((call) => call.args.includes("up"));
+    assert.ok(upCall);
+    assert.deepEqual(upCall.args.slice(-7), ["--no-deps", "api", "worker", "bot", "miniapp", "prometheus", "grafana"]);
+    assert.equal(upCall.args.includes("redis"), false);
+    assert.equal(upCall.args.includes("postgres"), false);
+    assert.equal(upCall.args.includes("minio"), false);
+    assert.equal(upCall.args.includes("caddy"), false);
+    assert.equal(upCall.env?.COMPOSE_REDIS_URL, "redis://host.docker.internal:6379");
+    assert.equal(upCall.env?.COMPOSE_DATABASE_URL, "postgres://postgres:postgres@host.docker.internal:5432/happytg");
+    assert.equal(upCall.env?.COMPOSE_S3_ENDPOINT, "http://host.docker.internal:9000/");
+    assert.deepEqual(result.launch.dockerServicePlan?.reusedServices, ["redis", "postgres", "minio", "caddy"]);
+    assert.equal(result.finalization?.items.find((item) => item.id === "docker-service-strategy")?.kind, "reuse");
+    assert.equal(result.finalization?.items.find((item) => item.id === "docker-caddy-strategy")?.kind, "manual");
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -913,8 +1061,8 @@ test("runHappyTGInstall launch-mode docker reports missing Docker as recoverable
     assert.equal(result.outcome, "recoverable-failure");
     assert.equal(result.launch.status, "failed");
     assert.match(result.launch.detail, /Docker binary was not found/);
-    assert.equal(result.finalization?.items.find((item) => item.id === "host-daemon-outside-compose")?.kind, "manual");
-    assert.match(result.finalization?.items.find((item) => item.id === "host-daemon-outside-compose")?.message ?? "", /host daemon is not part of Docker Compose/i);
+    assert.equal(result.finalization?.items.some((item) => item.id === "host-daemon-outside-compose"), false);
+    assert.equal(result.finalization?.items.find((item) => item.id === "docker-compose-stack")?.kind, "blocked");
     assert.equal(result.finalization?.items.find((item) => item.id === "start-daemon")?.kind, "manual");
   } finally {
     await rm(tempDir, { recursive: true, force: true });
@@ -1105,6 +1253,8 @@ test("interactive Docker launch receives Mini App port override saved by port pr
     });
 
     await advanceInteractiveInstallToPortPreflight(harness);
+    await harness.waitForOutput("Docker Service Strategy");
+    await harness.emitKeypress("\r", { name: "enter" });
     await harness.waitForOutput("Port Conflict");
     await harness.emitKeypress("\r", { name: "enter" });
     await harness.waitForOutput("Final Summary");
@@ -1116,6 +1266,103 @@ test("interactive Docker launch receives Mini App port override saved by port pr
     assert.equal(dockerLaunchMiniAppPort, "3002");
     assert.match(await readFile(path.join(repoPath, ".env"), "utf8"), /HAPPYTG_MINIAPP_PORT=3002/);
   } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("interactive Docker Caddy snippet uses ports after port preflight remaps", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-docker-caddy-remap-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const harness = createInteractiveHarness();
+  const previousStateDir = process.env.HAPPYTG_STATE_DIR;
+  let setupCall = 0;
+  let snippetPath: string | undefined;
+
+  try {
+    process.env.HAPPYTG_STATE_DIR = path.join(tempDir, "state");
+    await mkdir(repoPath, { recursive: true });
+    await writeFile(path.join(repoPath, ".env.example"), "TELEGRAM_BOT_TOKEN=\nHAPPYTG_MINIAPP_PORT=3001\n", "utf8");
+    const install = runHappyTGInstall({
+      json: false,
+      nonInteractive: false,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: [],
+      backgroundMode: "skip",
+      launchMode: "docker",
+      dockerServiceStrategy: "reuse",
+      dockerCaddyAction: "print-snippet",
+      postChecks: []
+    }, {
+      stdin: harness.stdin,
+      stdout: harness.stdout,
+      runBootstrapCheck: async () => {
+        setupCall += 1;
+        return setupReportWithPorts({
+          status: setupCall === 1 ? "warn" : "pass",
+          findings: setupCall === 1 ? [{ code: "MINIAPP_PORT_BUSY", severity: "warn", message: "Mini App plans to use port 3001, but another process is already there." }] : [],
+          ports: setupCall === 1
+            ? [{ id: "miniapp", label: "Mini App", port: 3001, state: "occupied_external", detail: "Mini App plans to use port 3001, but another process is already there.", overrideEnv: "HAPPYTG_MINIAPP_PORT", suggestedPort: 3002, suggestedPorts: [3002, 3003, 3004] }]
+            : [{ id: "miniapp", label: "Mini App", port: 3002, state: "free", detail: "Mini App plans to use port 3002; it is free.", overrideEnv: "HAPPYTG_MINIAPP_PORT" }]
+        });
+      },
+      deps: {
+        detectInstallerEnvironment: async () => ({
+          ...baseEnvironment(),
+          platform: { ...baseEnvironment().platform, isInteractiveTerminal: true }
+        }),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath, { exists: true, isRepo: true, emptyDirectory: false, rootPath: repoPath }),
+          choices: [{ mode: "update" as const, label: "Update existing checkout", path: repoPath, available: true, detail: "Existing checkout is ready to update." }]
+        }),
+        syncRepository: async () => ({ path: repoPath, sync: "updated", repoSource: "primary", repoUrl: primarySource.url, attempts: 1, fallbackUsed: false }),
+        resolveExecutable: async (command) => command === "pnpm" ? path.join(tempDir, "pnpm") : undefined,
+        runCommand: async () => ({ stdout: "", stderr: "", exitCode: 0, binaryPath: path.join(tempDir, "pnpm"), shell: false, fallbackUsed: false }),
+        fetchTelegramBotIdentity: async () => ({ ok: true, username: "happytg_bot" }),
+        configureBackgroundMode: async ({ mode }) => ({ mode, status: "skipped", detail: "Background daemon setup was skipped." }),
+        runDockerLaunch: async ({ dockerServicePlan }) => {
+          snippetPath = dockerServicePlan?.caddy?.snippetPath;
+          return {
+            mode: "docker",
+            status: "started",
+            detail: "Docker Compose control-plane stack started. Host daemon still runs outside Docker.",
+            composeFile: "infra/docker-compose.example.yml",
+            command: "docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d",
+            dockerServicePlan,
+            commands: [],
+            health: [],
+            warnings: [],
+            nextSteps: []
+          };
+        }
+      }
+    });
+
+    await advanceInteractiveInstallToPortPreflight(harness);
+    await harness.waitForOutput("Port Conflict");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Final Summary");
+    await harness.emitKeypress("\r", { name: "enter" });
+    const result = await install;
+
+    assert.equal(setupCall, 2);
+    assert.equal(result.launch.mode, "docker");
+    assert.ok(snippetPath);
+    assert.match(await readFile(snippetPath!, "utf8"), /reverse_proxy 127\.0\.0\.1:3002/);
+  } finally {
+    if (previousStateDir === undefined) {
+      delete process.env.HAPPYTG_STATE_DIR;
+    } else {
+      process.env.HAPPYTG_STATE_DIR = previousStateDir;
+    }
     await rm(tempDir, { recursive: true, force: true });
   }
 });
@@ -2440,9 +2687,9 @@ test("runHappyTGInstall interactive Telegram form starts blank even when draft a
     await emitKeypress("", { name: "down" });
     await emitKeypress("", { name: "down" });
     await emitKeypress("\r", { name: "return" });
-    await waitForOutput("Background Run Mode");
-    await emitKeypress("\r", { name: "return" });
     await waitForOutput("Launch Mode");
+    await emitKeypress("\r", { name: "return" });
+    await waitForOutput("Host Daemon Startup");
     await emitKeypress("\r", { name: "return" });
     await waitForOutput("Post-Install Checks");
     await emitKeypress("\r", { name: "return" });
@@ -2578,9 +2825,9 @@ test("runHappyTGInstall interactive existing env confirmation can reuse Telegram
     assert.match(existingEnvScreen, /TELEGRAM_ALLOWED_USER_IDS=1001, 1002/);
     assert.doesNotMatch(existingEnvScreen, new RegExp(token));
     await harness.emitKeypress("\r", { name: "enter" });
-    await harness.waitForOutput("Background Run Mode");
-    await harness.emitKeypress("\r", { name: "enter" });
     await harness.waitForOutput("Launch Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Host Daemon Startup");
     await harness.emitKeypress("\r", { name: "enter" });
     await harness.waitForOutput("Post-Install Checks");
     await harness.emitKeypress("\r", { name: "enter" });
@@ -2726,9 +2973,9 @@ test("runHappyTGInstall interactive existing env confirmation appears for option
     await harness.emitKeypress("", { name: "down" });
     await harness.emitKeypress("", { name: "down" });
     await harness.emitKeypress("\r", { name: "enter" });
-    await harness.waitForOutput("Background Run Mode");
-    await harness.emitKeypress("\r", { name: "enter" });
     await harness.waitForOutput("Launch Mode");
+    await harness.emitKeypress("\r", { name: "enter" });
+    await harness.waitForOutput("Host Daemon Startup");
     await harness.emitKeypress("\r", { name: "enter" });
     await harness.waitForOutput("Post-Install Checks");
     await harness.emitKeypress("\r", { name: "enter" });
@@ -2887,9 +3134,9 @@ test("runHappyTGInstall releases stdin after ENTER closes the final summary", as
     await emitKeypress("", { name: "down" });
     await emitKeypress("", { name: "down" });
     await emitKeypress("\r", { name: "enter" });
-    await waitForOutput("Background Run Mode");
-    await emitKeypress("\r", { name: "enter" });
     await waitForOutput("Launch Mode");
+    await emitKeypress("\r", { name: "enter" });
+    await waitForOutput("Host Daemon Startup");
     await emitKeypress("\r", { name: "enter" });
     await waitForOutput("Post-Install Checks");
     await emitKeypress("\r", { name: "enter" });
@@ -3223,7 +3470,7 @@ test("runHappyTGInstall interactive port preflight shows progress while saving t
     assert.match(progressScreen, /Resolve planned ports/);
     assert.match(progressScreen, /Re-running planned port preflight so the installer can continue/);
     assert.doesNotMatch(progressScreen, /Final Summary/);
-    assert.match(latestProgressScreen, /\[####------\] 3\/7 steps complete/);
+    assert.match(latestProgressScreen, /\[#####-----\] 4\/8 steps complete/);
 
     releaseSecondSetup?.();
     await harness.waitForOutput("Final Summary");

@@ -5,6 +5,9 @@ export type DirtyWorktreeStrategy = "cancel" | "stash" | "keep";
 export type BackgroundMode = "launchagent" | "scheduled-task" | "startup" | "systemd-user" | "manual" | "skip";
 export type InstallLaunchMode = "local" | "docker" | "manual" | "skip";
 export type InstallLaunchStatus = "not-started" | "started" | "skipped" | "failed";
+export type DockerServiceStrategy = "isolated" | "reuse";
+export type DockerServiceId = "redis" | "postgres" | "minio" | "caddy";
+export type DockerCaddyAction = "compose" | "reuse-system" | "print-snippet" | "patch-system" | "skip";
 export const DEFAULT_WINDOWS_DAEMON_TASK_NAME = "HappyTG Host Daemon";
 export type PostInstallCheck = "setup" | "doctor" | "verify";
 export type InstallStatus = "pass" | "warn" | "fail";
@@ -48,6 +51,9 @@ export interface InstallCommandOptions {
   telegramHomeChannel?: string;
   backgroundMode?: BackgroundMode;
   launchMode?: InstallLaunchMode;
+  dockerServiceStrategy?: DockerServiceStrategy;
+  dockerCaddyAction?: DockerCaddyAction;
+  caddyfilePath?: string;
   postChecks: PostInstallCheck[];
 }
 
@@ -214,12 +220,34 @@ export interface InstallLaunchHealthCheck {
   url?: string;
 }
 
+export interface SystemCaddyPlan {
+  action: DockerCaddyAction;
+  status: "compose" | "reuse" | "snippet" | "patched" | "skipped" | "blocked" | "failed";
+  detail: string;
+  caddyfilePath?: string;
+  snippetPath?: string;
+  backupPath?: string;
+  commands: string[];
+  warnings: string[];
+}
+
+export interface DockerServiceStrategyPlan {
+  strategy: DockerServiceStrategy;
+  reusedServices: DockerServiceId[];
+  composeServices: string[];
+  env: Record<string, string>;
+  overrideFiles: string[];
+  detail: string;
+  caddy?: SystemCaddyPlan;
+}
+
 export interface InstallLaunchResult {
   mode: InstallLaunchMode;
   status: InstallLaunchStatus;
   detail: string;
   composeFile?: string;
   command?: string;
+  dockerServicePlan?: DockerServiceStrategyPlan;
   commands: InstallLaunchCommandResult[];
   health: InstallLaunchHealthCheck[];
   warnings: string[];
@@ -267,6 +295,8 @@ export interface InstallDraftState {
   telegram?: TelegramSetup;
   backgroundMode?: BackgroundMode;
   launchMode?: InstallLaunchMode;
+  dockerServiceStrategy?: DockerServiceStrategy;
+  dockerCaddyAction?: DockerCaddyAction;
   postChecks?: PostInstallCheck[];
   updatedAt: string;
 }

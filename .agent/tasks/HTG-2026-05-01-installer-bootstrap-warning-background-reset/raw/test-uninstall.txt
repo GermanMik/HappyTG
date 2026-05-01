@@ -1,0 +1,11 @@
+✔ runHappyTGUninstall removes Linux user-service, state, and bootstrap artifacts while keeping the repo checkout (39.1191ms)
+✔ runHappyTGUninstall removes both recorded Windows autorun artifacts after repeated installs (20.4223ms)
+✔ runHappyTGUninstall does not query or remove unowned default Windows launchers for a custom state dir (17.481ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 446.5973

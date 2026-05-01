@@ -1,0 +1,123 @@
+Available memories (209 total, showing 10):
+- [May 01] Prompt updated for Docker service reuse and Caddy safety [context] [happytg,installer,prompt,docker,redis,caddy,reuse]
+- [May 01] Prompt amended for Docker install final warnings [context] [happytg,installer,prompt,docker,warnings,finalization]
+- [May 01] Prompt for installer bootstrap warning and background reset [context] [happytg,installer,prompt,pnpm,docker,background,uninstall]
+- [Apr 29] Published HappyTG 0.4.7 [decision] [happytg,release,0.4.7,github-actions,proof-loop]
+- [Apr 28] HappyTG final stale worktree cleanup [decision] [happytg,git,worktree,cleanup]
+- [Apr 28] HappyTG uninstall cleanup PR41 merged and branches cleaned [decision] [happytg,git,branch-cleanup,uninstall,pr41]
+- [Apr 28] HappyTG branch cleanup after PR40 [decision] [happytg,git,branch-cleanup,release]
+- [Apr 28] HappyTG env confirmation release already merged [decision] [happytg,installer,env,telegram,release,merge]
+- [Apr 28] HappyTG env copy saved as ignored local backup [context] [happytg,env,secrets,gitignore,cleanup]
+- [Apr 28] HappyTG primary worktree fast-forwarded to main PR39 [context] [happytg,main,fast-forward,telegram,env]
+Use `memory search <query>` for full details on any memory.
+
+ Results (5 found)
+
+ [1] Installer validates pnpm ignored-build warnings (score: 1.00)
+     bug | 2026-04-19 | HappyTG
+     What: HTG-2026-04-19-pnpm-build-script-warning-guard fixed a product bug where `pnpm install` exit code 0 was treated as success even when pnpm reported ignored build scripts; HappyTG now classifies that warning, runs a repo-local `tsx`/`esbuild` health check, and only continues as warning-only when the critical toolchain is still usable.
+     Why: The real risk was not the warning text itself but the misleading installer contract: pinned runtime `pnpm 10.0.0` in this repo does not expose `pnpm approve-builds`, the shell bootstrap path could leak raw pnpm noise before the TUI, and ignored build scripts can be harmless or can break the `tsx` bootstrap path depending on runtime state. The installer needed deterministic classification plus runtime-aware guidance instead of cosmetic suppression or unconditional success.
+     Impact: `packages/bootstrap/src/install/index.ts` now parses ignored-build-scripts warnings, detects runtime pnpm guidance support, probes `pnpm exec tsx --eval ...` for repo-local toolchain health, and turns broken states into install failure while healthy states become explicit installer warnings. `scripts/install/install.ps1` and `scripts/install/install.sh` now normalize bootstrap-phase warnings via a preflight `pnpm dlx tsx` check and hand off with `pnpm --silent dlx` so raw external warning noise no longer desynchronizes the UX. Tests and docs were updated, and the proof bundle for the task is complete with fresh verification passed.
+     Details: available (use `memory details dda447cc-577`)
+
+ [2] Verifier passed pnpm warning guard bundle (score: 0.86)
+     learning | 2026-04-19 | HappyTG
+     What: Independent verifier pass for HTG-2026-04-19-pnpm-build-script-warning-guard found no remaining product findings: ignored-build-scripts classification, tsx/esbuild health separation, runtime-aware pnpm guidance, and bootstrap warning normalization are supported by fresh verification, so the task bundle was synchronized to `Phase: complete` / `Verification: passed`.
+     Why: Fresh reruns plus direct runtime capability checks matched the builder evidence, and an extra manual bash harness reproduction closed the only remaining uncertainty around `scripts/install/install.sh` warning normalization.
+     Impact: Updated only verifier-owned task-bundle artifacts for `.agent/tasks/HTG-2026-04-19-pnpm-build-script-warning-guard/` (`problems.md`, `verdict.json`, `task.json`). Future agents can treat this task as verifier-passed and use the manual shell-path check as proof that `pnpm --silent dlx` handoff is normalization, not cosmetic suppression.
+     Details: available (use `memory details e9723ccd-5b2`)
+
+ [3] Published HappyTG 0.3.20 installer warning guard (score: 0.68)
+     decision | 2026-04-19 | HappyTG
+     What: Release 0.3.20 was published from `codex/release-0.3.20-pnpm-build-script-warning-guard` with release-prep commit `a4b2a42`, merged to `main` as `00732a9`, and finalized by proof-bundle follow-up commit `b5452ce`. The guarded GitHub Actions `Release` workflow run `24635223695` succeeded and created GitHub Release/tag `v0.3.20` for the installer pnpm ignored-build-scripts guard.
+     Why: The product fix was already merged on `main`, but the repo release process requires a separate metadata/publish layer: synchronized workspace versions, changelog and release notes, repo-local release verification, merge to `main`, then the guarded `Release` workflow from the latest default-branch HEAD. Because the primary coding worktree was dirty with unrelated edits, release prep and merge were done in clean temporary worktrees.
+     Impact: `main` and `origin/main` now contain version `0.3.20` metadata and the completed release proof bundle `.agent/tasks/HTG-2026-04-19-release-0320-pnpm-build-script-warning-guard/`. Tag `v0.3.20` points at merge commit `00732a9`, while final proof artifacts live in follow-up commit `b5452ce`; GitHub Release URL is `https://github.com/GermanMik/HappyTG/releases/tag/v0.3.20`. Future agents should preserve this distinction when auditing release provenance.
+     Details: available (use `memory details 3ae03dad-f3e`)
+
+ [4] Warning-guard task landed on main (score: 0.67)
+     context | 2026-04-19 | HappyTG
+     What: HTG-2026-04-19-pnpm-build-script-warning-guard was committed on `codex/pnpm-build-script-warning-guard` as `7892052`, pushed to origin, then merged cleanly onto `origin/main` in a detached clean worktree as merge commit `93d3fad`.
+     Why: The active coding worktree contained unrelated unstaged edits from other tasks, so switching local branches for merge would have risked dragging dirty state across branches. A separate detached worktree based on `origin/main` let the task land cleanly after re-installing deps and rerunning merge-result verification.
+     Impact: `origin/main` now contains the installer ignored-build-scripts guard changes and the proof bundle for this task. Future agents can treat this task as landed and should prefer the clean-worktree merge pattern when publish is requested from a dirty shared worktree.
+     Details: available (use `memory details 08650485-1d9`)
+
+ [5] Verifier found 0.3.10 onboarding contradiction remains (score: 0.44)
+     bug | 2026-04-17 | HappyTG
+     What: Fresh verifier pass for HTG-2026-04-17-release-0310-warning-triage found that setup/doctor/verify still emit contradictory onboarding guidance outside the install-summary path: they can include both `Start repo services: pnpm dev.` and `Some HappyTG services are already running...` in the same JSON output.
+     Why: `packages/bootstrap/src/index.ts` still builds shared setup/onboarding steps by pushing the start-services step before checking for occupied HappyTG service ports. The installer final-summary dedupe fix in `packages/bootstrap/src/install/index.ts` does not affect these setup/doctor/verify report surfaces.
+     Impact: The task verifier marked release 0.3.10 warning-triage as failed in `.agent/tasks/HTG-2026-04-17-release-0310-warning-triage/verdict.json`. A minimal follow-up fix must target `buildSetupPlan()` and then rerun setup/doctor/verify/install/task-validate before publish can proceed.
+     Details: available (use `memory details b1c81358-b53`)
+
+ Results (5 found)
+
+ [1] Uninstall tracks multiple owned launcher artifacts (score: 1.00)
+     decision | 2026-04-19 | HappyTG
+     What: HTG-2026-04-19-uninstall-multi-artifact-cleanup extended bootstrap install state so repeated installs with different background modes persist merged `ownedArtifacts`, and `pnpm happytg uninstall` now removes every recorded launcher artifact for the current local state scope instead of only the latest background mode.
+     Why: A single last-mode background record is not truthful when install runs more than once, especially on Windows where a host can accumulate both the `HappyTG Host Daemon` Scheduled Task and the Startup shortcut. Safe-by-default uninstall still must not delete unowned global launchers from a custom `HAPPYTG_STATE_DIR`, so the correct fix is ownership tracking and merged artifact records rather than broader fallback deletion.
+     Impact: `packages/bootstrap/src/install/background.ts`, `install/types.ts`, and `install/state.ts` now record and merge background launcher ownership; `packages/bootstrap/src/uninstall/index.ts` consumes those records and cleans recorded artifacts while preserving unowned defaults in custom state scopes. CLI/scripts/docs now expose `happytg uninstall` / `bootstrap:uninstall`, and proof bundle `.agent/tasks/HTG-2026-04-19-uninstall-multi-artifact-cleanup/` is finalized with fresh green build/lint/typecheck/test/doctor/verify plus isolated uninstall evidence.
+     Details: available (use `memory details 605adb73-cf7`)
+
+ [2] Prompt for installer bootstrap warning and background reset (score: 0.84)
+     context | 2026-05-01 | HappyTG | codex
+     What: Created a reusable HappyTG repair prompt for the Windows installer pnpm bootstrap warning and Docker/background stale launcher cleanup UX.
+     Why: The user asked for a prompt, and prior memories showed existing ownedArtifacts cleanup and Docker launch-mode decisions that future implementation must preserve.
+     Impact: Added .agent/prompts/installer-bootstrap-warning-background-reset.md; no production code changed.
+     Details: available (use `memory details 529d5f6c-766`)
+
+ [3] Uninstall now requires ownership for global launchers (score: 0.77)
+     bug | 2026-04-19 | HappyTG
+     What: HTG-2026-04-19-uninstall-flow added `pnpm happytg uninstall` / `pnpm bootstrap:uninstall`, then fixed a safe-by-default bug where a custom `HAPPYTG_STATE_DIR` without recorded install ownership could delete the real Windows Startup shortcut or query/delete the global scheduled task via default fallback paths.
+     Why: The initial uninstall flow removed installer-owned local state correctly, but its Windows background cleanup always fell back to standard global launcher locations when `install-last.json` was missing. A proof run against a temp custom state dir reproduced that unsafe behavior. The minimal safe rule is to clean global fallback launchers only from the default state scope or when `state/install-last.json` explicitly records ownership for that artifact/mode.
+     Impact: `packages/bootstrap/src/uninstall/index.ts` now gates LaunchAgent/systemd/Startup/Scheduled Task fallback cleanup on default-scope or explicit recorded ownership; `packages/bootstrap/src/uninstall.test.ts` covers the custom-state no-ownership regression plus explicit startup ownership. Docs in installation/quickstart/self-hosting/troubleshooting/engineering-blueprint now describe uninstall commands and the custom-state ownership rule. Proof bundle `.agent/tasks/HTG-2026-04-19-uninstall-flow/` is finalized with fresh green build/lint/typecheck/test/doctor/verify and an isolated `raw/uninstall.txt` proof run.
+     Details: available (use `memory details 6bf1e75b-9e9`)
+
+ [4] HealthOS Docker Desktop mount repair merged (score: 0.48)
+     decision | 2026-04-24 | HealthCheck | codex
+     What: Implemented and merged the HealthOS Docker Desktop mount/autostart repair. Pre-fix independent bind probes reproduced '/run/desktop/mnt/host/c ... file exists'; safe Docker Desktop + WSL restart restored bind mounts; added idempotent ensure/install Scheduled Task scripts and docs; PR #17 merged to main as b8d0809 after green GitHub checks.
+     Why: The root cause had to be separated from backend and compose defects. The bind mount failed before container startup, so the safe fix was Docker Desktop/WSL mount-table recovery plus a repeatable project autostart path rather than backend changes or destructive Docker cleanup.
+     Impact: HealthOS now has npm run ops:docker:ensure and npm run ops:docker:install-autostart, current-user Scheduled Task 'HealthOS Docker Autostart', proof-loop artifacts under .agent/tasks/docker-desktop-autostart-mount-repair-20260424, and docs/status update_0310. Manual Scheduled Task trigger passed; real reboot proof remains not executed and must be verified by an operator after reboot.
+     Details: available (use `memory details 2fcb901a-6c1`)
+
+ [5] Host port 8000 owned by scheduled python chain (score: 0.46)
+     learning | 2026-04-17 | HealthCheck
+     What: Verified that host-local port 8000 on this workstation is not held by HealthOS or Docker. It is listened on by python.exe PID 8132 at 127.0.0.1:8000, with parent chain python.exe PID 9184 -> cmd.exe PID 3368 -> svchost.exe PID 2872, and PID 2872 belongs to the Windows Task Scheduler service.
+     Why: After moving HealthOS BaseDeploy Caddy upstreams to host port 81, the remaining operator question was who actually occupied 8000. Identifying the owner avoids regressing Caddy back to localhost:8000 and clarifies that the conflict is a workstation background runtime, not a HealthOS backend contract.
+     Impact: Future routing/debugging work should treat host port 8000 as externally occupied by a scheduled background python runtime unless fresh probes disprove it. HealthOS local routed surfaces should keep targeting the real published host port 81 on this workstation.
+     Details: available (use `memory details 82aadce9-106`)
+
+ Results (5 found)
+
+ [1] Prompt updated for Docker service reuse and Caddy safety (score: 1.00)
+     context | 2026-05-01 | HappyTG | codex
+     What: Extended the installer repair prompt with Docker reuse-vs-isolated strategy and safe system Caddy detection/snippet/patch requirements.
+     Why: The user clarified that existing Redis/Caddy should not lead to duplicate Docker containers and that Caddy patching must be conservative and double-confirmed.
+     Impact: Updated .agent/prompts/installer-bootstrap-warning-background-reset.md; no production code changed.
+     Details: available (use `memory details cdcb173a-53d`)
+
+ [2] HappyTG Docker Compose project name happytg details (score: 0.99)
+     decision | 2026-04-27 | HappyTG | codex
+     What: Stable Docker Compose naming was implemented for HappyTG.
+     Why: Directory-derived Compose names were unclear; the stack should present as happytg while preserving service IDs, installer launch behavior, port remapping, external Redis/Postgres/S3 reuse, and keeping host-daemon outside Compose.
+     Impact: Compose config reports project happytg and dry-run launch shows happytg-postgres-1, happytg-redis-1, happytg-minio-1, happytg-api-1, happytg-worker-1, happytg-prometheus-1, happytg-bot-1, happytg-miniapp-1, happytg-grafana-1, and happytg-caddy-1. Bootstrap typecheck/test passed; pnpm happytg verify exited 0 with unrelated local environment warnings.
+     Details: available (use `memory details e1ed9274-7d5`)
+
+ [3] Release 0.3.6 fixes Windows paste flow (score: 0.89)
+     bug | 2026-04-14 | HappyTG
+     What: Prepared HappyTG 0.3.6 to fix Windows installer Telegram paste handling and make Redis/shared-infra guidance explicitly non-Docker-only where existing services are already supported.
+     Why: Minimal safe diff that fixes the real Windows terminal-paste failure, preserves the 0.3.5 summary aggregation behavior, and makes supported non-Docker reuse paths explicit without claiming unsupported clipboard capabilities or full dockerless parity.
+     Impact: Telegram form input now parses pasted chunks separately from field normalization, auto-commits terminal paste that carries trailing CRLF, and normalizes newline/comma-separated allowed user IDs. Bootstrap/setup wording now mentions DATABASE_URL/REDIS_URL/S3_ENDPOINT reuse alongside Compose guidance, and workspace/package metadata plus changelog/release notes are bumped to 0.3.6 with release-check coverage.
+     Details: available (use `memory details 0adb12f0-bff`)
+
+ [4] HappyTG Docker launch remaps busy infra ports (score: 0.89)
+     bug | 2026-04-27 | HappyTG | codex
+     What: Fixed Docker launch mode so the installer no longer runs docker compose with default Redis/Postgres/MinIO host-port bindings when those ports are already occupied by supported local services.
+     Why: The user hit a real install failure: Compose built images successfully but failed starting infra-postgres-1 because 0.0.0.0:5432 was already allocated. The setup preflight had classified local Redis/PostgreSQL/S3 as supported reuse, which is valid for local pnpm dev guidance but not enough for packaged Docker startup because Compose still publishes its own infra containers on those host ports.
+     Impact: In --launch-mode docker, packages/bootstrap/src/install/index.ts now auto-saves suggested free HAPPYTG_REDIS_HOST_PORT, HAPPYTG_POSTGRES_HOST_PORT, HAPPYTG_MINIO_PORT, and HAPPYTG_MINIO_CONSOLE_PORT overrides before Compose starts. packages/bootstrap/src/install/launch.ts passes repo .env values over the original shell env to Docker commands. A runtime regression proves compose up receives remapped values. Proof bundle HTG-2026-04-28-docker-infra-port-remap passed focused Docker runtime tests, bootstrap typecheck, bootstrap test, and bootstrap build.
+     Details: available (use `memory details 9cdcd533-137`)
+
+ [5] HappyTG installer Docker Caddy ports repaired (score: 0.80)
+     bug | 2026-04-27 | HappyTG | codex
+     What: Implemented the Docker launch port-preflight repair for Caddy HTTP/HTTPS plus Prometheus/Grafana host ports. Installer setup now emits planned-port reports for HAPPYTG_HTTP_PORT, HAPPYTG_HTTPS_PORT, HAPPYTG_PROMETHEUS_PORT, and HAPPYTG_GRAFANA_PORT; Docker launch auto-remaps those conflicts before compose up; bind failures name concrete override env vars; current Compose containers with project names happytg or legacy infra are treated as current-stack state.
+     Why: A real install failed late at docker compose up because Caddy tried to bind 0.0.0.0:80 even though planned-port preflight had only covered app, Redis/Postgres, and MinIO ports. The same Compose command also publishes 443, 9090, and 3000, so they need the same preflight/remap discipline. Partial Compose starts can leave project containers occupying planned remap ports and should not be called unsupported external conflicts.
+     Impact: Docker launch mode now handles occupied Caddy/observability host ports through saved .env overrides before Compose startup, keeps Telegram public HTTPS guidance truthful when Caddy is remapped, and preserves local-dev/shared-infra reuse behavior. Proof bundle HTG-2026-04-28-installer-docker-caddy-port80 is complete and validated.
+     Details: available (use `memory details dd34250d-1ee`)

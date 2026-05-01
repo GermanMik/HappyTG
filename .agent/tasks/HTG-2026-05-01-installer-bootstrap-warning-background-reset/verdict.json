@@ -1,0 +1,49 @@
+{
+  "taskId": "HTG-2026-05-01-installer-bootstrap-warning-background-reset",
+  "phase": "complete",
+  "status": "passed",
+  "summary": "Installer repair implemented with focused and root verification passing. Fresh verifier pass 1 found Caddy blockers; minimal fixes were applied and fresh verifier pass 2 found no blockers.",
+  "acceptance": {
+    "bootstrapWarningDemoted": true,
+    "repoLocalPnpmRiskPreserved": true,
+    "dockerBackgroundUxClarified": true,
+    "backgroundResetImplemented": true,
+    "customStateSafetyPreserved": true,
+    "dockerFinalGuidanceClarified": true,
+    "dockerServiceStrategyAdded": true,
+    "reuseSkipsDuplicateInfra": true,
+    "systemCaddySafetyImplemented": true,
+    "releasePrepared": true,
+    "freshVerifierPassed": true
+  },
+  "warnings": [
+    "pnpm happytg doctor/verify report existing environment warnings unrelated to this repair: Codex websocket fallback, public Mini App route identity mismatch, and already-running local services.",
+    "Live Docker endpoint reachability and live Caddy reload were not executed against operator infrastructure; tests use injected command runners/temp files."
+  ],
+  "findings": [
+    {
+      "source": "fresh-verifier-pass-1",
+      "severity": "P1",
+      "status": "fixed",
+      "message": "Repo starter Caddyfile was treated as active system Caddy."
+    },
+    {
+      "source": "fresh-verifier-pass-1",
+      "severity": "P1",
+      "status": "fixed",
+      "message": "System Caddy snippets could be generated before final port remaps."
+    },
+    {
+      "source": "fresh-verifier-pass-1",
+      "severity": "P2",
+      "status": "fixed",
+      "message": "Caddy reuse detection did not prove the full route surface."
+    },
+    {
+      "source": "fresh-verifier-pass-2",
+      "severity": "none",
+      "status": "passed",
+      "message": "No blocking findings."
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+✔ compose declares a stable HappyTG project name (6.3054ms)
+✔ compose keeps Mini App host port separate from container port for Caddy (0.9963ms)
+✔ compose publishes bot readiness on the host without changing worker exposure (1.0202ms)
+✔ Caddy Mini App upstream is configurable and defaults to Docker network (0.7875ms)
+✔ Caddy exposes only narrow public Mini App API exceptions before generic API deny (0.8505ms)
+✔ system Caddy snippet targets host-published Docker ports (0.3245ms)
+✔ system Caddy plan reuses existing validated HappyTG routes (6.7344ms)
+✔ system Caddy plan does not treat the repo starter Caddyfile as active system Caddy (7.4872ms)
+✔ system Caddy reuse requires the full HappyTG route surface (3.3863ms)
+✔ system Caddy print-snippet action writes snippet without editing the Caddyfile (8.7609ms)
+✔ system Caddy patch action requires confirmation and then backs up, validates, and reloads (8.4127ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 405.5495
