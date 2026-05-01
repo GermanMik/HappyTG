@@ -72,6 +72,12 @@ test("parseHappyTGArgs maps install flags into the installer request", () => {
     "manual",
     "--launch-mode",
     "docker",
+    "--docker-services",
+    "reuse",
+    "--docker-caddy",
+    "print-snippet",
+    "--caddyfile",
+    "./Caddyfile",
     "--post-check",
     "setup",
     "--post-check",
@@ -93,6 +99,9 @@ test("parseHappyTGArgs maps install flags into the installer request", () => {
   assert.equal(parsed.options.telegramHomeChannel, "@home");
   assert.equal(parsed.options.backgroundMode, "manual");
   assert.equal(parsed.options.launchMode, "docker");
+  assert.equal(parsed.options.dockerServiceStrategy, "reuse");
+  assert.equal(parsed.options.dockerCaddyAction, "print-snippet");
+  assert.equal(parsed.options.caddyfilePath, path.resolve("/tmp/happytg-cli", "Caddyfile"));
   assert.deepEqual(parsed.options.postChecks, ["setup", "doctor"]);
 });
 

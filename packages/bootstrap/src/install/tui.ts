@@ -3,6 +3,8 @@ import readline from "node:readline";
 import { automationItemRenderLines, groupAutomationItems, type AutomationItem } from "../finalization.js";
 import type {
   BackgroundMode,
+  DockerCaddyAction,
+  DockerServiceStrategy,
   InstallLaunchMode,
   InstallOutcome,
   InstallRuntimeErrorDetail,
@@ -452,11 +454,15 @@ export function renderExistingEnvConfirmationScreen(input: {
 
 export function renderBackgroundModeScreen(input: {
   platformLabel: string;
+  launchMode?: InstallLaunchMode;
   activeMode: BackgroundMode;
   modes: Array<{ mode: BackgroundMode; label: string; detail: string }>;
 }): string {
+  const dockerContext = input.launchMode === "docker"
+    ? "Docker starts the control-plane stack; the host daemon still runs on this host."
+    : `${input.platformLabel} host daemon startup preference`;
   return renderFrame([
-    ...header("Background Run Mode", `${input.platformLabel} background daemon preference`),
+    ...header("Host Daemon Startup", dockerContext),
     ...renderOptions(input.modes.map((mode) => ({
       label: mode.label,
       detail: mode.detail,
@@ -477,6 +483,116 @@ export function renderLaunchModeScreen(input: {
       label: mode.label,
       detail: mode.detail,
       active: mode.mode === input.activeMode
+    }))),
+    "",
+    keyboardHints()
+  ]);
+}
+
+export function renderDockerServiceStrategyScreen(input: {
+  activeStrategy: DockerServiceStrategy;
+  detectedReusableServices: string[];
+}): string {
+  const detected = input.detectedReusableServices.length > 0
+    ? `Detected reusable services: ${input.detectedReusableServices.join(", ")}.`
+    : "No healthy system services were detected automatically; choose reuse only when endpoints in .env are reachable from Docker.";
+  const options: Array<{ strategy: DockerServiceStrategy; label: string; detail: string }> = [
+    {
+      strategy: "reuse",
+      label: "Reuse system services",
+      detail: "Do not start duplicate Redis/Postgres/MinIO/Caddy containers; pass host-reachable endpoints to app containers."
+    },
+    {
+      strategy: "isolated",
+      label: "Isolated Docker stack",
+      detail: "Start HappyTG-owned Redis/Postgres/MinIO/Caddy containers and keep current port-remap behavior."
+    }
+  ];
+
+  return renderFrame([
+    ...header("Docker Service Strategy", detected),
+    ...renderOptions(options.map((option) => ({
+      label: option.label,
+      detail: option.detail,
+      active: option.strategy === input.activeStrategy
+    }))),
+    "",
+    keyboardHints()
+  ]);
+}
+
+export function renderSystemCaddyActionScreen(input: {
+  activeAction: DockerCaddyAction;
+  caddyfilePath?: string;
+}): string {
+  const options: Array<{ action: DockerCaddyAction; label: string; detail: string }> = [
+    {
+      action: "print-snippet",
+      label: "Print Caddy snippet",
+      detail: "Generate the HappyTG Caddy block and validation/reload commands without editing operator-owned files."
+    },
+    {
+      action: "patch-system",
+      label: "Patch Caddyfile",
+      detail: "Advanced: edit only a HappyTG-managed block after a second confirmation, backup, validate, and reload."
+    },
+    {
+      action: "skip",
+      label: "Skip Caddy",
+      detail: "Do not start Compose Caddy and do not edit system Caddy; public Telegram HTTPS routes remain manual."
+    }
+  ];
+
+  return renderFrame([
+    ...header("System Caddy", input.caddyfilePath ? `Candidate Caddyfile: ${input.caddyfilePath}` : "System Caddy exists or ports appear operator-owned; choose a safe action."),
+    ...renderOptions(options.map((option) => ({
+      label: option.label,
+      detail: option.detail,
+      active: option.action === input.activeAction
+    }))),
+    "",
+    keyboardHints()
+  ]);
+}
+
+export function renderSystemCaddyPatchConfirmScreen(input: {
+  activeChoice: "cancel" | "confirm";
+  caddyfilePath: string;
+  backupPath: string;
+  validateCommand: string;
+  reloadCommand: string;
+  rollbackCommand: string;
+}): string {
+  const options = [
+    {
+      id: "cancel",
+      label: "Cancel patch",
+      detail: "Print the snippet instead and leave the system Caddyfile unchanged."
+    },
+    {
+      id: "confirm",
+      label: "Confirm patch",
+      detail: "Back up, patch only the HappyTG-managed block, validate, and reload system Caddy."
+    }
+  ];
+
+  return renderFrame([
+    ...header("Confirm Caddy Patch", "This changes the operator-owned system reverse proxy."),
+    `${statusIcon("warn")} ${bright("Target")}`,
+    `   ${input.caddyfilePath}`,
+    `${statusIcon("info")} ${bright("Backup")}`,
+    `   ${input.backupPath}`,
+    `${statusIcon("info")} ${bright("Validate")}`,
+    `   ${input.validateCommand}`,
+    `${statusIcon("info")} ${bright("Reload")}`,
+    `   ${input.reloadCommand}`,
+    `${statusIcon("info")} ${bright("Rollback")}`,
+    `   ${input.rollbackCommand}`,
+    "",
+    ...renderOptions(options.map((option) => ({
+      label: option.label,
+      detail: option.detail,
+      active: option.id === input.activeChoice
     }))),
     "",
     keyboardHints()

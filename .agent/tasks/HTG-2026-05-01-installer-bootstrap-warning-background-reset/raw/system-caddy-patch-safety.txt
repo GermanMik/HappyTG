@@ -1,0 +1,1 @@
+Patch mode is blocked without a second confirmation. When confirmed, the installer creates a timestamped backup, replaces only the HappyTG managed block, runs caddy validate before reload, reloads only after validation passes, and reports rollback guidance using the backup path. Automated proof uses temp files and fake command runners.

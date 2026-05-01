@@ -2,6 +2,7 @@ import type { AutomationItem } from "../finalization.js";
 
 import type { CommandRunResult, runCommand } from "./commands.js";
 import type {
+  DockerServiceStrategyPlan,
   InstallLaunchCommandResult,
   InstallLaunchHealthCheck,
   InstallLaunchMode,
@@ -9,10 +10,9 @@ import type {
   InstallLaunchStatus,
   InstallStatus
 } from "./types.js";
+import { DOCKER_COMPOSE_FILE, DOCKER_COMPOSE_PREFIX } from "./docker-services.js";
 
-const COMPOSE_FILE = "infra/docker-compose.example.yml";
 const COMPOSE_PROJECT_NAME = "happytg";
-const DOCKER_COMPOSE_PREFIX = `docker compose --env-file .env -f ${COMPOSE_FILE}`;
 const DOCKER_UP_COMMAND = `${DOCKER_COMPOSE_PREFIX} up --build -d`;
 const DOCKER_CONFIG_COMMAND = `${DOCKER_COMPOSE_PREFIX} config`;
 const DOCKER_PS_COMMAND = `${DOCKER_COMPOSE_PREFIX} ps`;
@@ -32,6 +32,45 @@ const COMPOSE_PORT_OVERRIDES = new Map<number, { env: string; suggested: number 
   [9001, { env: "HAPPYTG_MINIO_CONSOLE_PORT", suggested: 9003 }],
   [9090, { env: "HAPPYTG_PROMETHEUS_PORT", suggested: 9091 }]
 ]);
+
+function composeFileArgs(plan?: DockerServiceStrategyPlan): string[] {
+  return [
+    "--env-file",
+    ".env",
+    "-f",
+    DOCKER_COMPOSE_FILE,
+    ...(plan?.overrideFiles ?? []).flatMap((file) => ["-f", file])
+  ];
+}
+
+function composeDisplayPrefix(plan?: DockerServiceStrategyPlan): string {
+  const extraFiles = (plan?.overrideFiles ?? []).map((file) => ` -f ${file}`).join("");
+  return `${DOCKER_COMPOSE_PREFIX}${extraFiles}`;
+}
+
+function composeArgs(plan: DockerServiceStrategyPlan | undefined, tail: string[]): string[] {
+  return ["compose", ...composeFileArgs(plan), ...tail];
+}
+
+function composeCommand(plan: DockerServiceStrategyPlan | undefined, tail: string[]): string {
+  return `${composeDisplayPrefix(plan)} ${tail.join(" ")}`;
+}
+
+function dockerUpArgs(plan?: DockerServiceStrategyPlan): string[] {
+  if (plan?.strategy === "reuse" && plan.composeServices.length > 0) {
+    return composeArgs(plan, ["up", "--build", "-d", "--no-deps", ...plan.composeServices]);
+  }
+
+  return composeArgs(plan, ["up", "--build", "-d"]);
+}
+
+function dockerUpCommand(plan?: DockerServiceStrategyPlan): string {
+  if (plan?.strategy === "reuse" && plan.composeServices.length > 0) {
+    return composeCommand(plan, ["up", "--build", "-d", "--no-deps", ...plan.composeServices]);
+  }
+
+  return composeCommand(plan, ["up", "--build", "-d"]);
+}
 
 interface ComposeServiceSummary {
   service: string;
@@ -390,33 +429,53 @@ export function launchAutomationItems(launch: InstallLaunchResult): AutomationIt
     return [];
   }
 
-  const hostDaemonMessage = "The host daemon is not part of Docker Compose; pair/start it on the host with `pnpm daemon:pair` and `pnpm dev:daemon` or the configured host launcher.";
   if (launch.status === "started") {
-    return [
+    const items: AutomationItem[] = [
       {
-        id: "start-repo-services",
+        id: "docker-compose-stack",
         kind: "auto",
-        message: `Started the packaged control-plane stack: \`${launch.command ?? DOCKER_UP_COMMAND}\`.`
-      },
-      {
-        id: "host-daemon-outside-compose",
-        kind: "manual",
-        message: hostDaemonMessage
+        message: "Docker Compose stack: started.",
+        solutions: [
+          `Started with: \`${launch.command ?? DOCKER_UP_COMMAND}\`.`,
+          `Inspect: \`${DOCKER_PS_COMMAND}\`.`,
+          `Logs: \`${DOCKER_COMPOSE_PREFIX} logs -f\`.`,
+          `Restart/start: \`${launch.command ?? DOCKER_UP_COMMAND}\`.`,
+          `Stop: \`${DOCKER_COMPOSE_PREFIX} down\`.`
+        ]
       }
     ];
+    if (launch.dockerServicePlan) {
+      items.push({
+        id: "docker-service-strategy",
+        kind: launch.dockerServicePlan.strategy === "reuse" ? "reuse" : "auto",
+        message: launch.dockerServicePlan.detail,
+        solutions: launch.dockerServicePlan.reusedServices.length > 0
+          ? [`Reused services: ${launch.dockerServicePlan.reusedServices.join(", ")}.`]
+          : undefined
+      });
+      if (launch.dockerServicePlan.caddy) {
+        const caddy = launch.dockerServicePlan.caddy;
+        items.push({
+          id: "docker-caddy-strategy",
+          kind: caddy.status === "reuse" ? "reuse" : caddy.status === "snippet" || caddy.status === "skipped" ? "manual" : caddy.status === "blocked" || caddy.status === "failed" ? "blocked" : "auto",
+          message: `System Caddy: ${caddy.detail}`,
+          solutions: [
+            ...(caddy.snippetPath ? [`Snippet: ${caddy.snippetPath}.`] : []),
+            ...(caddy.backupPath ? [`Backup: ${caddy.backupPath}.`] : []),
+            ...caddy.commands.map((command) => `Ran: ${command}`)
+          ]
+        });
+      }
+    }
+    return items;
   }
 
   return [
     {
-      id: "start-repo-services",
+      id: "docker-compose-stack",
       kind: "blocked",
       message: `Docker Compose launch did not complete: ${launch.detail}`,
       solutions: launch.nextSteps
-    },
-    {
-      id: "host-daemon-outside-compose",
-      kind: "manual",
-      message: hostDaemonMessage
     }
   ];
 }
@@ -426,6 +485,7 @@ export async function runDockerLaunch(input: {
   repoEnv: NodeJS.ProcessEnv;
   installEnv: NodeJS.ProcessEnv;
   platform: NodeJS.Platform;
+  dockerServicePlan?: DockerServiceStrategyPlan;
   fetchImpl?: typeof fetch;
   healthTimeoutMs?: number;
   healthIntervalMs?: number;
@@ -440,6 +500,7 @@ export async function runDockerLaunch(input: {
   const fetchImpl = input.fetchImpl ?? fetch;
   const healthTimeoutMs = input.healthTimeoutMs ?? DEFAULT_HEALTH_TIMEOUT_MS;
   const healthIntervalMs = input.healthIntervalMs ?? DEFAULT_HEALTH_INTERVAL_MS;
+  const requestedUpCommand = dockerUpCommand(input.dockerServicePlan);
   const dockerPath = await input.resolveExecutableImpl("docker", {
     cwd: input.repoPath,
     env: input.installEnv,
@@ -450,8 +511,9 @@ export async function runDockerLaunch(input: {
     return {
       mode: "docker",
       status: "failed",
-      composeFile: COMPOSE_FILE,
-      command: DOCKER_UP_COMMAND,
+      composeFile: DOCKER_COMPOSE_FILE,
+      command: requestedUpCommand,
+      dockerServicePlan: input.dockerServicePlan,
       commands,
       health: [],
       detail: "Docker binary was not found in this shell.",
@@ -471,6 +533,7 @@ export async function runDockerLaunch(input: {
       env: {
         ...input.installEnv,
         ...input.repoEnv,
+        ...(input.dockerServicePlan?.env ?? {}),
         COMPOSE_PROJECT_NAME
       },
       platform: input.platform
@@ -496,13 +559,14 @@ export async function runDockerLaunch(input: {
     return {
       mode: "docker",
       status: "failed",
-      composeFile: COMPOSE_FILE,
-      command: DOCKER_UP_COMMAND,
+      composeFile: DOCKER_COMPOSE_FILE,
+      command: requestedUpCommand,
+      dockerServicePlan: input.dockerServicePlan,
       commands,
       health: [],
       detail: "Docker Compose v2 is unavailable.",
       warnings: [output || "Docker Compose v2 check failed."],
-      nextSteps: dockerFailureNextSteps(output, DOCKER_UP_COMMAND)
+      nextSteps: dockerFailureNextSteps(output, requestedUpCommand)
     };
   }
 
@@ -512,55 +576,59 @@ export async function runDockerLaunch(input: {
     return {
       mode: "docker",
       status: "failed",
-      composeFile: COMPOSE_FILE,
-      command: DOCKER_UP_COMMAND,
+      composeFile: DOCKER_COMPOSE_FILE,
+      command: requestedUpCommand,
+      dockerServicePlan: input.dockerServicePlan,
       commands,
       health: [],
       detail: "Docker is installed, but the Docker daemon/Desktop is unavailable.",
       warnings: [output || "Docker daemon/Desktop check failed."],
-      nextSteps: dockerFailureNextSteps(output, DOCKER_UP_COMMAND)
+      nextSteps: dockerFailureNextSteps(output, requestedUpCommand)
     };
   }
 
-  const config = await runDocker("compose-config", DOCKER_CONFIG_COMMAND, ["compose", "--env-file", ".env", "-f", COMPOSE_FILE, "config"]);
+  const config = await runDocker("compose-config", composeCommand(input.dockerServicePlan, ["config"]), composeArgs(input.dockerServicePlan, ["config"]));
   if (config.exitCode !== 0) {
     const output = commandOutput(config);
     return {
       mode: "docker",
       status: "failed",
-      composeFile: COMPOSE_FILE,
-      command: DOCKER_UP_COMMAND,
+      composeFile: DOCKER_COMPOSE_FILE,
+      command: requestedUpCommand,
+      dockerServicePlan: input.dockerServicePlan,
       commands,
       health: [],
       detail: "Docker Compose config validation failed.",
       warnings: [output || "Compose config validation failed."],
-      nextSteps: dockerFailureNextSteps(output, DOCKER_UP_COMMAND)
+      nextSteps: dockerFailureNextSteps(output, requestedUpCommand)
     };
   }
 
-  const up = await runDocker("compose-up", DOCKER_UP_COMMAND, ["compose", "--env-file", ".env", "-f", COMPOSE_FILE, "up", "--build", "-d"]);
+  const upCommand = dockerUpCommand(input.dockerServicePlan);
+  const up = await runDocker("compose-up", upCommand, dockerUpArgs(input.dockerServicePlan));
   if (up.exitCode !== 0) {
     const output = commandOutput(up);
     const bindHint = dockerBindFailureHint(output);
     return {
       mode: "docker",
       status: "failed",
-      composeFile: COMPOSE_FILE,
-      command: DOCKER_UP_COMMAND,
+      composeFile: DOCKER_COMPOSE_FILE,
+      command: upCommand,
+      dockerServicePlan: input.dockerServicePlan,
       commands,
       health: [],
       detail: bindHint ? `Docker Compose startup failed. ${bindHint}` : "Docker Compose startup failed.",
       warnings: [output || "Compose startup failed."],
-      nextSteps: dockerFailureNextSteps(output, DOCKER_UP_COMMAND)
+      nextSteps: dockerFailureNextSteps(output, upCommand)
     };
   }
 
-  const psJson = await runDocker("compose-ps-json", DOCKER_PS_JSON_COMMAND, ["compose", "--env-file", ".env", "-f", COMPOSE_FILE, "ps", "--format", "json"]);
+  const psJson = await runDocker("compose-ps-json", composeCommand(input.dockerServicePlan, ["ps", "--format", "json"]), composeArgs(input.dockerServicePlan, ["ps", "--format", "json"]));
   let services: ComposeServiceSummary[] = [];
   if (psJson.exitCode === 0) {
     services = parseComposePsJson(psJson.stdout);
   } else {
-    await runDocker("compose-ps", DOCKER_PS_COMMAND, ["compose", "--env-file", ".env", "-f", COMPOSE_FILE, "ps"]);
+    await runDocker("compose-ps", composeCommand(input.dockerServicePlan, ["ps"]), composeArgs(input.dockerServicePlan, ["ps"]));
   }
 
   const health: InstallLaunchHealthCheck[] = [
@@ -595,8 +663,9 @@ export async function runDockerLaunch(input: {
   return {
     mode: "docker",
     status,
-    composeFile: COMPOSE_FILE,
-    command: DOCKER_UP_COMMAND,
+    composeFile: DOCKER_COMPOSE_FILE,
+    command: upCommand,
+    dockerServicePlan: input.dockerServicePlan,
     commands,
     health,
     detail: launchDetailFromHealth(status, health),
@@ -608,7 +677,10 @@ export async function runDockerLaunch(input: {
         "Rerun `pnpm happytg doctor --json` after the readiness checks pass."
       ]
       : [
-        `Inspect the running stack with \`${DOCKER_PS_COMMAND}\`.`
+        `Inspect the running stack with \`${DOCKER_PS_COMMAND}\`.`,
+        `Follow logs with \`${DOCKER_COMPOSE_PREFIX} logs -f\`.`,
+        `Restart/start with \`${upCommand}\`.`,
+        `Stop with \`${DOCKER_COMPOSE_PREFIX} down\`.`
       ]
   };
 }

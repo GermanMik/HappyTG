@@ -1,0 +1,11 @@
+✔ writeInstallState records only the current launcher ownership after install-time reset (15.5709ms)
+✔ resetBackgroundModeArtifacts removes default Windows Scheduled Task and Startup shortcut before reconfigure (13.1102ms)
+✔ resetBackgroundModeArtifacts keeps unowned default Windows global launchers for custom state dirs (11.6288ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 318.7265

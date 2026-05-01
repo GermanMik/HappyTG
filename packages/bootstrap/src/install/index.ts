@@ -17,12 +17,13 @@ import {
   type AutomationItem
 } from "../finalization.js";
 
-import { configureBackgroundMode } from "./background.js";
+import { configureBackgroundMode, resetBackgroundModeArtifacts } from "./background.js";
 import { runCommand, runShellCommand, CommandExecutionError } from "./commands.js";
 import { resolveInstallerRepoSources } from "./config.js";
 import { writeMergedEnvFile } from "./env.js";
 import { createInstallRuntimeError, isRetryableCommandOutput, toInstallRuntimeErrorDetail } from "./errors.js";
 import { createStaticLaunchResult, launchAutomationItems, launchStepStatus, runDockerLaunch } from "./launch.js";
+import { buildDockerServiceStrategyPlan, recommendedDockerServiceStrategy } from "./docker-services.js";
 import { detectInstallerEnvironment } from "./platform.js";
 import {
   defaultDirtyWorktreeStrategy,
@@ -38,6 +39,7 @@ import {
   promptSelect,
   promptTelegramForm,
   renderBackgroundModeScreen,
+  renderDockerServiceStrategyScreen,
   renderFinalScreen,
   renderDirtyWorktreeScreen,
   renderExistingEnvConfirmationScreen,
@@ -46,6 +48,8 @@ import {
   renderProgress,
   renderRepoModeScreen,
   renderSummaryScreen,
+  renderSystemCaddyActionScreen,
+  renderSystemCaddyPatchConfirmScreen,
   renderWelcomeScreen,
   waitForEnter
 } from "./tui.js";
@@ -54,6 +58,10 @@ import { evaluateInstallPairingDecision, fetchPairingHostStatus, pairingHandoffM
 import { fetchTelegramBotIdentity, normalizeTelegramAllowedUserIds, pairTargetLabel, telegramLookupDiagnostic, validateTelegramBotToken } from "./telegram.js";
 import type {
   BackgroundMode,
+  DockerCaddyAction,
+  DockerServiceId,
+  DockerServiceStrategy,
+  DockerServiceStrategyPlan,
   InstallCommandOptions,
   InstallDraftState,
   InstallLaunchMode,
@@ -106,6 +114,7 @@ interface PnpmInstallResult extends CommandRunResult {
 
 interface InstallRuntimeDependencies {
   configureBackgroundMode: typeof configureBackgroundMode;
+  resetBackgroundModeArtifacts: typeof resetBackgroundModeArtifacts;
   detectInstallerEnvironment: typeof detectInstallerEnvironment;
   detectRepoModeChoices: typeof detectRepoModeChoices;
   fetchPairingHostStatus: typeof fetchPairingHostStatus;
@@ -279,6 +288,61 @@ function bootstrapPortReports(report: BootstrapReport): PlannedPortReport[] {
     : [];
 }
 
+function dockerReusableServicesFromPorts(ports: readonly PlannedPortReport[]): DockerServiceId[] {
+  const services = new Set<DockerServiceId>();
+  for (const port of ports) {
+    if (port.state !== "occupied_supported" && port.state !== "occupied_expected") {
+      continue;
+    }
+    if (port.id === "redis") {
+      services.add("redis");
+    } else if (port.id === "postgres") {
+      services.add("postgres");
+    } else if (port.id === "minio-api" || port.id === "minio-console") {
+      services.add("minio");
+    } else if (port.id === "caddy-http" || port.id === "caddy-https") {
+      services.add("caddy");
+    }
+  }
+
+  return [...services];
+}
+
+function dockerPortIdsForReusedServices(services: readonly DockerServiceId[]): Set<string> {
+  const ids = new Set<string>();
+  for (const service of services) {
+    if (service === "redis") {
+      ids.add("redis");
+    } else if (service === "postgres") {
+      ids.add("postgres");
+    } else if (service === "minio") {
+      ids.add("minio-api");
+      ids.add("minio-console");
+    } else if (service === "caddy") {
+      ids.add("caddy-http");
+      ids.add("caddy-https");
+    }
+  }
+
+  return ids;
+}
+
+function dockerPortSkipServicesForSelection(input: {
+  strategy: DockerServiceStrategy;
+  caddyAction?: DockerCaddyAction;
+}): DockerServiceId[] {
+  if (input.strategy !== "reuse") {
+    return [];
+  }
+
+  const services: DockerServiceId[] = ["redis", "postgres", "minio"];
+  if (input.caddyAction !== "compose") {
+    services.push("caddy");
+  }
+
+  return services;
+}
+
 function suggestedPortsForReport(port: PlannedPortReport): number[] {
   const rawSuggestions: Array<number | undefined> = [
     ...(Array.isArray(port.suggestedPorts) ? port.suggestedPorts : []),
@@ -383,9 +447,10 @@ function unresolvedPortConflicts(ports: PlannedPortReport[]): PlannedPortReport[
   return ports.filter((port) => port.state === "occupied_external" && Boolean(port.overrideEnv));
 }
 
-function dockerComposePublishConflicts(ports: PlannedPortReport[]): PlannedPortReport[] {
+function dockerComposePublishConflicts(ports: PlannedPortReport[], skipIds: ReadonlySet<string> = new Set()): PlannedPortReport[] {
   return ports.filter((port) =>
     dockerComposePublishedPortIds.has(port.id)
+    && !skipIds.has(port.id)
     && port.state !== "free"
     && port.state !== "occupied_expected"
     && Boolean(port.overrideEnv)
@@ -446,6 +511,8 @@ async function resolvePortConflictsBeforePostChecks(input: {
   repoEnv: NodeJS.ProcessEnv;
   installEnv: NodeJS.ProcessEnv;
   platform: NodeJS.Platform;
+  skipDockerPortConflictIds?: ReadonlySet<string>;
+  initialReport?: BootstrapReport;
   runBootstrapCheck: (command: PostInstallCheck, context?: {
     cwd?: string;
     env?: NodeJS.ProcessEnv;
@@ -464,16 +531,17 @@ async function resolvePortConflictsBeforePostChecks(input: {
     ...input.repoEnv
   };
   const appliedOverrides: AppliedPortOverride[] = [];
-  let report = await input.runBootstrapCheck("setup", {
+  let report = input.initialReport ?? await input.runBootstrapCheck("setup", {
     cwd: input.repoPath,
     env: repoEnv,
     platform: input.platform
   });
   const dockerAutoRemapped = new Set<string>();
+  const skipDockerPortConflictIds = input.skipDockerPortConflictIds ?? new Set<string>();
 
   while (input.launchMode === "docker") {
     const ports = bootstrapPortReports(report);
-    const conflict = dockerComposePublishConflicts(ports)
+    const conflict = dockerComposePublishConflicts(ports, skipDockerPortConflictIds)
       .find((item) => item.overrideEnv && !dockerAutoRemapped.has(item.overrideEnv));
     if (!conflict?.overrideEnv) {
       break;
@@ -632,7 +700,13 @@ async function buildInstallFinalizationItems(input: {
     pushAutomationItem(items, {
       id: "background-configured",
       kind: "auto",
-      message: input.background.detail
+      message: input.background.detail,
+      solutions: input.background.mode === "scheduled-task" || input.background.mode === "startup"
+        ? [
+          "Host daemon startup is configured for the next user logon.",
+          "Optional start now: `pnpm dev:daemon`."
+        ]
+        : undefined
     });
   } else if (input.background.status === "manual" && input.background.mode !== "manual" && input.background.mode !== "skip") {
     pushAutomationItem(items, {
@@ -749,15 +823,6 @@ async function buildInstallFinalizationItems(input: {
 
   if (input.background.status === "configured") {
     removeAutomationItems(items, "start-daemon");
-    if (!pairingBlocked && (input.background.mode === "scheduled-task" || input.background.mode === "startup")) {
-      pushAutomationItem(items, {
-        id: "background-activation",
-        kind: "warning",
-        message: pairingPending
-          ? "The host daemon background launcher is configured for the next logon. If you need it immediately after pairing, run `pnpm dev:daemon` once."
-          : "The host daemon background launcher is configured for the next logon. If you need it immediately, run `pnpm dev:daemon` once."
-      });
-    }
   } else if (!pairingBlocked && input.background.status === "manual") {
     pushAutomationItem(items, {
       id: "start-daemon",
@@ -765,6 +830,14 @@ async function buildInstallFinalizationItems(input: {
       message: pairingPending
         ? "After pairing, start the daemon with `pnpm dev:daemon`."
         : "Start the daemon with `pnpm dev:daemon`."
+    });
+  } else if (!pairingBlocked && input.background.status === "skipped") {
+    pushAutomationItem(items, {
+      id: "start-daemon",
+      kind: "manual",
+      message: pairingPending
+        ? "No host-daemon autostart was configured. After pairing, start it manually with `pnpm dev:daemon` when host operations are needed."
+        : "No host-daemon autostart was configured. Start it manually with `pnpm dev:daemon` when host operations are needed."
     });
   } else if (!pairingBlocked && input.background.status === "failed") {
     pushAutomationItem(items, {
@@ -1475,6 +1548,7 @@ export async function runHappyTGInstall(
 ): Promise<InstallResult> {
   const deps: InstallRuntimeDependencies = {
     configureBackgroundMode,
+    resetBackgroundModeArtifacts,
     detectInstallerEnvironment,
     detectRepoModeChoices,
     fetchPairingHostStatus,
@@ -1524,6 +1598,8 @@ export async function runHappyTGInstall(
     telegram?: TelegramSetup;
     backgroundMode?: BackgroundMode;
     launchMode?: InstallLaunchMode;
+    dockerServiceStrategy?: DockerServiceStrategy;
+    dockerCaddyAction?: DockerCaddyAction;
     postChecks?: PostInstallCheck[];
   }): Promise<void> => {
     draft = await deps.writeInstallDraft({
@@ -1542,6 +1618,8 @@ export async function runHappyTGInstall(
           : draft?.telegram,
         backgroundMode: patch.backgroundMode ?? draft?.backgroundMode,
         launchMode: patch.launchMode ?? draft?.launchMode,
+        dockerServiceStrategy: patch.dockerServiceStrategy ?? draft?.dockerServiceStrategy,
+        dockerCaddyAction: patch.dockerCaddyAction ?? draft?.dockerCaddyAction,
         postChecks: patch.postChecks ?? draft?.postChecks,
         updatedAt: nowIso()
       },
@@ -1635,6 +1713,10 @@ export async function runHappyTGInstall(
   const launchModes = launchOptionsForInstall();
   const launchDefault = options.launchMode ?? draft?.launchMode ?? "local";
   let launchMode = launchDefault;
+  let dockerServiceStrategy: DockerServiceStrategy = options.dockerServiceStrategy ?? draft?.dockerServiceStrategy ?? "isolated";
+  let dockerCaddyAction: DockerCaddyAction | undefined = options.dockerCaddyAction ?? draft?.dockerCaddyAction;
+  let dockerCaddyPatchConfirmed = false;
+  let dockerServicePlan: DockerServiceStrategyPlan | undefined;
   const requestedPostChecks = samePostChecks(options.postChecks, DEFAULT_POST_CHECKS) && draft?.postChecks
     ? draft.postChecks
     : options.postChecks;
@@ -1650,11 +1732,13 @@ export async function runHappyTGInstall(
   let launch: InstallLaunchResult = createStaticLaunchResult(launchMode);
   let repoEnv: NodeJS.ProcessEnv | undefined;
   let preflightSetupReport: BootstrapReport | undefined;
+  let dockerServiceDetectionReport: BootstrapReport | undefined;
   let portPreflightDetail = "Planned port preflight did not run.";
   let appliedPortOverrides: AppliedPortOverride[] = [];
   let preflightConflictItems: AutomationItem[] = [];
   let pnpmInstallAssessment: PnpmIgnoredBuildScriptsAssessment | undefined;
   const pnpmInstallAutomationItems: AutomationItem[] = [];
+  const backgroundResetAutomationItems: AutomationItem[] = [];
 
   const updateStep = (next: InstallStepRecord) => {
     steps = replaceStep(steps, next);
@@ -1833,20 +1917,6 @@ export async function runHappyTGInstall(
         });
       }
     }
-    backgroundMode = interactive
-      ? await promptSelect({
-        stdin,
-        stdout,
-        items: backgroundModes.map((mode) => mode.mode),
-        initial: backgroundDefault,
-        render: (activeMode) => renderBackgroundModeScreen({
-          platformLabel: platformLabel(platform.platform.platform),
-          activeMode,
-          modes: backgroundModes
-        })
-      })
-      : backgroundDefault;
-    background = createFallbackBackground(backgroundMode);
     launchMode = interactive
       ? await promptSelect({
         stdin,
@@ -1860,6 +1930,25 @@ export async function runHappyTGInstall(
       })
       : launchDefault;
     launch = createStaticLaunchResult(launchMode);
+    backgroundMode = interactive
+      ? await promptSelect({
+        stdin,
+        stdout,
+        items: backgroundModes.map((mode) => mode.mode),
+        initial: backgroundDefault,
+        render: (activeMode) => renderBackgroundModeScreen({
+          platformLabel: platformLabel(platform.platform.platform),
+          launchMode,
+          activeMode,
+          modes: backgroundModes
+        })
+      })
+      : backgroundDefault;
+    background = createFallbackBackground(backgroundMode);
+    if (launchMode !== "docker") {
+      dockerServiceStrategy = "isolated";
+      dockerCaddyAction = undefined;
+    }
     postChecks = interactive
       ? await promptMultiSelect({
         stdin,
@@ -1884,6 +1973,8 @@ export async function runHappyTGInstall(
       telegram: telegramSetup,
       backgroundMode,
       launchMode,
+      dockerServiceStrategy,
+      dockerCaddyAction,
       postChecks
     });
     steps = [
@@ -1891,6 +1982,7 @@ export async function runHappyTGInstall(
       ...platform.dependencies.map((dependency) => createStep(`dep-${dependency.id}`, dependency.label, dependency.available ? "Already available." : dependency.installCommand ?? dependency.manualInstruction ?? "Manual follow-up required.")),
       createStep("pnpm-install", "Install workspace dependencies", "Run `pnpm install` in the selected checkout."),
       createStep("env-merge", "Merge environment", "Create or merge `.env` without overwriting existing values."),
+      createStep("docker-services", "Plan Docker services", launchMode === "docker" ? "Choose reuse or isolated Docker service startup." : "Not needed for the selected launch mode."),
       createStep("port-preflight", "Resolve planned ports", "Check planned HappyTG ports before later startup guidance."),
       createStep("telegram-bot", "Connect Telegram bot", "Validate the token and capture bot identity for later /pair guidance."),
       createStep("background", "Configure background run mode", backgroundModes.find((item) => item.mode === backgroundMode)?.detail ?? backgroundMode),
@@ -2143,6 +2235,87 @@ export async function runHappyTGInstall(
 
     repoEnv = await buildRepoEnv(repoSyncResult.path, installEnv);
     updateStep({
+      ...steps.find((step) => step.id === "docker-services")!,
+      status: launchMode === "docker" ? "running" : "skipped",
+      detail: launchMode === "docker"
+        ? "Planning Docker service reuse versus isolated Compose startup."
+        : "Docker service strategy is not needed for the selected launch mode."
+    });
+    if (launchMode === "docker") {
+      let detectedReusableServices: DockerServiceId[] = [];
+      if (input?.runBootstrapCheck) {
+        dockerServiceDetectionReport = await input.runBootstrapCheck("setup", {
+          cwd: repoSyncResult.path,
+          env: repoEnv,
+          platform: platform.platform.platform
+        });
+        detectedReusableServices = dockerReusableServicesFromPorts(bootstrapPortReports(dockerServiceDetectionReport));
+      }
+      const recommendedStrategy = recommendedDockerServiceStrategy({
+        repoEnv,
+        detectedReusableServices
+      });
+      dockerServiceStrategy = interactive && !options.dockerServiceStrategy
+        ? await promptSelect({
+          stdin,
+          stdout,
+          items: ["reuse", "isolated"] satisfies DockerServiceStrategy[],
+          initial: recommendedStrategy,
+          render: (activeStrategy) => renderDockerServiceStrategyScreen({
+            activeStrategy,
+            detectedReusableServices
+          })
+        })
+        : options.dockerServiceStrategy ?? "isolated";
+      if (dockerServiceStrategy === "reuse" && interactive && !options.dockerCaddyAction) {
+        dockerCaddyAction = await promptSelect({
+          stdin,
+          stdout,
+          items: ["print-snippet", "patch-system", "skip"] satisfies DockerCaddyAction[],
+          initial: dockerCaddyAction ?? "print-snippet",
+          render: (activeAction) => renderSystemCaddyActionScreen({
+            activeAction,
+            caddyfilePath: options.caddyfilePath
+          })
+        });
+      }
+      if (dockerServiceStrategy === "reuse" && dockerCaddyAction === "patch-system" && interactive && options.caddyfilePath) {
+        const backupPath = `${options.caddyfilePath}.happytg-backup-<timestamp>`;
+        const confirmation = await promptSelect({
+          stdin,
+          stdout,
+          items: ["cancel", "confirm"] satisfies Array<"cancel" | "confirm">,
+          initial: "cancel",
+          render: (activeChoice) => renderSystemCaddyPatchConfirmScreen({
+            activeChoice,
+            caddyfilePath: options.caddyfilePath!,
+            backupPath,
+            validateCommand: `caddy validate --config ${options.caddyfilePath}`,
+            reloadCommand: `caddy reload --config ${options.caddyfilePath}`,
+            rollbackCommand: `copy ${backupPath} ${options.caddyfilePath}`
+          })
+        });
+        dockerCaddyPatchConfirmed = confirmation === "confirm";
+        if (!dockerCaddyPatchConfirmed) {
+          dockerCaddyAction = "print-snippet";
+        }
+      }
+      updateStep({
+        ...steps.find((step) => step.id === "docker-services")!,
+        status: "passed",
+        detail: [
+          `Selected ${dockerServiceStrategy === "reuse" ? "existing system service reuse" : "isolated Docker stack"}.`,
+          dockerServiceStrategy === "reuse"
+            ? `System Caddy action: ${dockerCaddyAction ?? "print-snippet"}. Final Caddy config will be generated after port remaps are resolved.`
+            : undefined
+        ].filter(Boolean).join("\n")
+      });
+      await saveDraft({
+        dockerServiceStrategy,
+        dockerCaddyAction
+      });
+    }
+    updateStep({
       ...steps.find((step) => step.id === "port-preflight")!,
       status: "running",
       detail: "Checking planned HappyTG ports before post-install startup guidance."
@@ -2164,6 +2337,11 @@ export async function runHappyTGInstall(
         repoEnv,
         installEnv,
         platform: platform.platform.platform,
+        skipDockerPortConflictIds: dockerPortIdsForReusedServices(dockerPortSkipServicesForSelection({
+          strategy: dockerServiceStrategy,
+          caddyAction: dockerCaddyAction
+        })),
+        initialReport: dockerServiceDetectionReport,
         runBootstrapCheck: input.runBootstrapCheck,
         updateProgressDetail: (detail) => updateStep({
           ...steps.find((step) => step.id === "port-preflight")!,
@@ -2184,6 +2362,35 @@ export async function runHappyTGInstall(
         ...steps.find((step) => step.id === "port-preflight")!,
         status: portPreflight.unresolvedConflicts.length > 0 ? "warn" : "passed",
         detail: portPreflight.detail
+      });
+    }
+
+    if (launchMode === "docker") {
+      updateStep({
+        ...steps.find((step) => step.id === "docker-services")!,
+        status: "running",
+        detail: "Building final Docker service plan with post-remap ports."
+      });
+      dockerServicePlan = await buildDockerServiceStrategyPlan({
+        strategy: dockerServiceStrategy,
+        repoPath: repoSyncResult.path,
+        repoEnv,
+        installEnv,
+        platform: platform.platform.platform,
+        caddyAction: dockerCaddyAction,
+        caddyfilePath: options.caddyfilePath,
+        caddyPatchConfirmed: dockerCaddyPatchConfirmed,
+        resolveExecutableImpl: deps.resolveExecutable,
+        runCommandImpl: deps.runCommand
+      });
+      pushUniqueLines(warnings, dockerServicePlan.caddy?.warnings ?? []);
+      updateStep({
+        ...steps.find((step) => step.id === "docker-services")!,
+        status: dockerServicePlan.caddy?.status === "blocked" || dockerServicePlan.caddy?.status === "failed" ? "warn" : "passed",
+        detail: [
+          dockerServicePlan.detail,
+          dockerServicePlan.caddy?.detail
+        ].filter(Boolean).join("\n")
       });
     }
 
@@ -2218,6 +2425,39 @@ export async function runHappyTGInstall(
     updateStep({
       ...steps.find((step) => step.id === "background")!,
       status: "running",
+      detail: `Resetting stale HappyTG host daemon launchers before configuring ${backgroundMode}.`
+    });
+    const backgroundReset = await deps.resetBackgroundModeArtifacts({
+      cwd: repoSyncResult.path,
+      env: installEnv,
+      platform: platform.platform.platform,
+      resolveExecutableImpl: deps.resolveExecutable,
+      runCommandImpl: deps.runCommand
+    });
+    pushUniqueLines(warnings, backgroundReset.warnings);
+    if (backgroundReset.removedPaths.length > 0 || backgroundReset.commands.some((command) => command.status === "passed")) {
+      backgroundResetAutomationItems.push({
+        id: "background-reset",
+        kind: "auto",
+        message: "Removed stale HappyTG-owned host daemon launchers before applying the selected background mode.",
+        solutions: [
+          ...backgroundReset.removedPaths.map((item) => `Removed: ${item}`),
+          ...backgroundReset.commands
+            .filter((command) => command.status === "passed")
+            .map((command) => `Ran: ${[command.command, ...command.args].join(" ")}`)
+        ]
+      });
+    }
+    for (const warning of backgroundReset.warnings) {
+      backgroundResetAutomationItems.push({
+        id: `background-reset-warning-${backgroundResetAutomationItems.length}`,
+        kind: "warning",
+        message: warning
+      });
+    }
+    updateStep({
+      ...steps.find((step) => step.id === "background")!,
+      status: "running",
       detail: `Configuring ${backgroundMode}.`
     });
     background = await deps.configureBackgroundMode({
@@ -2244,6 +2484,7 @@ export async function runHappyTGInstall(
         repoEnv,
         installEnv,
         platform: platform.platform.platform,
+        dockerServicePlan,
         fetchImpl: input?.fetchImpl,
         resolveExecutableImpl: deps.resolveExecutable,
         runCommandImpl: deps.runCommand
@@ -2341,6 +2582,7 @@ export async function runHappyTGInstall(
         : undefined);
     const finalizationItems: AutomationItem[] = [];
     pushAutomationItems(finalizationItems, pnpmInstallAutomationItems);
+    pushAutomationItems(finalizationItems, backgroundResetAutomationItems);
     pushAutomationItems(finalizationItems, portPreflightAutomationItems(appliedPortOverrides));
     pushAutomationItems(finalizationItems, preflightConflictItems);
     pushAutomationItems(finalizationItems, launchAutomationItems(launch));

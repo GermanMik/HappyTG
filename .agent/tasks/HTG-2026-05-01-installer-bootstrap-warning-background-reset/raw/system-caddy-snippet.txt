@@ -1,0 +1,44 @@
+# BEGIN HappyTG managed block
+happytg.example.com {
+	encode zstd gzip
+
+	handle /health {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	handle /api/v1/miniapp/auth/session {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	handle /api/v1/miniapp/dashboard {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	@miniappApprovalResolve path_regexp miniapp_approval_resolve ^/api/v1/miniapp/approvals/[^/]+/resolve$
+	handle @miniappApprovalResolve {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	handle /api/* {
+		respond "Not found" 404
+	}
+
+	handle /telegram/webhook {
+		reverse_proxy 127.0.0.1:4100
+	}
+
+	handle_path /miniapp* {
+		reverse_proxy 127.0.0.1:3001 {
+			header_up X-Forwarded-Prefix /miniapp
+		}
+	}
+
+	handle_path /static* {
+		reverse_proxy 127.0.0.1:3001
+	}
+
+	handle {
+		redir * /miniapp 302
+	}
+}
+# END HappyTG managed block

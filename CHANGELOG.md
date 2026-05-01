@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v0.4.8
+
+### Added
+
+- Docker installer launch mode now has an explicit service strategy: isolated Docker stack or reuse existing system Redis/Postgres/MinIO/Caddy services.
+- Reuse mode starts only the app/observability Compose services with container-reachable `COMPOSE_REDIS_URL`, `COMPOSE_DATABASE_URL`, and `COMPOSE_S3_ENDPOINT`.
+- System Caddy handling now detects existing HappyTG routes, defaults to printing a snippet, and only patches a Caddyfile after explicit confirmation, backup, validation, and reload.
+
+### Fixed
+
+- The Windows one-line installer no longer emits a PowerShell `WARNING:` when temporary bootstrap pnpm output mentions ignored build scripts but the required `tsx`/`esbuild` preflight marker passed.
+- Docker-mode installer output now separates already-started Compose services, host-daemon startup, pairing, Telegram Mini App URL setup, and day-2 Docker commands.
+- Repeated installs reset HappyTG-owned host-daemon launchers before applying the selected mode, so `manual` and `skip` remove stale Windows Scheduled Task/Startup artifacts for the safe state scope.
+
+### Verification
+
+- Release validation covers the Windows bootstrap wrapper, Docker reuse command shaping, Caddy snippet/patch safety, background launcher reset, installer runtime regressions, bootstrap build/lint/typecheck/test, and canonical task evidence.
+
 ## v0.4.7
 
 ### Added

@@ -33,7 +33,7 @@ Use [Installation](./installation.md) if you need the fuller local/self-hosted s
 
 3. Start shared infra only. Do not run the full compose app stack and `pnpm dev` together.
 
-   If `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` already point at reachable services, skip Docker and continue to `pnpm dev`.
+   If `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` already point at reachable services, continue to `pnpm dev`, or choose `--launch-mode docker --docker-services reuse` when you want Docker to start only the app/observability services without duplicate Redis/Postgres/MinIO/Caddy containers.
 
    If Redis is already running locally:
 
@@ -136,7 +136,8 @@ If `6379` is already in use:
 - Mini App shows richer task and artifact views.
 - Repo-local proof artifacts are written to `.agent/tasks/<TASK_ID>/`.
 - `pnpm happytg install` is the primary onboarding path; `pnpm happytg setup` remains the short first-run checklist; `pnpm happytg doctor --json` and `pnpm happytg verify --json` keep the detailed diagnostics.
-- `pnpm happytg uninstall` removes local HappyTG bootstrap/runtime artifacts, including multiple recorded launcher surfaces from repeated installer runs in the same state scope, but intentionally keeps the repo checkout, `.env`, and any Compose-managed control-plane data.
+- `pnpm happytg install` resets stale HappyTG-owned host-daemon launchers before applying the selected mode; choosing `manual` or `skip` removes old autostart entries for the safe state scope.
+- `pnpm happytg uninstall` removes local HappyTG bootstrap/runtime artifacts and intentionally keeps the repo checkout, `.env`, and any Compose-managed control-plane data.
 
 ## Next Reads
 

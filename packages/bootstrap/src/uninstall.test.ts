@@ -206,38 +206,8 @@ test("runHappyTGUninstall removes both recorded Windows autorun artifacts after 
       writeFile(startupPath, "@echo off\r\ncall launcher\r\n", "utf8")
     ]);
 
-    await writeInstallState({
-      result: installResult({
-        repoRoot,
-        platform: "win32",
-        background: {
-          mode: "scheduled-task",
-          status: "configured",
-          detail: "Scheduled Task configured.",
-          launcherPath,
-          ownedArtifacts: [
-            {
-              kind: "launcher",
-              mode: "scheduled-task",
-              path: launcherPath
-            },
-            {
-              kind: "scheduled-task",
-              mode: "scheduled-task",
-              taskName: "HappyTG Host Daemon"
-            }
-          ]
-        }
-      }),
-      env: {
-        HOME: tempDir,
-        HAPPYTG_STATE_DIR: stateDir
-      },
-      platform: "win32"
-    });
-
-    await writeInstallState({
-      result: installResult({
+    const legacyMergedState = {
+      ...installResult({
         repoRoot,
         platform: "win32",
         background: {
@@ -260,12 +230,26 @@ test("runHappyTGUninstall removes both recorded Windows autorun artifacts after 
           ]
         }
       }),
-      env: {
-        HOME: tempDir,
-        HAPPYTG_STATE_DIR: stateDir
+      generatedAt: "2026-05-01T00:00:00.000Z"
+    };
+    legacyMergedState.background.ownedArtifacts = [
+      {
+        kind: "launcher",
+        mode: "scheduled-task",
+        path: launcherPath
       },
-      platform: "win32"
-    });
+      {
+        kind: "scheduled-task",
+        mode: "scheduled-task",
+        taskName: "HappyTG Host Daemon"
+      },
+      {
+        kind: "startup-shortcut",
+        mode: "startup",
+        path: startupPath
+      }
+    ];
+    await writeFile(path.join(stateDir, "state", "install-last.json"), `${JSON.stringify(legacyMergedState, null, 2)}\n`, "utf8");
 
     const result = await runHappyTGUninstall({
       json: true,

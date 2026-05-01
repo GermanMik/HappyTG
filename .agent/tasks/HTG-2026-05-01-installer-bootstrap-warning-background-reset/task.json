@@ -1,0 +1,19 @@
+{
+  "taskId": "HTG-2026-05-01-installer-bootstrap-warning-background-reset",
+  "phase": "complete",
+  "status": "complete",
+  "createdAt": "2026-05-01",
+  "scopeFrozen": true,
+  "builder": "codex",
+  "verifier": "passed",
+  "branch": "codex/installer-bootstrap-warning-background-reset",
+  "releaseVersion": "0.4.8",
+  "proof": {
+    "spec": "spec.md",
+    "evidence": "evidence.md",
+    "evidenceJson": "evidence.json",
+    "verdict": "verdict.json",
+    "problems": "problems.md",
+    "raw": "raw/"
+  }
+}

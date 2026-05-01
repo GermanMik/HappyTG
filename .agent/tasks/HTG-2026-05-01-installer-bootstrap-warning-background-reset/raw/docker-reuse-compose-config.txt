@@ -1,0 +1,4 @@
+Reuse command shape:
+docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d --no-deps api worker bot miniapp prometheus grafana
+
+If Compose Caddy is selected, caddy is appended to the target list. Redis, Postgres, and MinIO are not targets in reuse mode. Loopback endpoints are translated to host.docker.internal; Linux also gets a generated override with host-gateway extra_hosts.

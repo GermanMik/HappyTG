@@ -1,0 +1,1 @@
+Launch mode is now selected before host-daemon startup in runHappyTGInstall. The background screen is rendered as Host Daemon Startup and receives launchMode so Docker mode explicitly says Docker starts the control-plane stack while the host daemon remains on the host.

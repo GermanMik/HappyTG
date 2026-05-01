@@ -1,0 +1,17 @@
+Command: pnpm happytg verify
+Result: exit 0, status warn
+Sanitized: yes
+
+Findings:
+- WARN CODEX_SMOKE_WARNINGS: Codex CLI websocket returned 403 Forbidden and fell back to HTTP.
+- WARN CADDY_MINIAPP_ROUTE_UNAVAILABLE: public Mini App route responded HTTP 200 but did not return HappyTG Mini App identity.
+- INFO SERVICES_ALREADY_RUNNING: HappyTG services already appear to be running on local ports.
+
+Requires user:
+- Start or reuse remaining shared infrastructure when needed.
+- Request and send a pairing code when host daemon pairing is needed.
+- Start the host daemon manually if no background launcher was configured.
+
+Notes:
+- Private public URLs and bot names were redacted from this proof artifact.
+- No installer-code failure was reported by verify; warnings are operator-environment findings.

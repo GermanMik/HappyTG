@@ -68,18 +68,20 @@ flowchart TD
    - allowed user IDs
    - home channel
 9. Validates the bot token when possible and stores `TELEGRAM_BOT_USERNAME` so later pairing instructions can point at the configured bot directly.
-10. Offers a background daemon mode:
-   - macOS: `LaunchAgent`, `manual`, `skip`
-   - Windows: `Scheduled Task`, `Startup`, `manual`, `skip`
-   - Linux: current service flow remains supported, plus installer-safe user-service/manual options
-11. Offers a launch mode for the control-plane stack:
+10. Offers a launch mode for the control-plane stack:
    - `local`: do not start containers; final guidance uses `pnpm dev`
    - `docker`: validate and start `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d`
    - `manual`: do not start anything; print exact local and Docker commands
    - `skip`: no startup action beyond install and selected post-checks
+11. Offers a host daemon startup mode:
+   - macOS: `LaunchAgent`, `manual`, `skip`
+   - Windows: `Scheduled Task`, `Startup`, `manual`, `skip`
+   - Linux: current service flow remains supported, plus installer-safe user-service/manual options
 12. Can run `setup`, `doctor`, and `verify` in one unified flow.
 
 Docker Compose uses the stable project name `happytg`; a clean Docker launch creates container names such as `happytg-api-1`, `happytg-bot-1`, and `happytg-miniapp-1`. The host daemon remains outside Compose.
+
+In Docker launch mode, the installer asks whether to run an isolated HappyTG-owned Docker stack or reuse existing system Redis/Postgres/MinIO/Caddy services. Reuse mode starts only the app/observability services with `docker compose ... up --build -d --no-deps ...`, passes container-reachable `COMPOSE_REDIS_URL`, `COMPOSE_DATABASE_URL`, and `COMPOSE_S3_ENDPOINT`, and does not create duplicate `redis`, `postgres`, `minio`, or reused `caddy` containers. For system Caddy, the default action is to generate a snippet under HappyTG local state; patching an operator-owned Caddyfile is interactive-only, requires a second confirmation, writes a backup, validates before reload, and touches only a marked HappyTG block.
 
 When pnpm reports ignored build scripts, HappyTG does not silently suppress that state:
 
@@ -100,6 +102,7 @@ Useful flags:
 ```bash
 pnpm happytg install --non-interactive --repo-mode current --telegram-bot-token <TOKEN> --allowed-user 123456789 --home-channel @team --post-check setup --post-check doctor
 pnpm happytg install --non-interactive --repo-mode current --launch-mode docker --telegram-bot-token <TOKEN>
+pnpm happytg install --non-interactive --repo-mode current --launch-mode docker --docker-services reuse --docker-caddy print-snippet --telegram-bot-token <TOKEN>
 pnpm happytg install --json
 ```
 
@@ -110,7 +113,7 @@ pnpm happytg uninstall
 pnpm bootstrap:uninstall
 ```
 
-`pnpm happytg uninstall` removes installer-owned local HappyTG artifacts from `HAPPYTG_STATE_DIR` or `~/.happytg`, including daemon state/journal, install drafts and reports, installer logs/backups, the default bootstrap checkout, and installer-managed background launchers. Repeated installs are handled truthfully: if the same local state scope created both a Windows Scheduled Task and a Startup shortcut across separate installer runs, uninstall removes both recorded artifacts. The command keeps the repo checkout, `.env`, Docker Compose services, volumes, and remote control-plane data by default.
+`pnpm happytg uninstall` removes installer-owned local HappyTG artifacts from `HAPPYTG_STATE_DIR` or `~/.happytg`, including daemon state/journal, install drafts and reports, installer logs/backups, the default bootstrap checkout, and installer-managed background launchers. The installer now resets stale HappyTG-owned launchers before applying the newly selected host-daemon startup mode, so selecting `manual` or `skip` removes old Windows Scheduled Task/Startup artifacts for the safe state scope. The command keeps the repo checkout, `.env`, Docker Compose services, volumes, and remote control-plane data by default.
 
 ## First Start
 
@@ -137,7 +140,7 @@ For a packaged control-plane start directly from the installer:
 pnpm happytg install --launch-mode docker
 ```
 
-If `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` already point at reachable services, reuse them and skip Docker in this terminal.
+If `DATABASE_URL`, `REDIS_URL`, and `S3_ENDPOINT` already point at reachable services, choose Docker reuse mode during the installer or pass `--docker-services reuse`. Docker will not start duplicate Redis/Postgres/MinIO containers in that mode. If you want a completely isolated stack, choose the isolated Docker option and let the installer remap busy host ports.
 
 If Redis is already running on `localhost:6379` and you still want local Compose for PostgreSQL plus MinIO:
 
@@ -158,6 +161,17 @@ pnpm dev
 ```
 
 Do not run the full `pnpm dev` stack on the same default ports as `--launch-mode docker`. Choose one control-plane startup path per host unless you intentionally remap the relevant `HAPPYTG_*_PORT` values first.
+
+After a successful Docker launch, the installer reports Compose as already started and prints day-2 commands:
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.example.yml ps
+docker compose --env-file .env -f infra/docker-compose.example.yml logs -f
+docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
+docker compose --env-file .env -f infra/docker-compose.example.yml down
+```
+
+The host daemon is still separate from Docker. If `Scheduled Task`, `Startup`, `LaunchAgent`, or `systemd user service` was configured, it starts on the next login/session according to that launcher; run `pnpm dev:daemon` only if you need it immediately. If `manual` or `skip` was selected, start it manually with `pnpm dev:daemon` when host operations are needed.
 
 By default, the local repo path uses Telegram polling when `HAPPYTG_PUBLIC_URL` is local or otherwise not webhook-capable, so `/start` and `/pair <CODE>` do not require a public domain during local development.
 

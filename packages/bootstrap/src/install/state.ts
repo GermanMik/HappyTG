@@ -206,16 +206,9 @@ export async function writeInstallState(input: {
 }): Promise<PersistedInstallState> {
   const env = input.env ?? process.env;
   const platform = input.platform ?? process.platform;
-  const previous = await readInstallState({
-    env,
-    platform
-  });
   const background: BackgroundSetupResult = {
     ...input.result.background,
-    ownedArtifacts: normalizeOwnedBackgroundArtifacts([
-      ...ownedBackgroundArtifactsFromBackground(previous?.background, platform),
-      ...ownedBackgroundArtifactsFromBackground(input.result.background, platform)
-    ], platform)
+    ownedArtifacts: ownedBackgroundArtifactsFromBackground(input.result.background, platform)
   };
   const next: PersistedInstallState = {
     ...input.result,

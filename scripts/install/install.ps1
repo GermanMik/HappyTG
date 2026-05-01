@@ -304,11 +304,6 @@ function Test-IgnoredBuildScriptsWarning([string]$Output) {
   return $Output -match "(?im)ignored build scripts:|build scripts that were ignored:"
 }
 
-function Test-PnpmApproveBuildsSupport {
-  $result = Invoke-PnpmCaptured @("help", "approve-builds")
-  return $result.Output -notmatch 'No results for "approve-builds"'
-}
-
 function Invoke-SharedInstallerBootstrapPreflight {
   $result = Invoke-PnpmCaptured @("dlx", "tsx", "--eval", "const value: number = 1; console.log('$BootstrapToolchainMarker')")
   if ($result.ExitCode -ne 0) {
@@ -326,11 +321,7 @@ function Invoke-SharedInstallerBootstrapPreflight {
   }
 
   if (Test-IgnoredBuildScriptsWarning $result.Output) {
-    if (Test-PnpmApproveBuildsSupport) {
-      Write-Warning "pnpm ignored build scripts while preparing the shared installer bootstrap, but the repo-local tsx/esbuild preflight passed. Continuing with the installer. If a later bootstrap dlx run fails, review the blocked scripts with `pnpm approve-builds` and rerun."
-    } else {
-      Write-Warning "pnpm ignored build scripts while preparing the shared installer bootstrap, but the repo-local tsx/esbuild preflight passed. Continuing with the installer. This pnpm runtime does not support `pnpm approve-builds`; if a later bootstrap dlx run fails, allow the blocked packages in your pnpm build-script policy and rerun."
-    }
+    Write-Host "pnpm reported ignored build scripts during temporary bootstrap, but HappyTG verified the required tsx/esbuild path. Continuing; repo install will re-check."
   }
 }
 

@@ -358,8 +358,9 @@ test("install.ps1 normalizes ignored build script bootstrap warnings before hand
     const log = await readFile(logPath, "utf8");
 
     assert.equal(result.exitCode, 0);
-    assert.match(combined, /pnpm ignored build scripts while preparing the shared installer bootstrap/i);
-    assert.match(combined, /does not support pnpm approve-builds/i);
+    assert.match(combined, /pnpm reported ignored build scripts during temporary bootstrap/i);
+    assert.doesNotMatch(combined, /WARNING:\s*pnpm ignored build scripts while preparing the shared installer bootstrap/i);
+    assert.doesNotMatch(combined, /does not support pnpm approve-builds/i);
     assert.doesNotMatch(combined, /Ignored build scripts: esbuild@0\.27\.7\./i);
     assert.match(combined, /fake pnpm handoff ok/i);
     assert.match(log, /^PNPM dlx tsx --eval/m);
@@ -538,6 +539,9 @@ test("install.sh mirrors the external NODE_OPTIONS preload sanitization without 
             exit 0
           fi
           if [ "$1" = "dlx" ] && [ "$2" = "tsx" ] && [ "$3" = "--eval" ]; then
+            printf '%s\\n' "Warning:"
+            printf '%s\\n' "Ignored build scripts: esbuild@0.27.7."
+            printf '%s\\n' 'Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.'
             printf '%s\\n' "HTG_INSTALLER_BOOTSTRAP_OK:1"
             exit 0
           fi
@@ -581,6 +585,9 @@ test("install.sh mirrors the external NODE_OPTIONS preload sanitization without 
 
     assert.equal(result.exitCode, 0);
     assert.match(combined, /Ignoring broken external NODE_OPTIONS preload/i);
+    assert.match(combined, /pnpm reported ignored build scripts during temporary bootstrap/i);
+    assert.doesNotMatch(combined, /does not support `pnpm approve-builds`/i);
+    assert.doesNotMatch(combined, /Ignored build scripts: esbuild@0\.27\.7\./i);
     assert.match(combined, /fake pnpm handoff ok/i);
     assert.doesNotMatch(combined, /Node\.js 22\+ is still not available on PATH/i);
     assert.doesNotMatch(combined, /Node\.js 22\+ is required to continue/i);

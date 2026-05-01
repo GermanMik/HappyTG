@@ -1,0 +1,23 @@
+Fresh verifier pass 1: blocked.
+
+Findings:
+- P1: repo starter infra/caddy/Caddyfile was treated as active system Caddy.
+- P1: system Caddy snippets could be generated before final port remaps.
+- P2: Caddy reuse detection did not prove the full route surface.
+
+Minimal fixes applied after pass 1:
+- Removed repo starter Caddyfile from implicit system Caddy candidate paths.
+- Delayed final Docker/Caddy plan construction until after port preflight remaps.
+- Tightened HappyTG route detection and added regression tests.
+
+Fresh verifier pass 2: passed.
+
+Verifier: 019de31b-207a-74e0-b7da-7ed4a9cf1f2d
+
+Verdict: no blocking findings.
+
+Confirmed:
+- Repo starter infra/caddy/Caddyfile is not active system Caddy by default.
+- System Caddy snippet/patch planning runs after port preflight remaps and uses final repoEnv.
+- Existing system Caddy reuse requires the fuller HappyTG public route surface.
+- Bootstrap warning demotion, background reset safety, Docker reuse command/env shape, and release 0.4.8 metadata pass targeted checks.
