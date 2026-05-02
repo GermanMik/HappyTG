@@ -8,83 +8,83 @@
    • Running build in 15 packages
    • Remote caching disabled, using shared worktree cache
 
-@happytg/host-daemon:build: cache miss, executing 0ca6b90e3e3f1bc2
-@happytg/bot:build: cache miss, executing e13a116a90160aab
-@happytg/worker:build: cache miss, executing dc36d8d7cd8466fd
-@happytg/policy-engine:build: cache miss, executing 884e512a8bd2ae1e
-@happytg/api:build: cache miss, executing 7f3e5a48f81d4a72
-@happytg/shared:build: cache miss, executing a1c2f5aa64b361e9
-@happytg/session-engine:build: cache miss, executing 396dda040c7f2d3f
-@happytg/telegram-kit:build: cache miss, executing dec79c103748b7a5
-@happytg/runtime-adapters:build: cache miss, executing 76856eec8c30bbff
-@happytg/bootstrap:build: cache miss, executing d35343dccfe716cf
-@happytg/bot:build: 
-@happytg/bot:build: > @happytg/bot@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\bot
-@happytg/bot:build: > tsc -p tsconfig.json
-@happytg/bot:build: 
-@happytg/host-daemon:build: 
-@happytg/host-daemon:build: > @happytg/host-daemon@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\host-daemon
-@happytg/host-daemon:build: > tsc -p tsconfig.json
-@happytg/host-daemon:build: 
-@happytg/worker:build: 
-@happytg/worker:build: > @happytg/worker@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\worker
-@happytg/worker:build: > tsc -p tsconfig.json
-@happytg/worker:build: 
-@happytg/policy-engine:build: 
-@happytg/policy-engine:build: > @happytg/policy-engine@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\policy-engine
-@happytg/policy-engine:build: > tsc -p tsconfig.json
-@happytg/policy-engine:build: 
-@happytg/runtime-adapters:build: 
-@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\runtime-adapters
-@happytg/runtime-adapters:build: > tsc -p tsconfig.json
-@happytg/runtime-adapters:build: 
-@happytg/shared:build: 
+@happytg/bot:build: cache miss, executing 7a1992bd579303ed
+@happytg/bootstrap:build: cache miss, executing 1d53b9b607f4953e
+@happytg/telegram-kit:build: cache miss, executing b1b6e22b668f2f6a
+@happytg/approval-engine:build: cache miss, executing 53287af15ac2fb3d
+@happytg/session-engine:build: cache miss, executing 6ce2db998aaf8bdc
+@happytg/policy-engine:build: cache miss, executing b89dfdcf75932f19
+@happytg/runtime-adapters:build: cache miss, executing c810da4474c24d73
+@happytg/api:build: cache miss, executing ff32e1875e6ad37c
+@happytg/shared:build: cache miss, executing a8f67c1cfd416363
+@happytg/hooks:build: cache miss, executing 43524713c84d77d8
+@happytg/shared:build:
 @happytg/shared:build: > @happytg/shared@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\shared
 @happytg/shared:build: > tsc -p tsconfig.json
-@happytg/shared:build: 
-@happytg/api:build: 
-@happytg/api:build: > @happytg/api@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\api
-@happytg/api:build: > tsc -p tsconfig.json
-@happytg/api:build: 
-@happytg/telegram-kit:build: 
-@happytg/telegram-kit:build: > @happytg/telegram-kit@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\telegram-kit
-@happytg/telegram-kit:build: > tsc -p tsconfig.json
-@happytg/telegram-kit:build: 
-@happytg/bootstrap:build: 
+@happytg/shared:build:
+@happytg/bootstrap:build:
 @happytg/bootstrap:build: > @happytg/bootstrap@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\bootstrap
 @happytg/bootstrap:build: > tsc -p tsconfig.json
-@happytg/bootstrap:build: 
-@happytg/session-engine:build: 
-@happytg/session-engine:build: > @happytg/session-engine@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\session-engine
-@happytg/session-engine:build: > tsc -p tsconfig.json
-@happytg/session-engine:build: 
-@happytg/approval-engine:build: cache miss, executing b1596737137681a5
-@happytg/repo-proof:build: cache miss, executing eff96c79112d9be8
-@happytg/miniapp:build: cache miss, executing 1baff1d32fe32812
-@happytg/approval-engine:build: 
+@happytg/bootstrap:build:
+@happytg/bot:build:
+@happytg/bot:build: > @happytg/bot@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build:
+@happytg/approval-engine:build:
 @happytg/approval-engine:build: > @happytg/approval-engine@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\approval-engine
 @happytg/approval-engine:build: > tsc -p tsconfig.json
-@happytg/approval-engine:build: 
-@happytg/hooks:build: cache miss, executing 4d4eb96d35d94737
-@happytg/protocol:build: cache miss, executing 023cec6a65d9873f
-@happytg/repo-proof:build: 
-@happytg/repo-proof:build: > @happytg/repo-proof@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\repo-proof
-@happytg/repo-proof:build: > tsc -p tsconfig.json
-@happytg/repo-proof:build: 
-@happytg/miniapp:build: 
-@happytg/miniapp:build: > @happytg/miniapp@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\miniapp
-@happytg/miniapp:build: > tsc -p tsconfig.json
-@happytg/miniapp:build: 
-@happytg/hooks:build: 
+@happytg/approval-engine:build:
+@happytg/telegram-kit:build:
+@happytg/telegram-kit:build: > @happytg/telegram-kit@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\telegram-kit
+@happytg/telegram-kit:build: > tsc -p tsconfig.json
+@happytg/telegram-kit:build:
+@happytg/policy-engine:build:
+@happytg/policy-engine:build: > @happytg/policy-engine@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build:
+@happytg/api:build:
+@happytg/api:build: > @happytg/api@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build:
+@happytg/session-engine:build:
+@happytg/session-engine:build: > @happytg/session-engine@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\session-engine
+@happytg/session-engine:build: > tsc -p tsconfig.json
+@happytg/session-engine:build:
+@happytg/runtime-adapters:build:
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build:
+@happytg/hooks:build:
 @happytg/hooks:build: > @happytg/hooks@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\hooks
 @happytg/hooks:build: > tsc -p tsconfig.json
-@happytg/hooks:build: 
-@happytg/protocol:build: 
+@happytg/hooks:build:
+@happytg/worker:build: cache miss, executing 8c3dc3a1337d36a8
+@happytg/repo-proof:build: cache miss, executing f043828dba1deb45
+@happytg/host-daemon:build: cache miss, executing 18ee4f53be746ae6
+@happytg/miniapp:build: cache miss, executing 3ffa4b9965e474d5
+@happytg/protocol:build: cache miss, executing eef72488f324e483
+@happytg/worker:build:
+@happytg/worker:build: > @happytg/worker@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build:
+@happytg/repo-proof:build:
+@happytg/repo-proof:build: > @happytg/repo-proof@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build:
+@happytg/host-daemon:build:
+@happytg/host-daemon:build: > @happytg/host-daemon@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build:
+@happytg/miniapp:build:
+@happytg/miniapp:build: > @happytg/miniapp@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build:
+@happytg/protocol:build:
 @happytg/protocol:build: > @happytg/protocol@0.4.9 build C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\protocol
 @happytg/protocol:build: > tsc -p tsconfig.json
-@happytg/protocol:build: 
+@happytg/protocol:build:
 
  Tasks:    15 successful, 15 total
 Cached:    0 cached, 15 total
-  Time:    6.877s 
+  Time:    6.791s
 

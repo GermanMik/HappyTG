@@ -84,14 +84,13 @@ pnpm happytg uninstall
 
 ## Updating Later
 
-When the repository already exists locally, the simplest update path is to rerun the repo-local installer:
+When the repository already exists locally, the simplest update path is the repo-local update command:
 
 ```bash
-pnpm happytg install
-pnpm happytg verify
+pnpm happytg update
 ```
 
-The installer keeps the existing setup model in view: current checkout, update existing checkout, fresh clone, local dev, Docker isolated mode, or Docker service reuse.
+`pnpm happytg update` uses the current checkout by default, skips autostart changes, skips runtime launch by default, and runs the update post-checks. Pass `--launch-mode docker --docker-services reuse` when you want the Docker reuse path refreshed through the same command.
 
 For a clean checkout and a shorter manual path:
 

@@ -29,6 +29,7 @@ export class CliUsageError extends Error {
 type CliRequest =
   | { kind: "bootstrap"; command: BootstrapCommand; json: boolean }
   | { kind: "install"; json: boolean; options: InstallCommandOptions }
+  | { kind: "update"; json: boolean; options: InstallCommandOptions }
   | { kind: "telegram-menu-set"; json: boolean; dryRun: boolean }
   | { kind: "telegram-menu-reset"; json: boolean }
   | { kind: "uninstall"; json: boolean }
@@ -47,6 +48,9 @@ interface TaskStatusResponse {
   };
 }
 
+type UpdateResult = Omit<InstallResult, "kind"> & { kind: "update" };
+type InstallLikeResult = InstallResult | UpdateResult;
+
 interface ParsedOptions {
   json: boolean;
   values: Map<string, string[]>;
@@ -56,21 +60,21 @@ function statusBadge(status: "pass" | "warn" | "fail"): string {
   return `[${status.toUpperCase()}]`;
 }
 
-function installOutcomeSummary(outcome: InstallResult["outcome"]): string {
+function installOutcomeSummary(outcome: InstallResult["outcome"], label = "install"): string {
   switch (outcome) {
     case "success":
-      return "install flow is complete.";
+      return `${label} flow is complete.`;
     case "success-with-warnings":
-      return "install flow is complete with warnings.";
+      return `${label} flow is complete with warnings.`;
     case "recoverable-failure":
-      return "install needs follow-up before it is fully ready.";
+      return `${label} needs follow-up before it is fully ready.`;
     case "fatal-failure":
     default:
-      return "installer stopped before completion.";
+      return `${label} stopped before completion.`;
   }
 }
 
-function installTelegramSummary(result: InstallResult): string {
+function installTelegramSummary(result: InstallLikeResult): string {
   if (result.telegram.bot?.username) {
     return `@${result.telegram.bot.username}`;
   }
@@ -90,7 +94,7 @@ function installTelegramSummary(result: InstallResult): string {
   return "configured";
 }
 
-function installLaunchSummary(result: InstallResult): string {
+function installLaunchSummary(result: InstallLikeResult): string {
   if (result.launch.mode === "docker") {
     return result.launch.status === "started"
       ? `Docker Compose started (${result.launch.command ?? "docker compose"}).`
@@ -222,6 +226,7 @@ function usage(): string {
     "  happytg telegram menu set [--dry-run] [--json]",
     "  happytg telegram menu reset [--json]",
     "  happytg install [--repo-mode clone|update|current] [--repo-dir <path>] [--repo-url <url>] [--branch <name>] [--telegram-bot-token <token>] [--allowed-user <id>]... [--home-channel <value>] [--background launchagent|scheduled-task|startup|systemd-user|manual|skip] [--launch-mode local|docker|manual|skip] [--docker-services isolated|reuse] [--docker-caddy compose|reuse-system|print-snippet|skip] [--caddyfile <path>] [--post-check setup|doctor|verify]... [--non-interactive] [--json]",
+    "  happytg update [--launch-mode local|docker|manual|skip] [--docker-services isolated|reuse] [--post-check setup|doctor|verify]... [--non-interactive] [--json]",
     "  happytg uninstall [--json]",
     "  happytg config init [--json]",
     "  happytg env snapshot [--json]",
@@ -277,59 +282,108 @@ function requireOption(options: ParsedOptions, key: string): string {
   return value;
 }
 
+function parseInstallLikeArgs(input: {
+  scope: "install" | "update";
+  tokens: string[];
+  cwd: string;
+  defaultRepoMode?: InstallCommandOptions["repoMode"];
+  defaultBackgroundMode?: InstallCommandOptions["backgroundMode"];
+  defaultLaunchMode?: InstallCommandOptions["launchMode"];
+  defaultPostChecks: InstallCommandOptions["postChecks"];
+}): Extract<CliRequest, { kind: "install" | "update" }> {
+  const options = parseOptions(input.tokens.slice(1));
+  const postChecks = takeOptionList(options, "post-check")
+    .filter((value): value is InstallCommandOptions["postChecks"][number] => ["setup", "doctor", "verify"].includes(value));
+  const background = takeOption(options, "background");
+  const launchMode = takeOption(options, "launch-mode");
+  const dockerServices = takeOption(options, "docker-services");
+  const dockerCaddy = takeOption(options, "docker-caddy");
+  const repoMode = takeOption(options, "repo-mode");
+
+  const requestOptions: InstallCommandOptions = {
+    json: options.json,
+    nonInteractive: options.json || takeOption(options, "non-interactive") === "true",
+    cwd: input.cwd,
+    launchCwd: path.resolve(input.cwd, takeOption(options, "launch-cwd", input.cwd)),
+    bootstrapRepoRoot: takeOption(options, "bootstrap-repo-root") ? path.resolve(input.cwd, takeOption(options, "bootstrap-repo-root")) : undefined,
+    repoMode: repoMode === "clone" || repoMode === "update" || repoMode === "current" ? repoMode : input.defaultRepoMode,
+    repoDir: takeOption(options, "repo-dir") ? path.resolve(input.cwd, takeOption(options, "repo-dir")) : undefined,
+    repoUrl: takeOption(options, "repo-url") || undefined,
+    branch: takeOption(options, "branch", "main"),
+    dirtyWorktreeStrategy: (() => {
+      const strategy = takeOption(options, "dirty-worktree");
+      return strategy === "stash" || strategy === "keep" || strategy === "cancel" ? strategy : undefined;
+    })(),
+    telegramBotToken: takeOption(options, "telegram-bot-token") || undefined,
+    telegramAllowedUserIds: [
+      ...takeOptionList(options, "allowed-user"),
+      ...takeOptionList(options, "allowed-user-id"),
+      ...takeOptionList(options, "allowed-user-ids")
+    ],
+    telegramHomeChannel: takeOption(options, "home-channel") || undefined,
+    backgroundMode: background === "launchagent" || background === "scheduled-task" || background === "startup" || background === "systemd-user" || background === "manual" || background === "skip"
+      ? background
+      : input.defaultBackgroundMode,
+    launchMode: launchMode === "local" || launchMode === "docker" || launchMode === "manual" || launchMode === "skip"
+      ? launchMode
+      : input.defaultLaunchMode,
+    dockerServiceStrategy: dockerServices === "isolated" || dockerServices === "reuse"
+      ? dockerServices
+      : undefined,
+    dockerCaddyAction: dockerCaddy === "compose" || dockerCaddy === "reuse-system" || dockerCaddy === "print-snippet" || dockerCaddy === "skip"
+      ? dockerCaddy
+      : undefined,
+    caddyfilePath: takeOption(options, "caddyfile") ? path.resolve(input.cwd, takeOption(options, "caddyfile")) : undefined,
+    postChecks: postChecks.length > 0 ? postChecks : input.defaultPostChecks
+  };
+
+  if (input.scope === "install") {
+    return { kind: "install", json: options.json, options: requestOptions };
+  }
+
+  return { kind: "update", json: options.json, options: requestOptions };
+}
+
 export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliRequest {
   const json = argv.includes("--json");
   const tokens = argv.filter((token) => token !== "--json");
   const [scope = "status", action, ...rest] = tokens;
 
   if (scope === "install") {
-    const options = parseOptions(tokens.slice(1));
-    const postChecks = takeOptionList(options, "post-check")
-      .filter((value): value is InstallCommandOptions["postChecks"][number] => ["setup", "doctor", "verify"].includes(value));
-    const background = takeOption(options, "background");
-    const launchMode = takeOption(options, "launch-mode");
-    const dockerServices = takeOption(options, "docker-services");
-    const dockerCaddy = takeOption(options, "docker-caddy");
-    const repoMode = takeOption(options, "repo-mode");
-
+    const request = parseInstallLikeArgs({
+      scope: "install",
+      tokens,
+      cwd,
+      defaultPostChecks: ["setup", "doctor", "verify"]
+    });
     return {
-      kind: "install",
-      json: options.json || json,
+      ...request,
+      json: request.json || json,
       options: {
-        json: options.json || json,
-        nonInteractive: options.json || json || takeOption(options, "non-interactive") === "true",
-        cwd,
-        launchCwd: path.resolve(cwd, takeOption(options, "launch-cwd", cwd)),
-        bootstrapRepoRoot: takeOption(options, "bootstrap-repo-root") ? path.resolve(cwd, takeOption(options, "bootstrap-repo-root")) : undefined,
-        repoMode: repoMode === "clone" || repoMode === "update" || repoMode === "current" ? repoMode : undefined,
-        repoDir: takeOption(options, "repo-dir") ? path.resolve(cwd, takeOption(options, "repo-dir")) : undefined,
-        repoUrl: takeOption(options, "repo-url") || undefined,
-        branch: takeOption(options, "branch", "main"),
-        dirtyWorktreeStrategy: (() => {
-          const strategy = takeOption(options, "dirty-worktree");
-          return strategy === "stash" || strategy === "keep" || strategy === "cancel" ? strategy : undefined;
-        })(),
-        telegramBotToken: takeOption(options, "telegram-bot-token") || undefined,
-        telegramAllowedUserIds: [
-          ...takeOptionList(options, "allowed-user"),
-          ...takeOptionList(options, "allowed-user-id"),
-          ...takeOptionList(options, "allowed-user-ids")
-        ],
-        telegramHomeChannel: takeOption(options, "home-channel") || undefined,
-        backgroundMode: background === "launchagent" || background === "scheduled-task" || background === "startup" || background === "systemd-user" || background === "manual" || background === "skip"
-          ? background
-          : undefined,
-        launchMode: launchMode === "local" || launchMode === "docker" || launchMode === "manual" || launchMode === "skip"
-          ? launchMode
-          : undefined,
-        dockerServiceStrategy: dockerServices === "isolated" || dockerServices === "reuse"
-          ? dockerServices
-          : undefined,
-        dockerCaddyAction: dockerCaddy === "compose" || dockerCaddy === "reuse-system" || dockerCaddy === "print-snippet" || dockerCaddy === "skip"
-          ? dockerCaddy
-          : undefined,
-        caddyfilePath: takeOption(options, "caddyfile") ? path.resolve(cwd, takeOption(options, "caddyfile")) : undefined,
-        postChecks: postChecks.length > 0 ? postChecks : ["setup", "doctor", "verify"]
+        ...request.options,
+        json: request.options.json || json,
+        nonInteractive: request.options.nonInteractive || json
+      }
+    };
+  }
+
+  if (scope === "update") {
+    const request = parseInstallLikeArgs({
+      scope: "update",
+      tokens,
+      cwd,
+      defaultRepoMode: "current",
+      defaultBackgroundMode: "skip",
+      defaultLaunchMode: "skip",
+      defaultPostChecks: ["doctor", "verify"]
+    });
+    return {
+      ...request,
+      json: request.json || json,
+      options: {
+        ...request.options,
+        json: request.options.json || json,
+        nonInteractive: request.options.nonInteractive || json
       }
     };
   }
@@ -430,14 +484,15 @@ export function parseHappyTGArgs(argv: string[], cwd = process.cwd()): CliReques
   throw new CliUsageError(`Unsupported command: ${scope}`);
 }
 
-export function renderText(result: BootstrapReport | InstallResult | TelegramMenuCommandResult | UninstallResult | TaskBundle | TaskStatusResponse): string {
-  if ("kind" in result && result.kind === "install") {
+export function renderText(result: BootstrapReport | InstallResult | UpdateResult | TelegramMenuCommandResult | UninstallResult | TaskBundle | TaskStatusResponse): string {
+  if ("kind" in result && (result.kind === "install" || result.kind === "update")) {
+    const flowLabel = result.kind === "update" ? "update" : "install";
     const finalizationItems = result.finalization?.items ?? [];
     const groupedFinalization = groupAutomationItems(finalizationItems);
     const warningMessages = collectWarningMessages(result.warnings, finalizationItems);
     const lines = [
-      `HappyTG install ${statusBadge(result.status)}`,
-      `Result: ${installOutcomeSummary(result.outcome)}`,
+      `HappyTG ${flowLabel} ${statusBadge(result.status)}`,
+      `Result: ${installOutcomeSummary(result.outcome, flowLabel)}`,
       `Repo: ${result.repo.sync} ${result.repo.path}`,
       `Source: ${result.repo.source} ${result.repo.repoUrl}`,
       `Background: ${result.background.detail}`,
@@ -591,7 +646,7 @@ export async function executeHappyTG(
     runTelegramMenuResetImpl?: typeof runTelegramMenuReset;
     runHappyTGUninstallImpl?: typeof runHappyTGUninstall;
   }
-): Promise<BootstrapReport | InstallResult | TelegramMenuCommandResult | UninstallResult | TaskBundle | TaskStatusResponse> {
+): Promise<BootstrapReport | InstallResult | UpdateResult | TelegramMenuCommandResult | UninstallResult | TaskBundle | TaskStatusResponse> {
   const request = parseHappyTGArgs(argv, cwd);
   const runBootstrapCommandImpl = runtime?.runBootstrapCommandImpl ?? runBootstrapCommand;
   const runHappyTGInstallImpl = runtime?.runHappyTGInstallImpl ?? runHappyTGInstall;
@@ -612,6 +667,24 @@ export async function executeHappyTG(
           options: request.options,
           error
         });
+      }
+    case "update":
+      try {
+        const result = await runHappyTGInstallImpl(request.options, {
+          runBootstrapCheck: runBootstrapCommandImpl
+        });
+        return {
+          ...result,
+          kind: "update"
+        };
+      } catch (error) {
+        return {
+          ...createInstallFailureResult({
+            options: request.options,
+            error
+          }),
+          kind: "update"
+        };
       }
     case "telegram-menu-set":
       return runTelegramMenuSetImpl({
@@ -675,13 +748,13 @@ async function main(argv: string[]): Promise<void> {
   const result = await executeHappyTG(argv);
   if (request.json) {
     console.log(JSON.stringify(result, null, 2));
-    if ("kind" in result && (result.kind === "install" || result.kind === "uninstall") && result.status === "fail") {
+    if ("kind" in result && (result.kind === "install" || result.kind === "update" || result.kind === "uninstall") && result.status === "fail") {
       process.exitCode = 1;
     }
     return;
   }
 
-  if ("kind" in result && result.kind === "install" && result.tuiHandled) {
+  if ("kind" in result && (result.kind === "install" || result.kind === "update") && result.tuiHandled) {
     if (result.status === "fail") {
       process.exitCode = 1;
     }
@@ -689,7 +762,7 @@ async function main(argv: string[]): Promise<void> {
   }
 
   console.log(renderText(result));
-  if ("kind" in result && (result.kind === "install" || result.kind === "uninstall") && result.status === "fail") {
+  if ("kind" in result && (result.kind === "install" || result.kind === "update" || result.kind === "uninstall") && result.status === "fail") {
     process.exitCode = 1;
   }
 }

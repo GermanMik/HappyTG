@@ -26,7 +26,3 @@ HappyTG uses a manual-but-guarded GitHub workflow for tags and GitHub Releases.
 - refuses an existing tag or GitHub Release
 - verifies package versions, changelog, and release notes
 - reruns `pnpm typecheck`, `pnpm test`, and `pnpm build` before creating the tag and GitHub Release
-
-## APK Artifacts
-
-HappyTG's guarded release workflow publishes the TypeScript workspace release. It does not build a phone-installable APK unless the repository first gains a real Android packaging surface such as Gradle, AndroidManifest, or Capacitor/TWA configuration, plus signing and install verification. Do not attach renamed web assets or unrelated binaries as APKs.

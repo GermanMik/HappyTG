@@ -110,14 +110,13 @@ pnpm happytg install --json
 
 Use this path when GitHub has newer HappyTG changes and the repo already exists on the machine.
 
-The easiest update is the repo-local installer:
+The easiest update is the repo-local update command:
 
 ```bash
-pnpm happytg install
-pnpm happytg verify
+pnpm happytg update
 ```
 
-This preserves the current installation shape: local `pnpm dev`, Docker isolated stack, Docker service reuse, self-hosted control plane, or execution-host daemon setup. It also keeps `.env` merge behavior and post-check choices in one flow.
+By default, `pnpm happytg update` targets the current checkout, skips background launcher changes, skips runtime launch, and runs `doctor` plus `verify`. It keeps `.env` merge behavior and safe dirty-worktree handling through the existing installer engine.
 
 For a clean checkout where you want the shortest manual path:
 
@@ -144,10 +143,10 @@ docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
 docker compose --env-file .env -f infra/docker-compose.example.yml ps
 ```
 
-For Docker reuse mode, keep reused Redis/Postgres/MinIO/Caddy operator-owned and rerun with explicit reuse when you want the installer to refresh app services without duplicate infra:
+For Docker reuse mode, keep reused Redis/Postgres/MinIO/Caddy operator-owned and rerun with explicit reuse when you want the update command to refresh app services without duplicate infra:
 
 ```bash
-pnpm happytg install --launch-mode docker --docker-services reuse
+pnpm happytg update --launch-mode docker --docker-services reuse
 ```
 
 Local cleanup commands:

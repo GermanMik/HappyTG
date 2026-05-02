@@ -6,7 +6,8 @@
 
 ### Added
 
-- Added a reusable local update/uninstall prompt package with 10-role critical review and APK gating for future agents.
+- Added `pnpm happytg update`, a current-checkout update command with safe day-2 defaults.
+- Added a reusable local update/uninstall prompt package with 10-role critical review for future agents.
 - Documented the day-2 local update path across README, quickstart, installation, bootstrap, troubleshooting, self-hosting, and operations runbook guidance.
 
 ### Changed
@@ -16,7 +17,7 @@
 
 ### Verification
 
-- Release validation covers the prompt artifact, synchronized docs, APK support scan, task bundle validation, and repo verification commands.
+- Release validation covers the update command, prompt artifact, synchronized docs, task bundle validation, and repo verification commands.
 
 ## v0.4.8
 

@@ -156,11 +156,10 @@ For the fuller path, use [Quickstart](./docs/quickstart.md), [Installation](./do
 
 ## Day-2 Update And Uninstall
 
-For the easiest local update after GitHub changes, rerun the repo-local installer from the existing checkout:
+For the easiest local update after GitHub changes, run the repo-local update wrapper from the existing checkout:
 
 ```bash
-pnpm happytg install
-pnpm happytg verify
+pnpm happytg update
 ```
 
 For a clean checkout where you want the short manual path:
@@ -198,6 +197,7 @@ pnpm build
 pnpm dev
 pnpm happytg install
 pnpm happytg install --launch-mode docker
+pnpm happytg update
 pnpm happytg doctor
 pnpm happytg verify
 pnpm happytg uninstall

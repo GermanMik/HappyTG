@@ -59,7 +59,7 @@ Apply these role reviews before editing. Convert each concern into an explicit r
 
 | Role | Concern | Requirement |
 | --- | --- | --- |
-| New Windows user | "I need one command and I do not know whether I installed through PowerShell or cloned manually." | Start with `pnpm happytg install` for repo-present users and the one-line PowerShell shim for fresh bootstrap. Show a short manual fallback. |
+| New Windows user | "I need one command and I do not know whether I installed through PowerShell or cloned manually." | Start with `pnpm happytg update` for repo-present users and the one-line PowerShell shim for fresh bootstrap. Show a short manual fallback. |
 | Local developer | "I want the fast path and do not want installer screens every time." | Document `git pull --ff-only`, `pnpm install`, `pnpm happytg doctor`, and `pnpm happytg verify` as the lightweight path for a clean checkout. |
 | Docker operator | "Updating code is not enough; containers/images need rebuild." | Include `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d` and `ps/logs` verification. |
 | System-service operator | "I reuse Redis/Postgres/MinIO/Caddy and must not start duplicate infra." | Preserve `--docker-services reuse` guidance and state that reused services stay operator-owned. |
@@ -68,7 +68,7 @@ Apply these role reviews before editing. Convert each concern into an explicit r
 | Security reviewer | "Prompts and docs may leak tokens or suggest pasting secrets into evidence." | Instruct agents to mask tokens and avoid writing secrets to proof bundles, logs, docs, or memory. |
 | Release manager | "Docs-only changes still need version, changelog, release notes, and guarded release checks if shipped." | Require `CHANGELOG.md`, `docs/releases/X.Y.Z.md`, workspace version alignment, and `pnpm release:check --version X.Y.Z` when publishing. |
 | QA/verifier | "A simple update path is not done until diagnostics pass." | Record `doctor`, `verify`, and at least targeted package checks; full release path must run lint/typecheck/test/build. |
-| Mobile/Telegram user | "Phone install means APK, but HappyTG may only have Telegram Mini App surfaces." | Detect Android packaging files before APK work. If no Android project exists, report APK as blocked and do not create a fake artifact. |
+| Telegram/mobile user | "I operate from my phone and need the local host update to be predictable." | Keep phone-facing control in Telegram Bot/Mini App docs, but make the host-side update command explicit and verifiable. |
 
 ## Required User Guidance Shape
 
@@ -79,11 +79,10 @@ Prefer short sections with exact commands.
 Use when the repo already exists on the user's machine:
 
 ```powershell
-pnpm happytg install
-pnpm happytg verify
+pnpm happytg update
 ```
 
-Explain that the installer handles repo mode, `.env` merge, dependency install, setup/doctor/verify choices, and launch guidance.
+Explain that the update command uses the current checkout by default, skips background launcher changes, skips runtime launch, and runs update post-checks through the existing installer engine.
 
 ### Lightweight Manual Update
 
@@ -119,7 +118,7 @@ docker compose --env-file .env -f infra/docker-compose.example.yml ps
 For Docker reuse mode:
 
 ```powershell
-pnpm happytg install --launch-mode docker --docker-services reuse
+pnpm happytg update --launch-mode docker --docker-services reuse
 ```
 
 State that reused Redis/Postgres/MinIO/Caddy are not owned by HappyTG and are not removed by uninstall.
@@ -142,22 +141,6 @@ docker compose --env-file .env -f infra/docker-compose.example.yml down
 
 If the user explicitly wants to delete Docker volumes, require a second explicit confirmation in any future CLI/automation. Documentation may mention Docker's volume removal as destructive, but do not make it part of the default uninstall.
 
-## APK Gate
-
-Before promising or building an APK, run:
-
-```powershell
-rg --files -g '*.gradle' -g 'gradlew*' -g 'AndroidManifest.xml' -g 'capacitor.config.*' -g '*.apk'
-```
-
-If no Android packaging surface exists, record:
-
-- APK status: blocked
-- reason: HappyTG currently ships as a Telegram Bot/Mini App/control-plane stack, not an Android APK project
-- next required work: add a real Android wrapper/package such as Capacitor/TWA/native Android, signing policy, update channel, install proof on a device, and release artifact workflow
-
-Do not rename web assets, zip files, or unrelated binaries to `.apk`.
-
 ## Documentation Scope
 
 Update every user-facing place that would otherwise leave stale or incomplete guidance:
@@ -169,7 +152,7 @@ Update every user-facing place that would otherwise leave stale or incomplete gu
 - `docs/troubleshooting.md`
 - `docs/self-hosting.md`
 - `docs/operations/runbook.md`
-- `docs/release-process.md` when release/APK expectations are involved
+- `docs/release-process.md` when release expectations are involved
 - `CHANGELOG.md`
 - `docs/releases/X.Y.Z.md` for release branches
 
@@ -211,4 +194,4 @@ Before final response:
 1. Confirm branch status and diff.
 2. If branch changes are needed, commit, push, open PR, merge when checks and policy allow, and delete local/remote task branches only after merge.
 3. If the work is already in `main` or no branch is needed, remove the task branch/worktree without touching unrelated dirty worktrees.
-4. Save EchoVault memory with what changed, why, impact, verification, release status, and APK status.
+4. Save EchoVault memory with what changed, why, impact, verification, and release status.

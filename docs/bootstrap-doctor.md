@@ -12,6 +12,7 @@ Use [Quickstart](./quickstart.md) for the shortest first run, [Installation](./i
 | `pnpm happytg doctor --json` | Full diagnostic payload | You need raw paths, classifications, and detailed stderr. |
 | `pnpm happytg repair` | Deterministic repair path | You are applying allowed bootstrap fixes. |
 | `pnpm happytg verify` | Post-fix verification | You want the same checks after setup or repair. |
+| `pnpm happytg update` | Existing-checkout update | You want to refresh the current checkout with safe defaults: current repo, skipped background/launch, and `doctor` plus `verify`. |
 | `pnpm happytg uninstall` | Local cleanup | You want to remove HappyTG-owned bootstrap/daemon state and launchers while keeping the checkout, `.env`, Docker services, and remote data. |
 | `pnpm happytg status` | Last known bootstrap state | You want the last persisted report summary. |
 | `pnpm happytg config init` | Config plan-only path | You need deterministic config scaffolding. |
@@ -54,12 +55,13 @@ The Docker launch path never includes `apps/host-daemon`; pairing and host-daemo
 
 ## Updating Later
 
-For day-2 updates in an existing checkout, prefer the same repo-local installer:
+For day-2 updates in an existing checkout, prefer the repo-local update command:
 
 ```bash
-pnpm happytg install
-pnpm happytg verify
+pnpm happytg update
 ```
+
+Use `pnpm happytg install` when you need the full guided onboarding/reconfiguration flow instead of the update defaults.
 
 For a clean checkout and a faster manual path:
 

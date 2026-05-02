@@ -4,8 +4,8 @@
   "phase": "fresh verify",
   "branch": "codex/local-update-uninstall-prompt-20260502",
   "raw": {
-    "apkScan": "raw/apk-scan.txt",
     "pnpmInstall": "raw/pnpm-install.txt",
+    "updateCliTest": "raw/update-cli-test.txt",
     "releaseCheck": "raw/release-check.txt",
     "lint": "raw/lint.txt",
     "typecheck": "raw/typecheck.txt",
@@ -18,15 +18,15 @@
   },
   "checks": [
     {
+      "name": "update-cli",
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/cli.test.ts --test-name-pattern \"update\"",
+      "result": "passed",
+      "raw": "raw/update-cli-test.txt"
+    },
+    {
       "name": "prompt-artifact",
       "command": "manual review of .agent/prompts/local-update-uninstall-user-flow.md",
       "result": "passed"
-    },
-    {
-      "name": "apk-scan",
-      "command": "rg --files -g '*.gradle' -g 'gradlew*' -g 'AndroidManifest.xml' -g 'capacitor.config.*' -g '*.apk'",
-      "result": "passed_no_matches",
-      "raw": "raw/apk-scan.txt"
     },
     {
       "name": "pnpm-install",
@@ -84,12 +84,5 @@
       "raw": "raw/task-validate-final.txt"
     }
   ],
-  "apk": {
-    "status": "blocked_not_produced",
-    "notes": [
-      "No Gradle, AndroidManifest, Capacitor config, or APK files were found.",
-      "HappyTG currently ships as Telegram Bot/Mini App/control-plane surfaces, not an Android APK project.",
-      "A future APK release requires a real Android packaging layer, signing, install proof, and release workflow support."
-    ]
-  }
+  "scopeCorrection": "APK creation is out of scope after the user's correction."
 }

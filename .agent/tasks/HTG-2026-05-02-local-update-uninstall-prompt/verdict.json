@@ -1,13 +1,18 @@
 {
   "taskId": "HTG-2026-05-02-local-update-uninstall-prompt",
   "status": "passed_with_environment_blockers",
-  "verdict": "ready_for_release_without_apk",
-  "summary": "The local update/uninstall prompt package, synchronized documentation, and 0.4.9 release metadata are ready. APK creation is blocked because the repository has no Android packaging surface. Runtime `pnpm happytg verify` is environment-blocked in the isolated worktree by missing .env/Telegram token and local port conflicts, while release-check, lint, typecheck, test, and build passed.",
+  "verdict": "ready_for_release",
+  "summary": "The `pnpm happytg update` implementation, local update/uninstall prompt package, synchronized documentation, and 0.4.9 release metadata are ready. Runtime `pnpm happytg verify` is environment-blocked in the isolated worktree by missing .env/Telegram token and local port conflicts, while release-check, lint, typecheck, test, and build passed.",
   "checks": [
+    {
+      "name": "update-cli",
+      "ok": true,
+      "detail": "`pnpm happytg update` delegates to the installer engine with safe current-checkout update defaults."
+    },
     {
       "name": "prompt",
       "ok": true,
-      "detail": "Reusable prompt artifact exists and includes 10-role critique plus update/uninstall/release/APK gates."
+      "detail": "Reusable prompt artifact exists and includes 10-role critique plus update/uninstall/release gates."
     },
     {
       "name": "docs",
@@ -28,16 +33,11 @@
       "name": "happytg-verify",
       "ok": false,
       "detail": "Environment-blocked in isolated worktree: .env and TELEGRAM_BOT_TOKEN are absent; ports 3001/80/443/3000 are occupied."
-    },
-    {
-      "name": "apk",
-      "ok": false,
-      "detail": "Blocked: no Android packaging files exist, so no phone-installable APK was produced."
     }
   ],
   "residualRisks": [
-    "The documentation release does not add runtime CLI behavior; it documents the current supported paths and provides a future-agent prompt.",
-    "A future APK release requires a real Android packaging implementation before artifact publication."
+    "`pnpm happytg update` uses the installer repo-sync semantics, so dirty worktrees still require commit, stash, keep, or cancel decisions according to existing installer rules.",
+    "Environment-specific `pnpm happytg verify` still requires real `.env`, Telegram configuration, and available ports."
   ],
   "generatedAt": "2026-05-02T00:00:00+03:00"
 }

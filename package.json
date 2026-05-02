@@ -22,6 +22,7 @@
     "bootstrap:setup": "pnpm --filter @happytg/bootstrap run setup",
     "bootstrap:repair": "pnpm --filter @happytg/bootstrap run repair",
     "bootstrap:verify": "pnpm --filter @happytg/bootstrap run verify",
+    "bootstrap:update": "pnpm --filter @happytg/bootstrap run update",
     "bootstrap:uninstall": "pnpm --filter @happytg/bootstrap run uninstall:command"
   },
   "devDependencies": {

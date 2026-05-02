@@ -1,0 +1,25 @@
+✔ parseHappyTGArgs maps config and env nested commands (1.7617ms)
+✔ parseHappyTGArgs maps Telegram menu commands (0.2248ms)
+✔ parseHappyTGArgs maps install flags into the installer request (0.4709ms)
+✔ parseHappyTGArgs maps update to current-checkout install defaults (0.1916ms)
+✔ parseHappyTGArgs ignores invalid launch mode consistently with other install option enums (0.1561ms)
+✔ parseHappyTGArgs uses CliUsageError for invalid CLI surfaces (0.4232ms)
+✔ executeHappyTG initializes and inspects repo-local task bundles (31.9051ms)
+✔ executeHappyTG returns a structured install failure when installer throws before its internal runtime boundary (119.3145ms)
+✔ executeHappyTG delegates install requests through the CLI wrapper without changing the installer result contract (1.1834ms)
+✔ executeHappyTG delegates update through the installer with safe day-2 defaults (1.9597ms)
+✔ executeHappyTG delegates uninstall requests through the CLI wrapper without changing the uninstall result contract (1.1399ms)
+✔ renderText returns a compact bootstrap summary with preflight and diagnostics hints (0.4563ms)
+✔ renderText includes the exact Telegram Mini App menu URL (0.1307ms)
+✔ renderText returns a compact install summary with structured finalization sections (0.2389ms)
+✔ renderText keeps warning-only follow-up separate from manual actions in install summaries (0.254ms)
+✔ renderText explains recoverable installer failures without claiming completion (0.1837ms)
+✔ renderText summarizes uninstall scope without claiming checkout deletion (0.1556ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 567.0176

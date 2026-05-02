@@ -39,7 +39,7 @@ Back up before upgrades and after important sessions:
 1. Freeze new task intake.
 2. Let active mutating dispatches finish or pause sessions.
 3. Back up state and proof bundles.
-4. Pull the release through the guided path with `pnpm happytg install`, or use the clean-checkout manual path: `git pull --ff-only`, then `pnpm install --frozen-lockfile`.
+4. Pull the release through the guided path with `pnpm happytg update`, or use the clean-checkout manual path: `git pull --ff-only`, then `pnpm install --frozen-lockfile`.
 5. Run `pnpm happytg doctor` and `pnpm happytg verify`.
 6. Run `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build`.
 7. Rebuild compose images with `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d`.
