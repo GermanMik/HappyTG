@@ -1,0 +1,9 @@
+
+> happytg@0.4.9 happytg C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-05-02-local-update-uninstall-prompt"
+
+Task: HTG-2026-05-02-local-update-uninstall-prompt
+Bundle: C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\.agent\tasks\HTG-2026-05-02-local-update-uninstall-prompt
+Validation: missing raw\test-integration.txt
+Phase: unknown
+Verification: unknown

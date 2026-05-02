@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v0.4.9
+
+### Added
+
+- Added `pnpm happytg update`, a current-checkout update command with safe day-2 defaults.
+- Added a reusable local update/uninstall prompt package with 10-role critical review for future agents.
+- Documented the day-2 local update path across README, quickstart, installation, bootstrap, troubleshooting, self-hosting, and operations runbook guidance.
+
+### Changed
+
+- Clarified that `pnpm happytg uninstall` removes installer-owned local bootstrap/daemon artifacts while keeping the repo checkout, `.env`, Docker services/volumes, reused services, and remote control-plane data.
+- Clarified that stopping Docker services and deleting Docker volumes are separate operator actions from uninstall.
+
+### Verification
+
+- Release validation covers the update command, prompt artifact, synchronized docs, task bundle validation, and repo verification commands.
+
 ## v0.4.8
 
 ### Added

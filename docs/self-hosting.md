@@ -166,9 +166,12 @@ The command chooses a usable public HTTPS Mini App URL from `HAPPYTG_MINIAPP_URL
 - Backup PostgreSQL, object storage metadata, and `.happytg/` host state.
 - Backup `.happytg-dev/control-plane.json` while the MVP file store is in use.
 - Backup repo-local `.agent/tasks/<task-id>/` proof bundles for completed and in-flight proof tasks.
+- For an existing checkout, refresh through `pnpm happytg update`, or use `git pull --ff-only`, `pnpm install`, `pnpm happytg doctor`, and `pnpm happytg verify` when you want the clean-checkout manual path.
 - Run migrations before app restart when required.
 - Preserve event log and approval records across upgrades.
 - Keep `.env`, reverse proxy config, and `~/.codex/config.toml` under your normal secrets/config backup process.
+- Rebuild the packaged stack after code updates with `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d`.
+- Keep reused Redis/Postgres/MinIO/Caddy services operator-owned; HappyTG update/uninstall commands do not remove them.
 - Follow the detailed runbook in `docs/operations/runbook.md`.
 
 ## Observability

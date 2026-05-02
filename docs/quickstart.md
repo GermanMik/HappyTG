@@ -82,6 +82,35 @@ If you later want to remove the local bootstrap/daemon setup without deleting th
 pnpm happytg uninstall
 ```
 
+## Updating Later
+
+When the repository already exists locally, the simplest update path is the repo-local update command:
+
+```bash
+pnpm happytg update
+```
+
+`pnpm happytg update` uses the current checkout by default, skips autostart changes, skips runtime launch by default, and runs the update post-checks. Pass `--launch-mode docker --docker-services reuse` when you want the Docker reuse path refreshed through the same command.
+
+For a clean checkout and a shorter manual path:
+
+```bash
+git status --short
+git pull --ff-only
+pnpm install
+pnpm happytg doctor
+pnpm happytg verify
+```
+
+If `git status --short` shows local changes, commit or stash them first, or use `pnpm happytg install` so the installer can present the dirty-worktree choices.
+
+After updating, restart the runtime you use. For local dev, restart `pnpm dev` and the host daemon if needed. For the packaged Docker stack, rebuild and restart:
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
+docker compose --env-file .env -f infra/docker-compose.example.yml ps
+```
+
 ## What `pnpm dev` Starts
 
 | Surface | Port | Expected startup signal |
@@ -138,6 +167,7 @@ If `6379` is already in use:
 - `pnpm happytg install` is the primary onboarding path; `pnpm happytg setup` remains the short first-run checklist; `pnpm happytg doctor --json` and `pnpm happytg verify --json` keep the detailed diagnostics.
 - `pnpm happytg install` resets stale HappyTG-owned host-daemon launchers before applying the selected mode; choosing `manual` or `skip` removes old autostart entries for the safe state scope.
 - `pnpm happytg uninstall` removes local HappyTG bootstrap/runtime artifacts and intentionally keeps the repo checkout, `.env`, and any Compose-managed control-plane data.
+- Stopping Docker services or deleting Docker volumes is a separate operator action, not part of the default uninstall.
 
 ## Next Reads
 

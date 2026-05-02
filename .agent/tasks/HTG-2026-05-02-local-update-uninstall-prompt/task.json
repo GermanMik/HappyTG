@@ -1,0 +1,16 @@
+{
+  "id": "HTG-2026-05-02-local-update-uninstall-prompt",
+  "title": "Local update and uninstall prompt package",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG-worktrees\\local-update-uninstall-prompt-20260502\\.agent\\tasks\\HTG-2026-05-02-local-update-uninstall-prompt",
+  "status": "passed_with_environment_blockers",
+  "acceptanceCriteria": [
+    "pnpm happytg update exists and uses safe day-2 defaults.",
+    "Reusable prompt artifact exists under .agent/prompts/.",
+    "Prompt covers local, installer, Docker, self-hosted, and execution-host uninstall/update variants.",
+    "Prompt includes critical review from 10 independent roles.",
+    "User-facing documentation is updated consistently.",
+    "Release metadata is aligned for 0.4.9 if the branch is needed.",
+    "Evidence records verification truthfully."
+  ],
+  "updatedAt": "2026-05-02T00:00:00+03:00"
+}

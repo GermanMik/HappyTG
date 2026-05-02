@@ -12,6 +12,8 @@ Use [Quickstart](./quickstart.md) for the shortest first run, [Installation](./i
 | `pnpm happytg doctor --json` | Full diagnostic payload | You need raw paths, classifications, and detailed stderr. |
 | `pnpm happytg repair` | Deterministic repair path | You are applying allowed bootstrap fixes. |
 | `pnpm happytg verify` | Post-fix verification | You want the same checks after setup or repair. |
+| `pnpm happytg update` | Existing-checkout update | You want to refresh the current checkout with safe defaults: current repo, skipped background/launch, and `doctor` plus `verify`. |
+| `pnpm happytg uninstall` | Local cleanup | You want to remove HappyTG-owned bootstrap/daemon state and launchers while keeping the checkout, `.env`, Docker services, and remote data. |
 | `pnpm happytg status` | Last known bootstrap state | You want the last persisted report summary. |
 | `pnpm happytg config init` | Config plan-only path | You need deterministic config scaffolding. |
 | `pnpm happytg env snapshot` | Environment snapshot | You want a stable env-oriented report. |
@@ -50,6 +52,28 @@ For the local `pnpm dev` path, Docker Compose is a convenience for shared infra,
 - `skip` stops after install plus any selected post-checks.
 
 The Docker launch path never includes `apps/host-daemon`; pairing and host-daemon startup remain host-side follow-up steps.
+
+## Updating Later
+
+For day-2 updates in an existing checkout, prefer the repo-local update command:
+
+```bash
+pnpm happytg update
+```
+
+Use `pnpm happytg install` when you need the full guided onboarding/reconfiguration flow instead of the update defaults.
+
+For a clean checkout and a faster manual path:
+
+```bash
+git status --short
+git pull --ff-only
+pnpm install
+pnpm happytg doctor
+pnpm happytg verify
+```
+
+After updating, restart the selected runtime. Use `pnpm dev` for local development, or `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d` for the packaged Docker stack.
 
 It checks:
 

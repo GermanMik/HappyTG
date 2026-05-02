@@ -154,6 +154,38 @@ flowchart LR
 
 For the fuller path, use [Quickstart](./docs/quickstart.md), [Installation](./docs/installation.md), and [Bootstrap Doctor](./docs/bootstrap-doctor.md).
 
+## Day-2 Update And Uninstall
+
+For the easiest local update after GitHub changes, run the repo-local update wrapper from the existing checkout:
+
+```bash
+pnpm happytg update
+```
+
+For a clean checkout where you want the short manual path:
+
+```bash
+git status --short
+git pull --ff-only
+pnpm install
+pnpm happytg doctor
+pnpm happytg verify
+```
+
+After updating, restart the runtime you actually use: `pnpm dev` for local development, or `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d` for the packaged Compose stack.
+
+To remove local HappyTG bootstrap/daemon artifacts without deleting the repo checkout or `.env`:
+
+```bash
+pnpm happytg uninstall
+```
+
+Stopping Docker services is separate:
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.example.yml down
+```
+
 ## Monorepo Commands
 
 ```bash
@@ -165,8 +197,10 @@ pnpm build
 pnpm dev
 pnpm happytg install
 pnpm happytg install --launch-mode docker
+pnpm happytg update
 pnpm happytg doctor
 pnpm happytg verify
+pnpm happytg uninstall
 pnpm happytg task status --repo . --task HTG-0001
 ```
 

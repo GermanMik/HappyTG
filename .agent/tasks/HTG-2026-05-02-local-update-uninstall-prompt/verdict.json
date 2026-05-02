@@ -1,0 +1,43 @@
+{
+  "taskId": "HTG-2026-05-02-local-update-uninstall-prompt",
+  "status": "passed_with_environment_blockers",
+  "verdict": "ready_for_release",
+  "summary": "The `pnpm happytg update` implementation, local update/uninstall prompt package, synchronized documentation, and 0.4.9 release metadata are ready. Runtime `pnpm happytg verify` is environment-blocked in the isolated worktree by missing .env/Telegram token and local port conflicts, while release-check, lint, typecheck, test, and build passed.",
+  "checks": [
+    {
+      "name": "update-cli",
+      "ok": true,
+      "detail": "`pnpm happytg update` delegates to the installer engine with safe current-checkout update defaults."
+    },
+    {
+      "name": "prompt",
+      "ok": true,
+      "detail": "Reusable prompt artifact exists and includes 10-role critique plus update/uninstall/release gates."
+    },
+    {
+      "name": "docs",
+      "ok": true,
+      "detail": "README, quickstart, installation, bootstrap, troubleshooting, self-hosting, runbook, release-process, changelog, and release notes were updated."
+    },
+    {
+      "name": "release-metadata",
+      "ok": true,
+      "detail": "Workspace package versions, CHANGELOG.md, and docs/releases/0.4.9.md are aligned; release check passed."
+    },
+    {
+      "name": "repo-checks",
+      "ok": true,
+      "detail": "pnpm install --frozen-lockfile, lint, typecheck, test, build, and task validation passed."
+    },
+    {
+      "name": "happytg-verify",
+      "ok": false,
+      "detail": "Environment-blocked in isolated worktree: .env and TELEGRAM_BOT_TOKEN are absent; ports 3001/80/443/3000 are occupied."
+    }
+  ],
+  "residualRisks": [
+    "`pnpm happytg update` uses the installer repo-sync semantics, so dirty worktrees still require commit, stash, keep, or cancel decisions according to existing installer rules.",
+    "Environment-specific `pnpm happytg verify` still requires real `.env`, Telegram configuration, and available ports."
+  ],
+  "generatedAt": "2026-05-02T00:00:00+03:00"
+}

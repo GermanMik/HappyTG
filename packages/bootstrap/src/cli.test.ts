@@ -105,6 +105,32 @@ test("parseHappyTGArgs maps install flags into the installer request", () => {
   assert.deepEqual(parsed.options.postChecks, ["setup", "doctor"]);
 });
 
+test("parseHappyTGArgs maps update to current-checkout install defaults", () => {
+  const parsed = parseHappyTGArgs([
+    "update",
+    "--launch-mode",
+    "docker",
+    "--docker-services",
+    "reuse",
+    "--post-check",
+    "setup",
+    "--json"
+  ], "/tmp/happytg-cli");
+
+  assert.equal(parsed.kind, "update");
+  if (parsed.kind !== "update") {
+    return;
+  }
+
+  assert.equal(parsed.json, true);
+  assert.equal(parsed.options.nonInteractive, true);
+  assert.equal(parsed.options.repoMode, "current");
+  assert.equal(parsed.options.backgroundMode, "skip");
+  assert.equal(parsed.options.launchMode, "docker");
+  assert.equal(parsed.options.dockerServiceStrategy, "reuse");
+  assert.deepEqual(parsed.options.postChecks, ["setup"]);
+});
+
 test("parseHappyTGArgs ignores invalid launch mode consistently with other install option enums", () => {
   const parsed = parseHappyTGArgs([
     "install",
@@ -316,6 +342,104 @@ test("executeHappyTG delegates install requests through the CLI wrapper without 
       telegramAllowedUserIds: ["1001"]
     });
     assert.equal(bootstrapCheckCalls, 1);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("executeHappyTG delegates update through the installer with safe day-2 defaults", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-cli-update-wrapper-"));
+
+  try {
+    let receivedOptions: {
+      repoMode?: InstallResult["repo"]["mode"];
+      repoDir?: string;
+      backgroundMode?: InstallResult["background"]["mode"];
+      launchMode?: InstallResult["launch"]["mode"];
+      postChecks?: InstallResult["postChecks"][number]["command"][];
+    } | undefined;
+    const expected: InstallResult = {
+      kind: "install",
+      status: "pass",
+      outcome: "success",
+      interactive: false,
+      tuiHandled: false,
+      repo: {
+        mode: "current",
+        path: path.join(tempDir, "HappyTG"),
+        sync: "updated",
+        dirtyStrategy: "keep",
+        source: "primary",
+        repoUrl: "https://github.com/GermanMik/HappyTG.git",
+        attempts: 1,
+        fallbackUsed: false
+      },
+      environment: {
+        platform: {
+          platform: "win32",
+          arch: "x64",
+          shell: "powershell.exe",
+          linuxFamily: "unknown",
+          systemPackageManager: "winget",
+          repoPackageManager: "pnpm",
+          isInteractiveTerminal: false
+        },
+        dependencies: []
+      },
+      telegram: {
+        configured: true,
+        allowedUserIds: []
+      },
+      background: {
+        mode: "skip",
+        status: "skipped",
+        detail: "Background daemon setup was skipped."
+      },
+      launch: {
+        mode: "skip",
+        status: "skipped",
+        detail: "Startup skipped by request.",
+        commands: [],
+        health: [],
+        warnings: [],
+        nextSteps: []
+      },
+      postChecks: [],
+      steps: [],
+      nextSteps: [],
+      warnings: [],
+      reportJson: {}
+    };
+
+    const result = await executeHappyTG([
+      "update",
+      "--repo-dir",
+      "./HappyTG",
+      "--post-check",
+      "verify"
+    ], tempDir, {
+      runHappyTGInstallImpl: async (options) => {
+        receivedOptions = {
+          repoMode: options.repoMode,
+          repoDir: options.repoDir,
+          backgroundMode: options.backgroundMode,
+          launchMode: options.launchMode,
+          postChecks: options.postChecks
+        };
+        return expected;
+      }
+    });
+
+    assert.equal((result as { kind: string }).kind, "update");
+    assert.deepEqual(receivedOptions, {
+      repoMode: "current",
+      repoDir: path.resolve(tempDir, "HappyTG"),
+      backgroundMode: "skip",
+      launchMode: "skip",
+      postChecks: ["verify"]
+    });
+    assert.match(renderText(result), /HappyTG update \[PASS\]/);
+    assert.match(renderText(result), /Result: update flow is complete\./);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

@@ -1,6 +1,6 @@
 {
   "name": "@happytg/bootstrap",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "private": true,
   "type": "module",
   "bin": {
@@ -14,6 +14,7 @@
     "repair": "tsx src/cli.ts repair",
     "verify": "tsx src/cli.ts verify",
     "status": "tsx src/cli.ts status",
+    "update": "tsx src/cli.ts update",
     "uninstall:command": "tsx src/cli.ts uninstall",
     "config:init": "tsx src/cli.ts config init",
     "env:snapshot": "tsx src/cli.ts env snapshot",

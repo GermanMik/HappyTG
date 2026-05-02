@@ -106,6 +106,49 @@ pnpm happytg install --non-interactive --repo-mode current --launch-mode docker 
 pnpm happytg install --json
 ```
 
+## Updating An Existing Install
+
+Use this path when GitHub has newer HappyTG changes and the repo already exists on the machine.
+
+The easiest update is the repo-local update command:
+
+```bash
+pnpm happytg update
+```
+
+By default, `pnpm happytg update` targets the current checkout, skips background launcher changes, skips runtime launch, and runs `doctor` plus `verify`. It keeps `.env` merge behavior and safe dirty-worktree handling through the existing installer engine.
+
+For a clean checkout where you want the shortest manual path:
+
+```bash
+git status --short
+git pull --ff-only
+pnpm install
+pnpm happytg doctor
+pnpm happytg verify
+```
+
+If local changes exist, commit or stash them before the manual path, or rerun `pnpm happytg install` and choose the installer dirty-worktree handling.
+
+Restart only the runtime you use after the update:
+
+```bash
+pnpm dev
+```
+
+For Docker isolated mode:
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d
+docker compose --env-file .env -f infra/docker-compose.example.yml ps
+```
+
+For Docker reuse mode, keep reused Redis/Postgres/MinIO/Caddy operator-owned and rerun with explicit reuse when you want the update command to refresh app services without duplicate infra:
+
+```bash
+pnpm happytg update --launch-mode docker --docker-services reuse
+```
+
 Local cleanup commands:
 
 ```bash
@@ -114,6 +157,14 @@ pnpm bootstrap:uninstall
 ```
 
 `pnpm happytg uninstall` removes installer-owned local HappyTG artifacts from `HAPPYTG_STATE_DIR` or `~/.happytg`, including daemon state/journal, install drafts and reports, installer logs/backups, the default bootstrap checkout, and installer-managed background launchers. The installer now resets stale HappyTG-owned launchers before applying the newly selected host-daemon startup mode, so selecting `manual` or `skip` removes old Windows Scheduled Task/Startup artifacts for the safe state scope. The command keeps the repo checkout, `.env`, Docker Compose services, volumes, and remote control-plane data by default.
+
+Stopping packaged Docker services is separate from local uninstall:
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.example.yml down
+```
+
+Removing Docker volumes or deleting the repo checkout is destructive and should be done only as a separate explicit operator action.
 
 ## First Start
 
