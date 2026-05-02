@@ -1,0 +1,21 @@
+{
+  "taskId": "HTG-2026-05-01-codex-desktop-working-control",
+  "status": "PASS",
+  "summary": "Codex Desktop controls now execute through Codex app-server JSON-RPC when available, while unavailable control remains truthful and Mini App routing stays within the public API boundary. The primary checkout was fast-forwarded to origin/main / v0.4.9 and full main-tree checks passed.",
+  "remainingRisk": "Real New Desktop Task was not launched against the live model during verification. Repo doctor/verify are WARN, not FAIL, because of existing Codex smoke timeout and public Caddy Mini App route identity warnings.",
+  "mainTreeVerification": {
+    "status": "PASS_WITH_WARNINGS",
+    "date": "2026-05-02",
+    "head": "8c37a34b183637cfbe3b4cfcafce170282773be3",
+    "checks": [
+      "pnpm install --frozen-lockfile",
+      "pnpm release:check --version 0.4.9",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test",
+      "pnpm build",
+      "pnpm happytg doctor",
+      "pnpm happytg verify"
+    ]
+  }
+}

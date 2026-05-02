@@ -1,0 +1,4 @@
+## codex/codex-desktop-working-control
+?? .agent/prompts/codex-desktop-miniapp-link-repair.md
+?? .agent/prompts/installer-bootstrap-warning-background-reset.md
+?? .agent/tasks/HTG-2026-05-01-codex-desktop-working-control/

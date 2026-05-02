@@ -14,6 +14,7 @@ import {
   type Logger
 } from "../../../packages/shared/src/index.js";
 import type {
+  CodexDesktopControlResult,
   CodexDesktopProject,
   CodexDesktopSession,
   CreateSessionRequest,
@@ -740,6 +741,9 @@ export function renderPage(
         function apiUrl(pathname) {
           return new URL(pathname, window.HAPPYTgApiBase || window.location.origin);
         }
+        function miniAppUrl(pathname) {
+          return (window.HAPPYTgMiniAppBasePath || "") + pathname;
+        }
         function setNotice(target, tone, message) {
           if (!target) return;
           target.className = "notice notice-" + tone;
@@ -1035,13 +1039,13 @@ export function renderPage(
             var previousLabel = button.textContent;
             button.textContent = "Отправляем...";
             setActionFeedback(feedback, "info", "Отправляем Codex Desktop действие через API.");
-            fetch(apiUrl("/api/v1/codex-desktop/sessions/" + encodeURIComponent(sessionId) + "/" + encodeURIComponent(action)), {
+            fetch(miniAppUrl("/codex/desktop-action"), {
               method: "POST",
               headers: {
                 "content-type": "application/json",
                 "authorization": "Bearer " + sessionToken
               },
-              body: JSON.stringify({})
+              body: JSON.stringify({ sessionId: sessionId, action: action })
             }).then(function (response) {
               if (!response.ok) {
                 return readError(response, "Desktop action unsupported.").then(function (detail) {
@@ -1059,6 +1063,14 @@ export function renderPage(
             });
           });
         });
+        document.querySelector("[data-new-task-form]")?.addEventListener("change", function (event) {
+          if (event.target && event.target.name === "runtime") {
+            var runtime = event.target.value || "codex-cli";
+            document.querySelectorAll("[data-source-fields]").forEach(function (section) {
+              section.hidden = section.getAttribute("data-source-fields") !== runtime;
+            });
+          }
+        });
         document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
           event.preventDefault();
           var form = event.currentTarget;
@@ -1068,6 +1080,9 @@ export function renderPage(
           if (submit) submit.textContent = "Создаем...";
           setActionFeedback(feedback, "info", "Создаем сессию и готовим переход к деталям.");
           var data = new FormData(form);
+          var runtime = String(data.get("runtime") || "codex-cli");
+          var desktopProject = form.querySelector("[name=projectId]");
+          var selectedDesktopProject = desktopProject && desktopProject.options ? desktopProject.options[desktopProject.selectedIndex] : null;
           fetch(location.pathname + location.search, {
             method: "POST",
             headers: { "content-type": "application/json" },
@@ -1075,7 +1090,9 @@ export function renderPage(
             body: JSON.stringify({
               hostId: data.get("hostId"),
               workspaceId: data.get("workspaceId"),
-              runtime: data.get("runtime") || "codex-cli",
+              runtime: runtime,
+              projectId: runtime === "codex-desktop" ? data.get("projectId") : undefined,
+              projectPath: runtime === "codex-desktop" && selectedDesktopProject ? selectedDesktopProject.getAttribute("data-project-path") : undefined,
               mode: data.get("mode") || "proof",
               title: data.get("title") || "Mini App task",
               prompt: data.get("prompt") || "",
@@ -1378,30 +1395,40 @@ function renderProjectCards(projects: MiniAppProjectCard[]): string {
   </li>`).join("")}</ul>`;
 }
 
-function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?: string; workspaceId?: string; source?: string }, desktop?: { projects: CodexDesktopProject[]; sessions: CodexDesktopSession[] }): string {
+function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?: string; workspaceId?: string; source?: string; projectId?: string }, desktop?: { projects: CodexDesktopProject[]; sessions: CodexDesktopSession[] }): string {
   const selectedWorkspaceId = selected?.workspaceId ?? projects[0]?.id;
   const selectedProject = projects.find((project) => project.id === selectedWorkspaceId) ?? projects[0];
-  const selectedSource = selected?.source === "codex-desktop" ? "codex-desktop" : "codex-cli";
+  const desktopProjects = desktop?.projects ?? [];
   const desktopCanCreate = Boolean(desktop?.sessions.some((session) => session.canCreateTask));
+  const selectedSource = selected?.source === "codex-desktop" || (projects.length === 0 && desktopCanCreate) ? "codex-desktop" : "codex-cli";
   const desktopReason = desktop?.sessions.find((session) => session.unsupportedReason)?.unsupportedReason ?? "Stable Codex Desktop New Task contract is unavailable.";
   const options = projects.map((project) => `<option value="${escapeHtml(project.id)}" data-host-id="${escapeHtml(project.hostId)}"${project.id === selectedProject?.id ? " selected" : ""}>${escapeHtml(project.repoName)} · ${escapeHtml(project.hostLabel ?? "host n/a")}</option>`).join("");
+  const selectedDesktopProjectId = selected?.projectId ?? desktopProjects[0]?.id;
+  const desktopOptions = desktopProjects.map((project) => `<option value="${escapeHtml(project.id)}" data-project-path="${escapeHtml(project.path)}"${project.id === selectedDesktopProjectId ? " selected" : ""}>${escapeHtml(project.label)} · ${escapeHtml(project.path)}</option>`).join("");
+  const hasAnyProjects = projects.length > 0 || desktopProjects.length > 0;
 
   return `<section class="panel hero">
     <h1>Новая Codex-задача</h1>
     <p class="muted">Сначала выберите runtime/source. CLI использует HappyTG host flow; Desktop доступен только при proven contract.</p>
   </section>
   <section class="panel">
-    ${projects.length === 0 ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form>
+    ${!hasAnyProjects ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form>
       <label class="eyebrow" for="runtime">Source</label>
       <select id="runtime" name="runtime">
-        <option value="codex-cli"${selectedSource === "codex-cli" ? " selected" : ""}>Codex CLI</option>
+        <option value="codex-cli"${selectedSource === "codex-cli" ? " selected" : ""}${projects.length > 0 ? "" : " disabled"}>Codex CLI${projects.length > 0 ? "" : " (no host project)"}</option>
         <option value="codex-desktop"${selectedSource === "codex-desktop" ? " selected" : ""}${desktopCanCreate ? "" : " disabled"}>Codex Desktop${desktopCanCreate ? "" : " (unsupported)"}</option>
       </select>
       <input type="hidden" name="hostId" value="${escapeHtml(selectedProject?.hostId ?? selected?.hostId ?? "")}">
       <div class="notice notice-info" data-task-feedback hidden>Создаем сессию.</div>
       ${desktopCanCreate ? "" : `<div class="notice notice-warn">New Desktop Task disabled: ${escapeHtml(desktopReason)}</div>`}
-      <label class="eyebrow" for="workspaceId">Проект</label>
-      <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''">${options}</select>
+      <div data-source-fields="codex-cli"${selectedSource === "codex-cli" ? "" : " hidden"}>
+        <label class="eyebrow" for="workspaceId">CLI проект</label>
+        <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''">${options}</select>
+      </div>
+      <div data-source-fields="codex-desktop"${selectedSource === "codex-desktop" ? "" : " hidden"}>
+        <label class="eyebrow" for="projectId">Desktop проект</label>
+        <select id="projectId" name="projectId">${desktopOptions}</select>
+      </div>
       <label class="eyebrow" for="mode">Режим</label>
       <select id="mode" name="mode">
         <option value="proof" selected>proof</option>
@@ -1923,8 +1950,23 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         html(res, 200, renderForRequest(req, "Новая задача", renderNewTaskForm(projects.projects, {
           hostId: url.searchParams.get("hostId") ?? undefined,
           workspaceId: url.searchParams.get("workspaceId") ?? undefined,
-          source: url.searchParams.get("source") ?? undefined
+          source: url.searchParams.get("source") ?? undefined,
+          projectId: url.searchParams.get("projectId") ?? undefined
         }, { projects: desktopProjects.projects, sessions: desktopSessions.sessions }), { navKey: "projects" }));
+      }),
+      route("POST", "/codex/desktop-action", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
+          return;
+        }
+
+        const body = await readJsonBody<{ sessionId?: string; action?: string }>(req);
+        if (!body.sessionId || (body.action !== "resume" && body.action !== "stop")) {
+          json(res, 400, { error: "Desktop sessionId and supported action are required" });
+          return;
+        }
+
+        const result = await postForRequest<CodexDesktopControlResult>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(body.sessionId)}/${body.action}`, {});
+        json(res, 200, result);
       }),
       route("POST", "/new-task", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Новая задача", "projects")) {
@@ -1932,8 +1974,17 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const body = await readJsonBody<Omit<CreateSessionRequest, "userId" | "runtime"> & { runtime?: string; projectId?: string; projectPath?: string }>(req);
+        let desktopBody = body;
+        if (body.runtime === "codex-desktop" && body.projectId && !body.projectPath) {
+          const desktopProjects = await fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects");
+          const project = desktopProjects.projects.find((item) => item.id === body.projectId);
+          desktopBody = {
+            ...body,
+            projectPath: project?.path
+          };
+        }
         const created = body.runtime === "codex-desktop"
-          ? await postForRequest<{ task?: { id: string }; session?: MiniAppSessionCard }>(req, url, "/api/v1/codex-desktop/tasks", body)
+          ? await postForRequest<{ task?: { id: string }; session?: MiniAppSessionCard }>(req, url, "/api/v1/codex-desktop/tasks", desktopBody)
           : await postForRequest<{ session: MiniAppSessionCard }>(req, url, "/api/v1/miniapp/sessions", {
               ...body,
               runtime: "codex-cli"

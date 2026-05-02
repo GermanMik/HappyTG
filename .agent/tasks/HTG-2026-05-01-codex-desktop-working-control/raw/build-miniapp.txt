@@ -1,0 +1,3 @@
+
+> @happytg/miniapp@0.4.8 build C:\Develop\Projects\HappyTG\apps\miniapp
+> tsc -p tsconfig.json

@@ -1,0 +1,36 @@
+
+> @happytg/api@0.4.8 test C:\Develop\Projects\HappyTG\apps\api
+> tsx --test src/*.test.ts
+
+✔ api ready endpoint returns store metadata (50.5358ms)
+✔ api exposes fast version and prometheus metrics endpoints (29.0904ms)
+✔ api dev CORS allows only explicit Mini App origins (14.1675ms)
+✔ mini app projection endpoints require session auth instead of falling back to global state (12.7333ms)
+✔ mini app approval resolve endpoint uses bearer session user (20.2844ms)
+✔ mini app project and session mutation endpoints require bearer user context (16.4295ms)
+✔ codex desktop API is user-scoped and maps guarded control responses (19.6182ms)
+✔ session cancel endpoint delegates to the control-plane service (7.4934ms)
+✔ startApiServer reuses an already-running HappyTG API on the same port (59.2136ms)
+✔ startApiServer rejects with an actionable message when another process occupies the port (13.2168ms)
+✔ startApiServer rejects when a different HappyTG service occupies the API port (12.0964ms)
+✔ startApiServer retries a transient HappyTG API handoff before classifying reuse (37.5438ms)
+✔ proof session creates task bundle and approval, then approval dispatches session (97.9974ms)
+✔ quick session dispatches immediately without approval (20.6194ms)
+✔ cancelSession cancels active sessions, dispatch records, event, and audit (34.7507ms)
+✔ session timeline and task artifact reads are available for mini app inspection (49.6358ms)
+✔ bootstrap sessions dispatch deterministic doctor runs and support resume state transitions (19.9168ms)
+✔ bot projections list user-scoped workspaces, sessions, approvals, and reject stale callback nonce (53.9154ms)
+✔ Codex Desktop projections are user-scoped and sanitized (42.6903ms)
+✔ Codex Desktop controls block unavailable contracts and audit attempts (87.5842ms)
+✔ Codex Desktop controls execute only through supported adapter contract (58.8654ms)
+✔ mini app launch validates initData, issues app session, and exposes action-first projections (76.6426ms)
+✔ proof task filesystem initialization runs outside the serialized store queue (26.892ms)
+✔ proof approval record failure fails session and closes the waiting approval (83.7201ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1348.334

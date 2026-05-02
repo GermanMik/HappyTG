@@ -1,0 +1,5 @@
+Integration-relevant coverage:
+
+- test-api.txt covers API policy/audit and Desktop endpoint behavior.
+- test-miniapp.txt covers Mini App same-origin Desktop action forwarding and New Desktop Task forwarding.
+- live-app-server-probe.txt covers real local app-server list/resume without starting a new turn.

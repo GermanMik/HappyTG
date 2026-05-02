@@ -1,0 +1,5 @@
+Focused package lints are recorded in:
+
+- lint-runtime-adapters.txt
+- lint-api.txt
+- lint-miniapp.txt

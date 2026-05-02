@@ -1,0 +1,36 @@
+
+> happytg@0.4.9 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "verify"
+
+HappyTG verify [WARN]
+Summary: 2 warnings, 1 info found.
+Profile: recommended
+
+Checks:
+- Env: .env found
+- Codex: codex-cli 0.125.0
+- Telegram: configured
+- Telegram Mini App URL: https://happytg.gerta.crazedns.ru/miniapp
+- Caddy /miniapp: Public Caddy Mini App route responded with HTTP 200, but did not return HappyTG Mini App identity. First body detail: <!DOCTYPE html> <html lang="ru"> <head> <base href="/" /> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum
+- Telegram menu button: Telegram menu button state is not checked during doctor/verify to avoid leaking tokens through network diagnostics. Run `pnpm happytg telegram menu set --dry-run`, then `pnpm happytg telegram menu set`.
+- Redis: running on localhost:6379
+- Ports: reuse: Mini App 3007, API 4000, Bot 4100, Redis host port 6380, Postgres host port 5433, MinIO API host port 9002, MinIO console host port 9006, Prometheus host port 9090, Grafana host port 3004; free: Worker probe 4200, Caddy HTTP host port 82, Caddy HTTPS host port 444
+
+Findings:
+- WARN  Codex CLI started, but the smoke check failed: Codex smoke command did not exit before the 120000ms timeout. Run `pnpm happytg doctor --json` for stderr details.
+- WARN  Public Caddy Mini App route responded with HTTP 200, but did not return HappyTG Mini App identity. First body detail: <!DOCTYPE html> <html lang="ru"> <head> <base href="/" /> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum Fix the public Caddy route before running `pnpm happytg telegram menu set`.
+- INFO  HappyTG services already appear to be running on 3007, 4000, 4100. Reuse the running stack or stop it before starting another copy.
+
+Requires user:
+- If PostgreSQL and S3-compatible storage are not already available, start the remaining shared infra: `docker compose --env-file .env -f infra/docker-compose.example.yml up postgres minio`.
+- Request a pairing code on the execution host: `pnpm daemon:pair`.
+- Send `/pair <CODE>` to @gerta_workbot.
+- After pairing, start the daemon with `pnpm dev:daemon`.
+
+Reuse:
+- Redis is already running locally. Reuse it, and if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services, you can skip Docker entirely.
+- Some HappyTG services are already running. Reuse the current stack or stop it before starting another copy.
+
+Diagnostics:
+- Run `pnpm happytg verify --json` for machine-readable details.
+- Run `pnpm happytg doctor --json` for the full environment report.

@@ -1,0 +1,3 @@
+
+> @happytg/api@0.4.8 build C:\Develop\Projects\HappyTG\apps\api
+> tsc -p tsconfig.json
