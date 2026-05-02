@@ -1,0 +1,90 @@
+
+> happytg@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502
+> turbo lint
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running lint in 15 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/bot:lint: cache miss, executing 412e2b4c5aa7711e
+@happytg/miniapp:lint: cache miss, executing 06ea1ea53c40d26c
+@happytg/api:lint: cache miss, executing f4b4790076d1abf1
+@happytg/session-engine:lint: cache miss, executing a8b5a4f4409bc4be
+@happytg/protocol:lint: cache miss, executing c016f8219e359348
+@happytg/host-daemon:lint: cache miss, executing 664f32134abd25f9
+@happytg/telegram-kit:lint: cache miss, executing 79b899df50f8e229
+@happytg/runtime-adapters:lint: cache miss, executing ececf24e12ab826b
+@happytg/bootstrap:lint: cache miss, executing 57d8839c78e34556
+@happytg/approval-engine:lint: cache miss, executing d9f11b2981459fd1
+@happytg/miniapp:lint: 
+@happytg/miniapp:lint: > @happytg/miniapp@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\miniapp
+@happytg/miniapp:lint: > tsc -p tsconfig.json --noEmit
+@happytg/miniapp:lint: 
+@happytg/telegram-kit:lint: 
+@happytg/telegram-kit:lint: > @happytg/telegram-kit@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\telegram-kit
+@happytg/telegram-kit:lint: > tsc -p tsconfig.json --noEmit
+@happytg/telegram-kit:lint: 
+@happytg/api:lint: 
+@happytg/api:lint: > @happytg/api@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\api
+@happytg/api:lint: > tsc -p tsconfig.json --noEmit
+@happytg/api:lint: 
+@happytg/bot:lint: 
+@happytg/bot:lint: > @happytg/bot@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\bot
+@happytg/bot:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bot:lint: 
+@happytg/protocol:lint: 
+@happytg/protocol:lint: > @happytg/protocol@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\protocol
+@happytg/protocol:lint: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:lint: 
+@happytg/approval-engine:lint: 
+@happytg/approval-engine:lint: > @happytg/approval-engine@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\approval-engine
+@happytg/approval-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:lint: 
+@happytg/host-daemon:lint: 
+@happytg/host-daemon:lint: > @happytg/host-daemon@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\host-daemon
+@happytg/host-daemon:lint: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:lint: 
+@happytg/bootstrap:lint: 
+@happytg/bootstrap:lint: > @happytg/bootstrap@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\bootstrap
+@happytg/bootstrap:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:lint: 
+@happytg/session-engine:lint: 
+@happytg/session-engine:lint: > @happytg/session-engine@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\session-engine
+@happytg/session-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/session-engine:lint: 
+@happytg/runtime-adapters:lint: 
+@happytg/runtime-adapters:lint: > @happytg/runtime-adapters@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\runtime-adapters
+@happytg/runtime-adapters:lint: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:lint: 
+@happytg/shared:lint: cache miss, executing 974133d6ace8709e
+@happytg/worker:lint: cache miss, executing 1448bdff7028e030
+@happytg/policy-engine:lint: cache miss, executing be07831d2138474f
+@happytg/hooks:lint: cache miss, executing adffc2af516ab794
+@happytg/shared:lint: 
+@happytg/shared:lint: > @happytg/shared@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\shared
+@happytg/shared:lint: > tsc -p tsconfig.json --noEmit
+@happytg/shared:lint: 
+@happytg/worker:lint: 
+@happytg/worker:lint: > @happytg/worker@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\apps\worker
+@happytg/worker:lint: > tsc -p tsconfig.json --noEmit
+@happytg/worker:lint: 
+@happytg/repo-proof:lint: cache miss, executing ff8493385cb6aa13
+@happytg/policy-engine:lint: 
+@happytg/policy-engine:lint: > @happytg/policy-engine@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\policy-engine
+@happytg/policy-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:lint: 
+@happytg/hooks:lint: 
+@happytg/hooks:lint: > @happytg/hooks@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\hooks
+@happytg/hooks:lint: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:lint: 
+@happytg/repo-proof:lint: 
+@happytg/repo-proof:lint: > @happytg/repo-proof@0.4.9 lint C:\Develop\Projects\HappyTG-worktrees\local-update-uninstall-prompt-20260502\packages\repo-proof
+@happytg/repo-proof:lint: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:lint: 
+
+ Tasks:    15 successful, 15 total
+Cached:    0 cached, 15 total
+  Time:    6.117s 
+

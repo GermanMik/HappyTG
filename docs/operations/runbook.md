@@ -39,12 +39,26 @@ Back up before upgrades and after important sessions:
 1. Freeze new task intake.
 2. Let active mutating dispatches finish or pause sessions.
 3. Back up state and proof bundles.
-4. Pull the release.
-5. Run `pnpm install --frozen-lockfile`.
+4. Pull the release through the guided path with `pnpm happytg install`, or use the clean-checkout manual path: `git pull --ff-only`, then `pnpm install --frozen-lockfile`.
+5. Run `pnpm happytg doctor` and `pnpm happytg verify`.
 6. Run `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build`.
-7. Rebuild compose images.
-8. Start services and verify health/ready/version/metrics.
+7. Rebuild compose images with `docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d`.
+8. Verify health/ready/version/metrics.
 9. Resume paused sessions only after host heartbeat is fresh.
+
+## Local Cleanup
+
+Use this on an execution host when you only want to remove HappyTG-owned daemon/bootstrap state:
+
+```bash
+pnpm happytg uninstall
+```
+
+That keeps the repo checkout, `.env`, Docker Compose services, volumes, and remote control-plane data. Stop packaged services separately when needed:
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.example.yml down
+```
 
 ## Rollback
 

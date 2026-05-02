@@ -1,0 +1,95 @@
+{
+  "taskId": "HTG-2026-05-02-local-update-uninstall-prompt",
+  "status": "passed_with_environment_blockers",
+  "phase": "fresh verify",
+  "branch": "codex/local-update-uninstall-prompt-20260502",
+  "raw": {
+    "apkScan": "raw/apk-scan.txt",
+    "pnpmInstall": "raw/pnpm-install.txt",
+    "releaseCheck": "raw/release-check.txt",
+    "lint": "raw/lint.txt",
+    "typecheck": "raw/typecheck.txt",
+    "test": "raw/test-unit.txt",
+    "testIntegration": "raw/test-integration.txt",
+    "build": "raw/build.txt",
+    "happytgVerify": "raw/happytg-verify.txt",
+    "taskValidate": "raw/task-validate.txt",
+    "taskValidateFinal": "raw/task-validate-final.txt"
+  },
+  "checks": [
+    {
+      "name": "prompt-artifact",
+      "command": "manual review of .agent/prompts/local-update-uninstall-user-flow.md",
+      "result": "passed"
+    },
+    {
+      "name": "apk-scan",
+      "command": "rg --files -g '*.gradle' -g 'gradlew*' -g 'AndroidManifest.xml' -g 'capacitor.config.*' -g '*.apk'",
+      "result": "passed_no_matches",
+      "raw": "raw/apk-scan.txt"
+    },
+    {
+      "name": "pnpm-install",
+      "command": "pnpm install --frozen-lockfile",
+      "result": "passed",
+      "raw": "raw/pnpm-install.txt"
+    },
+    {
+      "name": "release-check",
+      "command": "pnpm release:check --version 0.4.9",
+      "result": "passed",
+      "raw": "raw/release-check.txt"
+    },
+    {
+      "name": "lint",
+      "command": "pnpm lint",
+      "result": "passed",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "name": "typecheck",
+      "command": "pnpm typecheck",
+      "result": "passed",
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "name": "test",
+      "command": "pnpm test",
+      "result": "passed",
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "name": "test-integration",
+      "command": "pnpm --filter @happytg/bootstrap exec tsx --test src/install.runtime.test.ts --test-name-pattern \"repo|uninstall|Docker|current|update\"",
+      "result": "passed",
+      "raw": "raw/test-integration.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm build",
+      "result": "passed",
+      "raw": "raw/build.txt"
+    },
+    {
+      "name": "happytg-verify",
+      "command": "pnpm happytg verify",
+      "result": "environment_blocked",
+      "raw": "raw/happytg-verify.txt",
+      "detail": "HappyTG reported FAIL due missing .env, missing Telegram token, and local port conflicts in the isolated worktree."
+    },
+    {
+      "name": "task-validate",
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-05-02-local-update-uninstall-prompt",
+      "result": "passed",
+      "raw": "raw/task-validate-final.txt"
+    }
+  ],
+  "apk": {
+    "status": "blocked_not_produced",
+    "notes": [
+      "No Gradle, AndroidManifest, Capacitor config, or APK files were found.",
+      "HappyTG currently ships as Telegram Bot/Mini App/control-plane surfaces, not an Android APK project.",
+      "A future APK release requires a real Android packaging layer, signing, install proof, and release workflow support."
+    ]
+  }
+}

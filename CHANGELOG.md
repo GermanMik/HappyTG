@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.4.9
+
+### Added
+
+- Added a reusable local update/uninstall prompt package with 10-role critical review and APK gating for future agents.
+- Documented the day-2 local update path across README, quickstart, installation, bootstrap, troubleshooting, self-hosting, and operations runbook guidance.
+
+### Changed
+
+- Clarified that `pnpm happytg uninstall` removes installer-owned local bootstrap/daemon artifacts while keeping the repo checkout, `.env`, Docker services/volumes, reused services, and remote control-plane data.
+- Clarified that stopping Docker services and deleting Docker volumes are separate operator actions from uninstall.
+
+### Verification
+
+- Release validation covers the prompt artifact, synchronized docs, APK support scan, task bundle validation, and repo verification commands.
+
 ## v0.4.8
 
 ### Added
