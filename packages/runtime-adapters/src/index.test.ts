@@ -300,6 +300,121 @@ test("Codex Desktop adapter parses session_index and session files as sanitized 
   }
 });
 
+test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-control-"));
+  let adapter: CodexDesktopStateAdapter | undefined;
+  try {
+    const codexHome = path.join(tempDir, "codex-home");
+    const sessionDir = path.join(codexHome, "sessions", "2026", "05", "01");
+    await mkdir(sessionDir, { recursive: true });
+    await writeFile(
+      path.join(codexHome, ".codex-global-state.json"),
+      JSON.stringify({
+        "electron-saved-workspace-roots": ["C:/Develop/Projects/HappyTG"],
+        "thread-workspace-root-hints": {
+          "session-1": "C:/Develop/Projects/HappyTG"
+        }
+      }),
+      "utf8"
+    );
+    await writeFile(
+      path.join(codexHome, "session_index.jsonl"),
+      `${JSON.stringify({ id: "session-1", thread_name: "Desktop app-server control", updated_at: "2026-05-01T08:00:00.000Z" })}\n`,
+      "utf8"
+    );
+    await writeFile(
+      path.join(sessionDir, "session-1.jsonl"),
+      `${JSON.stringify({ timestamp: "2026-05-01T09:00:00.000Z", payload: { id: "session-1", cwd: "C:/Develop/Projects/HappyTG" } })}\n`,
+      "utf8"
+    );
+
+    const harness = await createCodexHarness(
+      tempDir,
+      "app-server-harness.mjs",
+      `
+        import readline from "node:readline";
+        const rl = readline.createInterface({ input: process.stdin });
+        function thread(id, status = "idle") {
+          return {
+            id,
+            preview: id === "new-thread" ? "Run Desktop task" : "Desktop app-server control",
+            name: id === "new-thread" ? "Desktop task" : "Desktop app-server control",
+            cwd: "C:/Develop/Projects/HappyTG",
+            updatedAt: 1777626000,
+            status: { type: status },
+            turns: []
+          };
+        }
+        function send(id, result) {
+          process.stdout.write(JSON.stringify({ id, result }) + "\\n");
+        }
+        rl.on("line", (line) => {
+          const message = JSON.parse(line);
+          if (!message.id) return;
+          switch (message.method) {
+            case "initialize":
+              send(message.id, { userAgent: "happytg-test", codexHome: ${JSON.stringify(codexHome)}, platformFamily: "windows", platformOs: "windows" });
+              break;
+            case "thread/list":
+              send(message.id, { data: [thread("session-1")], nextCursor: null, backwardsCursor: null });
+              break;
+            case "thread/resume":
+              send(message.id, { thread: thread(message.params.threadId) });
+              break;
+            case "thread/turns/list":
+              send(message.id, { data: [{ id: "turn-running", status: "inProgress" }], nextCursor: null, backwardsCursor: null });
+              break;
+            case "turn/interrupt":
+              send(message.id, {});
+              break;
+            case "thread/start":
+              send(message.id, { thread: thread("new-thread", "active") });
+              break;
+            case "turn/start":
+              send(message.id, { turn: { id: "turn-new", status: "inProgress" } });
+              break;
+            default:
+              process.stdout.write(JSON.stringify({ id: message.id, error: { code: -32601, message: "unexpected " + message.method } }) + "\\n");
+          }
+        });
+      `
+    );
+
+    adapter = new CodexDesktopStateAdapter({
+      codexHome,
+      env: {
+        ...process.env,
+        HAPPYTG_CODEX_DESKTOP_CONTROL: "app-server"
+      },
+      appServerCommand: harness.binaryPath,
+      appServerArgs: harness.binaryArgs
+    });
+    const sessions = await adapter.listSessions();
+
+    assert.equal(sessions[0]?.canResume, true);
+    assert.equal(sessions[0]?.canStop, true);
+    assert.equal(sessions[0]?.canCreateTask, true);
+
+    const resumed = await adapter.resumeSession(sessions[0]!);
+    const stopped = await adapter.stopSession(sessions[0]!);
+    const created = await adapter.createTask({
+      userId: "usr_1",
+      projectPath: "C:/Develop/Projects/HappyTG",
+      prompt: "Run Desktop task",
+      title: "Desktop task"
+    });
+
+    assert.equal(resumed.action, "resume");
+    assert.equal(stopped.action, "stop");
+    assert.equal(created.action, "new-task");
+    assert.equal(created.task?.id, "new-thread");
+    assert.equal(created.task?.status, "running");
+  } finally {
+    adapter?.dispose();
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("Codex Desktop adapter tolerates missing and corrupt state", async () => {
   const codexHome = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-corrupt-"));
   try {

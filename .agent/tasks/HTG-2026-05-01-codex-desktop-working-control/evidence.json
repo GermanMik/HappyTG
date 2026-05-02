@@ -1,0 +1,31 @@
+{
+  "taskId": "HTG-2026-05-01-codex-desktop-working-control",
+  "checks": [
+    { "name": "runtime-adapters test", "status": "passed", "path": "raw/test-runtime-adapters.txt" },
+    { "name": "api test", "status": "passed", "path": "raw/test-api.txt" },
+    { "name": "miniapp test", "status": "passed", "path": "raw/test-miniapp.txt" },
+    { "name": "runtime-adapters typecheck", "status": "passed", "path": "raw/typecheck-runtime-adapters.txt" },
+    { "name": "api typecheck", "status": "passed", "path": "raw/typecheck-api.txt" },
+    { "name": "miniapp typecheck", "status": "passed", "path": "raw/typecheck-miniapp.txt" },
+    { "name": "runtime-adapters build", "status": "passed", "path": "raw/build-runtime-adapters.txt" },
+    { "name": "api build", "status": "passed", "path": "raw/build-api.txt" },
+    { "name": "miniapp build", "status": "passed", "path": "raw/build-miniapp.txt" },
+    { "name": "runtime-adapters lint", "status": "passed", "path": "raw/lint-runtime-adapters.txt" },
+    { "name": "api lint", "status": "passed", "path": "raw/lint-api.txt" },
+    { "name": "miniapp lint", "status": "passed", "path": "raw/lint-miniapp.txt" },
+    { "name": "live app-server probe", "status": "passed", "path": "raw/live-app-server-probe.txt" },
+    { "name": "main-tree pnpm install", "status": "passed", "path": "raw/pnpm-install-main-tree.txt" },
+    { "name": "main-tree release check", "status": "passed", "path": "raw/release-check-0.4.9-main-tree.txt" },
+    { "name": "main-tree lint", "status": "passed", "path": "raw/lint-main-tree.txt" },
+    { "name": "main-tree typecheck", "status": "passed", "path": "raw/typecheck-main-tree.txt" },
+    { "name": "main-tree test", "status": "passed", "path": "raw/test-unit-main-tree.txt" },
+    { "name": "main-tree build", "status": "passed", "path": "raw/build-main-tree.txt" },
+    { "name": "main-tree doctor", "status": "warn", "path": "raw/doctor-main-tree.txt" },
+    { "name": "main-tree verify", "status": "warn", "path": "raw/verify-main-tree.txt" },
+    { "name": "main-tree task validate", "status": "passed", "path": "raw/task-validate-main-tree.txt" },
+    { "name": "task validate", "status": "passed", "path": "raw/task-validate.txt" },
+    { "name": "doctor", "status": "warn", "path": "raw/doctor.txt" },
+    { "name": "verify json", "status": "warn", "path": "raw/verify-json.txt" },
+    { "name": "verify direct", "status": "warn", "path": "raw/verify-direct.txt" }
+  ]
+}

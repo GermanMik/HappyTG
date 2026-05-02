@@ -1,0 +1,12 @@
+Local `codex app-server generate-ts` showed usable JSON-RPC control methods:
+
+- `thread/list`
+- `thread/resume`
+- `thread/start`
+- `turn/start`
+- `thread/turns/list`
+- `turn/interrupt`
+
+`codex app-server proxy` could not connect to a running Desktop control socket on this host, so the implementation uses a persistent local `codex app-server --listen stdio://` process by default and supports proxy mode via `HAPPYTG_CODEX_DESKTOP_APP_SERVER_MODE=proxy`.
+
+Live probe result is recorded in `live-app-server-probe.txt`.

@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import { createApprovalRequest, resolveApprovalRequestIdempotent } from "../../../packages/approval-engine/src/index.js";
 import { createDefaultPolicies, evaluatePolicies } from "../../../packages/policy-engine/src/index.js";
 import { advanceTaskPhase, initTaskBundle, recordTaskApproval, validateTaskBundle } from "../../../packages/repo-proof/src/index.js";
-import { defaultCodexDesktopStateAdapter, type CodexDesktopStateAdapter } from "../../../packages/runtime-adapters/src/index.js";
+import { CodexDesktopControlUnavailableError, defaultCodexDesktopStateAdapter, type CodexDesktopStateAdapter } from "../../../packages/runtime-adapters/src/index.js";
 import { canTransitionSession, nextResumeState, transitionSession } from "../../../packages/session-engine/src/index.js";
 import {
   makeLaunchGrantId,
@@ -421,7 +421,7 @@ const defaultRepoProofOperations: RepoProofOperations = {
 
 export class CodexDesktopControlError extends Error {
   constructor(
-    readonly statusCode: 404 | 409 | 501,
+    readonly statusCode: 404 | 409 | 501 | 502,
     message: string,
     readonly reason = message
   ) {
@@ -778,9 +778,15 @@ export class HappyTGControlPlaneService {
       throw new CodexDesktopControlError(501, reason);
     }
 
-    const result = await this.codexDesktop.resumeSession(session);
-    await this.auditCodexDesktopResult(userId, "codex_desktop.resume.completed", session.id, { ok: result.ok });
-    return result;
+    try {
+      const result = await this.codexDesktop.resumeSession(session);
+      await this.auditCodexDesktopResult(userId, "codex_desktop.resume.completed", session.id, { ok: result.ok });
+      return result;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "Codex Desktop resume failed.";
+      await this.auditCodexDesktopResult(userId, "codex_desktop.resume.failed", session.id, { reason });
+      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason);
+    }
   }
 
   async stopCodexDesktopSession(userId: string, sessionId: string): Promise<CodexDesktopControlResult> {
@@ -803,9 +809,15 @@ export class HappyTGControlPlaneService {
       throw new CodexDesktopControlError(501, reason);
     }
 
-    const result = await this.codexDesktop.stopSession(session);
-    await this.auditCodexDesktopResult(userId, "codex_desktop.stop.completed", session.id, { ok: result.ok });
-    return result;
+    try {
+      const result = await this.codexDesktop.stopSession(session);
+      await this.auditCodexDesktopResult(userId, "codex_desktop.stop.completed", session.id, { ok: result.ok });
+      return result;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "Codex Desktop stop failed.";
+      await this.auditCodexDesktopResult(userId, "codex_desktop.stop.failed", session.id, { reason });
+      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason);
+    }
   }
 
   async createCodexDesktopTask(input: CreateCodexDesktopTaskRequest): Promise<CodexDesktopControlResult> {
@@ -827,9 +839,15 @@ export class HappyTGControlPlaneService {
       throw new CodexDesktopControlError(501, reason);
     }
 
-    const result = await this.codexDesktop.createTask(input);
-    await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.completed", result.task?.id ?? "codex-desktop", { ok: result.ok });
-    return result;
+    try {
+      const result = await this.codexDesktop.createTask(input);
+      await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.completed", result.task?.id ?? "codex-desktop", { ok: result.ok });
+      return result;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "Codex Desktop task creation failed.";
+      await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.failed", input.projectId ?? input.projectPath ?? "codex-desktop", { reason });
+      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason);
+    }
   }
 
   async getUserByTelegram(telegramUserId: string): Promise<User | undefined> {

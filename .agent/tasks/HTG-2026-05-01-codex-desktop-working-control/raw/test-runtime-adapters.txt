@@ -1,0 +1,33 @@
+
+> @happytg/runtime-adapters@0.4.8 test C:\Develop\Projects\HappyTG\packages\runtime-adapters
+> tsx --test src/*.test.ts
+
+✔ checkCodexReadiness reports available Codex and captures smoke warnings (217.9793ms)
+✔ tool execution model classifies actions and serializes mutations (1.5876ms)
+✔ Codex Desktop adapter parses projects from global state without private payloads (6.3143ms)
+✔ Codex Desktop adapter parses session_index and session files as sanitized sessions (17.9571ms)
+✔ Codex Desktop adapter controls sessions through Codex app-server JSON-RPC (122.6261ms)
+✔ Codex Desktop adapter tolerates missing and corrupt state (33.5875ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from Path (415.2952ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext (277.8121ms)
+✔ checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated (258.9262ms)
+✔ checkCodexReadiness closes stdin so smoke runs do not hang waiting for EOF (153.0211ms)
+✔ checkCodexReadiness preserves spaced prompts when it runs through a Windows cmd wrapper (204.0149ms)
+✔ checkCodexReadiness treats a Windows shell command-not-found result as missing (3.6972ms)
+✔ checkCodexReadiness marks only true ENOENT failures as missing (65.8769ms)
+✔ classifyCodexSmokeStderr ignores known benign Codex internal warnings only (0.8427ms)
+✔ summarizeCodexSmokeStderr extracts concise actionable root causes (1.2954ms)
+✔ codexCliMissingMessage explains PATH diagnosis and reinstall fallback (0.1479ms)
+✔ runCodexExec reads summary from the Codex output file (67.9185ms)
+✔ runCodexExec marks timeout and returns a timeout summary (40.3684ms)
+✔ runCodexExec settles timeout even when the child ignores normal termination (29.0306ms)
+✔ runCodexExec caps stdout and stderr while reporting truncation metadata (62.3027ms)
+✔ runCodexExec returns actionable guidance when Codex CLI is missing (3.8579ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2497.8348

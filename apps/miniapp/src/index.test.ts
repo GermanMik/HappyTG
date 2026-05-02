@@ -517,6 +517,15 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
           }
         } as never;
       }
+      if (pathname === "/api/v1/codex-desktop/sessions/desktop-supported/resume?userId=usr_1") {
+        assert.equal(init?.method, "POST");
+        return {
+          ok: true,
+          action: "resume",
+          source: "codex-desktop",
+          session: desktopSession
+        } as never;
+      }
       throw new Error(`Unexpected path ${pathname}`);
     }
   });
@@ -535,6 +544,20 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
     assert.match(detailHtml, /data-desktop-action="stop"/);
     assert.match(detailHtml, /New Desktop Task/);
 
+    const action = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-action?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        sessionId: "desktop-supported",
+        action: "resume"
+      })
+    });
+    const actionPayload = await action.json() as { action: string };
+    assert.equal(action.status, 200);
+    assert.equal(actionPayload.action, "resume");
+
     const created = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
       method: "POST",
       headers: {
@@ -552,6 +575,7 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
     assert.equal(payload.task.id, "cdt_1");
     assert.equal(payload.sessionHref, "/codex?source=codex-desktop");
     assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/tasks?userId=usr_1"), true);
+    assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/sessions/desktop-supported/resume?userId=usr_1"), true);
   } finally {
     await closeServer(server);
   }
