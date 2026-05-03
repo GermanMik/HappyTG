@@ -421,6 +421,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
               canStop: false,
               canCreateTask: false,
               unsupportedReason: "contract missing",
+              unsupportedReasonCode: "CODEX_DESKTOP_CONTROL_UNSUPPORTED",
               rawPayload: "RAW_PROMPT_SECRET"
             }
           ]
@@ -447,6 +448,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
     assert.match(html, /Desktop fixture/);
     assert.match(html, /recent/);
     assert.match(html, /contract missing/);
+    assert.match(html, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
     assert.doesNotMatch(html, /CLI fixture/);
     assert.doesNotMatch(html, /RAW_PROMPT_SECRET/);
 
@@ -457,6 +459,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
     assert.match(detailHtml, /Stop/);
     assert.match(detailHtml, /New Desktop Task/);
     assert.match(detailHtml, /disabled/);
+    assert.match(detailHtml, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
     assert.doesNotMatch(detailHtml, /data-desktop-action="resume"/);
     assert.doesNotMatch(detailHtml, /RAW_PROMPT_SECRET/);
   } finally {

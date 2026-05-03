@@ -1,0 +1,4 @@
+# command: C:\Program Files\WindowsApps\OpenAI.Codex_26.429.3425.0_x64__2p2nqsd0c76g0\app\resources\codex.exe --help
+# exception: Program 'codex.exe' failed to run: StandardOutputEncoding is only supported when standard output is redirected.At line:17 char:5
++     & $bin @($cmd.Args) *>> $out
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~.

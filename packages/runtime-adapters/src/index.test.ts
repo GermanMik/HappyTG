@@ -8,8 +8,10 @@ import {
   checkCodexReadiness,
   classifyActionKind,
   classifyCodexSmokeStderr,
+  CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE,
   CodexDesktopStateAdapter,
   codexCliMissingMessage,
+  createCodexDesktopAppServerControlContract,
   planToolExecutionBatches,
   runCodexExec,
   summarizeCodexSmokeStderr,
@@ -208,23 +210,31 @@ test("tool execution model classifies actions and serializes mutations", () => {
   assert.equal(classifyActionKind("verification_run"), "bounded_compute");
   assert.equal(classifyActionKind("workspace_write"), "repo_mutation");
   assert.equal(classifyActionKind("git_push"), "deploy_publish_external_side_effect");
+  assert.equal(classifyActionKind("codex_desktop_stop"), "shell_network_system_sensitive");
 
   assert.equal(toolExecutionPolicyForAction("workspace_read").defaultPolicy, "allow");
   assert.equal(toolExecutionPolicyForAction("workspace_write").defaultPolicy, "require_approval");
   assert.equal(toolExecutionPolicyForAction("git_push").defaultPolicy, "deny");
+  assert.equal(toolExecutionPolicyForAction("codex_desktop_resume").executionLane, "serial_mutation");
 
   const batches = planToolExecutionBatches([
     { id: "read-1", actionKind: "read_status" },
     { id: "read-2", actionKind: "workspace_read" },
+    { id: "desktop-resume", actionKind: "codex_desktop_resume" },
+    { id: "desktop-stop", actionKind: "codex_desktop_stop" },
     { id: "write-1", actionKind: "workspace_write" },
     { id: "verify-1", actionKind: "verification_run" },
+    { id: "desktop-new-task", actionKind: "codex_desktop_new_task" },
     { id: "push-1", actionKind: "git_push" }
   ]);
 
   assert.deepEqual(batches.map((batch) => `${batch.mode}:${batch.calls.map((call) => call.id).join(",")}`), [
     "parallel:read-1,read-2",
+    "serial:desktop-resume",
+    "serial:desktop-stop",
     "serial:write-1",
     "parallel:verify-1",
+    "serial:desktop-new-task",
     "serial:push-1"
   ]);
 });
@@ -294,6 +304,7 @@ test("Codex Desktop adapter parses session_index and session files as sanitized 
     assert.equal(sessions[0]?.canResume, false);
     assert.equal(sessions[0]?.canStop, false);
     assert.match(sessions[0]?.unsupportedReason ?? "", /unsupported/i);
+    assert.equal(sessions[0]?.unsupportedReasonCode, CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE);
     assert.doesNotMatch(JSON.stringify(sessions), /RAW_PROMPT_SECRET/);
   } finally {
     await rm(codexHome, { recursive: true, force: true });
@@ -382,12 +393,12 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
 
     adapter = new CodexDesktopStateAdapter({
       codexHome,
-      env: {
-        ...process.env,
-        HAPPYTG_CODEX_DESKTOP_CONTROL: "app-server"
-      },
-      appServerCommand: harness.binaryPath,
-      appServerArgs: harness.binaryArgs
+      controlContract: createCodexDesktopAppServerControlContract({
+        env: process.env,
+        codexHome,
+        command: harness.binaryPath,
+        args: harness.binaryArgs
+      })
     });
     const sessions = await adapter.listSessions();
 
@@ -411,6 +422,38 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
     assert.equal(created.task?.status, "running");
   } finally {
     adapter?.dispose();
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("Codex Desktop default adapter keeps experimental app-server control unsupported", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-default-unsupported-"));
+  try {
+    const codexHome = path.join(tempDir, "codex-home");
+    await mkdir(codexHome, { recursive: true });
+    await writeFile(
+      path.join(codexHome, "session_index.jsonl"),
+      `${JSON.stringify({ id: "session-1", thread_name: "Desktop default unsupported", updated_at: "2026-05-03T08:00:00.000Z" })}\n`,
+      "utf8"
+    );
+
+    const adapter = new CodexDesktopStateAdapter({
+      codexHome,
+      env: {
+        ...process.env,
+        HAPPYTG_CODEX_DESKTOP_CONTROL: "app-server"
+      }
+    });
+    const sessions = await adapter.listSessions();
+
+    assert.equal(adapter.canCreateTask(), false);
+    assert.equal(adapter.controlUnsupportedReasonCode(), CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE);
+    assert.equal(sessions[0]?.canResume, false);
+    assert.equal(sessions[0]?.canStop, false);
+    assert.equal(sessions[0]?.canCreateTask, false);
+    assert.equal(sessions[0]?.unsupportedReasonCode, CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE);
+    assert.match(sessions[0]?.unsupportedReason ?? "", /experimental/i);
+  } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
 });

@@ -94,6 +94,7 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
         json(res, error.statusCode, {
           error: error.message,
           reason: error.reason,
+          reasonCode: error.reasonCode,
           source: "codex-desktop"
         });
         return;

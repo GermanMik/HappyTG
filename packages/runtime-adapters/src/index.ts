@@ -114,9 +114,9 @@ const ACTION_TOOL_CATEGORIES: Readonly<Record<ActionKind, ToolCategory>> = {
   bootstrap_config_edit: "shell_network_system_sensitive",
   daemon_pair: "shell_network_system_sensitive",
   git_push: "deploy_publish_external_side_effect",
-  codex_desktop_resume: "bounded_compute",
-  codex_desktop_stop: "bounded_compute",
-  codex_desktop_new_task: "bounded_compute"
+  codex_desktop_resume: "shell_network_system_sensitive",
+  codex_desktop_stop: "shell_network_system_sensitive",
+  codex_desktop_new_task: "shell_network_system_sensitive"
 };
 
 export const TOOL_EXECUTION_CATEGORY_POLICIES: Readonly<Record<ToolCategory, ToolExecutionCategoryPolicy>> = {

@@ -672,6 +672,7 @@ export interface CodexDesktopSession {
   canStop: boolean;
   canCreateTask?: boolean;
   unsupportedReason?: string;
+  unsupportedReasonCode?: string;
 }
 
 export interface CodexDesktopControlResult {
@@ -819,6 +820,7 @@ export interface MiniAppSessionCard {
   canStop?: boolean;
   canCreateTask?: boolean;
   unsupportedReason?: string;
+  unsupportedReasonCode?: string;
 }
 
 export interface MiniAppProjectCard {

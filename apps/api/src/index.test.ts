@@ -299,18 +299,19 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
             source: "codex-desktop",
             canResume: false,
             canStop: false,
-            unsupportedReason: "contract missing"
+            unsupportedReason: "contract missing",
+            unsupportedReasonCode: "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
           }
         ]
       };
     },
     async resumeCodexDesktopSession(userId: string, sessionId: string) {
       calls.push({ kind: "resume", userId, sessionId });
-      throw new CodexDesktopControlError(501, "contract missing");
+      throw new CodexDesktopControlError(501, "contract missing", "contract missing", "CODEX_DESKTOP_CONTROL_UNSUPPORTED");
     },
     async stopCodexDesktopSession(userId: string, sessionId: string) {
       calls.push({ kind: "stop", userId, sessionId });
-      throw new CodexDesktopControlError(501, "contract missing");
+      throw new CodexDesktopControlError(501, "contract missing", "contract missing", "CODEX_DESKTOP_CONTROL_UNSUPPORTED");
     },
     async createCodexDesktopTask(body: { userId: string; prompt: string; projectPath?: string }) {
       calls.push({ kind: "new-task", userId: body.userId, body });
@@ -348,10 +349,11 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
         authorization: "Bearer mas_token"
       }
     });
-    const sessionsPayload = await sessions.json() as { sessions: Array<{ source: string; unsupportedReason?: string }> };
+    const sessionsPayload = await sessions.json() as { sessions: Array<{ source: string; unsupportedReason?: string; unsupportedReasonCode?: string }> };
     assert.equal(sessions.status, 200);
     assert.equal(sessionsPayload.sessions[0]?.source, "codex-desktop");
     assert.equal(sessionsPayload.sessions[0]?.unsupportedReason, "contract missing");
+    assert.equal(sessionsPayload.sessions[0]?.unsupportedReasonCode, "CODEX_DESKTOP_CONTROL_UNSUPPORTED");
 
     const unsupported = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/sessions/cds_1/resume`, {
       method: "POST",
@@ -360,10 +362,11 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
       },
       body: JSON.stringify({ userId: "usr_query" })
     });
-    const unsupportedPayload = await unsupported.json() as { source: string; reason: string };
+    const unsupportedPayload = await unsupported.json() as { source: string; reason: string; reasonCode: string };
     assert.equal(unsupported.status, 501);
     assert.equal(unsupportedPayload.source, "codex-desktop");
     assert.equal(unsupportedPayload.reason, "contract missing");
+    assert.equal(unsupportedPayload.reasonCode, "CODEX_DESKTOP_CONTROL_UNSUPPORTED");
 
     const created = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/tasks`, {
       method: "POST",

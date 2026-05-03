@@ -1,0 +1,30 @@
+FAIL for proof-bundle completion; no production-code blocker found.
+
+Finding:
+- Proof metadata was stale/incomplete:
+  - verdict.json still had pass=false and said fresh verification was running.
+  - evidence.json still had status=build.
+  - problems.md still listed missing raw captures and verifier review as open.
+
+Verified OK:
+- spec.md is frozen.
+- Required bundle files and raw outputs exist: lint.txt, typecheck.txt, test-unit.txt, test-integration.txt, doctor.txt, verify.txt.
+- Codex CLI/Desktop contract evidence is grounded in raw help.
+- codex app-server and generated bindings are experimental.
+- Desktop control is unsupported by default.
+- Desktop Stop is not implemented through process/window/lockfile workaround.
+- API errors expose reasonCode and source.
+- Policy evaluation precedes Desktop approval/control handling.
+- Injected Desktop mutations serialize through the API service queue.
+- Bot and Mini App expose Desktop/CLI discriminators and unsupported reasons.
+
+Verifier targeted tests:
+- pnpm --filter @happytg/runtime-adapters test: passed, 22/22.
+- pnpm --filter @happytg/api test: passed, 25/25.
+- pnpm --filter @happytg/bot test: passed, 49/49.
+- pnpm --filter @happytg/miniapp test: passed, 17/17.
+
+Residual risks:
+- Desktop mutating app-server remains experimental and correctly unsupported by default.
+- Raw doctor/verify evidence reports Codex websocket 403 fallback to HTTP.
+- Verifier inspected full required command raw evidence instead of rerunning full root commands.

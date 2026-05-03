@@ -1,0 +1,3 @@
+# command: codex app-server --help
+Error: stdin is not a terminal
+# exit: 1

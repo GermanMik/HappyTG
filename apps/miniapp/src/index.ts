@@ -1263,8 +1263,14 @@ function desktopSessionCard(session: CodexDesktopSession): MiniAppSessionCard {
     canResume: session.canResume,
     canStop: session.canStop,
     canCreateTask: session.canCreateTask,
-    unsupportedReason: session.unsupportedReason
+    unsupportedReason: session.unsupportedReason,
+    unsupportedReasonCode: session.unsupportedReasonCode
   };
+}
+
+function desktopUnsupportedReason(session: Pick<CodexDesktopSession, "unsupportedReason" | "unsupportedReasonCode">): string {
+  const reason = session.unsupportedReason ?? "Stable Codex Desktop control contract is unavailable.";
+  return session.unsupportedReasonCode ? `[${session.unsupportedReasonCode}] ${reason}` : reason;
 }
 
 function renderSourceSwitcher(activeSource: string): string {
@@ -1293,7 +1299,7 @@ function matchesCodexSearch(card: MiniAppSessionCard, query: string): boolean {
 }
 
 function renderDesktopActions(session: CodexDesktopSession): string {
-  const reason = session.unsupportedReason ?? "Stable Codex Desktop control contract is unavailable.";
+  const reason = desktopUnsupportedReason(session);
   return `<div class="actions">
     ${session.canResume ? `<button class="button button-primary" type="button" data-desktop-action="resume" data-session-id="${escapeHtml(session.id)}">Resume</button>` : disabledButton("Resume", reason)}
     ${session.canStop ? `<button class="button button-danger" type="button" data-desktop-action="stop" data-session-id="${escapeHtml(session.id)}">Stop</button>` : disabledButton("Stop", reason)}
@@ -1324,7 +1330,8 @@ function renderCodexPanel(input: {
     .filter((card) => !input.project || input.project === "all" || card.repoName === input.project || card.projectPath === input.project)
     .filter((card) => matchesCodexSearch(card, query))
     .sort((left, right) => right.lastUpdatedAt.localeCompare(left.lastUpdatedAt));
-  const desktopReason = input.desktopSessions.find((session) => session.unsupportedReason)?.unsupportedReason;
+  const desktopReasonSession = input.desktopSessions.find((session) => session.unsupportedReason);
+  const desktopReason = desktopReasonSession ? desktopUnsupportedReason(desktopReasonSession) : undefined;
 
   return `
     <section class="panel hero">
@@ -1377,7 +1384,7 @@ function renderDesktopSessionDetail(session: CodexDesktopSession): string {
       <div class="kv-item"><div class="eyebrow">Updated</div><strong>${escapeHtml(session.updatedAt)}</strong></div>
       <div class="kv-item"><div class="eyebrow">Contract</div><strong>${session.canResume || session.canStop || session.canCreateTask ? "partial" : "unsupported"}</strong></div>
     </section>
-    ${session.unsupportedReason ? `<section class="notice notice-warn">${escapeHtml(session.unsupportedReason)}</section>` : ""}
+    ${session.unsupportedReason ? `<section class="notice notice-warn">${escapeHtml(desktopUnsupportedReason(session))}</section>` : ""}
   `;
 }
 
@@ -1401,7 +1408,8 @@ function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?:
   const desktopProjects = desktop?.projects ?? [];
   const desktopCanCreate = Boolean(desktop?.sessions.some((session) => session.canCreateTask));
   const selectedSource = selected?.source === "codex-desktop" || (projects.length === 0 && desktopCanCreate) ? "codex-desktop" : "codex-cli";
-  const desktopReason = desktop?.sessions.find((session) => session.unsupportedReason)?.unsupportedReason ?? "Stable Codex Desktop New Task contract is unavailable.";
+  const desktopReasonSession = desktop?.sessions.find((session) => session.unsupportedReason);
+  const desktopReason = desktopReasonSession ? desktopUnsupportedReason(desktopReasonSession) : "Stable Codex Desktop New Task contract is unavailable.";
   const options = projects.map((project) => `<option value="${escapeHtml(project.id)}" data-host-id="${escapeHtml(project.hostId)}"${project.id === selectedProject?.id ? " selected" : ""}>${escapeHtml(project.repoName)} · ${escapeHtml(project.hostLabel ?? "host n/a")}</option>`).join("");
   const selectedDesktopProjectId = selected?.projectId ?? desktopProjects[0]?.id;
   const desktopOptions = desktopProjects.map((project) => `<option value="${escapeHtml(project.id)}" data-project-path="${escapeHtml(project.path)}"${project.id === selectedDesktopProjectId ? " selected" : ""}>${escapeHtml(project.label)} · ${escapeHtml(project.path)}</option>`).join("");

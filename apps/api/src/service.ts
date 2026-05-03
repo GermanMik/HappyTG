@@ -5,7 +5,13 @@ import { readFile } from "node:fs/promises";
 import { createApprovalRequest, resolveApprovalRequestIdempotent } from "../../../packages/approval-engine/src/index.js";
 import { createDefaultPolicies, evaluatePolicies } from "../../../packages/policy-engine/src/index.js";
 import { advanceTaskPhase, initTaskBundle, recordTaskApproval, validateTaskBundle } from "../../../packages/repo-proof/src/index.js";
-import { CodexDesktopControlUnavailableError, defaultCodexDesktopStateAdapter, type CodexDesktopStateAdapter } from "../../../packages/runtime-adapters/src/index.js";
+import {
+  CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE,
+  CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE,
+  CodexDesktopControlUnavailableError,
+  defaultCodexDesktopStateAdapter,
+  type CodexDesktopStateAdapter
+} from "../../../packages/runtime-adapters/src/index.js";
 import { canTransitionSession, nextResumeState, transitionSession } from "../../../packages/session-engine/src/index.js";
 import {
   makeLaunchGrantId,
@@ -419,11 +425,18 @@ const defaultRepoProofOperations: RepoProofOperations = {
   advanceTaskPhase
 };
 
+const CODEX_DESKTOP_POLICY_DENIED_REASON_CODE = "CODEX_DESKTOP_POLICY_DENIED";
+const CODEX_DESKTOP_APPROVAL_REQUIRED_REASON_CODE = "CODEX_DESKTOP_APPROVAL_REQUIRED_UNSUPPORTED";
+const CODEX_DESKTOP_SESSION_NOT_FOUND_REASON_CODE = "CODEX_DESKTOP_SESSION_NOT_FOUND";
+const CODEX_DESKTOP_USER_NOT_FOUND_REASON_CODE = "CODEX_DESKTOP_USER_NOT_FOUND";
+const CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE = "CODEX_DESKTOP_CONTROL_FAILED";
+
 export class CodexDesktopControlError extends Error {
   constructor(
     readonly statusCode: 404 | 409 | 501 | 502,
     message: string,
-    readonly reason = message
+    readonly reason = message,
+    readonly reasonCode = CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE
   ) {
     super(message);
     this.name = "CodexDesktopControlError";
@@ -431,11 +444,29 @@ export class CodexDesktopControlError extends Error {
 }
 
 export class HappyTGControlPlaneService {
+  private codexDesktopMutationTail: Promise<void> = Promise.resolve();
+
   constructor(
     private readonly store: FileStateStore = new FileStateStore(),
     private readonly repoProof: RepoProofOperations = defaultRepoProofOperations,
     private readonly codexDesktop: CodexDesktopStateAdapter = defaultCodexDesktopStateAdapter
   ) {}
+
+  private async runCodexDesktopMutation<T>(operation: () => Promise<T>): Promise<T> {
+    const previous = this.codexDesktopMutationTail.catch(() => undefined);
+    let releaseCurrent!: () => void;
+    const current = new Promise<void>((resolve) => {
+      releaseCurrent = resolve;
+    });
+    this.codexDesktopMutationTail = previous.then(() => current);
+
+    await previous;
+    try {
+      return await operation();
+    } finally {
+      releaseCurrent();
+    }
+  }
 
   async createMiniAppLaunchGrant(input: CreateMiniAppLaunchGrantRequest): Promise<CreateMiniAppLaunchGrantResponse> {
     return this.store.update((store) => {
@@ -671,7 +702,7 @@ export class HappyTGControlPlaneService {
   private assertKnownUser(store: HappyTGStore, userId: string): User {
     const user = store.users.find((item) => item.id === userId && item.status === "active");
     if (!user) {
-      throw new CodexDesktopControlError(404, "User not found for Codex Desktop projection");
+      throw new CodexDesktopControlError(404, "User not found for Codex Desktop projection", "User not found for Codex Desktop projection", CODEX_DESKTOP_USER_NOT_FOUND_REASON_CODE);
     }
 
     return user;
@@ -737,17 +768,24 @@ export class HappyTGControlPlaneService {
       if (policyDecision.outcome === "deny") {
         appendAudit(store, "system", "policy", `${input.auditAction}.denied`, input.targetRef, {
           userId: input.userId,
-          reason: policyDecision.reason
+          reason: policyDecision.reason,
+          reasonCode: CODEX_DESKTOP_POLICY_DENIED_REASON_CODE
         });
-        throw new CodexDesktopControlError(409, policyDecision.reason);
+        throw new CodexDesktopControlError(409, policyDecision.reason, policyDecision.reason, CODEX_DESKTOP_POLICY_DENIED_REASON_CODE);
       }
 
       if (policyDecision.outcome === "require_approval") {
         appendAudit(store, "system", "policy", `${input.auditAction}.approval_required`, input.targetRef, {
           userId: input.userId,
-          reason: policyDecision.reason
+          reason: policyDecision.reason,
+          reasonCode: CODEX_DESKTOP_APPROVAL_REQUIRED_REASON_CODE
         });
-        throw new CodexDesktopControlError(409, "Codex Desktop action requires approval, but no stable Desktop approval control contract is available.");
+        throw new CodexDesktopControlError(
+          409,
+          "Codex Desktop action requires approval, but no stable Desktop approval control contract is available.",
+          "Codex Desktop action requires approval, but no stable Desktop approval control contract is available.",
+          CODEX_DESKTOP_APPROVAL_REQUIRED_REASON_CODE
+        );
       }
     });
   }
@@ -761,7 +799,7 @@ export class HappyTGControlPlaneService {
   async resumeCodexDesktopSession(userId: string, sessionId: string): Promise<CodexDesktopControlResult> {
     const session = await this.codexDesktop.getSession(sessionId);
     if (!session) {
-      throw new CodexDesktopControlError(404, "Codex Desktop session not found");
+      throw new CodexDesktopControlError(404, "Codex Desktop session not found", "Codex Desktop session not found", CODEX_DESKTOP_SESSION_NOT_FOUND_REASON_CODE);
     }
 
     await this.authorizeCodexDesktopAction({
@@ -774,25 +812,29 @@ export class HappyTGControlPlaneService {
 
     if (!session.canResume) {
       const reason = session.unsupportedReason ?? this.codexDesktop.controlUnsupportedReason();
-      await this.auditCodexDesktopResult(userId, "codex_desktop.resume.unsupported", session.id, { reason });
-      throw new CodexDesktopControlError(501, reason);
+      const reasonCode = session.unsupportedReasonCode ?? this.codexDesktop.controlUnsupportedReasonCode();
+      await this.auditCodexDesktopResult(userId, "codex_desktop.resume.unsupported", session.id, { reason, reasonCode });
+      throw new CodexDesktopControlError(501, reason, reason, reasonCode);
     }
 
     try {
-      const result = await this.codexDesktop.resumeSession(session);
-      await this.auditCodexDesktopResult(userId, "codex_desktop.resume.completed", session.id, { ok: result.ok });
-      return result;
+      return await this.runCodexDesktopMutation(async () => {
+        const result = await this.codexDesktop.resumeSession(session);
+        await this.auditCodexDesktopResult(userId, "codex_desktop.resume.completed", session.id, { ok: result.ok });
+        return result;
+      });
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Codex Desktop resume failed.";
-      await this.auditCodexDesktopResult(userId, "codex_desktop.resume.failed", session.id, { reason });
-      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason);
+      const reasonCode = error instanceof CodexDesktopControlUnavailableError ? CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE : CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE;
+      await this.auditCodexDesktopResult(userId, "codex_desktop.resume.failed", session.id, { reason, reasonCode });
+      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason, reason, reasonCode);
     }
   }
 
   async stopCodexDesktopSession(userId: string, sessionId: string): Promise<CodexDesktopControlResult> {
     const session = await this.codexDesktop.getSession(sessionId);
     if (!session) {
-      throw new CodexDesktopControlError(404, "Codex Desktop session not found");
+      throw new CodexDesktopControlError(404, "Codex Desktop session not found", "Codex Desktop session not found", CODEX_DESKTOP_SESSION_NOT_FOUND_REASON_CODE);
     }
 
     await this.authorizeCodexDesktopAction({
@@ -805,18 +847,22 @@ export class HappyTGControlPlaneService {
 
     if (!session.canStop) {
       const reason = session.unsupportedReason ?? this.codexDesktop.controlUnsupportedReason();
-      await this.auditCodexDesktopResult(userId, "codex_desktop.stop.unsupported", session.id, { reason });
-      throw new CodexDesktopControlError(501, reason);
+      const reasonCode = session.unsupportedReasonCode ?? this.codexDesktop.controlUnsupportedReasonCode();
+      await this.auditCodexDesktopResult(userId, "codex_desktop.stop.unsupported", session.id, { reason, reasonCode });
+      throw new CodexDesktopControlError(501, reason, reason, reasonCode);
     }
 
     try {
-      const result = await this.codexDesktop.stopSession(session);
-      await this.auditCodexDesktopResult(userId, "codex_desktop.stop.completed", session.id, { ok: result.ok });
-      return result;
+      return await this.runCodexDesktopMutation(async () => {
+        const result = await this.codexDesktop.stopSession(session);
+        await this.auditCodexDesktopResult(userId, "codex_desktop.stop.completed", session.id, { ok: result.ok });
+        return result;
+      });
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Codex Desktop stop failed.";
-      await this.auditCodexDesktopResult(userId, "codex_desktop.stop.failed", session.id, { reason });
-      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason);
+      const reasonCode = error instanceof CodexDesktopControlUnavailableError ? CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE : CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE;
+      await this.auditCodexDesktopResult(userId, "codex_desktop.stop.failed", session.id, { reason, reasonCode });
+      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason, reason, reasonCode);
     }
   }
 
@@ -835,18 +881,22 @@ export class HappyTGControlPlaneService {
 
     if (!this.codexDesktop.canCreateTask()) {
       const reason = this.codexDesktop.controlUnsupportedReason();
-      await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.unsupported", input.projectId ?? input.projectPath ?? "codex-desktop", { reason });
-      throw new CodexDesktopControlError(501, reason);
+      const reasonCode = this.codexDesktop.controlUnsupportedReasonCode() ?? CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE;
+      await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.unsupported", input.projectId ?? input.projectPath ?? "codex-desktop", { reason, reasonCode });
+      throw new CodexDesktopControlError(501, reason, reason, reasonCode);
     }
 
     try {
-      const result = await this.codexDesktop.createTask(input);
-      await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.completed", result.task?.id ?? "codex-desktop", { ok: result.ok });
-      return result;
+      return await this.runCodexDesktopMutation(async () => {
+        const result = await this.codexDesktop.createTask(input);
+        await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.completed", result.task?.id ?? "codex-desktop", { ok: result.ok });
+        return result;
+      });
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Codex Desktop task creation failed.";
-      await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.failed", input.projectId ?? input.projectPath ?? "codex-desktop", { reason });
-      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason);
+      const reasonCode = error instanceof CodexDesktopControlUnavailableError ? CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE : CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE;
+      await this.auditCodexDesktopResult(input.userId, "codex_desktop.new_task.failed", input.projectId ?? input.projectPath ?? "codex-desktop", { reason, reasonCode });
+      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason, reason, reasonCode);
     }
   }
 

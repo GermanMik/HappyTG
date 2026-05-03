@@ -1,0 +1,2 @@
+# command: cmd /c codex app-server generate-ts --experimental --out .agent\tasks\HTG-2026-05-03-codex-vision-control-repair\raw\app-server-ts
+# exit: 0
