@@ -1,0 +1,56 @@
+{
+  "taskId": "HTG-2026-05-02-installer-warnings-repair",
+  "status": "completed_with_external_warnings",
+  "changedFiles": [
+    "C:/Develop/Projects/BaseDeploy/caddy/Caddyfile",
+    "C:/Develop/Projects/BaseDeploy/docs/CADDY_SETUP.md",
+    "C:/Develop/Projects/BaseDeploy/docs/happytg-caddy-identity-2026-05-02.md",
+    "C:/Develop/Projects/HappyTG/docs/self-hosting.md",
+    "C:/Develop/Projects/HappyTG/docs/troubleshooting.md"
+  ],
+  "probes": {
+    "local443": {
+      "url": "https://happytg.gerta.crazedns.ru/miniapp",
+      "forcedResolve": "happytg.gerta.crazedns.ru:443:127.0.0.1",
+      "http": 200,
+      "identity": "HappyTG"
+    },
+    "local8443": {
+      "url": "https://happytg.gerta.crazedns.ru:8443/miniapp",
+      "forcedResolve": "happytg.gerta.crazedns.ru:8443:127.0.0.1",
+      "http": 200,
+      "identity": "HappyTG"
+    },
+    "fallback8443Host": {
+      "url": "https://127.0.0.1:8443/miniapp",
+      "hostHeader": "happytg.gerta.crazedns.ru",
+      "http": 200,
+      "identity": "HappyTG"
+    },
+    "public": {
+      "url": "https://happytg.gerta.crazedns.ru/miniapp",
+      "http": 200,
+      "identity": "HappyTG"
+    },
+    "scheduledTaskAfterDelete": {
+      "command": "schtasks.exe /Query /TN \"HappyTG Host Daemon\" /FO LIST /V",
+      "exitCode": 1,
+      "result": "not_found"
+    }
+  },
+  "commands": {
+    "caddyValidate": 0,
+    "caddyReload": 0,
+    "telegramMenuDryRun": 0,
+    "happytgVerify": 0,
+    "build": 0,
+    "lint": 0,
+    "typecheck": 0,
+    "test": 0,
+    "taskValidate": 0,
+    "scheduledTaskQueryAfterDelete": 1
+  },
+  "remainingWarnings": [
+    "Codex Responses websocket returned 403 Forbidden, then Codex CLI fell back to HTTP."
+  ]
+}
