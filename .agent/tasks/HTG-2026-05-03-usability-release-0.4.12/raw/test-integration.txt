@@ -1,0 +1,2 @@
+No separate integration command is defined for this release metadata task.
+`pnpm test` was run as the repo-standard test command and includes the existing integration-style suites.

@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-05-03-usability-release-0.4.12",
+  "phase": "evidence",
+  "verdict": "PASS_PENDING_PR_CI_RELEASE",
+  "blockingFindings": [],
+  "residualRisks": [
+    "doctor/verify WARN for Codex websocket fallback and already-running services",
+    "PR CI and GitHub Release publication happen after this proof-bundle commit"
+  ]
+}

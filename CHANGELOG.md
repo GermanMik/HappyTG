@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.12
+
+### Changed
+
+- Released the proof-backed Mini App and Telegram Bot usability/design pass.
+- Mini App dashboard and session cards now surface decision-first next actions, localized attention labels, and clearer approval affordances.
+- Telegram Bot menu and active-session messages now include concise next-action hints while keeping detail in the Mini App.
+
+### Verification
+
+- Release validation covers workspace version metadata, release notes, proof-bundle evidence, browser screenshot evidence, repo checks, and GitHub CI.
+
 ## v0.4.11
 
 ### Added
