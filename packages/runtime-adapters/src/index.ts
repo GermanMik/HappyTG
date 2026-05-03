@@ -210,6 +210,7 @@ export function planToolExecutionBatches(calls: PlannedToolCall[]): ToolExecutio
 
 const BENIGN_CODEX_SMOKE_WARNING_PATTERNS = [
   /codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit/i,
+  /codex_models_manager::manager: failed to refresh available models: timeout waiting for child process to exit/i,
   /codex_state::runtime: failed to remove legacy logs db file .* \(os error 32\)/i,
   /codex_state::runtime: failed to open state db .*migration .*missing in the resolved migrations/i,
   /codex_core::state_db: failed to initialize state runtime .*migration .*missing in the resolved migrations/i,

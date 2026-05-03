@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.13
+
+### Fixed
+
+- `pnpm happytg doctor` and `pnpm happytg verify` no longer report a warning when Codex successfully returns the smoke `OK` reply after falling back from Responses websocket 403 to HTTP.
+- Codex readiness smoke checks now run from a neutral directory so project/global instructions do not turn a successful smoke probe into noisy tool-policy diagnostics.
+- Already-running HappyTG services are now presented as reuse guidance instead of a findings-table condition.
+
+### Verification
+
+- Release validation covers workspace version metadata, doctor/verify PASS output, the doctor warning cleanup proof bundle, repo checks, and release metadata validation.
+
 ## v0.4.12
 
 ### Changed
