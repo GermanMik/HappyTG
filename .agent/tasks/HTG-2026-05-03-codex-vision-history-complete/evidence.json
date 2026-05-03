@@ -1,0 +1,130 @@
+{
+  "taskId": "HTG-2026-05-03-codex-vision-history-complete",
+  "branch": "codex/happytg-codex-vision-history-complete",
+  "status": "verified",
+  "specFrozen": true,
+  "memory": {
+    "contextRetrieved": true,
+    "searchQuery": "HappyTG Codex vision control transcripts desktop cli 0.4.10",
+    "detailsFetched": [
+      "7fd5cc96-03b"
+    ]
+  },
+  "contracts": {
+    "codexCli": {
+      "startNewTask": {
+        "stableContractExists": true,
+        "invocation": "codex exec",
+        "evidence": "raw/codex-contracts.txt"
+      },
+      "resume": {
+        "stableContractExists": true,
+        "invocation": "codex resume",
+        "evidence": "raw/codex-contracts.txt",
+        "note": "CLI interactive resume remains separate from Desktop control."
+      }
+    },
+    "codexDesktop": {
+      "visibility": {
+        "stableReadContractExists": true,
+        "contract": "Read-only local Codex Desktop state JSON/JSONL projection through CodexDesktopStateAdapter.",
+        "evidence": [
+          "packages/runtime-adapters/src/codex-desktop.ts",
+          "packages/runtime-adapters/src/index.test.ts",
+          "apps/api/src/service.test.ts"
+        ]
+      },
+      "resume": {
+        "stableMutatingContractExists": false,
+        "reasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+      },
+      "stop": {
+        "stableMutatingContractExists": false,
+        "reasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED",
+        "forbiddenWorkarounds": [
+          "process kill",
+          "window close",
+          "lock-file deletion",
+          "direct Desktop file mutation"
+        ]
+      },
+      "newTask": {
+        "stableMutatingContractExists": false,
+        "reasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+      }
+    }
+  },
+  "implementation": {
+    "api": [
+      "GET /api/v1/codex-desktop/sessions/:id"
+    ],
+    "miniApp": [
+      "Desktop session detail renders bounded sanitized history."
+    ],
+    "bot": [
+      "Desktop session card points to Mini App history without transcript dump."
+    ],
+    "runtime": [
+      "CodexDesktopStateAdapter.getSessionDetail(sessionId)"
+    ],
+    "testHarness": [
+      "Fixed apps/api transient handoff test cleanup race exposed by CI run 25275659748."
+    ]
+  },
+  "verification": {
+    "build": {
+      "command": "pnpm build",
+      "raw": "raw/build.txt",
+      "passed": true
+    },
+    "lint": {
+      "command": "pnpm lint",
+      "raw": "raw/lint.txt",
+      "passed": true
+    },
+    "typecheck": {
+      "command": "pnpm typecheck",
+      "raw": "raw/typecheck.txt",
+      "passed": true
+    },
+    "testUnit": {
+      "command": "pnpm test",
+      "raw": "raw/test-unit.txt",
+      "passed": true
+    },
+    "testIntegration": {
+      "command": "pnpm --filter @happytg/api test",
+      "raw": "raw/test-integration.txt",
+      "passed": true
+    },
+    "doctor": {
+      "command": "pnpm happytg doctor",
+      "raw": "raw/doctor.txt",
+      "passed": true,
+      "warnings": [
+        "Codex Responses websocket returned 403 Forbidden, then CLI fell back to HTTP.",
+        "Existing HappyTG services already running on 3007, 4000, 4100."
+      ]
+    },
+    "verify": {
+      "command": "pnpm happytg verify",
+      "raw": "raw/verify.txt",
+      "passed": true,
+      "warnings": [
+        "Codex Responses websocket returned 403 Forbidden, then CLI fell back to HTTP.",
+        "Existing HappyTG services already running on 3007, 4000, 4100."
+      ]
+    },
+    "taskValidate": {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-05-03-codex-vision-history-complete",
+      "raw": "raw/task-validate.txt",
+      "passed": true
+    }
+  },
+  "freshVerifier": {
+    "status": "pass",
+    "raw": "raw/fresh-verifier.txt",
+    "blockingFindings": [],
+    "rerunAfterCiFix": "pass"
+  }
+}

@@ -290,11 +290,16 @@ test("Codex Desktop adapter parses session_index and session files as sanitized 
     );
     await writeFile(
       path.join(sessionDir, "session-1.jsonl"),
-      `${JSON.stringify({ timestamp: "2026-04-28T09:00:00.000Z", payload: { id: "session-1", cwd: "C:/Develop/Projects/HappyTG", content: "RAW_PROMPT_SECRET" } })}\n`,
+      [
+        JSON.stringify({ timestamp: "2026-04-28T09:00:00.000Z", payload: { id: "session-1", cwd: "C:/Develop/Projects/HappyTG", role: "user", content: "RAW_PROMPT_SECRET token=abc" } }),
+        JSON.stringify({ timestamp: "2026-04-28T09:01:00.000Z", payload: { id: "session-1", role: "assistant", content: "Safe desktop answer" } })
+      ].join("\n") + "\n",
       "utf8"
     );
 
-    const sessions = await new CodexDesktopStateAdapter({ codexHome }).listSessions();
+    const adapter = new CodexDesktopStateAdapter({ codexHome });
+    const sessions = await adapter.listSessions();
+    const detail = await adapter.getSessionDetail("session-1");
 
     assert.equal(sessions.length, 1);
     assert.equal(sessions[0]?.id, "session-1");
@@ -306,6 +311,13 @@ test("Codex Desktop adapter parses session_index and session files as sanitized 
     assert.match(sessions[0]?.unsupportedReason ?? "", /unsupported/i);
     assert.equal(sessions[0]?.unsupportedReasonCode, CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE);
     assert.doesNotMatch(JSON.stringify(sessions), /RAW_PROMPT_SECRET/);
+    assert.equal(detail?.session.source, "codex-desktop");
+    assert.equal(detail?.history.length, 2);
+    assert.equal(detail?.history[0]?.source, "codex-desktop");
+    assert.equal(detail?.history[0]?.role, "user");
+    assert.match(detail?.history[1]?.summary ?? "", /Safe desktop answer/);
+    assert.doesNotMatch(JSON.stringify(detail), /RAW_PROMPT_SECRET/);
+    assert.doesNotMatch(JSON.stringify(detail), /token=abc/);
   } finally {
     await rm(codexHome, { recursive: true, force: true });
   }

@@ -1,0 +1,34 @@
+PASS.
+
+Blocking findings: none.
+
+Verified:
+- Source-aware Desktop detail API: apps/api/src/index.ts:205, apps/api/src/service.ts:743
+- Desktop history projection is bounded/sanitized and source: "codex-desktop": packages/runtime-adapters/src/codex-desktop.ts:268, packages/runtime-adapters/src/codex-desktop.ts:1204
+- Protocol has explicit Desktop detail/history discriminator: packages/protocol/src/index.ts:678
+- Mini App renders Desktop history and keeps controls separate: apps/miniapp/src/index.ts:1321, apps/miniapp/src/index.ts:1877
+- Telegram points to Mini App instead of dumping transcript text: apps/bot/src/handlers.ts:497
+- Desktop Stop remains contract-based, no new kill/window/lock-file workaround in the diff; unsupported path still returns reasonCode/audit instead of fake success: apps/api/src/service.ts:851
+- Mutating Desktop actions still go through serialized queue after policy evaluation: apps/api/src/service.ts:456, apps/api/src/service.ts:753
+
+Raw evidence present and passing: build, lint, typecheck, test-unit, test-integration, doctor, verify, task-validate. doctor/verify keep the known websocket 403 fallback warning, not a task failure.
+
+Residual risks:
+- Desktop history is a sanitized bounded preview, not full raw transcript export.
+- JSONL output is bounded; very large Desktop JSONL files remain a performance consideration for future hardening.
+
+Rerun after CI cleanup race fix: PASS.
+
+Blocking findings: none.
+
+Verified:
+- Desktop detail/history API remains source-aware.
+- Desktop history remains bounded/sanitized and emits source: "codex-desktop".
+- Mini App renders Desktop history while unsupported controls stay disabled.
+- Bot points history inspection to Mini App instead of dumping transcript text.
+- Desktop Stop remains unsupported without stable contract; no new kill/window/lock-file workaround found in diff.
+- API startup handoff cleanup race fix is limited to test harness.
+
+Residual risks:
+- Desktop history remains a bounded sanitized preview, not full raw transcript export.
+- doctor/verify still show the known Codex websocket 403 fallback warning.

@@ -202,6 +202,14 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
 
         await codexDesktopJson(res, () => service.listCodexDesktopSessions(userId));
       }),
+      route("GET", "/api/v1/codex-desktop/sessions/:id", async ({ req, res, params, url }) => {
+        const userId = await requireCodexDesktopUserId(req, res, url);
+        if (!userId) {
+          return;
+        }
+
+        await codexDesktopJson(res, () => service.getCodexDesktopSessionDetail(userId, params.id));
+      }),
       route("POST", "/api/v1/codex-desktop/sessions/:id/resume", async ({ req, res, params, url }) => {
         const body = await readJsonBody<{ userId?: string }>(req);
         const userId = body.userId ?? await miniAppUserId(req, url);

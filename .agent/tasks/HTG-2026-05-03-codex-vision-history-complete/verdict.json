@@ -1,0 +1,47 @@
+{
+  "taskId": "HTG-2026-05-03-codex-vision-history-complete",
+  "status": "implemented",
+  "pass": true,
+  "summary": "Backend, Mini App, Bot, and tests now support bounded sanitized Codex Desktop session history while keeping Desktop control unsupported without a proven stable mutating contract.",
+  "evidence": [
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/spec.md",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/evidence.md",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/evidence.json",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/problems.md",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/build.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/lint.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/doctor.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/verify.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/task-validate.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/codex-contracts.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/fresh-verifier.txt"
+  ],
+  "unsupported": [
+    {
+      "source": "codex-desktop",
+      "actions": [
+        "resume",
+        "stop",
+        "new-task"
+      ],
+      "reasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED",
+      "reason": "No stable non-experimental Desktop mutating contract was proven."
+    },
+    {
+      "source": "codex-desktop",
+      "actions": [
+        "full-raw-transcript-export"
+      ],
+      "reason": "Only bounded sanitized read-only history preview is implemented."
+    }
+  ],
+  "risks": [
+    "Codex CLI doctor/verify emits a websocket 403 warning and falls back to HTTP in this environment.",
+    "Existing HappyTG services were already running during doctor/verify.",
+    "Desktop history is a sanitized preview and may omit fields that look secret-like or exceed configured bounds."
+  ],
+  "freshVerifier": "pass; rerun after CI cleanup race fix also pass"
+}

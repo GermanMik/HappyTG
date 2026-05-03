@@ -27,6 +27,7 @@ import type {
   CodexDesktopControlResult,
   CodexDesktopProject,
   CodexDesktopSession,
+  CodexDesktopSessionDetail,
   ClaimPairingRequest,
   CreateCodexDesktopTaskRequest,
   CreateMiniAppLaunchGrantRequest,
@@ -737,6 +738,16 @@ export class HappyTGControlPlaneService {
         sessions: []
       };
     }
+  }
+
+  async getCodexDesktopSessionDetail(userId: string, sessionId: string): Promise<CodexDesktopSessionDetail> {
+    await this.assertCodexDesktopUser(userId);
+    const detail = await this.codexDesktop.getSessionDetail(sessionId);
+    if (!detail) {
+      throw new CodexDesktopControlError(404, "Codex Desktop session not found", "Codex Desktop session not found", CODEX_DESKTOP_SESSION_NOT_FOUND_REASON_CODE);
+    }
+
+    return detail;
   }
 
   private async authorizeCodexDesktopAction(input: {

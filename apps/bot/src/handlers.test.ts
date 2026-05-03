@@ -483,6 +483,7 @@ test("codex menu separates Desktop and CLI sessions and hides unsupported Deskto
   assert.match(messages[2]?.text ?? "", /Codex Desktop projects/);
   assert.match(messages[2]?.text ?? "", /HappyTG/);
   assert.match(messages[3]?.text ?? "", /Источник: Codex Desktop/);
+  assert.match(messages[3]?.text ?? "", /История: Mini App/);
   assert.match(messages[3]?.text ?? "", /Resume: unsupported/);
   assert.match(messages[3]?.text ?? "", /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
   assert.match(messages[4]?.text ?? "", /Активные сессии/);

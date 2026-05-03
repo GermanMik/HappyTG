@@ -1,0 +1,6 @@
+warning: in the working copy of '.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/evidence.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/evidence.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/problems.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/raw/fresh-verifier.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it

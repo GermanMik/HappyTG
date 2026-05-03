@@ -675,6 +675,25 @@ export interface CodexDesktopSession {
   unsupportedReasonCode?: string;
 }
 
+export interface CodexDesktopHistoryEntry {
+  id: string;
+  sequence: number;
+  occurredAt: string;
+  kind: "message" | "event" | "turn" | "metadata" | "unknown";
+  role?: "user" | "assistant" | "system" | "tool";
+  title: string;
+  summary: string;
+  source: "codex-desktop";
+}
+
+export interface CodexDesktopSessionDetail {
+  session: CodexDesktopSession;
+  history: CodexDesktopHistoryEntry[];
+  historyTruncated: boolean;
+  historyUnsupportedReason?: string;
+  historyUnsupportedReasonCode?: string;
+}
+
 export interface CodexDesktopControlResult {
   ok: true;
   action: "resume" | "stop" | "new-task";
