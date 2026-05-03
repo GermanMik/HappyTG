@@ -30,6 +30,8 @@ For `happytg.gerta.crazedns.ru`, use one HTTPS origin and path-based routing:
 
 The starter Caddy config is `infra/caddy/Caddyfile`.
 
+For operator-owned system Caddy, the Mini App upstream often listens at `/` on a host port such as `127.0.0.1:3007`. In that topology, route public `/miniapp` with `handle_path /miniapp*` so Caddy strips the prefix before proxying. If Caddy proxies `/miniapp` without stripping it, the upstream can return 404; if the HappyTG hostname falls through to another site block, Telegram menu dry-run can report HTTP 200 without HappyTG identity. Treat that as a broken route, not a successful public preflight.
+
 If upstream public `443` maps to Caddy:
 
 ```env
@@ -102,7 +104,7 @@ Leave `HAPPYTG_BROWSER_API_URL` empty for the public Telegram Mini App path. Whe
    - worker health through Compose service health
 5. Confirm Prometheus can scrape API `/metrics` and Grafana can see the Prometheus datasource.
 6. Configure Telegram webhook delivery against `https://<domain>/telegram/webhook`.
-7. Configure the persistent Telegram menu button after the public route passes preflight:
+7. Configure the persistent Telegram menu button after the public route passes preflight. The preflight must return the HappyTG Mini App identity, not just HTTP 200 from any reverse-proxy fallback:
 
    ```bash
    pnpm happytg telegram menu set --dry-run

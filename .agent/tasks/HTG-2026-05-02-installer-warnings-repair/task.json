@@ -1,0 +1,31 @@
+{
+  "id": "HTG-2026-05-02-installer-warnings-repair",
+  "sessionId": "ses_local_installer_warning_repair",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-05-02-installer-warnings-repair",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Repair installer warnings after local install",
+  "status": "complete",
+  "acceptanceCriteria": [
+    "Public https://happytg.gerta.crazedns.ru/miniapp returns HTTP 200 with HappyTG Mini App identity.",
+    "pnpm happytg telegram menu set --dry-run passes without calling Telegram Bot API.",
+    "pnpm happytg verify exits 0 and reports the Caddy Mini App route as HappyTG.",
+    "pnpm lint, pnpm typecheck, pnpm test, and pnpm build pass.",
+    "Documentation records the repaired route and remaining operator warnings."
+  ],
+  "verificationState": "passed",
+  "phases": [
+    "init",
+    "freeze/spec",
+    "build",
+    "evidence",
+    "fresh verify",
+    "minimal fix",
+    "fresh verify",
+    "complete"
+  ],
+  "scope": "Local operator Caddy repair and evidence for HappyTG installer warning cleanup.",
+  "createdAt": "2026-05-02T12:20:00.000Z",
+  "updatedAt": "2026-05-02T12:29:00.000Z"
+}

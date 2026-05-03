@@ -1,0 +1,6 @@
+{
+  "taskId": "HTG-2026-05-02-installer-warnings-repair",
+  "verdict": "pass_with_external_warnings",
+  "acceptanceCriteriaSatisfied": true,
+  "summary": "HappyTG public Mini App route now returns HappyTG identity and telegram menu dry-run passes. Repo build, lint, typecheck, test, and happytg verify exit 0. The stale Windows Scheduled Task is absent after operator deletion. The only remaining warning is external Codex websocket 403 with HTTP fallback."
+}
