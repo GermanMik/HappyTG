@@ -329,8 +329,8 @@ export function renderPage(
     <title>${title}</title>
     <style>
       :root {
-        --bg: #f2f5ef;
-        --bg-accent: radial-gradient(circle at top left, rgba(21, 132, 108, 0.18), transparent 34%), radial-gradient(circle at top right, rgba(28, 93, 153, 0.12), transparent 28%), linear-gradient(180deg, #f8fbf7 0%, #eef2ee 100%);
+        --bg: #f4f6f4;
+        --bg-accent: linear-gradient(180deg, #f8fbf7 0%, #eef2ee 100%);
         --surface: rgba(255, 255, 255, 0.88);
         --surface-soft: #eef6f3;
         --surface-strong: #f5fbf8;
@@ -362,14 +362,14 @@ export function renderPage(
       .panel {
         background: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 20px;
+        border-radius: 8px;
         padding: 16px;
         margin-bottom: 14px;
         box-shadow: var(--shadow);
         backdrop-filter: blur(10px);
       }
       .hero {
-        background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 246, 243, 0.94) 55%, rgba(245, 251, 248, 0.92) 100%);
+        background: var(--surface-strong);
         border-color: rgba(13, 127, 102, 0.16);
       }
       .grid {
@@ -493,7 +493,7 @@ export function renderPage(
         gap: 12px;
         align-items: flex-start;
         padding: 12px 14px;
-        border-radius: 16px;
+        border-radius: 8px;
         border: 1px solid var(--border);
         background: #fff;
       }
@@ -523,7 +523,7 @@ export function renderPage(
       }
       .kv-item {
         padding: 12px 14px;
-        border-radius: 16px;
+        border-radius: 8px;
         border: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.82);
       }
@@ -546,7 +546,7 @@ export function renderPage(
         align-items: center;
         justify-content: center;
         padding: 10px 14px;
-        border-radius: 14px;
+        border-radius: 8px;
         border: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.95);
         color: var(--ink);
@@ -572,7 +572,7 @@ export function renderPage(
         transform: translateY(1px);
       }
       .notice {
-        border-radius: 16px;
+        border-radius: 8px;
         padding: 12px 14px;
         border: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.92);
@@ -603,7 +603,7 @@ export function renderPage(
         align-items: center;
         gap: 10px;
         padding: 10px 12px;
-        border-radius: 14px;
+        border-radius: 8px;
         border: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.84);
       }
@@ -656,7 +656,7 @@ export function renderPage(
       .empty {
         border: 1px dashed var(--border);
         background: rgba(255, 255, 255, 0.82);
-        border-radius: 16px;
+        border-radius: 8px;
         padding: 16px;
       }
       .draft-recovery {
@@ -677,7 +677,7 @@ export function renderPage(
         width: 100%;
         min-height: 46px;
         border: 1px solid var(--border);
-        border-radius: 14px;
+        border-radius: 8px;
         padding: 12px;
         font: inherit;
         background: rgba(255, 255, 255, 0.95);
@@ -1182,11 +1182,61 @@ function approvalActionButton(label: string, approval: MiniAppApprovalCard, deci
   return `<button class="button${primary ? " button-primary" : decision === "rejected" ? " button-danger" : ""}" type="button" data-approval-action data-approval-id="${escapeHtml(approval.id)}" data-decision="${decision}" data-scope="${escapeHtml(scope ?? "")}" data-nonce="${escapeHtml(approval.nonce ?? "")}">${escapeHtml(label)}</button>`;
 }
 
+function nextActionLabel(action: string | undefined): string {
+  switch (action) {
+    case undefined:
+    case "":
+      return "Открыть";
+    case "open approval":
+    case "open_approval":
+      return "Открыть approval";
+    case "open verify":
+    case "open_verify":
+      return "Открыть verify";
+    case "run_fix":
+      return "Запустить fix";
+    case "resume":
+      return "Продолжить";
+    case "open":
+      return "Открыть";
+    default:
+      return /[А-Яа-яЁё]/u.test(action) ? action : "Открыть";
+  }
+}
+
+function attentionLabel(attention: string | undefined): string | undefined {
+  switch (attention) {
+    case "approval":
+      return "Нужно подтверждение";
+    case "blocked":
+      return "Сессия остановилась";
+    case "verify":
+      return "Verify требует внимания";
+    case "unsupported":
+      return "Действие недоступно";
+    default:
+      return attention;
+  }
+}
+
 function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
+  const topAttention = dashboard.attention[0];
+  const topAttentionBlock = topAttention
+    ? `<div class="notice notice-${topAttention.severity === "danger" ? "danger" : topAttention.severity === "warn" ? "warn" : "info"}">
+        <p class="eyebrow">Следующее действие</p>
+        <strong>${escapeHtml(topAttention.title)}</strong>
+        <div class="muted">${escapeHtml(topAttention.detail)}</div>
+        <div class="actions">${linkButton(nextActionLabel(topAttention.nextAction), topAttention.href, true)}</div>
+      </div>`
+    : `<div class="notice notice-success">
+        <p class="eyebrow">Следующее действие</p>
+        <strong>Сейчас ничего не требует внимания</strong>
+        <div class="muted">Можно запустить новую задачу или открыть последние сессии.</div>
+      </div>`;
   const attention = dashboard.attention.length > 0
     ? `<ul class="status-list">${dashboard.attention.map((item) => `<li>
         <div><strong>${escapeHtml(item.title)}</strong><div class="muted">${escapeHtml(item.detail)}</div></div>
-        <div class="status-meta">${renderBadge(item.severity)}${linkButton(item.nextAction, item.href)}</div>
+        <div class="status-meta">${renderBadge(item.severity)}${linkButton(nextActionLabel(item.nextAction), item.href)}</div>
       </li>`).join("")}</ul>`
     : renderEmptyState("Сейчас ничего не требует внимания", "Активные проблемы, approvals и verify failures появятся здесь.", "Открыть sessions", "/sessions");
 
@@ -1195,6 +1245,7 @@ function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
       <p class="eyebrow">Что важно сейчас</p>
       <h1>Панель управления HappyTG</h1>
       <p class="muted">Короткий статус, быстрые действия и переход к деталям без чтения raw logs.</p>
+      ${topAttentionBlock}
       <div class="actions">
         ${linkButton("Новая задача", "/new-task", true)}
         ${linkButton("Codex", "/codex")}
@@ -1243,9 +1294,9 @@ function renderSessionCards(sessions: MiniAppSessionCard[]): string {
     <div>
       <strong><a href="${escapeHtml(session.href)}">${escapeHtml(session.title)}</a></strong>
       <div class="muted">${escapeHtml(runtimeLabel(session.runtime))} · ${escapeHtml(session.repoName ?? "repo not selected")} · ${escapeHtml(session.hostLabel ?? "host n/a")} · ${escapeHtml(session.lastUpdatedAt)}</div>
-      ${session.attention ? `<div class="muted">Needs: ${escapeHtml(session.attention)}</div>` : ""}
+      ${session.attention ? `<div class="muted">Внимание: ${escapeHtml(attentionLabel(session.attention) ?? session.attention)}</div>` : ""}
     </div>
-    <div class="status-meta">${renderBadge(session.desktopStatus ?? session.state)}${session.phase ? renderBadge(session.phase, "info") : ""}${session.verificationState ? renderBadge(session.verificationState) : ""}${linkButton(session.nextAction, session.href)}</div>
+    <div class="status-meta">${renderBadge(session.desktopStatus ?? session.state)}${session.phase ? renderBadge(session.phase, "info") : ""}${session.verificationState ? renderBadge(session.verificationState) : ""}${linkButton(nextActionLabel(session.nextAction), session.href, Boolean(session.attention))}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -1764,6 +1815,9 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       route("GET", "/health", async ({ res }) => {
         text(res, 200, "ok");
       }),
+      route("GET", "/favicon.ico", async ({ res }) => {
+        text(res, 204, "");
+      }),
       route("GET", "/ready", async ({ res }) => {
         try {
           await dependencies.fetchJson<{ ok: boolean }>("/health");
@@ -1892,7 +1946,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
 
         const detail = await fetchForRequest<{ approval: MiniAppApprovalCard; session?: MiniAppSessionCard }>(req, url, `/api/v1/miniapp/approvals/${params.id}`);
         const approvalActions = detail.approval.state === "waiting_human"
-          ? `${approvalActionButton("Разрешить один раз", detail.approval, "approved", "once", true)}${approvalActionButton("Разрешить на фазу", detail.approval, "approved", "phase")}${approvalActionButton("Отклонить", detail.approval, "rejected")}`
+          ? `${approvalActionButton("Разрешить один раз", detail.approval, "approved", "once", true)}${approvalActionButton("Разрешить на фазу", detail.approval, "approved", "phase")}${approvalActionButton("Разрешить на сессию", detail.approval, "approved", "session")}${approvalActionButton("Отклонить", detail.approval, "rejected")}`
           : "";
         const body = `<section class="panel hero">
           <p class="eyebrow">Подтверждение</p>

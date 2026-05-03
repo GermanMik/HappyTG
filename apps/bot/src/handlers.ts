@@ -384,6 +384,39 @@ function riskLabel(risk: ApprovalRequest["risk"]): string {
   }
 }
 
+function sessionAttentionFlags(session: SessionDetail, overview?: MiniAppOverview): string {
+  const task = session.task ?? overview?.tasks.find((item) => item.id === session.taskId);
+  const approval = session.approval ?? overview?.approvals.find((item) => item.id === session.approvalId);
+  return [
+    approval && isWaitingApproval(approval) ? "нужно подтверждение" : undefined,
+    task?.verificationState === "failed" || task?.verificationState === "inconclusive" ? "verify требует внимания" : undefined,
+    task?.verificationState === "stale" ? "verify устарел" : undefined,
+    session.state === "blocked" ? "сессия заблокирована" : undefined
+  ].filter(Boolean).join(", ") || "нет";
+}
+
+function menuNextAction(overview?: MiniAppOverview): string {
+  if (!overview || overview.hosts.length === 0) {
+    return "подключите host через pairing";
+  }
+  if (overview.workspaces.length === 0) {
+    return "дождитесь repo от host daemon";
+  }
+  if (overview.approvals.some(isWaitingApproval)) {
+    return "откройте approvals";
+  }
+  if (overview.sessions.some((item) => item.state === "blocked" || item.state === "failed")) {
+    return "откройте активные сессии";
+  }
+  if (overview.tasks.some((item) => item.verificationState === "failed" || item.verificationState === "inconclusive" || item.verificationState === "stale")) {
+    return "откройте reports или verify";
+  }
+  if (overview.sessions.some(isActiveSession)) {
+    return "продолжите активную сессию";
+  }
+  return "запустите новую задачу";
+}
+
 function formatMainMenuText(overview?: MiniAppOverview): string {
   const activeSessions = overview?.sessions.filter(isActiveSession).length ?? 0;
   const waitingApprovals = overview?.approvals.filter(isWaitingApproval).length ?? 0;
@@ -406,7 +439,8 @@ function formatMainMenuText(overview?: MiniAppOverview): string {
     `Ждут подтверждения: ${waitingApprovals}`,
     `Требуют внимания: ${problemSessions}`,
     `Незавершенные proof-задачи: ${unfinishedTasks}`,
-    `Последний host/repo: ${lastHost ? lastHost.label : "нет"}${lastWorkspace ? ` / ${lastWorkspace.repoName}` : ""}`
+    `Последний host/repo: ${lastHost ? lastHost.label : "нет"}${lastWorkspace ? ` / ${lastWorkspace.repoName}` : ""}`,
+    `Следующее: ${menuNextAction(overview)}.`
   ].join("\n");
 }
 
@@ -424,13 +458,7 @@ function formatSessionCard(session: SessionDetail, overview?: MiniAppOverview): 
   const host = overview?.hosts.find((item) => item.id === session.hostId);
   const workspace = overview?.workspaces.find((item) => item.id === session.workspaceId);
   const task = session.task ?? overview?.tasks.find((item) => item.id === session.taskId);
-  const approval = session.approval ?? overview?.approvals.find((item) => item.id === session.approvalId);
-  const flags = [
-    approval && isWaitingApproval(approval) ? "approval" : undefined,
-    task?.verificationState === "failed" || task?.verificationState === "inconclusive" ? "verify issue" : undefined,
-    task?.verificationState === "stale" ? "stale verify" : undefined,
-    session.state === "blocked" ? "blocked" : undefined
-  ].filter(Boolean).join(", ") || "нет";
+  const flags = sessionAttentionFlags(session, overview);
 
   return [
     `Сессия ${shortId(session.id)}`,
@@ -851,7 +879,13 @@ export function createBotHandlers(dependencies: BotDependencies) {
     const miniAppButton = telegramWebAppButton("Mini App", miniBaseUrl, "sessions");
     await dependencies.sendTelegramMessage(
       message.chat.id,
-      ["Активные сессии", ...sessions.map((session, index) => `${index + 1}. ${trimLine(session.title, 70)} - ${session.state}`)].join("\n"),
+      [
+        "Активные сессии",
+        ...sessions.map((session, index) => {
+          const flags = sessionAttentionFlags(session, overview);
+          return `${index + 1}. ${trimLine(session.title, 70)} - ${session.state}${flags === "нет" ? "" : `\n   Внимание: ${flags}`}`;
+        })
+      ].join("\n"),
       inlineKeyboard([
         ...sessions.map((session) => [
           { text: `Открыть ${shortId(session.id)}`, callback_data: `s:u:${session.id}` },
