@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.4.11
+
+### Added
+
+- Added a reusable 10-role UX optimization prompt for a future proof-backed HappyTG Mini App and Telegram Bot usability/design implementation pass.
+
+### Changed
+
+- Documented a stricter usability pass workflow that requires independent operator, mobile, first-time user, power user, accessibility, Telegram platform, safety, information architecture, visual design, and QA/release perspectives before implementation.
+
+### Verification
+
+- Release validation covers the prompt artifact, proof bundle evidence, repo checks, and release metadata validation.
+
 ## v0.4.10
 
 ### Fixed

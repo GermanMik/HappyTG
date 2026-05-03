@@ -1,0 +1,30 @@
+{
+  "taskId": "HTG-2026-05-03-ux-10-role-prompt",
+  "status": "implemented",
+  "pass": true,
+  "summary": "Added a reusable 10-role Mini App/Bot UX optimization prompt and prepared 0.4.11 release metadata.",
+  "evidence": [
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/spec.md",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/evidence.md",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/evidence.json",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/problems.md",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/build.txt",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/lint.txt",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/doctor.txt",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/verify.txt",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/release-check.txt",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/task-validate.txt",
+    ".agent/tasks/HTG-2026-05-03-ux-10-role-prompt/raw/fresh-verifier.txt",
+    "docs/prompts/happytg-ux-10-role-optimization.md",
+    "docs/releases/0.4.11.md"
+  ],
+  "risks": [
+    "This release creates the execution prompt; it does not implement the future UX redesign itself.",
+    "doctor/verify report Codex websocket 403 fallback to HTTP in this environment.",
+    "doctor/verify report existing HappyTG services already running on 3007, 4000, 4100."
+  ],
+  "freshVerifier": "pass"
+}
