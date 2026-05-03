@@ -1,0 +1,267 @@
+warning: in the working copy of 'CHANGELOG.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/bot/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/host-daemon/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/miniapp/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/worker/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/approval-engine/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/hooks/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/policy-engine/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/protocol/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/repo-proof/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/session-engine/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/shared/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/telegram-kit/package.json', LF will be replaced by CRLF the next time Git touches it
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 770e4f1..480e5ec 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,18 @@
+ 
+ ## Unreleased
+ 
++## v0.4.13
++
++### Fixed
++
++- `pnpm happytg doctor` and `pnpm happytg verify` no longer report a warning when Codex successfully returns the smoke `OK` reply after falling back from Responses websocket 403 to HTTP.
++- Codex readiness smoke checks now run from a neutral directory so project/global instructions do not turn a successful smoke probe into noisy tool-policy diagnostics.
++- Already-running HappyTG services are now presented as reuse guidance instead of a findings-table condition.
++
++### Verification
++
++- Release validation covers workspace version metadata, doctor/verify PASS output, the doctor warning cleanup proof bundle, repo checks, and release metadata validation.
++
+ ## v0.4.12
+ 
+ ### Changed
+diff --git a/apps/api/package.json b/apps/api/package.json
+index e0652ef..75e3034 100644
+--- a/apps/api/package.json
++++ b/apps/api/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/api",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/apps/bot/package.json b/apps/bot/package.json
+index 62b01ff..e2e6f12 100644
+--- a/apps/bot/package.json
++++ b/apps/bot/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/bot",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/apps/host-daemon/package.json b/apps/host-daemon/package.json
+index f846e1c..e433101 100644
+--- a/apps/host-daemon/package.json
++++ b/apps/host-daemon/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/host-daemon",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/apps/miniapp/package.json b/apps/miniapp/package.json
+index 163cc03..a70e91c 100644
+--- a/apps/miniapp/package.json
++++ b/apps/miniapp/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/miniapp",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/apps/worker/package.json b/apps/worker/package.json
+index 0a674ae..972916b 100644
+--- a/apps/worker/package.json
++++ b/apps/worker/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/worker",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/package.json b/package.json
+index d96c073..84e8bdf 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "happytg",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "packageManager": "pnpm@10.0.0",
+   "scripts": {
+diff --git a/packages/approval-engine/package.json b/packages/approval-engine/package.json
+index 47a895a..81d7015 100644
+--- a/packages/approval-engine/package.json
++++ b/packages/approval-engine/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/approval-engine",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/packages/bootstrap/package.json b/packages/bootstrap/package.json
+index 66f06fe..3bffc9f 100644
+--- a/packages/bootstrap/package.json
++++ b/packages/bootstrap/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/bootstrap",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "bin": {
+diff --git a/packages/hooks/package.json b/packages/hooks/package.json
+index da6b5d9..20b45e4 100644
+--- a/packages/hooks/package.json
++++ b/packages/hooks/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/hooks",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/packages/policy-engine/package.json b/packages/policy-engine/package.json
+index d7a559b..8024e6e 100644
+--- a/packages/policy-engine/package.json
++++ b/packages/policy-engine/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/policy-engine",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/packages/protocol/package.json b/packages/protocol/package.json
+index abd4bbd..a871412 100644
+--- a/packages/protocol/package.json
++++ b/packages/protocol/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/protocol",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/packages/repo-proof/package.json b/packages/repo-proof/package.json
+index 0625856..d78ba61 100644
+--- a/packages/repo-proof/package.json
++++ b/packages/repo-proof/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/repo-proof",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/packages/runtime-adapters/package.json b/packages/runtime-adapters/package.json
+index 7ef4a67..327e7e8 100644
+--- a/packages/runtime-adapters/package.json
++++ b/packages/runtime-adapters/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/runtime-adapters",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/packages/runtime-adapters/src/index.test.ts b/packages/runtime-adapters/src/index.test.ts
+index b661e25..4ac3806 100644
+--- a/packages/runtime-adapters/src/index.test.ts
++++ b/packages/runtime-adapters/src/index.test.ts
+@@ -769,6 +769,7 @@ test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+     "2026-04-08T14:03:06Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell",
+     "Reading additional input from stdin...",
+     "2026-04-08T14:03:06Z ERROR codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit",
++    "2026-05-03T18:19:35Z ERROR codex_models_manager::manager: failed to refresh available models: timeout waiting for child process to exit",
+     "2026-05-03T13:52:18Z WARN codex_analytics::client: failed to send events request: error sending request for url (https://chatgpt.com/backend-api/codex/analytics-events/events)",
+     "2026-05-03T13:57:41Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest(\"http/request failed: error sending request for url (https://chatgpt.com/backend-api/wham/apps)\")))",
+     "2026-05-03T14:03:08Z ERROR codex_core::tools::router: error=`\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command 'memory context --project'` rejected: blocked by policy",
+@@ -783,7 +784,7 @@ test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only
+ 
+   const classified = classifyCodexSmokeStderr(stderr);
+ 
+-  assert.equal(classified.ignoredLines.length, 17);
++  assert.equal(classified.ignoredLines.length, 18);
+   assert.deepEqual(classified.actionableLines, [
+     "2026-04-08T14:03:07Z WARN custom warning"
+   ]);
+diff --git a/packages/runtime-adapters/src/index.ts b/packages/runtime-adapters/src/index.ts
+index 7e2afdd..f06970c 100644
+--- a/packages/runtime-adapters/src/index.ts
++++ b/packages/runtime-adapters/src/index.ts
+@@ -210,6 +210,7 @@ export function planToolExecutionBatches(calls: PlannedToolCall[]): ToolExecutio
+ 
+ const BENIGN_CODEX_SMOKE_WARNING_PATTERNS = [
+   /codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit/i,
++  /codex_models_manager::manager: failed to refresh available models: timeout waiting for child process to exit/i,
+   /codex_state::runtime: failed to remove legacy logs db file .* \(os error 32\)/i,
+   /codex_state::runtime: failed to open state db .*migration .*missing in the resolved migrations/i,
+   /codex_core::state_db: failed to initialize state runtime .*migration .*missing in the resolved migrations/i,
+diff --git a/packages/session-engine/package.json b/packages/session-engine/package.json
+index 994064f..a89787f 100644
+--- a/packages/session-engine/package.json
++++ b/packages/session-engine/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/session-engine",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/packages/shared/package.json b/packages/shared/package.json
+index d5a9319..9dff630 100644
+--- a/packages/shared/package.json
++++ b/packages/shared/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/shared",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",
+diff --git a/packages/telegram-kit/package.json b/packages/telegram-kit/package.json
+index 723fbc5..5531d28 100644
+--- a/packages/telegram-kit/package.json
++++ b/packages/telegram-kit/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@happytg/telegram-kit",
+-  "version": "0.4.12",
++  "version": "0.4.13",
+   "private": true,
+   "type": "module",
+   "main": "dist/index.js",

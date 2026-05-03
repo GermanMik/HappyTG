@@ -769,6 +769,7 @@ test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only
     "2026-04-08T14:03:06Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell",
     "Reading additional input from stdin...",
     "2026-04-08T14:03:06Z ERROR codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit",
+    "2026-05-03T18:19:35Z ERROR codex_models_manager::manager: failed to refresh available models: timeout waiting for child process to exit",
     "2026-05-03T13:52:18Z WARN codex_analytics::client: failed to send events request: error sending request for url (https://chatgpt.com/backend-api/codex/analytics-events/events)",
     "2026-05-03T13:57:41Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest(\"http/request failed: error sending request for url (https://chatgpt.com/backend-api/wham/apps)\")))",
     "2026-05-03T14:03:08Z ERROR codex_core::tools::router: error=`\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command 'memory context --project'` rejected: blocked by policy",
@@ -783,7 +784,7 @@ test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only
 
   const classified = classifyCodexSmokeStderr(stderr);
 
-  assert.equal(classified.ignoredLines.length, 17);
+  assert.equal(classified.ignoredLines.length, 18);
   assert.deepEqual(classified.actionableLines, [
     "2026-04-08T14:03:07Z WARN custom warning"
   ]);

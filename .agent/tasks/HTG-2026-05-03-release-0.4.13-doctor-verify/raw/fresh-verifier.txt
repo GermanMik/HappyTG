@@ -1,0 +1,21 @@
+Fresh verifier pass: PASS
+
+Scope checked:
+- Frozen spec in spec.md.
+- Package version diff for all 16 workspace manifests.
+- CHANGELOG.md v0.4.13 entry.
+- docs/releases/0.4.13.md.
+- Runtime-adapters classifier follow-up for codex_models_manager successful-smoke warning.
+- Focused runtime-adapters/bootstrap tests.
+- Full build/lint/typecheck/test outputs.
+- Final doctor/verify PASS outputs.
+- release:check output.
+- Proof artifacts: evidence.md, evidence.json, problems.md, verdict.json.
+
+Blocking findings:
+- None.
+
+Verifier notes:
+- Release metadata is aligned to 0.4.13.
+- Real Codex smoke failure reporting remains intact; only a successful-smoke diagnostic variant was added as benign.
+- No Telegram, Mini App, approval, policy, host mutation, or release-safety invariant was weakened.

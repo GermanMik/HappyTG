@@ -1,0 +1,39 @@
+warning: in the working copy of 'CHANGELOG.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/api/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/bot/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/host-daemon/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/miniapp/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/worker/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/approval-engine/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/hooks/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/policy-engine/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/protocol/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/repo-proof/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/session-engine/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/shared/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/telegram-kit/package.json', LF will be replaced by CRLF the next time Git touches it
+ CHANGELOG.md                                | 12 ++++++++++++
+ apps/api/package.json                       |  2 +-
+ apps/bot/package.json                       |  2 +-
+ apps/host-daemon/package.json               |  2 +-
+ apps/miniapp/package.json                   |  2 +-
+ apps/worker/package.json                    |  2 +-
+ package.json                                |  2 +-
+ packages/approval-engine/package.json       |  2 +-
+ packages/bootstrap/package.json             |  2 +-
+ packages/hooks/package.json                 |  2 +-
+ packages/policy-engine/package.json         |  2 +-
+ packages/protocol/package.json              |  2 +-
+ packages/repo-proof/package.json            |  2 +-
+ packages/runtime-adapters/package.json      |  2 +-
+ packages/runtime-adapters/src/index.test.ts |  3 ++-
+ packages/runtime-adapters/src/index.ts      |  1 +
+ packages/session-engine/package.json        |  2 +-
+ packages/shared/package.json                |  2 +-
+ packages/telegram-kit/package.json          |  2 +-
+ 19 files changed, 31 insertions(+), 17 deletions(-)

@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-05-03-release-0.4.13-doctor-verify",
+  "phase": "release-verify",
+  "verdict": "PASS",
+  "blockingFindings": [],
+  "residualRisks": [
+    "Future Codex CLI versions can emit new benign successful-smoke stderr strings; add them only with raw evidence and tests.",
+    "GitHub Release publication still depends on successful PR merge and tag creation after this verifier pass."
+  ]
+}
