@@ -1,0 +1,19 @@
+Baseline summary captured before the final fix.
+
+doctor --json:
+- status: warn
+- finding: CODEX_SMOKE_WARNINGS
+- smokeOk: true
+- smokeTimedOut: false
+- summary: successful Codex smoke returned OK after Responses websocket 403 fallback, but benign stderr was still classified as a warning.
+
+verify --json:
+- status: warn
+- finding: CODEX_SMOKE_WARNINGS
+- smokeOk: true
+- smokeTimedOut: false
+- summary: same successful Codex smoke / HTTP fallback path as doctor.
+
+Running services:
+- Mini App 3007, API 4000, Bot 4100, and shared local services were detected as reuse/occupied_expected.
+- The product also emitted SERVICES_ALREADY_RUNNING as a finding before this fix, making normal reuse look like unresolved warning work.

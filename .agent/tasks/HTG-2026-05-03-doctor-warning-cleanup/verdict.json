@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-05-03-doctor-warning-cleanup",
+  "phase": "complete",
+  "verdict": "PASS",
+  "blockingFindings": [],
+  "residualRisks": [
+    "Future Codex CLI versions may emit new benign stderr strings during successful smoke; those should be added only with raw evidence and tests.",
+    "If Codex smoke does not return the expected OK reply, HappyTG still reports CODEX_SMOKE_FAILED."
+  ]
+}

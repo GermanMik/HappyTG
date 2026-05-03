@@ -1,0 +1,17 @@
+Fresh verifier pass: PASS
+
+Scope checked:
+- Frozen spec in spec.md.
+- Implementation diff in raw/diff.txt and raw/diff-stat.txt.
+- Runtime-adapters and bootstrap focused tests.
+- Full build/lint/typecheck/test outputs.
+- Final doctor/verify outputs.
+- Proof artifacts: evidence.md, evidence.json, problems.md, verdict.json.
+
+Blocking findings:
+- None.
+
+Verifier notes:
+- The fix does not weaken failed Codex smoke handling; non-OK smoke remains CODEX_SMOKE_FAILED.
+- Already-running local services remain visible as reuse guidance, but are no longer emitted as a finding.
+- Telegram, Mini App, policy, approval, host mutation, release, and runtime source semantics were not changed.

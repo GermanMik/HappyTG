@@ -1,0 +1,4 @@
+warning: in the working copy of 'packages/bootstrap/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.ts', LF will be replaced by CRLF the next time Git touches it

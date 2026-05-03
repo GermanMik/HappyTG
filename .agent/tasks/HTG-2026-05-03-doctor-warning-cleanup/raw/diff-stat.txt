@@ -1,0 +1,10 @@
+warning: in the working copy of 'packages/bootstrap/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'packages/runtime-adapters/src/index.ts', LF will be replaced by CRLF the next time Git touches it
+ docs/bootstrap-doctor.md                    |  1 -
+ packages/bootstrap/src/index.test.ts        | 74 ++++++++++++++++++++++++++++-
+ packages/bootstrap/src/index.ts             | 16 ++-----
+ packages/runtime-adapters/src/index.test.ts | 71 ++++++++++++++++++++++++++-
+ packages/runtime-adapters/src/index.ts      | 29 ++++++++++-
+ 5 files changed, 173 insertions(+), 18 deletions(-)

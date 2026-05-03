@@ -664,10 +664,12 @@ async function resolveCodexReadiness(context: {
   env: NodeJS.ProcessEnv;
   platform: NodeJS.Platform;
 }): Promise<CodexReadinessResolution> {
+  const smokeCwd = context.env.HAPPYTG_CODEX_SMOKE_CWD || os.tmpdir();
   const direct = await checkCodexReadiness({
     cwd: context.cwd,
     env: context.env,
-    platform: context.platform
+    platform: context.platform,
+    smokeCwd
   });
   if (direct.available || direct.missing === false) {
     return {
@@ -695,7 +697,8 @@ async function resolveCodexReadiness(context: {
       cwd: context.cwd,
       env: context.env,
       platform: context.platform,
-      binaryPath: wrapperPath
+      binaryPath: wrapperPath,
+      smokeCwd
     });
     if (resolved.available || resolved.missing === false) {
       return {
@@ -1856,15 +1859,6 @@ export async function detectFindings(context: DoctorContext): Promise<DoctorDete
       break;
     default:
       break;
-  }
-
-  const occupiedHappyTGServices = portResults.filter((item) => item.state === "occupied_expected" && ["miniapp", "api", "bot", "worker"].includes(item.id));
-  if (occupiedHappyTGServices.length > 0) {
-    pushFinding(findings, {
-      code: "SERVICES_ALREADY_RUNNING",
-      severity: "info",
-      message: `HappyTG services already appear to be running on ${occupiedHappyTGServices.map((item) => item.port).join(", ")}. Reuse the running stack or stop it before starting another copy.`
-    });
   }
 
   for (const portResult of portResults) {
