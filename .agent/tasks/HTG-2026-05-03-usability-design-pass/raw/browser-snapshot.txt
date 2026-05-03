@@ -1,0 +1,76 @@
+### Page
+- Page URL: http://127.0.0.1:3007/?userId=usr_1
+- Page Title: HappyTG Mini App
+- Console: 1 errors, 0 warnings
+### Snapshot
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - link "HappyTG" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - strong [ref=e5]: HappyTG
+      - generic [ref=e6]: Mini App
+    - generic [ref=e7]:
+      - paragraph [ref=e8]: Что важно сейчас
+      - heading "Панель управления HappyTG" [level=1] [ref=e9]
+      - paragraph [ref=e10]: Короткий статус, быстрые действия и переход к деталям без чтения raw logs.
+      - generic [ref=e11]:
+        - link "Новая задача" [ref=e12] [cursor=pointer]:
+          - /url: /new-task
+        - link "Codex" [ref=e13] [cursor=pointer]:
+          - /url: /codex
+        - link "Проекты" [ref=e14] [cursor=pointer]:
+          - /url: /projects
+        - link "Подтверждения" [ref=e15] [cursor=pointer]:
+          - /url: /approvals
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]: Активные
+        - strong [ref=e19]: "0"
+      - generic [ref=e20]:
+        - generic [ref=e21]: Подтв.
+        - strong [ref=e22]: "0"
+      - generic [ref=e23]:
+        - generic [ref=e24]: Блокеры
+        - strong [ref=e25]: "0"
+      - generic [ref=e26]:
+        - generic [ref=e27]: Verify
+        - strong [ref=e28]: "0"
+    - generic [ref=e29]:
+      - heading "Требует внимания" [level=2] [ref=e30]
+      - generic [ref=e31]:
+        - heading "Сейчас ничего не требует внимания" [level=2] [ref=e32]
+        - paragraph [ref=e33]: Активные проблемы, approvals и verify failures появятся здесь.
+        - link "Открыть sessions" [ref=e35] [cursor=pointer]:
+          - /url: /sessions
+    - generic [ref=e36]:
+      - heading "Активные и последние сессии" [level=2] [ref=e37]
+      - generic [ref=e38]:
+        - heading "Нет активных сессий" [level=2] [ref=e39]
+        - paragraph [ref=e40]: Когда host будет подключен, новая задача появится здесь.
+        - link "Проверить hosts" [ref=e42] [cursor=pointer]:
+          - /url: /hosts
+    - generic [ref=e43]:
+      - heading "Последние отчеты" [level=2] [ref=e44]
+      - generic [ref=e45]:
+        - heading "Отчетов пока нет" [level=2] [ref=e46]
+        - paragraph [ref=e47]: Proof-loop отчеты появятся после первой задачи с evidence и verify.
+        - link "Открыть сессии" [ref=e49] [cursor=pointer]:
+          - /url: /sessions
+  - navigation "Основная навигация" [ref=e50]:
+    - link "Главная" [ref=e51] [cursor=pointer]:
+      - /url: /
+    - link "Codex" [ref=e52] [cursor=pointer]:
+      - /url: /codex
+    - link "Сессии" [ref=e53] [cursor=pointer]:
+      - /url: /sessions
+    - link "Проекты" [ref=e54] [cursor=pointer]:
+      - /url: /projects
+    - link "Решения" [ref=e55] [cursor=pointer]:
+      - /url: /approvals
+    - link "Хосты" [ref=e56] [cursor=pointer]:
+      - /url: /hosts
+    - link "Отчеты" [ref=e57] [cursor=pointer]:
+      - /url: /reports
+```

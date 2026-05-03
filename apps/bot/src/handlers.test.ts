@@ -184,6 +184,7 @@ test("menu command renders a concise action-first main menu", async () => {
   ]);
   assert.match(messages[0]?.text ?? "", /Активные сессии: 1/);
   assert.match(messages[0]?.text ?? "", /Ждут подтверждения: 1/);
+  assert.match(messages[0]?.text ?? "", /Следующее: откройте approvals\./);
   assert.deepEqual((messages[0]?.replyMarkup as { inline_keyboard: unknown[] })?.inline_keyboard.length, 4);
   assert.deepEqual(collectWebAppUrls(messages[0]?.replyMarkup), ["https://happy.example/miniapp?screen=home"]);
 });
@@ -772,8 +773,8 @@ test("active sessions list includes a stop button for each active session", asyn
         return {
           hosts: [host()],
           workspaces: [workspace()],
-          sessions: [session({ id: "ses_active", state: "running" })],
-          approvals: [],
+          sessions: [session({ id: "ses_active", state: "running", approvalId: "apr_1" })],
+          approvals: [approval({ id: "apr_1", sessionId: "ses_active" })],
           tasks: []
         } as never;
       }
@@ -794,6 +795,7 @@ test("active sessions list includes a stop button for each active session", asyn
   assert.match(JSON.stringify(messages[0]?.replyMarkup ?? {}), /s:u:ses_active/);
   assert.match(JSON.stringify(messages[0]?.replyMarkup ?? {}), /s:c:ses_active/);
   assert.match(JSON.stringify(messages[0]?.replyMarkup ?? {}), /Остановить/);
+  assert.match(messages[0]?.text ?? "", /Внимание: нужно подтверждение/);
 });
 
 test("session cancel callback posts cancel and renders updated card", async () => {

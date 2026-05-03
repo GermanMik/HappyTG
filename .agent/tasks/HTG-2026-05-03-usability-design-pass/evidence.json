@@ -1,0 +1,82 @@
+{
+  "taskId": "HTG-2026-05-03-usability-design-pass",
+  "status": "implemented",
+  "specFrozen": true,
+  "roleAssessments": 10,
+  "selectedChanges": [
+    "miniapp-dashboard-next-action",
+    "miniapp-session-localized-actions",
+    "miniapp-session-scope-approval",
+    "bot-menu-next-action",
+    "bot-session-attention-hints"
+  ],
+  "commands": {
+    "pnpm build": {
+      "status": "pass",
+      "raw": "raw/build.txt"
+    },
+    "pnpm lint": {
+      "status": "pass",
+      "raw": "raw/lint.txt"
+    },
+    "pnpm typecheck": {
+      "status": "pass",
+      "raw": "raw/typecheck.txt"
+    },
+    "pnpm test": {
+      "status": "pass",
+      "raw": "raw/test-unit.txt"
+    },
+    "pnpm --filter @happytg/miniapp test": {
+      "status": "pass",
+      "raw": "raw/test-miniapp-focused.txt"
+    },
+    "pnpm --filter @happytg/bot test": {
+      "status": "pass",
+      "raw": "raw/test-bot-focused.txt"
+    },
+    "pnpm happytg doctor": {
+      "status": "pass-with-warn",
+      "raw": "raw/doctor.txt",
+      "warn": "Codex Responses websocket returned 403 Forbidden, then CLI fell back to HTTP; services already running."
+    },
+    "pnpm happytg verify": {
+      "status": "pass-with-warn",
+      "raw": "raw/happytg-verify.txt",
+      "warn": "Codex Responses websocket returned 403 Forbidden, then CLI fell back to HTTP; services already running."
+    },
+    "pnpm happytg task validate --repo . --task HTG-2026-05-03-usability-design-pass": {
+      "status": "pass",
+      "raw": "raw/task-validate.txt"
+    },
+    "browser render check": {
+      "status": "pass",
+      "raw": "raw/browser-snapshot-current.txt",
+      "console": "raw/browser-console.txt",
+      "screenshot": "raw/screenshots/miniapp-home.png"
+    }
+  },
+  "freshVerifier": {
+    "status": "pass",
+    "firstPass": {
+      "verdict": "FAIL",
+      "blockingFindings": [
+        "Proof metadata still marked Implementation Notes, Verification, Fresh Verifier, commands, and verdict as pending."
+      ],
+      "implementationFindings": []
+    },
+    "fix": "Completed proof metadata and localized bot attention hints.",
+    "finalPass": {
+      "verdict": "PASS",
+      "blockingFindings": [],
+      "notes": [
+        "No backend policy or approval ordering files changed.",
+        "No callback contract changes found.",
+        "Source/runtime labels remain explicit.",
+        "Unsupported Desktop actions remain truthful.",
+        "Mini App auth and reverse-proxy tests remain green.",
+        "Bot chat changes do not expose raw logs or secrets."
+      ]
+    }
+  }
+}

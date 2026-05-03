@@ -1,0 +1,5 @@
+No separate integration command was available for this scoped UI pass.
+
+Coverage note:
+- `pnpm test` was run and captured in `raw/test-unit.txt`.
+- That suite includes API, bot, Mini App, bootstrap, runtime-adapter, and control-plane integration-style tests.

@@ -1,0 +1,13 @@
+### Browser `happytg-usability` opened with pid 45088.
+### Ran Playwright code
+```js
+await page.goto('http://127.0.0.1:3007/?userId=usr_1');
+```
+### Page
+- Page URL: http://127.0.0.1:3007/?userId=usr_1
+- Page Title: HappyTG Mini App
+- Console: 1 errors, 0 warnings
+### Snapshot
+- [Snapshot](.playwright-cli\page-2026-05-03T12-31-08-987Z.yml)
+### Events
+- New console entries: .playwright-cli\console-2026-05-03T12-31-08-037Z.log#L1-L7

@@ -65,6 +65,28 @@ test("mini app ready endpoint returns 503 when api health fails", async () => {
   }
 });
 
+test("mini app favicon route avoids browser 404 noise", async () => {
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/favicon.ico`);
+
+    assert.equal(response.status, 204);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("overview page renders hosts, sessions, approvals, and tasks", async () => {
   const server = createMiniAppServer({
     async fetchJson(pathname) {
@@ -101,8 +123,9 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
               hostLabel: "devbox",
               repoName: "projection-repo",
               lastUpdatedAt: "2026-04-21T04:00:00.000Z",
+              attention: "verify",
               href: "/session/ses_1",
-              nextAction: "open"
+              nextAction: "open verify"
             }
           ],
           recentReports: [
@@ -133,9 +156,13 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type") ?? "", /text\/html/);
     assert.match(html, /Панель управления HappyTG/);
+    assert.match(html, /Следующее действие/);
     assert.match(html, /Codex CLI/);
     assert.match(html, /devbox/);
     assert.match(html, /Нужно подтверждение/);
+    assert.match(html, /Открыть approval/);
+    assert.match(html, /Внимание: Verify требует внимания/);
+    assert.match(html, /Открыть verify/);
     assert.match(html, /href="\/session\/ses_1"/);
     assert.match(html, /href="\/task\/HTG-0001"/);
     assert.match(html, /happytg:miniapp:draft:v1/);
@@ -911,6 +938,8 @@ test("approval page renders real authenticated action buttons", async () => {
     assert.equal(response.status, 200);
     assert.match(html, /data-approval-action/);
     assert.match(html, /data-approval-id="apr_1"/);
+    assert.match(html, /Разрешить на сессию/);
+    assert.match(html, /data-scope="session"/);
     assert.match(html, /"authorization": "Bearer " \+ sessionToken/);
     assert.match(html, /\/api\/v1\/miniapp\/approvals\//);
     assert.match(html, /data-action-feedback/);
