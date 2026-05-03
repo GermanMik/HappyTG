@@ -12,7 +12,11 @@ import type {
 } from "../../protocol/src/index.js";
 import { normalizeSpawnEnv, resolveExecutable } from "../../shared/src/index.js";
 
+export const CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE = "CODEX_DESKTOP_CONTROL_UNSUPPORTED";
+export const CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE = "CODEX_DESKTOP_APP_SERVER_UNAVAILABLE";
+
 const DEFAULT_UNSUPPORTED_REASON = "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.";
+const APP_SERVER_EXPERIMENTAL_REASON = "Codex Desktop app-server control remains disabled by default because the local Codex CLI marks app-server as experimental.";
 const APP_SERVER_UNAVAILABLE_REASON = "Codex Desktop app-server control is unavailable. Start Codex Desktop or make `codex app-server` available on this host.";
 const DEFAULT_MAX_SESSION_FILES = 500;
 const DEFAULT_APP_SERVER_REQUEST_TIMEOUT_MS = 10_000;
@@ -23,6 +27,7 @@ interface CodexDesktopControlCapabilities {
   supportsStop: boolean;
   supportsNewTask: boolean;
   unsupportedReason?: string;
+  unsupportedReasonCode?: string;
 }
 
 interface SessionDraft {
@@ -39,6 +44,7 @@ export interface CodexDesktopControlContract {
   supportsStop?: boolean;
   supportsNewTask?: boolean;
   unsupportedReason?: string;
+  unsupportedReasonCode?: string;
   capabilities?(): Promise<CodexDesktopControlCapabilities>;
   resumeSession?(session: CodexDesktopSession): Promise<CodexDesktopControlResult>;
   stopSession?(session: CodexDesktopSession): Promise<CodexDesktopControlResult>;
@@ -653,6 +659,7 @@ export function createCodexDesktopAppServerControlContract(options: {
     supportsStop: true,
     supportsNewTask: true,
     unsupportedReason: APP_SERVER_UNAVAILABLE_REASON,
+    unsupportedReasonCode: CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE,
     async capabilities() {
       try {
         await ensureAvailable();
@@ -666,7 +673,8 @@ export function createCodexDesktopAppServerControlContract(options: {
           supportsResume: false,
           supportsStop: false,
           supportsNewTask: false,
-          unsupportedReason: error instanceof Error ? error.message : APP_SERVER_UNAVAILABLE_REASON
+          unsupportedReason: error instanceof Error ? error.message : APP_SERVER_UNAVAILABLE_REASON,
+          unsupportedReasonCode: CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE
         };
       }
     },
@@ -756,19 +764,15 @@ export function createCodexDesktopAppServerControlContract(options: {
 
 function defaultControlContract(options: CodexDesktopStateAdapterOptions, codexHome: string): CodexDesktopControlContract {
   const env = options.env ?? process.env;
-  const mode = env.HAPPYTG_CODEX_DESKTOP_CONTROL ?? (options.codexHome ? "off" : "app-server");
-  if (mode === "off" || mode === "unsupported" || mode === "false") {
-    return {};
-  }
-
-  return createCodexDesktopAppServerControlContract({
-    env,
-    cwd: options.cwd,
-    platform: options.platform,
-    codexHome,
-    command: options.appServerCommand,
-    args: options.appServerArgs
-  });
+  const mode = env.HAPPYTG_CODEX_DESKTOP_CONTROL;
+  const reason = mode && mode !== "off" && mode !== "unsupported" && mode !== "false"
+    ? `${DEFAULT_UNSUPPORTED_REASON} ${APP_SERVER_EXPERIMENTAL_REASON}`
+    : DEFAULT_UNSUPPORTED_REASON;
+  void codexHome;
+  return {
+    unsupportedReason: reason,
+    unsupportedReasonCode: CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE
+  };
 }
 
 export class CodexDesktopStateAdapter {
@@ -792,12 +796,20 @@ export class CodexDesktopStateAdapter {
     return this.controlContract.unsupportedReason ?? DEFAULT_UNSUPPORTED_REASON;
   }
 
+  private unsupportedReasonCode(): string {
+    return this.controlContract.unsupportedReasonCode ?? CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE;
+  }
+
   canCreateTask(): boolean {
     return Boolean(this.controlContract.supportsNewTask && this.controlContract.createTask);
   }
 
   controlUnsupportedReason(): string {
     return this.unsupportedReason();
+  }
+
+  controlUnsupportedReasonCode(): string {
+    return this.unsupportedReasonCode();
   }
 
   private async controlCapabilities(): Promise<CodexDesktopControlCapabilities> {
@@ -809,11 +821,12 @@ export class CodexDesktopStateAdapter {
       supportsResume: Boolean(this.controlContract.supportsResume && this.controlContract.resumeSession),
       supportsStop: Boolean(this.controlContract.supportsStop && this.controlContract.stopSession),
       supportsNewTask: Boolean(this.controlContract.supportsNewTask && this.controlContract.createTask),
-      unsupportedReason: this.unsupportedReason()
+      unsupportedReason: this.unsupportedReason(),
+      unsupportedReasonCode: this.unsupportedReasonCode()
     };
   }
 
-  private decorateSession(session: Omit<CodexDesktopSession, "canResume" | "canStop" | "canCreateTask" | "unsupportedReason">, capabilities: CodexDesktopControlCapabilities): CodexDesktopSession {
+  private decorateSession(session: Omit<CodexDesktopSession, "canResume" | "canStop" | "canCreateTask" | "unsupportedReason" | "unsupportedReasonCode">, capabilities: CodexDesktopControlCapabilities): CodexDesktopSession {
     const canResume = Boolean(capabilities.supportsResume && this.controlContract.resumeSession);
     const canStop = Boolean(capabilities.supportsStop && this.controlContract.stopSession);
     const canCreateTask = Boolean(capabilities.supportsNewTask && this.controlContract.createTask);
@@ -823,7 +836,10 @@ export class CodexDesktopStateAdapter {
       canResume,
       canStop,
       canCreateTask,
-      ...(unsupportedReason ? { unsupportedReason: capabilities.unsupportedReason ?? unsupportedReason } : {})
+      ...(unsupportedReason ? {
+        unsupportedReason: capabilities.unsupportedReason ?? unsupportedReason,
+        unsupportedReasonCode: capabilities.unsupportedReasonCode ?? this.unsupportedReasonCode()
+      } : {})
     };
   }
 

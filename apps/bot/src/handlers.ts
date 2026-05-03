@@ -480,6 +480,11 @@ function formatDesktopSessions(sessions: CodexDesktopSession[]): string {
   ].join("\n");
 }
 
+function formatDesktopUnsupportedReason(session: Pick<CodexDesktopSession, "unsupportedReason" | "unsupportedReasonCode">): string {
+  const reason = session.unsupportedReason ?? "contract unavailable";
+  return session.unsupportedReasonCode ? `[${session.unsupportedReasonCode}] ${reason}` : reason;
+}
+
 function formatDesktopSessionCard(session: CodexDesktopSession): string {
   return [
     `Codex Desktop session ${shortId(session.id)}`,
@@ -491,7 +496,7 @@ function formatDesktopSessionCard(session: CodexDesktopSession): string {
     `Обновлено: ${session.updatedAt}`,
     `Resume: ${session.canResume ? "supported" : "unsupported"}`,
     `Stop: ${session.canStop ? "supported" : "unsupported"}`,
-    !session.canResume || !session.canStop || !session.canCreateTask ? `Причина: ${trimLine(session.unsupportedReason ?? "contract unavailable", 160)}` : undefined
+    !session.canResume || !session.canStop || !session.canCreateTask ? `Причина: ${trimLine(formatDesktopUnsupportedReason(session), 180)}` : undefined
   ].filter(Boolean).join("\n");
 }
 
@@ -995,7 +1000,7 @@ export function createBotHandlers(dependencies: BotDependencies) {
     ]);
     const canCreateTask = sessions.some((session) => session.canCreateTask);
     if (!canCreateTask) {
-      const reason = sessions[0]?.unsupportedReason ?? "Stable Codex Desktop New Task contract is unavailable.";
+      const reason = sessions[0] ? formatDesktopUnsupportedReason(sessions[0]) : "Stable Codex Desktop New Task contract is unavailable.";
       await dependencies.sendTelegramMessage(
         chatId,
         [

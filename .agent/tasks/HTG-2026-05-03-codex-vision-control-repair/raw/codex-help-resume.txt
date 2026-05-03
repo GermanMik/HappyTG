@@ -1,0 +1,3 @@
+# command: codex help resume
+Error: stdin is not a terminal
+# exit: 1

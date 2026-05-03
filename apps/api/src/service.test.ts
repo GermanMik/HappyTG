@@ -6,7 +6,7 @@ import path from "node:path";
 import test from "node:test";
 
 import type { HappyTGStore, TaskBundle } from "../../../packages/protocol/src/index.js";
-import { CodexDesktopStateAdapter } from "../../../packages/runtime-adapters/src/index.js";
+import { CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE, CodexDesktopStateAdapter } from "../../../packages/runtime-adapters/src/index.js";
 import { FileStateStore } from "../../../packages/shared/src/index.js";
 
 import { CodexDesktopControlError, HappyTGControlPlaneService } from "./service.js";
@@ -448,24 +448,26 @@ test("Codex Desktop controls block unavailable contracts and audit attempts", as
 
     await assert.rejects(
       () => service.resumeCodexDesktopSession(userId, "desktop-session-1"),
-      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501
+      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501 && error.reasonCode === CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE
     );
     await assert.rejects(
       () => service.stopCodexDesktopSession(userId, "desktop-session-1"),
-      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501
+      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501 && error.reasonCode === CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE
     );
     await assert.rejects(
       () => service.createCodexDesktopTask({ userId, prompt: "Do desktop work", projectPath: "C:/Develop/Projects/HappyTG" }),
-      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501
+      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501 && error.reasonCode === CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE
     );
 
-    const actions = (await store.read()).auditRecords.map((record) => record.action);
+    const auditRecords = (await store.read()).auditRecords;
+    const actions = auditRecords.map((record) => record.action);
     assert.equal(actions.includes("codex_desktop.resume.attempt"), true);
     assert.equal(actions.includes("codex_desktop.resume.unsupported"), true);
     assert.equal(actions.includes("codex_desktop.stop.attempt"), true);
     assert.equal(actions.includes("codex_desktop.stop.unsupported"), true);
     assert.equal(actions.includes("codex_desktop.new_task.attempt"), true);
     assert.equal(actions.includes("codex_desktop.new_task.unsupported"), true);
+    assert.equal(auditRecords.some((record) => record.action.endsWith(".unsupported") && record.metadata.reasonCode === CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE), true);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
     if (serviceTempDir) {
@@ -532,6 +534,75 @@ test("Codex Desktop controls execute only through supported adapter contract", a
     assert.equal(actions.includes("codex_desktop.resume.completed"), true);
     assert.equal(actions.includes("codex_desktop.stop.completed"), true);
     assert.equal(actions.includes("codex_desktop.new_task.completed"), true);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+    if (serviceTempDir) {
+      await rm(serviceTempDir, { recursive: true, force: true });
+    }
+  }
+});
+
+test("Codex Desktop mutating controls are serialized through the API service", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-api-desktop-serialized-"));
+  let serviceTempDir: string | undefined;
+  try {
+    const codexHome = await createCodexDesktopHome(tempDir);
+    let active = 0;
+    let maxActive = 0;
+    const order: string[] = [];
+    const recordMutation = async (label: string): Promise<void> => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      order.push(`start:${label}`);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      order.push(`end:${label}`);
+      active -= 1;
+    };
+    const adapter = new CodexDesktopStateAdapter({
+      codexHome,
+      controlContract: {
+        supportsResume: true,
+        supportsStop: true,
+        supportsNewTask: true,
+        async resumeSession(session) {
+          await recordMutation("resume");
+          return { ok: true, action: "resume", source: "codex-desktop", session };
+        },
+        async stopSession(session) {
+          await recordMutation("stop");
+          return { ok: true, action: "stop", source: "codex-desktop", session };
+        },
+        async createTask(input) {
+          await recordMutation("new-task");
+          return {
+            ok: true,
+            action: "new-task",
+            source: "codex-desktop",
+            task: {
+              id: "cdt_serialized",
+              title: input.title ?? "Desktop task",
+              projectPath: input.projectPath,
+              status: "created"
+            }
+          };
+        }
+      }
+    });
+    const bundle = await createServiceWithTempStore(adapter);
+    serviceTempDir = bundle.tempDir;
+    const { service } = bundle;
+    const userId = await createKnownUser(service, "04");
+
+    await Promise.all([
+      service.resumeCodexDesktopSession(userId, "desktop-session-1"),
+      service.stopCodexDesktopSession(userId, "desktop-session-1"),
+      service.createCodexDesktopTask({ userId, prompt: "Do desktop work", projectPath: "C:/Develop/Projects/HappyTG" })
+    ]);
+
+    assert.equal(maxActive, 1);
+    assert.equal(order.length, 6);
+    assert.equal(order.filter((item) => item.startsWith("start:")).length, 3);
+    assert.equal(order.filter((item) => item.startsWith("end:")).length, 3);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
     if (serviceTempDir) {

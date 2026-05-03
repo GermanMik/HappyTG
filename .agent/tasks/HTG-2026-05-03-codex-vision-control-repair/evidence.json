@@ -1,0 +1,148 @@
+{
+  "taskId": "HTG-2026-05-03-codex-vision-control-repair",
+  "branch": "codex/happytg-codex-vision-control-repair",
+  "status": "complete",
+  "specFrozen": true,
+  "memory": {
+    "contextRetrieved": true,
+    "searchQuery": "codex desktop cli vision control",
+    "detailsFetched": [
+      "d7aab336-573",
+      "64809725-580",
+      "225fba9e-6ca",
+      "47167d23-b37",
+      "3e51c0fa-3fd"
+    ]
+  },
+  "contracts": {
+    "codexCli": {
+      "status": "supported",
+      "version": "codex-cli 0.125.0",
+      "helpFiles": [
+        "raw/codex-help.txt",
+        "raw/codex-cmd-exec-help.txt",
+        "raw/codex-cmd-resume-help.txt"
+      ],
+      "startNewTask": {
+        "stableContractExists": true,
+        "invocation": "codex exec --json --output-last-message <file> --cd <workspace> <prompt>",
+        "happyTgPath": "apps/host-daemon/src/index.ts",
+        "queue": "host daemon sequential processDispatch loop"
+      },
+      "resume": {
+        "stableContractExists": "degraded",
+        "invocation": "codex resume [OPTIONS] [SESSION_ID] [PROMPT]",
+        "happyTgPath": "backend session_resume state transition; not Desktop control"
+      },
+      "cancel": {
+        "stableContractExists": "degraded",
+        "happyTgPath": "backend cancels HappyTG session/dispatch state; does not kill Desktop"
+      }
+    },
+    "codexDesktop": {
+      "readContract": {
+        "status": "supported",
+        "files": [
+          "CODEX_HOME/.codex-global-state.json",
+          "CODEX_HOME/session_index.jsonl",
+          "CODEX_HOME/sessions/**/*.jsonl",
+          "CODEX_HOME/archived_sessions/**/*.jsonl"
+        ],
+        "sanitizedProjection": true,
+        "transcriptHistory": "degraded_metadata_only"
+      },
+      "mutatingContract": {
+        "status": "unsupported_by_default",
+        "stableContractExists": false,
+        "reasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED",
+        "reason": "Local app-server/exec-server contracts are marked experimental and are not automatically enabled.",
+        "experimentalEvidence": [
+          "raw/codex-cmd-app-server-help.txt",
+          "raw/codex-cmd-app-server-generate-ts-help.txt",
+          "raw/codex-cmd-exec-server-help.txt",
+          "raw/app-server-ts/ClientRequest.ts",
+          "raw/app-server-ts/InitializeCapabilities.ts"
+        ],
+        "forbiddenWorkaroundsPresent": false
+      }
+    }
+  },
+  "changes": [
+    "Default Codex Desktop control is unsupported with reason code unless a contract is explicitly injected.",
+    "API, Telegram Bot, and Mini App propagate Desktop unsupported reason codes.",
+    "Desktop mutating action kinds classify as serial mutations.",
+    "API service serializes injected/proven Desktop mutating calls.",
+    "Tests cover supported injected paths and unsupported default paths without fake success."
+  ],
+  "targetedVerification": {
+    "runtimeAdapters": "passed",
+    "api": "passed",
+    "bot": "passed",
+    "miniapp": "passed"
+  },
+  "verification": {
+    "lint": {
+      "command": "pnpm lint",
+      "raw": "raw/lint.txt",
+      "exitCode": 0,
+      "summary": "15/15 turbo tasks successful"
+    },
+    "typecheck": {
+      "command": "pnpm typecheck",
+      "raw": "raw/typecheck.txt",
+      "exitCode": 0,
+      "summary": "15/15 turbo tasks successful"
+    },
+    "testUnit": {
+      "command": "pnpm test",
+      "raw": "raw/test-unit.txt",
+      "exitCode": 0,
+      "summary": "15/15 turbo tasks successful"
+    },
+    "testIntegration": {
+      "command": "pnpm --filter @happytg/api test",
+      "raw": "raw/test-integration.txt",
+      "exitCode": 0,
+      "summary": "25/25 API tests passed"
+    },
+    "doctor": {
+      "command": "pnpm happytg doctor",
+      "raw": "raw/doctor.txt",
+      "exitCode": 0,
+      "summary": "WARN: Codex websocket 403 fallback to HTTP; INFO: local HappyTG services already running"
+    },
+    "verify": {
+      "command": "pnpm happytg verify",
+      "raw": "raw/verify.txt",
+      "exitCode": 0,
+      "summary": "WARN: Codex websocket 403 fallback to HTTP; INFO: local HappyTG services already running"
+    },
+    "releaseCheck": {
+      "command": "pnpm release:check --version 0.4.10",
+      "raw": "raw/release-check.txt",
+      "exitCode": 0,
+      "summary": "Checked 16 package versions, CHANGELOG.md, and docs/releases/0.4.10.md"
+    },
+    "build": {
+      "command": "pnpm build",
+      "raw": "raw/build.txt",
+      "exitCode": 0,
+      "summary": "15/15 turbo tasks successful"
+    },
+    "taskValidate": {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-05-03-codex-vision-control-repair",
+      "raw": "raw/task-validate.txt",
+      "exitCode": 0,
+      "summary": "Proof bundle validation ok"
+    },
+    "freshVerifier": {
+      "status": "metadata_only_failures_resolved",
+      "raw": [
+        "raw/fresh-verifier-1.txt",
+        "raw/fresh-verifier-2.txt",
+        "raw/fresh-verifier-3.txt"
+      ],
+      "summary": "Final read-only sanity verifier passed after metadata-only findings were resolved."
+    }
+  }
+}

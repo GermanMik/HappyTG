@@ -120,6 +120,7 @@ function desktopSession(overrides: Partial<CodexDesktopSession> = {}): CodexDesk
     canStop: false,
     canCreateTask: false,
     unsupportedReason: "contract missing",
+    unsupportedReasonCode: "CODEX_DESKTOP_CONTROL_UNSUPPORTED",
     ...overrides
   };
 }
@@ -483,9 +484,11 @@ test("codex menu separates Desktop and CLI sessions and hides unsupported Deskto
   assert.match(messages[2]?.text ?? "", /HappyTG/);
   assert.match(messages[3]?.text ?? "", /Источник: Codex Desktop/);
   assert.match(messages[3]?.text ?? "", /Resume: unsupported/);
+  assert.match(messages[3]?.text ?? "", /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
   assert.match(messages[4]?.text ?? "", /Активные сессии/);
   assert.match(messages[4]?.text ?? "", /CLI fixture/);
   assert.match(messages[5]?.text ?? "", /New Desktop Task сейчас недоступен/);
+  assert.match(messages[5]?.text ?? "", /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
   assert.doesNotMatch(JSON.stringify(messages[3]?.replyMarkup ?? {}), /cd:[rx]:desktop-session-1/);
   assert.equal(calls.some((call) => call.pathname === "/api/v1/sessions" && call.init?.method === "POST"), false);
 });

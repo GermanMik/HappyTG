@@ -1,0 +1,20 @@
+FAIL for proof-bundle terminal status; no implementation blocker found.
+
+Findings:
+- verdict.json still had pass=false with status fresh_verify_fix.
+- problems.md still had Open item: second fresh verifier pass needs to confirm the metadata-only proof fix.
+- evidence.json reflected fresh_verify_fix, and raw/fresh-verifier-1.txt existed and recorded the first verifier's metadata-only failure.
+
+Confirmed OK:
+- spec.md remains frozen.
+- Required raw outputs exist for lint/typecheck/unit/integration/doctor/verify plus fresh-verifier-1.txt.
+- Codex app-server evidence remains grounded in raw help and marked experimental.
+- Desktop control remains unsupported by default with CODEX_DESKTOP_CONTROL_UNSUPPORTED.
+- API exposes reasonCode and source.
+- Policy evaluation precedes Desktop control/approval handling.
+- Desktop mutation action kinds classify into the serial mutation path.
+
+Residual risks:
+- Codex Desktop mutating app-server remains experimental and unsupported by default.
+- Raw doctor/verify report Codex websocket 403 fallback to HTTP.
+- Verifier inspected existing raw evidence and implementation read-only instead of rerunning full root commands.

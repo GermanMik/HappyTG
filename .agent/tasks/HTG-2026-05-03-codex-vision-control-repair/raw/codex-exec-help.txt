@@ -1,0 +1,3 @@
+# command: codex exec --help
+Error: stdin is not a terminal
+# exit: 1

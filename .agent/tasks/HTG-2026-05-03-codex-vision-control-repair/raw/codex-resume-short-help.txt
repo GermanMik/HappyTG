@@ -1,0 +1,3 @@
+# command: codex resume -h
+Error: stdin is not a terminal
+# exit: 1

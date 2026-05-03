@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v0.4.10
+
+### Fixed
+
+- Codex Desktop control no longer enables the experimental `codex app-server` contract by default.
+- Unsupported Codex Desktop Resume, Stop, and New Task actions now return honest unsupported responses with `CODEX_DESKTOP_CONTROL_UNSUPPORTED` reason codes instead of appearing successful.
+- Telegram Bot and Mini App Codex flows now surface Desktop/CLI source separation together with disabled Desktop controls and reason-code details.
+
+### Changed
+
+- Codex Desktop mutating action kinds now use the serialized mutation lane, and injected/proven Desktop control contracts run through the API service mutation queue.
+- Codex Desktop visibility remains a sanitized read-only projection from local Codex state while full Desktop transcripts stay degraded rather than exposing raw local payloads.
+
+### Verification
+
+- Release validation covers CLI/Desktop contract discovery, proof-bundle evidence, source-aware API/Bot/Mini App flows, unsupported Desktop control behavior, serialized mutation tests, repo checks, and release metadata validation.
+
 ## v0.4.9
 
 ### Added

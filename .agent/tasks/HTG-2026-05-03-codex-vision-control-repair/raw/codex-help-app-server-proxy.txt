@@ -1,0 +1,3 @@
+# command: codex help app-server proxy
+Error: stdin is not a terminal
+# exit: 1

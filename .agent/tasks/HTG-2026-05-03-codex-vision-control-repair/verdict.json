@@ -1,0 +1,28 @@
+{
+  "taskId": "HTG-2026-05-03-codex-vision-control-repair",
+  "status": "complete",
+  "pass": true,
+  "summary": "Codex CLI vision/control paths remain supported through proven local CLI contracts. Codex Desktop visibility is supported through sanitized read-only state projection. Codex Desktop Resume/Stop/New Task are unsupported by default because app-server/exec-server contracts are experimental, with reason codes, disabled UI, audit records, serial mutation classification, tests, and 0.4.10 release metadata.",
+  "evidence": [
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/spec.md",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/evidence.md",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/evidence.json",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/problems.md",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/lint.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/typecheck.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/doctor.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/verify.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/release-check.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/build.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/task-validate.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/fresh-verifier-1.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/fresh-verifier-2.txt",
+    ".agent/tasks/HTG-2026-05-03-codex-vision-control-repair/raw/fresh-verifier-3.txt"
+  ],
+  "risks": [
+    "Codex Desktop mutating app-server contract is not proven stable and remains unsupported by default.",
+    "Doctor/verify report Codex websocket 403 fallback to HTTP in this environment."
+  ]
+}
