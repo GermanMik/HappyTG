@@ -87,8 +87,13 @@ async function createStrictWindowsCodexShim(tempDir: string, version: string, ex
         process.exit(0);
       }
       if (args[0] === "exec") {
+        const normalized = [...args];
+        const cdIndex = normalized.indexOf("-C");
+        if (cdIndex !== -1) {
+          normalized.splice(cdIndex, 2);
+        }
         const expected = ["exec", "--skip-git-repo-check", "--json", ${JSON.stringify(expectedPrompt)}];
-        const matches = args.length === expected.length && args.every((value, index) => value === expected[index]);
+        const matches = normalized.length === expected.length && normalized.every((value, index) => value === expected[index]);
         if (!matches) {
           console.error(\`unexpected exec args: \${JSON.stringify(args)}\`);
           process.exit(1);
@@ -452,6 +457,71 @@ test("verify surfaces Codex smoke warnings as warn when config exists", async ()
     assert.equal(report.status, "warn");
     assert.ok(report.findings.some((item) => item.code === "CODEX_SMOKE_WARNINGS"));
     assert.match(String(report.reportJson.platform), /-/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("verify treats successful Codex HTTP fallback as non-warning diagnostics", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-bootstrap-codex-http-fallback-"));
+  try {
+    const binaryPath = path.join(tempDir, "codex-verify.mjs");
+    const configPath = path.join(tempDir, "config.toml");
+    const gitBinaryPath = path.join(tempDir, "git");
+    await Promise.all([
+      writeFile(path.join(tempDir, ".env"), "TELEGRAM_BOT_TOKEN=123456:abcdefghijklmnopqrstuvwx\n", "utf8"),
+      writeFile(configPath, 'model = "gpt-5"\n', "utf8"),
+      writeExecutable(
+        binaryPath,
+        `
+          #!/usr/bin/env node
+          const args = process.argv.slice(2);
+          if (args[0] === "--version") {
+            console.log("codex test 1.0");
+            process.exit(0);
+          }
+          if (args[0] === "exec") {
+            if (!args.includes("-C")) {
+              console.error("missing neutral smoke cwd");
+              process.exit(1);
+            }
+            console.error("2026-05-03T13:44:10.261005Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden, url: wss://chatgpt.com/backend-api/codex/responses");
+            console.error("2026-05-03T13:44:10.927113Z  WARN codex_core::session::turn: stream disconnected - retrying sampling request (1/5 in 215ms)...");
+            console.error("2026-05-03T13:44:17.471005Z  WARN codex_core::client: falling back to HTTP");
+            console.error("2026-05-03T13:44:38.189324Z  WARN codex_analytics::client: events failed with status 403 Forbidden: <html>");
+            console.error("2026-05-03T14:03:08.022037Z ERROR codex_core::tools::router: error=memory context --project rejected: blocked by policy");
+            console.error('2026-05-03T14:07:22.026457Z ERROR codex_core::tools::router: error=memory search "OK exact output" rejected: blocked by policy');
+            console.log('{"type":"item.completed","item":{"type":"agent_message","text":"OK"}}');
+            process.exit(0);
+          }
+          console.error("unexpected invocation");
+          process.exit(1);
+        `
+      ),
+      writeFakeGitBinary(gitBinaryPath)
+    ]);
+
+    const report = await runBootstrapCommand("verify", {
+      cwd: tempDir,
+      env: {
+        TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx",
+        CODEX_CLI_BIN: binaryPath,
+        CODEX_CONFIG_PATH: configPath,
+        HAPPYTG_STATE_DIR: path.join(tempDir, ".happytg-state"),
+        HAPPYTG_MINIAPP_PORT: String(await reserveFreePort()),
+        HAPPYTG_API_PORT: String(await reserveFreePort()),
+        HAPPYTG_BOT_PORT: String(await reserveFreePort()),
+        HAPPYTG_WORKER_PORT: String(await reserveFreePort()),
+        HAPPYTG_REDIS_HOST_PORT: String(await reserveFreePort()),
+        REDIS_URL: `redis://127.0.0.1:${await reserveFreePort()}`,
+        PATH: tempDir
+      }
+    });
+
+    assert.equal(report.command, "verify");
+    assert.ok(!report.findings.some((item) => item.code === "CODEX_SMOKE_WARNINGS"));
+    assert.ok(!report.findings.some((item) => item.code === "CODEX_SMOKE_FAILED"));
+    assert.equal((report.reportJson.codex as { smokeOk: boolean }).smokeOk, true);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
@@ -938,7 +1008,7 @@ test("doctor reports an actionable mini app port conflict and distinguishes an a
       (setupReport.reportJson.ports as Array<{ id: string; state: string }>).find((item) => item.id === "miniapp")?.state,
       "occupied_expected"
     );
-    assert.ok(setupReport.findings.some((item) => item.code === "SERVICES_ALREADY_RUNNING"));
+    assert.ok(!setupReport.findings.some((item) => item.code === "SERVICES_ALREADY_RUNNING"));
     assert.match(setupReport.planPreview.join("\n"), /Reuse the current stack/);
     assert.equal(setupReport.planPreview.some((item) => item === "Start repo services: `pnpm dev`."), false);
     assert.equal(((setupReport.reportJson.onboarding as { steps: string[] }).steps).some((item) => item === "Start repo services: `pnpm dev`."), false);

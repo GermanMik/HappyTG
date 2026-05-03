@@ -101,7 +101,6 @@ Use `--json` when you need raw paths, detailed port classifications, or full Cod
 | `TELEGRAM_TOKEN_INVALID` | Bot token exists but does not match the expected format. | Fix the token value without printing it to logs. |
 | `CODEX_MISSING` | Codex is not resolvable in this shell. | Verify `codex --version`, install or fix PATH, then rerun doctor. |
 | `CODEX_UNAVAILABLE` | Codex was found, but `codex --version` failed in this shell. | Fix the local Codex runtime/environment, then rerun `pnpm happytg doctor --json`. |
-| `SERVICES_ALREADY_RUNNING` | One or more HappyTG services already occupy the default ports. | Reuse the running stack or stop it before starting another copy. |
 
 ## State Files
 

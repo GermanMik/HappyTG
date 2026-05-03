@@ -218,6 +218,24 @@ const BENIGN_CODEX_SMOKE_WARNING_PATTERNS = [
   /codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back/i,
   /codex_core::shell_snapshot: Failed to delete shell snapshot .*No such file or directory/i,
   /codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell/i,
+  /codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 403 Forbidden/i,
+  /codex_core::session_startup_prewarm: startup websocket prewarm setup failed: unexpected status 403 Forbidden/i,
+  /codex_core::session::turn: stream disconnected - retrying sampling request/i,
+  /codex_core::client: falling back to HTTP/i,
+  /codex_core::tools::router: error=.*\bmemory (?:context|search|details)\b.*rejected: blocked by policy/i,
+  /codex_core::plugins::startup_sync: startup remote plugin sync failed/i,
+  /codex_core::plugins::manager: failed to warm featured plugin ids cache/i,
+  /codex_core_plugins::manifest: ignoring interface\.defaultPrompt/i,
+  /codex_analytics::client: events failed with status 403 Forbidden/i,
+  /codex_analytics::client: failed to send events request: error sending request for url/i,
+  /codex_core::session: failed to record rollout items: thread .* not found/i,
+  /rmcp::transport::worker: worker quit with fatal: Client error: HTTP request failed/i,
+  /rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client\(HttpRequest/i,
+  /^<!DOCTYPE html>/i,
+  /^<!--\[if /i,
+  /^<\/?(?:html|head|body|div|script|noscript|svg|path|span|style|meta)\b/i,
+  /^(?:width|height|viewBox|fill|xmlns|strokeWidth|class|d)=["']/i,
+  /^\/?>$/i,
   /Reading additional input from stdin\.\.\./i
 ] as const;
 
@@ -507,6 +525,7 @@ export async function checkCodexReadiness(input?: {
   binaryArgs?: string[];
   configPath?: string;
   smokePrompt?: string;
+  smokeCwd?: string;
   cwd?: string;
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform;
@@ -538,8 +557,14 @@ export async function checkCodexReadiness(input?: {
     let smokeError = "";
 
     if (available && configExists) {
-      const smokeRun = await runCommand(commandPath, [...binaryArgs, "exec", "--skip-git-repo-check", "--json", smokePrompt], {
-        cwd: input?.cwd,
+      const smokeArgs = [...binaryArgs, "exec", "--skip-git-repo-check", "--json"];
+      if (input?.smokeCwd) {
+        smokeArgs.push("-C", input.smokeCwd);
+      }
+      smokeArgs.push(smokePrompt);
+
+      const smokeRun = await runCommand(commandPath, smokeArgs, {
+        cwd: input?.smokeCwd ?? input?.cwd,
         env,
         platform
       });

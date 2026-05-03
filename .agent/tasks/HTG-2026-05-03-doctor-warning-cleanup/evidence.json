@@ -1,0 +1,61 @@
+{
+  "taskId": "HTG-2026-05-03-doctor-warning-cleanup",
+  "phase": "complete",
+  "verdict": "PASS",
+  "commands": [
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters test",
+      "status": "pass",
+      "raw": "raw/test-runtime-adapters-fifth.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/bootstrap test",
+      "status": "pass",
+      "raw": "raw/test-bootstrap-final.txt"
+    },
+    {
+      "command": "pnpm build",
+      "status": "pass",
+      "raw": "raw/build.txt"
+    },
+    {
+      "command": "pnpm lint",
+      "status": "pass",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "command": "pnpm typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck-final.txt"
+    },
+    {
+      "command": "pnpm test",
+      "status": "pass",
+      "raw": "raw/test-final.txt"
+    },
+    {
+      "command": "pnpm happytg doctor",
+      "status": "pass",
+      "raw": "raw/doctor-final.txt"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "status": "pass",
+      "raw": "raw/happytg-verify-final.txt"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-05-03-doctor-warning-cleanup",
+      "status": "pass",
+      "raw": "raw/task-validate-final.txt"
+    },
+    {
+      "command": "git diff --check",
+      "status": "pass",
+      "raw": "raw/diff-check.txt"
+    }
+  ],
+  "freshVerifier": {
+    "status": "pass",
+    "raw": "raw/fresh-verifier.txt"
+  }
+}

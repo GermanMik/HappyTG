@@ -106,8 +106,13 @@ async function createStrictWindowsCodexShim(tempDir: string, version: string, ex
         process.exit(0);
       }
       if (args[0] === "exec") {
+        const normalized = [...args];
+        const cdIndex = normalized.indexOf("-C");
+        if (cdIndex !== -1) {
+          normalized.splice(cdIndex, 2);
+        }
         const expected = ["exec", "--skip-git-repo-check", "--json", ${JSON.stringify(expectedPrompt)}];
-        const matches = args.length === expected.length && args.every((value, index) => value === expected[index]);
+        const matches = normalized.length === expected.length && normalized.every((value, index) => value === expected[index]);
         if (!matches) {
           console.error(\`unexpected exec args: \${JSON.stringify(args)}\`);
           process.exit(1);
@@ -651,6 +656,59 @@ test("checkCodexReadiness preserves spaced prompts when it runs through a Window
   }
 });
 
+test("checkCodexReadiness runs smoke from a neutral cwd when provided", async () => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-smoke-cwd-"));
+  try {
+    const repoDir = path.join(tempRoot, "repo");
+    const smokeDir = path.join(tempRoot, "smoke");
+    await mkdir(repoDir, { recursive: true });
+    await mkdir(smokeDir, { recursive: true });
+    const harness = await createCodexHarness(
+      tempRoot,
+      "codex-smoke-cwd-harness.mjs",
+      `
+        import path from "node:path";
+        const expectedSmokeCwd = path.resolve(${JSON.stringify(smokeDir)});
+        const args = process.argv.slice(2);
+        if (args[0] === "--version") {
+          console.log("codex test 1.0");
+          process.exit(0);
+        }
+        if (args[0] === "exec") {
+          const cdIndex = args.indexOf("-C");
+          if (cdIndex === -1 || path.resolve(args[cdIndex + 1] ?? "") !== expectedSmokeCwd) {
+            console.error(\`missing neutral smoke cwd: \${JSON.stringify(args)}\`);
+            process.exit(1);
+          }
+          if (path.resolve(process.cwd()) !== expectedSmokeCwd) {
+            console.error(\`unexpected process cwd: \${process.cwd()}\`);
+            process.exit(1);
+          }
+          console.log('{"type":"message","text":"OK"}');
+          process.exit(0);
+        }
+        console.error("unexpected invocation");
+        process.exit(1);
+      `
+    );
+    const configPath = path.join(tempRoot, "config.toml");
+    await writeFile(configPath, 'model = "gpt-5"\n', "utf8");
+
+    const readiness = await checkCodexReadiness({
+      binaryPath: harness.binaryPath,
+      binaryArgs: harness.binaryArgs,
+      configPath,
+      cwd: repoDir,
+      smokeCwd: smokeDir
+    });
+
+    assert.equal(readiness.available, true);
+    assert.equal(readiness.smokeOk, true);
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test("checkCodexReadiness treats a Windows shell command-not-found result as missing", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-runtime-win-missing-"));
   try {
@@ -711,12 +769,21 @@ test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only
     "2026-04-08T14:03:06Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell",
     "Reading additional input from stdin...",
     "2026-04-08T14:03:06Z ERROR codex_core::models_manager::manager: failed to refresh available models: timeout waiting for child process to exit",
+    "2026-05-03T13:52:18Z WARN codex_analytics::client: failed to send events request: error sending request for url (https://chatgpt.com/backend-api/codex/analytics-events/events)",
+    "2026-05-03T13:57:41Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest(\"http/request failed: error sending request for url (https://chatgpt.com/backend-api/wham/apps)\")))",
+    "2026-05-03T14:03:08Z ERROR codex_core::tools::router: error=`\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command 'memory context --project'` rejected: blocked by policy",
+    "2026-05-03T14:07:22Z ERROR codex_core::tools::router: error=`\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command 'memory search \"OK exact output\"'` rejected: blocked by policy",
+    "<!DOCTYPE html>",
+    "<head>",
+    "width=\"41\"",
+    "<script>(function(){window._cf_chl_opt = {cRay: 'test'};}());</script>",
+    "</html>",
     "2026-04-08T14:03:07Z WARN custom warning"
   ].join("\n");
 
   const classified = classifyCodexSmokeStderr(stderr);
 
-  assert.equal(classified.ignoredLines.length, 8);
+  assert.equal(classified.ignoredLines.length, 17);
   assert.deepEqual(classified.actionableLines, [
     "2026-04-08T14:03:07Z WARN custom warning"
   ]);
