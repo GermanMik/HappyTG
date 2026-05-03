@@ -1,0 +1,2 @@
+Navigating to http://127.0.0.1:3108/?userId=release-preview
+Capturing screenshot into .agent/tasks/HTG-2026-05-03-usability-release-0.4.12/raw/screenshots/miniapp-home.png

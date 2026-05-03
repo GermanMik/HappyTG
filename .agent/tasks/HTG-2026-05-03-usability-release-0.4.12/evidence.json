@@ -1,0 +1,68 @@
+{
+  "taskId": "HTG-2026-05-03-usability-release-0.4.12",
+  "targetVersion": "0.4.12",
+  "baseCommit": "78b2705",
+  "previousRelease": {
+    "tag": "v0.4.11",
+    "published": true
+  },
+  "commands": [
+    {
+      "name": "pnpm release:check --version 0.4.12",
+      "status": "pass",
+      "raw": "raw/release-check.txt"
+    },
+    {
+      "name": "pnpm build",
+      "status": "pass",
+      "raw": "raw/build.txt"
+    },
+    {
+      "name": "pnpm lint",
+      "status": "pass",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "name": "pnpm typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "name": "pnpm test",
+      "status": "pass",
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "name": "pnpm happytg doctor",
+      "status": "warn",
+      "raw": "raw/doctor.txt"
+    },
+    {
+      "name": "pnpm happytg verify",
+      "status": "warn",
+      "raw": "raw/happytg-verify.txt"
+    },
+    {
+      "name": "pnpm happytg task validate --repo . --task HTG-2026-05-03-usability-release-0.4.12",
+      "status": "pass",
+      "raw": "raw/task-validate.txt"
+    },
+    {
+      "name": "npx playwright screenshot",
+      "status": "pass",
+      "raw": "raw/browser-screenshot.txt"
+    }
+  ],
+  "ci": {
+    "status": "pending"
+  },
+  "release": {
+    "status": "pending"
+  },
+  "screenshots": [
+    {
+      "label": "Mini App dashboard preview",
+      "path": "raw/screenshots/miniapp-home.png"
+    }
+  ]
+}
