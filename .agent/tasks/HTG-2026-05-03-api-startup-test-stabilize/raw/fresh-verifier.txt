@@ -1,0 +1,19 @@
+Fresh verifier pass: PASS
+
+Scope reviewed:
+- spec.md
+- evidence.md
+- evidence.json
+- problems.md
+- verdict.json
+- apps/api/src/index.test.ts
+- raw verification outputs
+
+Findings:
+- The only production-adjacent file changed is a test file.
+- The test still asserts the supported behavior: transient HappyTG API handoff must result in `{ status: "listening", port }`.
+- The fix removes the timer race by making the first reuse probe close the occupied mock server before later probes run.
+- Required local checks passed.
+
+Residual risk:
+- GitHub release workflow must be rerun after merge to prove the CI/release environment is green.
