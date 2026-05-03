@@ -585,16 +585,30 @@ test("startApiServer retries a transient HappyTG API handoff before classifying 
   const apiServer = createApiServer();
   let occupiedClosed = false;
   let occupiedClosePromise: Promise<void> | undefined;
-  const handoffTimer = setTimeout(() => {
+  let probeCount = 0;
+  const fetchImpl: typeof fetch = async () => {
+    probeCount += 1;
+    if (probeCount !== 1) {
+      throw new Error("Transient HappyTG API handoff mock is no longer reachable");
+    }
+
     occupiedClosePromise = closeServer(occupied).then(() => {
       occupiedClosed = true;
     });
-  }, 20);
+    await occupiedClosePromise;
+
+    return new Response(JSON.stringify({ ok: true, service: "api" }), {
+      headers: {
+        "content-type": "application/json"
+      }
+    });
+  };
 
   try {
     const result = await startApiServer(apiServer, {
       port: address.port,
       logger: { info() {} },
+      fetchImpl,
       reuseProbeWindowMs: 250,
       reuseProbeIntervalMs: 25
     });
@@ -602,11 +616,11 @@ test("startApiServer retries a transient HappyTG API handoff before classifying 
     assert.deepEqual(result, { status: "listening", port: address.port });
     assert.equal(apiServer.listening, true);
     assert.equal(occupiedClosed, true);
+    assert.equal(probeCount >= 2, true);
   } finally {
     if (apiServer.listening) {
       await closeServer(apiServer);
     }
-    clearTimeout(handoffTimer);
     if (occupiedClosePromise) {
       await occupiedClosePromise;
     } else if (occupied.listening && !occupiedClosed) {

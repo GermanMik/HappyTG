@@ -1,0 +1,9 @@
+
+> happytg@0.4.11 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-05-03-api-startup-test-stabilize"
+
+Task: HTG-2026-05-03-api-startup-test-stabilize
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-05-03-api-startup-test-stabilize
+Validation: missing raw\build.txt, raw\test-unit.txt, raw\test-integration.txt
+Phase: unknown
+Verification: unknown

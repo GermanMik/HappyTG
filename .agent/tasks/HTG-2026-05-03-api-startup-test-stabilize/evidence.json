@@ -1,0 +1,50 @@
+{
+  "taskId": "HTG-2026-05-03-api-startup-test-stabilize",
+  "status": "verified",
+  "trigger": {
+    "releaseRunId": "25278110721",
+    "releaseRunUrl": "https://github.com/GermanMik/HappyTG/actions/runs/25278110721",
+    "failedCommand": "pnpm test",
+    "failedTest": "startApiServer retries a transient HappyTG API handoff before classifying reuse"
+  },
+  "scope": {
+    "productionCodeChangesAllowed": false,
+    "testHarnessChangesAllowed": true
+  },
+  "changes": [
+    {
+      "file": "apps/api/src/index.test.ts",
+      "summary": "Made the transient HappyTG API handoff test deterministic by replacing timer-based server close with fetchImpl-driven synchronous handoff."
+    }
+  ],
+  "checks": {
+    "pnpm --filter @happytg/api test": {
+      "status": "pass",
+      "raw": "raw/test-api.txt"
+    },
+    "pnpm test": {
+      "status": "pass",
+      "raw": "raw/test-unit.txt"
+    },
+    "pnpm build": {
+      "status": "pass",
+      "raw": "raw/build.txt"
+    },
+    "pnpm lint": {
+      "status": "pass",
+      "raw": "raw/lint.txt"
+    },
+    "pnpm typecheck": {
+      "status": "pass",
+      "raw": "raw/typecheck.txt"
+    },
+    "pnpm release:check --version 0.4.11": {
+      "status": "pass",
+      "raw": "raw/release-check.txt"
+    },
+    "git diff --check": {
+      "status": "pass",
+      "raw": "raw/diff-check.txt"
+    }
+  }
+}
