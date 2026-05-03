@@ -15,8 +15,10 @@ import {
 } from "../../../packages/shared/src/index.js";
 import type {
   CodexDesktopControlResult,
+  CodexDesktopHistoryEntry,
   CodexDesktopProject,
   CodexDesktopSession,
+  CodexDesktopSessionDetail,
   CreateSessionRequest,
   MiniAppApprovalCard,
   MiniAppDashboardProjection,
@@ -1307,6 +1309,29 @@ function renderDesktopActions(session: CodexDesktopSession): string {
   </div>`;
 }
 
+function renderDesktopHistoryItem(entry: CodexDesktopHistoryEntry): string {
+  const role = entry.role ? ` · ${entry.role}` : "";
+  return `<li>
+    <strong>${entry.sequence}. ${escapeHtml(entry.kind)}${escapeHtml(role)}</strong>
+    <div class="muted">${escapeHtml(entry.occurredAt)} · ${escapeHtml(entry.source)}</div>
+    <p>${escapeHtml(entry.summary)}</p>
+  </li>`;
+}
+
+function renderDesktopHistory(detail: CodexDesktopSessionDetail): string {
+  if (detail.history.length === 0) {
+    return renderEmptyState(
+      "History недоступна",
+      detail.historyUnsupportedReason ?? "No bounded Codex Desktop history records were found for this session.",
+      "Codex Desktop",
+      "/codex?source=codex-desktop"
+    );
+  }
+
+  return `<ol class="timeline">${detail.history.map(renderDesktopHistoryItem).join("")}</ol>
+    ${detail.historyTruncated ? `<p class="muted">History truncated to a bounded read-only preview.</p>` : ""}`;
+}
+
 function renderCodexPanel(input: {
   cliSessions: MiniAppSessionCard[];
   desktopProjects: CodexDesktopProject[];
@@ -1369,7 +1394,8 @@ function renderCodexPanel(input: {
   `;
 }
 
-function renderDesktopSessionDetail(session: CodexDesktopSession): string {
+function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail): string {
+  const session = detail.session;
   return `
     <section class="panel hero">
       <p class="eyebrow">Codex Desktop</p>
@@ -1385,6 +1411,11 @@ function renderDesktopSessionDetail(session: CodexDesktopSession): string {
       <div class="kv-item"><div class="eyebrow">Contract</div><strong>${session.canResume || session.canStop || session.canCreateTask ? "partial" : "unsupported"}</strong></div>
     </section>
     ${session.unsupportedReason ? `<section class="notice notice-warn">${escapeHtml(desktopUnsupportedReason(session))}</section>` : ""}
+    ${detail.historyUnsupportedReasonCode ? `<section class="notice notice-info">${escapeHtml(detail.historyUnsupportedReasonCode)}</section>` : ""}
+    <section class="panel">
+      <h2>History</h2>
+      ${renderDesktopHistory(detail)}
+    </section>
   `;
 }
 
@@ -1765,9 +1796,8 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
         if (screen === "codex-session" && url.searchParams.get("id")) {
           const id = url.searchParams.get("id")!;
-          const codex = await fetchCodexForRequest(req, url);
-          const session = codex.desktopSessions.find((item) => item.id === id);
-          html(res, session ? 200 : 404, renderForRequest(req, session ? `Codex Desktop ${session.id}` : "Codex Desktop session not found", session ? renderDesktopSessionDetail(session) : renderEmptyState("Desktop session не найдена", "Adapter did not return this session.", "Codex", "/codex?source=codex-desktop"), { navKey: "codex" }));
+          const detail = await fetchForRequest<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`);
+          html(res, 200, renderForRequest(req, `Codex Desktop ${detail.session.id}`, renderDesktopSessionDetail(detail), { navKey: "codex" }));
           return;
         }
         if (screen === "sessions") {
@@ -1839,9 +1869,13 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const id = url.searchParams.get("id");
-        const codex = await fetchCodexForRequest(req, url);
-        const session = id ? codex.desktopSessions.find((item) => item.id === id) : undefined;
-        html(res, session ? 200 : 404, renderForRequest(req, session ? `Codex Desktop ${session.id}` : "Codex Desktop session not found", session ? renderDesktopSessionDetail(session) : renderEmptyState("Desktop session не найдена", "Adapter did not return this session.", "Codex", "/codex?source=codex-desktop"), { navKey: "codex" }));
+        if (!id) {
+          html(res, 404, renderForRequest(req, "Codex Desktop session not found", renderEmptyState("Desktop session не найдена", "Adapter did not return this session.", "Codex", "/codex?source=codex-desktop"), { navKey: "codex" }));
+          return;
+        }
+
+        const detail = await fetchForRequest<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`);
+        html(res, 200, renderForRequest(req, `Codex Desktop ${detail.session.id}`, renderDesktopSessionDetail(detail), { navKey: "codex" }));
       }),
       route("GET", "/approvals", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Подтверждения", "approvals")) {

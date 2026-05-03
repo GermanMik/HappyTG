@@ -6,21 +6,54 @@ import path from "node:path";
 
 import type {
   CodexDesktopControlResult,
+  CodexDesktopHistoryEntry,
   CodexDesktopProject,
   CodexDesktopSession,
+  CodexDesktopSessionDetail,
   CreateCodexDesktopTaskRequest
 } from "../../protocol/src/index.js";
 import { normalizeSpawnEnv, resolveExecutable } from "../../shared/src/index.js";
 
 export const CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE = "CODEX_DESKTOP_CONTROL_UNSUPPORTED";
 export const CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE = "CODEX_DESKTOP_APP_SERVER_UNAVAILABLE";
+export const CODEX_DESKTOP_HISTORY_UNAVAILABLE_REASON_CODE = "CODEX_DESKTOP_HISTORY_UNAVAILABLE";
 
 const DEFAULT_UNSUPPORTED_REASON = "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.";
 const APP_SERVER_EXPERIMENTAL_REASON = "Codex Desktop app-server control remains disabled by default because the local Codex CLI marks app-server as experimental.";
 const APP_SERVER_UNAVAILABLE_REASON = "Codex Desktop app-server control is unavailable. Start Codex Desktop or make `codex app-server` available on this host.";
 const DEFAULT_MAX_SESSION_FILES = 500;
+const DEFAULT_HISTORY_MAX_RECORDS = 80;
+const DEFAULT_HISTORY_SUMMARY_MAX_CHARS = 320;
 const DEFAULT_APP_SERVER_REQUEST_TIMEOUT_MS = 10_000;
 const DEFAULT_APP_SERVER_STDERR_MAX_BYTES = 8_192;
+const SECRET_FIELD_RE = /(?:secret|token|password|passwd|credential|authorization|auth|api[_-]?key|private[_-]?key|access[_-]?token|refresh[_-]?token)/iu;
+const SECRET_VALUE_RE = /\b(?:RAW_[A-Z0-9_]*SECRET[A-Z0-9_]*|sk-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|gh[pousr]_[A-Za-z0-9_]{20,}|Bearer\s+[A-Za-z0-9._~-]+|(?:api[_-]?key|token|password|secret)\s*[:=]\s*\S+)/giu;
+const HISTORY_TEXT_KEYS = new Set([
+  "content",
+  "text",
+  "message",
+  "summary",
+  "preview",
+  "title",
+  "thread_name",
+  "input",
+  "output",
+  "response",
+  "reason",
+  "error",
+  "command"
+]);
+const HISTORY_CONTAINER_KEYS = new Set([
+  "payload",
+  "message",
+  "messages",
+  "item",
+  "items",
+  "data",
+  "event",
+  "turn",
+  "response"
+]);
 
 interface CodexDesktopControlCapabilities {
   supportsResume: boolean;
@@ -58,9 +91,15 @@ export interface CodexDesktopStateAdapterOptions {
   cwd?: string;
   platform?: NodeJS.Platform;
   maxSessionFiles?: number;
+  maxHistoryRecords?: number;
   controlContract?: CodexDesktopControlContract;
   appServerCommand?: string;
   appServerArgs?: string[];
+}
+
+interface JsonlReadResult {
+  records: Record<string, unknown>[];
+  truncated: boolean;
 }
 
 interface JsonRpcErrorObject {
@@ -226,6 +265,34 @@ async function readJsonl(filePath: string, maxLines?: number): Promise<Record<st
   }
 }
 
+async function readJsonlBounded(filePath: string, maxLines: number): Promise<JsonlReadResult> {
+  try {
+    const raw = await fs.readFile(filePath, "utf8");
+    const lines = raw.split(/\r?\n/u).filter((line) => line.trim());
+    const selected = lines.slice(0, maxLines);
+    const records: Record<string, unknown>[] = [];
+    for (const line of selected) {
+      try {
+        const parsed = JSON.parse(line) as unknown;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          records.push(parsed as Record<string, unknown>);
+        }
+      } catch {
+        records.push({ parseError: true });
+      }
+    }
+    return {
+      records,
+      truncated: lines.length > selected.length
+    };
+  } catch {
+    return {
+      records: [],
+      truncated: false
+    };
+  }
+}
+
 async function collectJsonlFiles(root: string, maxFiles: number): Promise<string[]> {
   const files: string[] = [];
 
@@ -302,6 +369,164 @@ function metadataFromSessionRecords(filePath: string, records: Record<string, un
     updatedAt,
     archived,
     unknown
+  };
+}
+
+function boundedText(value: string, maxChars = DEFAULT_HISTORY_SUMMARY_MAX_CHARS): string {
+  const normalized = value.replace(/\s+/gu, " ").trim();
+  return normalized.length <= maxChars ? normalized : `${normalized.slice(0, maxChars - 3)}...`;
+}
+
+function redactHistoryText(value: string): string {
+  const redacted = value.replace(SECRET_VALUE_RE, "[redacted]");
+  return boundedText(redacted);
+}
+
+function collectHistoryText(value: unknown, output: string[], keyPath: string[] = [], depth = 0): void {
+  if (output.length >= 6 || depth > 5 || value === undefined || value === null) {
+    return;
+  }
+
+  const key = keyPath.at(-1) ?? "";
+  if (SECRET_FIELD_RE.test(key)) {
+    output.push("[redacted]");
+    return;
+  }
+
+  if (typeof value === "string") {
+    if (HISTORY_TEXT_KEYS.has(key) || keyPath.length === 0) {
+      const text = redactHistoryText(value);
+      if (text) {
+        output.push(text);
+      }
+    }
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value.slice(0, 12)) {
+      collectHistoryText(item, output, keyPath, depth + 1);
+    }
+    return;
+  }
+
+  if (!value || typeof value !== "object") {
+    return;
+  }
+
+  for (const [nestedKey, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+    if (output.length >= 6) {
+      return;
+    }
+    if (SECRET_FIELD_RE.test(nestedKey)) {
+      output.push("[redacted]");
+      continue;
+    }
+    if (HISTORY_TEXT_KEYS.has(nestedKey) || HISTORY_CONTAINER_KEYS.has(nestedKey)) {
+      collectHistoryText(nestedValue, output, [...keyPath, nestedKey], depth + 1);
+    }
+  }
+}
+
+function objectValue(record: Record<string, unknown>, key: string): Record<string, unknown> | undefined {
+  const value = record[key];
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : undefined;
+}
+
+function nestedString(record: Record<string, unknown>, key: string): string | undefined {
+  const direct = safeString(record[key]);
+  if (direct) {
+    return direct;
+  }
+
+  const payload = objectValue(record, "payload");
+  return payload ? safeString(payload[key]) : undefined;
+}
+
+function nestedIso(record: Record<string, unknown>, key: string): string | undefined {
+  const direct = safeIso(record[key]);
+  if (direct) {
+    return direct;
+  }
+
+  const payload = objectValue(record, "payload");
+  return payload ? safeIso(payload[key]) : undefined;
+}
+
+function historyRole(record: Record<string, unknown>): CodexDesktopHistoryEntry["role"] | undefined {
+  const role = nestedString(record, "role")?.toLowerCase();
+  return role === "user" || role === "assistant" || role === "system" || role === "tool" ? role : undefined;
+}
+
+function historyKind(record: Record<string, unknown>, role?: CodexDesktopHistoryEntry["role"]): CodexDesktopHistoryEntry["kind"] {
+  if (record.parseError) {
+    return "unknown";
+  }
+
+  const raw = [
+    nestedString(record, "type"),
+    nestedString(record, "kind"),
+    nestedString(record, "event"),
+    role
+  ].filter(Boolean).join(" ").toLowerCase();
+
+  if (role || raw.includes("message")) {
+    return "message";
+  }
+  if (raw.includes("turn")) {
+    return "turn";
+  }
+  if (raw.includes("event")) {
+    return "event";
+  }
+  if (raw) {
+    return "metadata";
+  }
+  return "unknown";
+}
+
+function historyOccurredAt(record: Record<string, unknown>, fallback: string): string {
+  return nestedIso(record, "timestamp")
+    ?? nestedIso(record, "created_at")
+    ?? nestedIso(record, "createdAt")
+    ?? nestedIso(record, "updated_at")
+    ?? nestedIso(record, "updatedAt")
+    ?? fallback;
+}
+
+function historySummary(record: Record<string, unknown>, kind: CodexDesktopHistoryEntry["kind"]): string {
+  if (record.parseError) {
+    return "Unreadable Codex Desktop JSONL record.";
+  }
+
+  const texts: string[] = [];
+  collectHistoryText(record, texts);
+  const unique = [...new Set(texts.filter(Boolean))];
+  return unique.length > 0
+    ? boundedText(unique.join(" "))
+    : `Codex Desktop ${kind} record.`;
+}
+
+function historyEntryFromRecord(input: {
+  filePath: string;
+  record: Record<string, unknown>;
+  sequence: number;
+  fallbackOccurredAt: string;
+}): CodexDesktopHistoryEntry {
+  const role = historyRole(input.record);
+  const kind = historyKind(input.record, role);
+  const title = role ? `${role} ${kind}` : kind;
+  return {
+    id: `cdh_${createHash("sha256").update(`${input.filePath}:${input.sequence}`).digest("hex").slice(0, 16)}`,
+    sequence: input.sequence,
+    occurredAt: historyOccurredAt(input.record, input.fallbackOccurredAt),
+    kind,
+    ...(role ? { role } : {}),
+    title,
+    summary: historySummary(input.record, kind),
+    source: "codex-desktop"
   };
 }
 
@@ -778,11 +1003,13 @@ function defaultControlContract(options: CodexDesktopStateAdapterOptions, codexH
 export class CodexDesktopStateAdapter {
   private readonly env: NodeJS.ProcessEnv;
   private readonly maxSessionFiles: number;
+  private readonly maxHistoryRecords: number;
   private readonly controlContract: CodexDesktopControlContract;
 
   constructor(private readonly options: CodexDesktopStateAdapterOptions = {}) {
     this.env = options.env ?? process.env;
     this.maxSessionFiles = options.maxSessionFiles ?? Number(this.env.HAPPYTG_CODEX_DESKTOP_MAX_SESSION_FILES ?? DEFAULT_MAX_SESSION_FILES);
+    this.maxHistoryRecords = options.maxHistoryRecords ?? Number(this.env.HAPPYTG_CODEX_DESKTOP_MAX_HISTORY_RECORDS ?? DEFAULT_HISTORY_MAX_RECORDS);
     this.controlContract = options.controlContract ?? defaultControlContract(options, this.codexHome());
   }
 
@@ -951,6 +1178,70 @@ export class CodexDesktopStateAdapter {
 
   async getSession(sessionId: string): Promise<CodexDesktopSession | undefined> {
     return (await this.listSessions()).find((session) => session.id === sessionId);
+  }
+
+  private async sessionJsonlFiles(sessionId: string): Promise<string[]> {
+    const codexHome = this.codexHome();
+    const sessionFiles = await collectJsonlFiles(path.join(codexHome, "sessions"), this.maxSessionFiles);
+    const archivedFiles = await collectJsonlFiles(path.join(codexHome, "archived_sessions"), this.maxSessionFiles);
+    const files = [...sessionFiles, ...archivedFiles];
+    const directMatches = files.filter((filePath) => extractFileSessionId(filePath) === sessionId);
+    if (directMatches.length > 0) {
+      return directMatches;
+    }
+
+    const matches: string[] = [];
+    for (const filePath of files) {
+      const archived = filePath.includes(`${path.sep}archived_sessions${path.sep}`);
+      const metadata = metadataFromSessionRecords(filePath, await readJsonl(filePath, 40), archived);
+      if (metadata?.id === sessionId) {
+        matches.push(filePath);
+      }
+    }
+    return matches;
+  }
+
+  async getSessionDetail(sessionId: string): Promise<CodexDesktopSessionDetail | undefined> {
+    const session = await this.getSession(sessionId);
+    if (!session) {
+      return undefined;
+    }
+
+    const files = await this.sessionJsonlFiles(sessionId);
+    const maxRecords = Number.isInteger(this.maxHistoryRecords) && this.maxHistoryRecords > 0
+      ? this.maxHistoryRecords
+      : DEFAULT_HISTORY_MAX_RECORDS;
+    const history: CodexDesktopHistoryEntry[] = [];
+    let historyTruncated = false;
+
+    for (const filePath of files) {
+      if (history.length >= maxRecords) {
+        historyTruncated = true;
+        break;
+      }
+
+      const remaining = maxRecords - history.length;
+      const result = await readJsonlBounded(filePath, remaining);
+      historyTruncated = historyTruncated || result.truncated;
+      for (const record of result.records) {
+        history.push(historyEntryFromRecord({
+          filePath,
+          record,
+          sequence: history.length + 1,
+          fallbackOccurredAt: session.updatedAt
+        }));
+      }
+    }
+
+    return {
+      session,
+      history,
+      historyTruncated,
+      ...(files.length === 0 ? {
+        historyUnsupportedReason: "No Codex Desktop JSONL history file was found for this session.",
+        historyUnsupportedReasonCode: CODEX_DESKTOP_HISTORY_UNAVAILABLE_REASON_CODE
+      } : {})
+    };
   }
 
   async resumeSession(session: CodexDesktopSession): Promise<CodexDesktopControlResult> {

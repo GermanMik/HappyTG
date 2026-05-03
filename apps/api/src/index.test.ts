@@ -305,6 +305,35 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
         ]
       };
     },
+    async getCodexDesktopSessionDetail(userId: string, sessionId: string) {
+      calls.push({ kind: "detail", userId, sessionId });
+      return {
+        session: {
+          id: sessionId,
+          title: "Desktop task",
+          updatedAt: "2026-04-28T09:00:00.000Z",
+          status: "recent",
+          source: "codex-desktop",
+          canResume: false,
+          canStop: false,
+          unsupportedReason: "contract missing",
+          unsupportedReasonCode: "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+        },
+        history: [
+          {
+            id: "cdh_1",
+            sequence: 1,
+            occurredAt: "2026-04-28T09:01:00.000Z",
+            kind: "message",
+            role: "assistant",
+            title: "assistant message",
+            summary: "Safe desktop answer",
+            source: "codex-desktop"
+          }
+        ],
+        historyTruncated: false
+      };
+    },
     async resumeCodexDesktopSession(userId: string, sessionId: string) {
       calls.push({ kind: "resume", userId, sessionId });
       throw new CodexDesktopControlError(501, "contract missing", "contract missing", "CODEX_DESKTOP_CONTROL_UNSUPPORTED");
@@ -355,6 +384,13 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
     assert.equal(sessionsPayload.sessions[0]?.unsupportedReason, "contract missing");
     assert.equal(sessionsPayload.sessions[0]?.unsupportedReasonCode, "CODEX_DESKTOP_CONTROL_UNSUPPORTED");
 
+    const detail = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/sessions/cds_1?userId=usr_query`);
+    const detailPayload = await detail.json() as { session: { source: string }; history: Array<{ source: string; summary: string }> };
+    assert.equal(detail.status, 200);
+    assert.equal(detailPayload.session.source, "codex-desktop");
+    assert.equal(detailPayload.history[0]?.source, "codex-desktop");
+    assert.equal(detailPayload.history[0]?.summary, "Safe desktop answer");
+
     const unsupported = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/sessions/cds_1/resume`, {
       method: "POST",
       headers: {
@@ -382,6 +418,7 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
     assert.deepEqual(calls.map((call) => `${call.kind}:${call.userId ?? ""}`), [
       "projects:usr_query",
       "sessions:usr_bearer",
+      "detail:usr_query",
       "resume:usr_query",
       "new-task:usr_bearer"
     ]);
@@ -547,8 +584,9 @@ test("startApiServer retries a transient HappyTG API handoff before classifying 
 
   const apiServer = createApiServer();
   let occupiedClosed = false;
-  setTimeout(() => {
-    void closeServer(occupied).then(() => {
+  let occupiedClosePromise: Promise<void> | undefined;
+  const handoffTimer = setTimeout(() => {
+    occupiedClosePromise = closeServer(occupied).then(() => {
       occupiedClosed = true;
     });
   }, 20);
@@ -568,8 +606,12 @@ test("startApiServer retries a transient HappyTG API handoff before classifying 
     if (apiServer.listening) {
       await closeServer(apiServer);
     }
-    if (!occupiedClosed) {
+    clearTimeout(handoffTimer);
+    if (occupiedClosePromise) {
+      await occupiedClosePromise;
+    } else if (occupied.listening && !occupiedClosed) {
       await closeServer(occupied);
+      occupiedClosed = true;
     }
   }
 });

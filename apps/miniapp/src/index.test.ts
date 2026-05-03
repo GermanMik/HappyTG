@@ -427,6 +427,37 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
           ]
         } as never;
       }
+      if (pathname === "/api/v1/codex-desktop/sessions/desktop-session-1?userId=usr_1") {
+        return {
+          session: {
+            id: "desktop-session-1",
+            title: "Desktop fixture",
+            projectPath: "C:/Develop/Projects/HappyTG",
+            projectId: "cdp_1",
+            updatedAt: "2026-04-28T09:00:00.000Z",
+            status: "recent",
+            source: "codex-desktop",
+            canResume: false,
+            canStop: false,
+            canCreateTask: false,
+            unsupportedReason: "contract missing",
+            unsupportedReasonCode: "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+          },
+          history: [
+            {
+              id: "cdh_1",
+              sequence: 1,
+              occurredAt: "2026-04-28T09:01:00.000Z",
+              kind: "message",
+              role: "assistant",
+              title: "assistant message",
+              summary: "Safe desktop answer",
+              source: "codex-desktop"
+            }
+          ],
+          historyTruncated: false
+        } as never;
+      }
       throw new Error(`Unexpected path ${pathname}`);
     }
   });
@@ -460,6 +491,8 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
     assert.match(detailHtml, /New Desktop Task/);
     assert.match(detailHtml, /disabled/);
     assert.match(detailHtml, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
+    assert.match(detailHtml, /History/);
+    assert.match(detailHtml, /Safe desktop answer/);
     assert.doesNotMatch(detailHtml, /data-desktop-action="resume"/);
     assert.doesNotMatch(detailHtml, /RAW_PROMPT_SECRET/);
   } finally {
@@ -504,6 +537,15 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
       }
       if (pathname === "/api/v1/codex-desktop/sessions?userId=usr_1") {
         return { sessions: [desktopSession] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions/desktop-supported?userId=usr_1") {
+        return {
+          session: desktopSession,
+          history: [],
+          historyTruncated: false,
+          historyUnsupportedReason: "No Codex Desktop JSONL history file was found for this session.",
+          historyUnsupportedReasonCode: "CODEX_DESKTOP_HISTORY_UNAVAILABLE"
+        } as never;
       }
       if (pathname === "/api/v1/codex-desktop/tasks?userId=usr_1") {
         assert.equal(init?.method, "POST");

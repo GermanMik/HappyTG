@@ -1,0 +1,37 @@
+
+> @happytg/api@0.4.10 test C:\Develop\Projects\HappyTG\apps\api
+> tsx --test src/*.test.ts
+
+✔ api ready endpoint returns store metadata (32.4847ms)
+✔ api exposes fast version and prometheus metrics endpoints (11.916ms)
+✔ api dev CORS allows only explicit Mini App origins (8.8656ms)
+✔ mini app projection endpoints require session auth instead of falling back to global state (5.819ms)
+✔ mini app approval resolve endpoint uses bearer session user (12.0547ms)
+✔ mini app project and session mutation endpoints require bearer user context (9.382ms)
+✔ codex desktop API is user-scoped and maps guarded control responses (12.747ms)
+✔ session cancel endpoint delegates to the control-plane service (5.2703ms)
+✔ startApiServer reuses an already-running HappyTG API on the same port (57.672ms)
+✔ startApiServer rejects with an actionable message when another process occupies the port (5.7006ms)
+✔ startApiServer rejects when a different HappyTG service occupies the API port (4.9841ms)
+✔ startApiServer retries a transient HappyTG API handoff before classifying reuse (36.5348ms)
+✔ proof session creates task bundle and approval, then approval dispatches session (34.2446ms)
+✔ quick session dispatches immediately without approval (7.8063ms)
+✔ cancelSession cancels active sessions, dispatch records, event, and audit (15.3029ms)
+✔ session timeline and task artifact reads are available for mini app inspection (23.509ms)
+✔ bootstrap sessions dispatch deterministic doctor runs and support resume state transitions (10.6729ms)
+✔ bot projections list user-scoped workspaces, sessions, approvals, and reject stale callback nonce (25.3107ms)
+✔ Codex Desktop projections are user-scoped and sanitized (24.9978ms)
+✔ Codex Desktop controls block unavailable contracts and audit attempts (24.4817ms)
+✔ Codex Desktop controls execute only through supported adapter contract (23.2541ms)
+✔ Codex Desktop mutating controls are serialized through the API service (69.6693ms)
+✔ mini app launch validates initData, issues app session, and exposes action-first projections (44.8845ms)
+✔ proof task filesystem initialization runs outside the serialized store queue (10.1507ms)
+✔ proof approval record failure fails session and closes the waiting approval (14.2784ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 715.9604

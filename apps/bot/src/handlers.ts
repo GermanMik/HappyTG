@@ -494,6 +494,7 @@ function formatDesktopSessionCard(session: CodexDesktopSession): string {
     `Статус: ${session.status}`,
     `Project: ${session.projectPath ? trimLine(session.projectPath, 110) : "unknown"}`,
     `Обновлено: ${session.updatedAt}`,
+    "История: Mini App показывает bounded read-only history",
     `Resume: ${session.canResume ? "supported" : "unsupported"}`,
     `Stop: ${session.canStop ? "supported" : "unsupported"}`,
     !session.canResume || !session.canStop || !session.canCreateTask ? `Причина: ${trimLine(formatDesktopUnsupportedReason(session), 180)}` : undefined

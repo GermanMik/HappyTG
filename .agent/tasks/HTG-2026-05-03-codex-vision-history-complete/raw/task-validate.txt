@@ -1,0 +1,9 @@
+
+> happytg@0.4.10 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-05-03-codex-vision-history-complete"
+
+Task: HTG-2026-05-03-codex-vision-history-complete
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-05-03-codex-vision-history-complete
+Validation: ok
+Phase: unknown
+Verification: unknown

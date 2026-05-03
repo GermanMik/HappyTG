@@ -69,7 +69,10 @@ async function createCodexDesktopHome(root: string): Promise<string> {
   );
   await writeFile(
     path.join(sessionDir, "desktop-session-1.jsonl"),
-    `${JSON.stringify({ timestamp: "2026-04-28T09:00:00.000Z", payload: { id: "desktop-session-1", cwd: "C:/Develop/Projects/HappyTG", content: "RAW_SECRET_PROMPT" } })}\n`,
+    [
+      JSON.stringify({ timestamp: "2026-04-28T09:00:00.000Z", payload: { id: "desktop-session-1", cwd: "C:/Develop/Projects/HappyTG", role: "user", content: "RAW_SECRET_PROMPT" } }),
+      JSON.stringify({ timestamp: "2026-04-28T09:01:00.000Z", payload: { id: "desktop-session-1", role: "assistant", content: "Safe Desktop summary" } })
+    ].join("\n") + "\n",
     "utf8"
   );
   return codexHome;
@@ -417,14 +420,19 @@ test("Codex Desktop projections are user-scoped and sanitized", async () => {
 
     const projects = await service.listCodexDesktopProjects(userId);
     const sessions = await service.listCodexDesktopSessions(userId);
+    const detail = await service.getCodexDesktopSessionDetail(userId, "desktop-session-1");
 
     assert.equal(projects.projects[0]?.source, "codex-desktop");
     assert.equal(projects.projects[0]?.label, "HappyTG");
     assert.equal(sessions.sessions[0]?.source, "codex-desktop");
     assert.equal(sessions.sessions[0]?.canResume, false);
     assert.equal(sessions.sessions[0]?.canStop, false);
-    assert.doesNotMatch(JSON.stringify({ projects, sessions }), /RAW_SECRET_PROMPT/);
+    assert.equal(detail.session.source, "codex-desktop");
+    assert.equal(detail.history[0]?.source, "codex-desktop");
+    assert.match(detail.history[1]?.summary ?? "", /Safe Desktop summary/);
+    assert.doesNotMatch(JSON.stringify({ projects, sessions, detail }), /RAW_SECRET_PROMPT/);
     await assert.rejects(() => service.listCodexDesktopSessions("unknown-user"), /User not found/);
+    await assert.rejects(() => service.getCodexDesktopSessionDetail(userId, "missing-session"), /Codex Desktop session not found/);
 
     const storeState = await store.read();
     assert.equal(storeState.users.some((user) => user.id === userId), true);
