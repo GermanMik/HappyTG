@@ -1,0 +1,45 @@
+{
+  "task_id": "HTG-2026-05-03-ux-10-role-prompt",
+  "session_id": "manual-codex",
+  "current_phase": "fresh verify",
+  "phase_history": [
+    {
+      "phase": "init",
+      "at": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "phase": "freeze/spec",
+      "at": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "phase": "build",
+      "at": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "phase": "evidence",
+      "at": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "phase": "fresh verify",
+      "at": "2026-05-03T00:00:00.000Z"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "spec.md",
+    "evidence.md",
+    "evidence.json",
+    "problems.md",
+    "verdict.json",
+    "raw/",
+    "docs/prompts/happytg-ux-10-role-optimization.md",
+    "docs/releases/0.4.11.md"
+  ],
+  "unresolved_issues": [],
+  "last_event_cursor": null,
+  "timestamps": {
+    "created_at": "2026-05-03T00:00:00.000Z",
+    "updated_at": "2026-05-03T00:00:00.000Z"
+  }
+}

@@ -1,0 +1,18 @@
+PASS.
+
+Blocking findings: none.
+
+Verified:
+- `spec.md` was frozen before prompt/release artifact changes.
+- `docs/prompts/happytg-ux-10-role-optimization.md` includes a comprehensive HappyTG Mini App and Bot UX optimization prompt.
+- The prompt includes a baseline 10-role opinion model and also requires a fresh 10-role assessment during execution.
+- The prompt requires 10 independent role assessments and a synthesis table before implementation decisions.
+- The prompt separates Mini App and Telegram Bot responsibilities and references existing HappyTG architecture docs.
+- The prompt preserves project invariants: Telegram is not internal agent-event transport, mutating host operations stay serialized, policy evaluation precedes approval evaluation, higher-level policy cannot be weakened by lower-level overrides, heavy runtime initialization stays lazy/cache-aware, source/runtime discrimination stays explicit, and unsupported actions must not look successful.
+- Version metadata is consistently bumped to `0.4.11` across 16 workspace package manifests.
+- `CHANGELOG.md` and `docs/releases/0.4.11.md` describe the prompt release.
+- Raw verification outputs are present for build, lint, typecheck, test-unit, test-integration, doctor, verify, release-check, and task-validate.
+
+Residual risks:
+- This task creates the prompt/release artifact only; it does not implement the future Mini App/Bot UX redesign.
+- `doctor` and `verify` retain the known Codex websocket 403 fallback warning and existing-services info.

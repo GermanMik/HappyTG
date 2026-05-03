@@ -1,0 +1,81 @@
+{
+  "taskId": "HTG-2026-05-03-ux-10-role-prompt",
+  "branch": "codex/happytg-ux-10-role-prompt-release",
+  "status": "verified",
+  "specFrozen": true,
+  "memory": {
+    "contextRetrieved": true,
+    "searchQuery": "HappyTG design miniapp bot usability prompt roles",
+    "detailsFetched": [
+      "d6ff4387-c41",
+      "2e9fbab1-433",
+      "694f087e-464"
+    ]
+  },
+  "artifacts": {
+    "prompt": "docs/prompts/happytg-ux-10-role-optimization.md",
+    "releaseNotes": "docs/releases/0.4.11.md",
+    "changelog": "CHANGELOG.md",
+    "version": "0.4.11"
+  },
+  "verification": {
+    "build": {
+      "command": "pnpm build",
+      "raw": "raw/build.txt",
+      "passed": true
+    },
+    "lint": {
+      "command": "pnpm lint",
+      "raw": "raw/lint.txt",
+      "passed": true
+    },
+    "typecheck": {
+      "command": "pnpm typecheck",
+      "raw": "raw/typecheck.txt",
+      "passed": true
+    },
+    "testUnit": {
+      "command": "pnpm test",
+      "raw": "raw/test-unit.txt",
+      "passed": true
+    },
+    "testIntegration": {
+      "command": "pnpm --filter @happytg/api test",
+      "raw": "raw/test-integration.txt",
+      "passed": true
+    },
+    "doctor": {
+      "command": "pnpm happytg doctor",
+      "raw": "raw/doctor.txt",
+      "passed": true,
+      "warnings": [
+        "Codex Responses websocket returned 403 Forbidden, then CLI fell back to HTTP.",
+        "Existing HappyTG services already running on 3007, 4000, 4100."
+      ]
+    },
+    "verify": {
+      "command": "pnpm happytg verify",
+      "raw": "raw/verify.txt",
+      "passed": true,
+      "warnings": [
+        "Codex Responses websocket returned 403 Forbidden, then CLI fell back to HTTP.",
+        "Existing HappyTG services already running on 3007, 4000, 4100."
+      ]
+    },
+    "releaseCheck": {
+      "command": "pnpm release:check --version 0.4.11",
+      "raw": "raw/release-check.txt",
+      "passed": true
+    },
+    "taskValidate": {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-05-03-ux-10-role-prompt",
+      "raw": "raw/task-validate.txt",
+      "passed": true
+    }
+  },
+  "freshVerifier": {
+    "status": "pass",
+    "raw": "raw/fresh-verifier.txt",
+    "blockingFindings": []
+  }
+}
