@@ -1,0 +1,41 @@
+{
+  "task_id": "HTG-2026-05-11-full-verify-release-0.4.14",
+  "verdict": "passed",
+  "verifier": {
+    "role": "fresh-verifier",
+    "run_id": "fresh-verifier-2026-05-11"
+  },
+  "blocking_findings": [],
+  "checks": [
+    {
+      "name": "spec-and-roles",
+      "ok": true,
+      "detail": "Spec is frozen and evidence records 10 independent role findings with remediation."
+    },
+    {
+      "name": "release-metadata",
+      "ok": true,
+      "detail": "All 16 workspace package versions, CHANGELOG.md, and docs/releases/0.4.14.md validate with pnpm release:check --version 0.4.14."
+    },
+    {
+      "name": "repo-validation",
+      "ok": true,
+      "detail": "lint, typecheck, test, build, release check, task validate, graph parse, secret scan, and diff check passed."
+    },
+    {
+      "name": "doctor-verify",
+      "ok": true,
+      "detail": "doctor and verify exited 0 with environment WARN status recorded as residual risk, not clean PASS."
+    },
+    {
+      "name": "docker-graphify-cleanup",
+      "ok": true,
+      "detail": "Docker compose config/images and Docker builds passed; Graphify deterministic graph was refreshed and unsafe generated residue removed."
+    }
+  ],
+  "residual_risks": [
+    "Full docker compose up was not rerun to avoid mutating local Docker services and ports.",
+    "Graphify semantic extraction was not rerun; deterministic graph update passed.",
+    "doctor and verify exited 0 with environment WARN status due local Caddy Mini App identity mismatch and Codex slow SQLite stderr."
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "taskId": "HTG-2026-05-03-docker-corepack-pnpm-retry",
+  "status": "complete",
+  "releaseCleanup": "Raw command artifacts are omitted from the 0.4.14 release branch; refreshed release-candidate evidence is recorded in HTG-2026-05-11-full-verify-release-0.4.14.",
+  "commands": [
+    {
+      "name": "docker-compose-config",
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml config",
+      "artifact": "omitted-from-release-branch",
+      "exitCode": 0
+    },
+    {
+      "name": "docker-build-target",
+      "command": "docker build --progress=plain --build-arg APP_PACKAGE='@happytg/bot' -f infra/Dockerfile.app -t happytg .",
+      "artifact": "omitted-from-release-branch",
+      "exitCode": 0
+    },
+    {
+      "name": "docker-compose-up-first",
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d --no-deps api worker bot miniapp prometheus grafana",
+      "artifact": "omitted-from-release-branch",
+      "exitCode": 1,
+      "note": "Failed before app layers on Docker Hub node image metadata EOF; separate transient registry failure."
+    },
+    {
+      "name": "docker-compose-up-retry",
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d --no-deps api worker bot miniapp prometheus grafana",
+      "artifact": "omitted-from-release-branch",
+      "exitCode": 0
+    },
+    {
+      "name": "docker-compose-ps",
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml ps",
+      "artifact": "omitted-from-release-branch",
+      "exitCode": 0
+    },
+    {
+      "name": "docker-images",
+      "command": "docker images --format \"{{.Repository}}:{{.Tag}} {{.ID}}\" | Select-String -Pattern \"happytg\"",
+      "artifact": "omitted-from-release-branch",
+      "exitCode": 0
+    },
+    {
+      "name": "doctor",
+      "command": "pnpm happytg doctor --json",
+      "artifact": "omitted-from-release-branch",
+      "exitCode": 0,
+      "status": "pass"
+    },
+    {
+      "name": "verify",
+      "command": "pnpm happytg verify --json",
+      "artifact": "omitted-from-release-branch",
+      "exitCode": 0,
+      "status": "pass"
+    },
+    {
+      "name": "task-validate",
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-05-03-docker-corepack-pnpm-retry",
+      "artifact": "omitted-from-release-branch",
+      "exitCode": 0,
+      "status": "ok"
+    }
+  ],
+  "changedFiles": [
+    "infra/Dockerfile.app"
+  ],
+  "generatedAt": "2026-05-03T21:53:00+03:00"
+}

@@ -1,0 +1,173 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.app
+#1 DONE 0.3s
+
+#1 [internal] load build definition from Dockerfile.app
+#1 transferring dockerfile:
+#1 transferring dockerfile: 769B 1.8s done
+#1 DONE 10.8s
+
+#2 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#2 DONE 19.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context:
+#3 transferring context: 164B 0.3s done
+#3 DONE 0.5s
+
+#4 [internal] load build context
+#4 DONE 0.0s
+
+#5 [1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e
+#5 resolve docker.io/library/node:22-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e
+#5 resolve docker.io/library/node:22-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e 0.5s done
+#5 DONE 2.8s
+
+#4 [internal] load build context
+#4 transferring context: 17.98kB 2.4s
+#4 transferring context: 26.12kB 7.5s
+#4 ...
+
+#5 [1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 7.34MB / 28.24MB 4.7s
+#5 sha256:dad35d9305371ac05c2bdf6de63217e78a5906a5f0335bd26432bbee187aea33 1.71MB / 1.71MB 1.7s done
+#5 sha256:079e3008b73419a93cb985863971162eb59bcb78e57f6ef558fc198ad2848d89 450B / 450B 2.1s done
+#5 sha256:5d4a3aa5a9ad18507bf18000f0280556365b57788f03aca635c4792a79799082 3.32kB / 3.32kB 0.6s done
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 2.10MB / 49.84MB 2.1s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 9.44MB / 28.24MB 6.0s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 5.24MB / 49.84MB 5.1s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 11.53MB / 28.24MB 8.7s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 13.63MB / 28.24MB 10.8s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 8.39MB / 49.84MB 8.3s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 15.73MB / 28.24MB 13.1s
+#5 ...
+
+#4 [internal] load build context
+#4 transferring context: 41.02kB 17.6s
+#4 ...
+
+#5 [1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 11.53MB / 49.84MB 12.3s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 17.83MB / 28.24MB 15.6s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 19.92MB / 28.24MB 18.3s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 14.68MB / 49.84MB 16.2s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 22.02MB / 28.24MB 20.7s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 17.83MB / 49.84MB 19.7s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 24.12MB / 28.24MB 23.0s
+#5 ...
+
+#4 [internal] load build context
+#4 transferring context: 4.78MB 26.8s done
+#4 DONE 27.4s
+
+#5 [1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 26.21MB / 28.24MB 24.9s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 20.97MB / 49.84MB 22.8s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 28.24MB / 28.24MB 26.9s
+#5 sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 28.24MB / 28.24MB 27.0s done
+#5 extracting sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 24.12MB / 49.84MB 25.4s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 27.26MB / 49.84MB 27.7s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 30.41MB / 49.84MB 29.3s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 33.55MB / 49.84MB 31.0s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 36.70MB / 49.84MB 32.7s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 39.85MB / 49.84MB 34.6s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 42.99MB / 49.84MB 36.7s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 46.14MB / 49.84MB 38.8s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 49.28MB / 49.84MB 40.8s
+#5 sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 49.84MB / 49.84MB 41.2s done
+#5 extracting sha256:9b02e9fcb40102eae20d9d1fc7594b44328f4a3eb9b8a3bdb7db283d10840a30 69.9s done
+#5 DONE 100.5s
+
+#5 [1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e
+#5 extracting sha256:5d4a3aa5a9ad18507bf18000f0280556365b57788f03aca635c4792a79799082
+#5 extracting sha256:5d4a3aa5a9ad18507bf18000f0280556365b57788f03aca635c4792a79799082 0.4s done
+#5 DONE 100.9s
+
+#5 [1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e
+#5 extracting sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82
+#5 extracting sha256:22c736fe2dee42f2274e133f0fd657bc3a2661f48b034a8adc2ba40bb6fa4b82 7.9s done
+#5 DONE 108.8s
+
+#5 [1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:9f6d5975c7dca860947d3915877f85607946403fc55349f39b4bc3688448bb6e
+#5 extracting sha256:dad35d9305371ac05c2bdf6de63217e78a5906a5f0335bd26432bbee187aea33
+#5 extracting sha256:dad35d9305371ac05c2bdf6de63217e78a5906a5f0335bd26432bbee187aea33 0.2s done
+#5 extracting sha256:079e3008b73419a93cb985863971162eb59bcb78e57f6ef558fc198ad2848d89
+#5 extracting sha256:079e3008b73419a93cb985863971162eb59bcb78e57f6ef558fc198ad2848d89 0.1s done
+#5 DONE 109.1s
+
+#6 [2/8] WORKDIR /app
+#6 DONE 5.6s
+
+#7 [3/8] RUN corepack enable
+#7 DONE 4.7s
+
+#8 [4/8] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+#8 DONE 0.5s
+
+#9 [5/8] RUN set -eux;     PNPM_SPEC="$(node -p "require('./package.json').packageManager")";     for attempt in 1 2 3; do       corepack prepare "${PNPM_SPEC}" --activate && break;       if [ "${attempt}" = "3" ]; then         exit 1;       fi;       sleep $((attempt * 5));     done;     pnpm --version
+#9 1.238 + node -p require('./package.json').packageManager
+#9 1.493 + PNPM_SPEC=pnpm@10.0.0
+#9 1.493 + corepack prepare pnpm@10.0.0 --activate
+#9 1.606 Preparing pnpm@10.0.0 for immediate activation...
+#9 12.17 + break
+#9 12.17 + pnpm --version
+#9 12.77 10.0.0
+#9 DONE 12.9s
+
+#10 [6/8] COPY apps ./apps
+#10 DONE 2.2s
+
+#11 [7/8] COPY packages ./packages
+#11 DONE 2.8s
+
+#12 [8/8] RUN pnpm install --frozen-lockfile
+#12 1.509 Scope: all 16 workspace projects
+#12 1.615 Lockfile is up to date, resolution step is skipped
+#12 1.639 Progress: resolved 1, reused 0, downloaded 0, added 0
+#12 1.656 Packages: +10
+#12 1.656 ++++++++++
+#12 2.598
+#12 2.598    ╭──────────────────────────────────────────────────────────────────╮
+#12 2.598    │                                                                  │
+#12 2.598    │                Update available! 10.0.0 → 11.0.9.                │
+#12 2.598    │   Changelog: https://github.com/pnpm/pnpm/releases/tag/v11.0.9   │
+#12 2.598    │         Run "corepack install -g pnpm@11.0.9" to update.         │
+#12 2.598    │                                                                  │
+#12 2.598    ╰──────────────────────────────────────────────────────────────────╯
+#12 2.598
+#12 2.640 Progress: resolved 10, reused 0, downloaded 0, added 0
+#12 3.641 Progress: resolved 10, reused 0, downloaded 5, added 4
+#12 4.641 Progress: resolved 10, reused 0, downloaded 7, added 7
+#12 7.837 Progress: resolved 10, reused 0, downloaded 8, added 7
+#12 8.837 Progress: resolved 10, reused 0, downloaded 9, added 9
+#12 16.29 Progress: resolved 10, reused 0, downloaded 10, added 9
+#12 16.33 Progress: resolved 10, reused 0, downloaded 10, added 10, done
+#12 16.59
+#12 16.59 devDependencies:
+#12 16.59 + @types/node 22.19.17
+#12 16.59 + tsx 4.21.0
+#12 16.59 + turbo 2.9.3
+#12 16.59 + typescript 5.9.3
+#12 16.59
+#12 16.59 The following dependencies have build scripts that were ignored: esbuild
+#12 16.59 To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
+#12 16.59
+#12 16.61 Done in 15.6s
+#12 DONE 16.9s
+
+#13 exporting to image
+#13 exporting layers
+#13 exporting layers 7.3s done
+#13 exporting manifest sha256:0d9ede9f7a408c57219cd9edc360417b6c836ae3f5e241ca84ef6bb91e2774e8 0.0s done
+#13 exporting config sha256:3c4bb8cd5717fbf98e4e076916a61147920b695b95ca8aace80a623d7843951c 0.0s done
+#13 exporting attestation manifest sha256:f92a4bf8661711288907944c6c282367524222b6d72c45c1c9408418dbb5cd31
+#13 exporting attestation manifest sha256:f92a4bf8661711288907944c6c282367524222b6d72c45c1c9408418dbb5cd31 0.1s done
+#13 exporting manifest list sha256:37992c4cad3b8dd80dd0c3882c807da3cb6c62d12d0b5dbfcf0ec7d308678c68 0.0s done
+#13 naming to docker.io/library/happytg:0.4.14-verify done
+#13 unpacking to docker.io/library/happytg:0.4.14-verify
+#13 unpacking to docker.io/library/happytg:0.4.14-verify 7.4s done
+#13 DONE 14.9s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/1cmvqthxpqzrtgt1haf2erh4m

@@ -1,0 +1,145 @@
+{
+  "task_id": "HTG-2026-05-11-full-verify-release-0.4.14",
+  "status": "evidence_complete",
+  "branch": "codex/happytg-full-verify-release-0.4.14-20260511",
+  "target_version": "0.4.14",
+  "role_reviews": [
+    {
+      "role": "Release Manager",
+      "initial_verdict": "NO-GO",
+      "resolution": "Release metadata and proof bundle added."
+    },
+    {
+      "role": "QA/Test Engineer",
+      "initial_verdict": "NO-GO",
+      "resolution": "Full local validation outputs recorded."
+    },
+    {
+      "role": "Security/Secrets Reviewer",
+      "initial_verdict": "NO-GO",
+      "resolution": "Release-unsafe generated residue removed; secret scan passed; Docker context hardened."
+    },
+    {
+      "role": "Architecture Invariants Reviewer",
+      "initial_verdict": "GO",
+      "resolution": "No runtime invariant changes beyond Docker build reliability."
+    },
+    {
+      "role": "Docker/Self-hosting Reviewer",
+      "initial_verdict": "NO-GO",
+      "resolution": "Compose config/images and Docker builds refreshed."
+    },
+    {
+      "role": "Graphify/Knowledge Reviewer",
+      "initial_verdict": "NO-GO",
+      "resolution": "Graphify deterministic graph refreshed and local residue removed."
+    },
+    {
+      "role": "Docs/Prompt Reviewer",
+      "initial_verdict": "NO-GO",
+      "resolution": "Prompt, changelog, release notes, and evidence added."
+    },
+    {
+      "role": "Monorepo Metadata Reviewer",
+      "initial_verdict": "NO-GO",
+      "resolution": "All 16 package manifests bumped and release check passed."
+    },
+    {
+      "role": "Git/Branch Hygiene Reviewer",
+      "initial_verdict": "NO-GO",
+      "resolution": "Pending final push, PR, merge, and branch cleanup after verifier PASS."
+    },
+    {
+      "role": "Operator/User Impact Reviewer",
+      "initial_verdict": "NO-GO",
+      "resolution": "Operator-facing Docker, Graphify, prompt, and release evidence completed."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm lint",
+      "status": "pass",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "command": "pnpm typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "command": "pnpm test",
+      "status": "pass",
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "command": "pnpm build",
+      "status": "pass",
+      "raw": "raw/build.txt"
+    },
+    {
+      "command": "pnpm happytg doctor",
+      "status": "warn_exit_0",
+      "raw": "raw/doctor.txt"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "status": "warn_exit_0",
+      "raw": "raw/test-integration.txt"
+    },
+    {
+      "command": "docker compose -f infra/docker-compose.example.yml config --quiet",
+      "status": "pass",
+      "raw": "raw/docker-compose-config.txt"
+    },
+    {
+      "command": "docker compose -f infra/docker-compose.example.yml config --images",
+      "status": "pass",
+      "raw": "raw/docker-compose-images.txt"
+    },
+    {
+      "command": "docker build --progress=plain --no-cache --build-arg APP_PACKAGE='@happytg/bot' -f infra/Dockerfile.app -t happytg:0.4.14-verify .",
+      "status": "pass",
+      "raw": "raw/docker-build-nocache.txt"
+    },
+    {
+      "command": "docker build --progress=plain --build-arg APP_PACKAGE='@happytg/bot' -f infra/Dockerfile.app -t happytg:0.4.14-verify .",
+      "status": "pass",
+      "raw": "raw/docker-build-after-dockerignore.txt"
+    },
+    {
+      "command": "graphify update .",
+      "status": "pass",
+      "raw": "raw/graphify-update.txt"
+    },
+    {
+      "command": "node -e <graph parse>",
+      "status": "pass",
+      "raw": "raw/graph-parse.txt"
+    },
+    {
+      "command": "pnpm release:check --version 0.4.14",
+      "status": "pass",
+      "raw": "raw/release-check.txt"
+    },
+    {
+      "command": "git diff --check",
+      "status": "pass",
+      "raw": "raw/diff-check.txt"
+    },
+    {
+      "command": "secret-pattern scan",
+      "status": "pass",
+      "raw": "raw/secret-scan.txt"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-05-11-full-verify-release-0.4.14",
+      "status": "pass",
+      "raw": "raw/task-validate.txt"
+    }
+  ],
+  "residual_risks": [
+    "Full docker compose up was not rerun to avoid mutating local Docker services and ports; compose config/images plus targeted Docker builds passed.",
+    "Graphify semantic extraction was not rerun; deterministic graph update passed without cloud or Ollama fallback.",
+    "Doctor and verify exited 0 with environment WARN status due Codex slow SQLite stderr and public Caddy Mini App identity mismatch."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "task_id": "HTG-2026-05-11-full-verify-release-0.4.14",
+  "session_id": "codex-2026-05-11-release-0.4.14",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "init",
+      "entered_at": "2026-05-11T02:04:02.5742536+03:00",
+      "event": "TaskBundleInitialized"
+    },
+    {
+      "phase": "freeze",
+      "entered_at": "2026-05-11T02:04:02.5742536+03:00",
+      "event": "TaskSpecFrozen"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-05-11T02:04:02.5742536+03:00",
+      "event": "EvidenceUpdated"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-05-11T02:20:00+03:00",
+      "event": "VerificationPassed"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "spec.md",
+    "evidence.md",
+    "evidence.json",
+    "verdict.json",
+    "problems.md",
+    "raw/build.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/lint.txt"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-05-11T02:04:02.5742536+03:00",
+    "updated_at": "2026-05-11T02:20:00+03:00"
+  }
+}

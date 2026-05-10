@@ -6,6 +6,8 @@ dist
 build
 .turbo
 coverage
+.env
+.env.*
 .happytg
 .happytg-dev
 .codex/cache

@@ -1,0 +1,10 @@
+redis:7
+grafana/grafana:11.3.0
+prom/prometheus:v2.55.1
+caddy:2
+happytg-worker
+happytg-api
+happytg-miniapp
+happytg-bot
+postgres:16
+minio/minio:RELEASE.2025-09-07T16-13-09Z

@@ -1,0 +1,18 @@
+{
+  "id": "HTG-2026-05-11-full-verify-release-0.4.14",
+  "sessionId": "codex-2026-05-11-release-0.4.14",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-05-11-full-verify-release-0.4.14",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Full verification and release 0.4.14",
+  "acceptanceCriteria": [
+    "Release metadata for 0.4.14 is complete and validated.",
+    "Full verification prompt is documented.",
+    "Docker, Graphify, and release evidence are refreshed and publish-safe.",
+    "Fresh verifier passes before PR and release."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-05-11T02:04:02.5742536+03:00",
+  "updatedAt": "2026-05-11T02:20:00+03:00"
+}

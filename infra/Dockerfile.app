@@ -8,6 +8,16 @@ WORKDIR /app
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+RUN set -eux; \
+    PNPM_SPEC="$(node -p "require('./package.json').packageManager")"; \
+    for attempt in 1 2 3; do \
+      corepack prepare "${PNPM_SPEC}" --activate && break; \
+      if [ "${attempt}" = "3" ]; then \
+        exit 1; \
+      fi; \
+      sleep $((attempt * 5)); \
+    done; \
+    pnpm --version
 COPY apps ./apps
 COPY packages ./packages
 

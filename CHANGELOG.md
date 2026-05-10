@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v0.4.14
+
+### Added
+
+- Added a reusable full-project verification and release prompt with 10 independent role perspectives, proof-bundle requirements, dirty-worktree safety, branch cleanup, PR/merge, release, evidence, and EchoVault memory steps.
+- Added a committed Graphify knowledge graph and local-first evidence for architecture and dependency navigation.
+
+### Changed
+
+- Docker app image builds now activate the `packageManager`-pinned `pnpm@10.0.0` through a cacheable bounded Corepack retry layer before `pnpm install`.
+- Docker build context now excludes `.env` and `.env.*` files.
+- The self-hosting compose example now pins MinIO to `minio/minio:RELEASE.2025-09-07T16-13-09Z` instead of `latest`.
+- `AGENTS.md` now documents how to use `graphify-out/GRAPH_REPORT.md` and local LM Studio Graphify workflow for large architecture/dependency work.
+
+### Verification
+
+- Release validation covers workspace version metadata, the full-verification prompt artifact, Docker compose config, refreshed Graphify artifact integrity, repo checks, and release metadata validation.
+
 ## v0.4.13
 
 ### Fixed
