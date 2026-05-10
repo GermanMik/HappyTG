@@ -30,3 +30,11 @@ logs/
 
 # proof raw outputs
 .agent/tasks/**/raw/*.tmp
+.agent/tasks/**/raw/__pycache__/
+.agent/tasks/**/raw/*.pyc
+.agent/tasks/**/raw/*.pid
+
+# graphify local generation residue
+graphify-out/cache/
+graphify-out/.graphify_*
+graphify-out/manifest.json

@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-05-03-docker-corepack-pnpm-retry",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "fresh-verify-2026-05-03"
+  },
+  "checks": [
+    {
+      "name": "frozen-scope",
+      "ok": true,
+      "detail": "Spec was frozen before production edits and limited the task to Docker app image pnpm activation reliability."
+    },
+    {
+      "name": "dockerfile-change-scope",
+      "ok": true,
+      "detail": "Only infra/Dockerfile.app was changed in production code; installer launch semantics and Compose topology were not changed."
+    },
+    {
+      "name": "pnpm-activation",
+      "ok": true,
+      "detail": "Docker build activates packageManager pnpm@10.0.0 with Corepack before pnpm install and prints version 10.0.0."
+    },
+    {
+      "name": "compose-startup",
+      "ok": true,
+      "detail": "The original installer Compose up command succeeded on retry and started API, worker, bot, miniapp, prometheus, and grafana."
+    },
+    {
+      "name": "post-launch-health",
+      "ok": true,
+      "detail": "docker compose ps shows API, bot, miniapp, and worker healthy; doctor and verify both returned pass with no findings."
+    }
+  ],
+  "generatedAt": "2026-05-03T21:53:00+03:00"
+}

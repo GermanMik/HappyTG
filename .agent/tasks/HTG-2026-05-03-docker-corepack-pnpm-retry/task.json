@@ -1,0 +1,20 @@
+{
+  "id": "HTG-2026-05-03-docker-corepack-pnpm-retry",
+  "sessionId": "codex-docker-corepack-pnpm-retry",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-05-03-docker-corepack-pnpm-retry",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Docker app image pnpm activation retry",
+  "acceptanceCriteria": [
+    "The shared Docker app image activates the pinned pnpm version before dependency installation instead of relying on a lazy Corepack download during pnpm install.",
+    "The pnpm activation step tolerates transient registry/network failures with bounded retries.",
+    "The image keeps using the repository-pinned pnpm@10.0.0 and pnpm install --frozen-lockfile.",
+    "The fix is limited to Docker build reliability and does not change installer launch semantics, service selection, ports, host-daemon behavior, or application runtime contracts.",
+    "Targeted verification proves the Dockerfile is syntactically/build-wise valid enough to pass the prior failing pnpm activation/download point.",
+    "Proof artifacts record the command output and a fresh verification verdict."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-05-03T21:44:00+03:00",
+  "updatedAt": "2026-05-03T21:53:00+03:00"
+}

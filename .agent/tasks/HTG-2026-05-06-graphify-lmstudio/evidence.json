@@ -1,0 +1,28 @@
+{
+  "status": "pass",
+  "releaseCleanup": "0.4.14 keeps graphify-out/GRAPH_REPORT.md, graph.json, graph.html, and summary evidence; stale semantic summary plus local cache/intermediate/raw generation residue is omitted.",
+  "lmstudio": {
+    "baseUrl": "http://localhost:1234/v1",
+    "model": "google/gemma-4-e2b",
+    "inputTokens": 63852,
+    "outputTokens": 54733
+  },
+  "corpus": {
+    "codeFiles": 68,
+    "semanticFiles": 77,
+    "imageFilesSkipped": 1,
+    "chunks": 34
+  },
+  "graph": {
+    "nodes": 1092,
+    "edges": 2736,
+    "communities": 48,
+    "semanticNodes": 243,
+    "semanticEdges": 261
+  },
+  "artifacts": [
+    "graphify-out/graph.json",
+    "graphify-out/graph.html",
+    "graphify-out/GRAPH_REPORT.md"
+  ]
+}

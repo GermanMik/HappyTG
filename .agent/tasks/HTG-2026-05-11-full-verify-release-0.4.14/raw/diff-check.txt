@@ -1,0 +1,1 @@
+warning: in the working copy of '.agent/tasks/HTG-2026-05-11-full-verify-release-0.4.14/task.json', LF will be replaced by CRLF the next time Git touches it

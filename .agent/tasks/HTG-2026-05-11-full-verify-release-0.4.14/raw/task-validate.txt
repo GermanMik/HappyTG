@@ -1,0 +1,9 @@
+
+> happytg@0.4.14 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-05-11-full-verify-release-0.4.14"
+
+Task: HTG-2026-05-11-full-verify-release-0.4.14
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-05-11-full-verify-release-0.4.14
+Validation: ok
+Phase: complete
+Verification: passed

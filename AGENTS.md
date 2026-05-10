@@ -93,3 +93,130 @@ These are discipline sources, not substitutes for repository evidence. Final dec
 - Higher-level policy cannot be weakened by lower-level overrides.
 - Heavy runtime initialization is lazy and cache-aware.
 - Hooks are platform primitives, not app-specific glue.
+
+## graphify
+
+This project has a Graphify knowledge graph at `graphify-out/`.
+
+Rules:
+- Before answering architecture, dependency, module-relationship or large codebase navigation questions, read `graphify-out/GRAPH_REPORT.md`.
+- Prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<node>"` for cross-module questions before falling back to broad source search.
+- After code changes, run `graphify update .` to refresh the deterministic AST graph when it is relevant to the task.
+- Do not run heavy semantic Graphify extraction automatically; use it only when the task needs architecture/dependency understanding.
+- For semantic refreshes, prefer the existing local LM Studio workflow recorded in `.agent/tasks/HTG-2026-05-06-graphify-lmstudio/`; do not use cloud Graphify backends or Ollama fallback unless explicitly requested.
+- Treat Graphify as navigation evidence, not as a replacement for reading the actual source files before edits.
+
+## Project Codex Instructions — layered memory
+
+### Language policy
+
+- Отвечать пользователю на русском.
+- Уточняющие вопросы, progress updates, summaries и финальные отчёты писать на русском.
+- Commands, paths, filenames, config keys, code identifiers, package names и tool names оставлять в original form.
+
+### Project summary
+
+HappyTG is a Telegram-first, Codex-first, self-hosted control plane for remotely operating AI coding sessions on a home machine or server. Telegram is a render/approval surface, not the execution core or source of truth.
+
+### Existing project approach
+
+Derived from:
+- `AGENTS.md`
+- `README.md`
+- `ARCHITECTURE.md`
+- `CONTRIBUTING.md`
+- `ROADMAP.md`
+
+Rules:
+- Preserve the split execution model: render layers, control plane, execution plane and durable state.
+- Preserve the architecture invariants listed above.
+- Mutating host operations must remain serialized, policy-checked and approval-guarded.
+- For non-trivial work, follow the existing proof-loop and `.agent/tasks/<TASK_ID>/` evidence discipline.
+
+### Stack
+
+- pnpm + Turbo monorepo.
+- TypeScript.
+- Apps: `apps/api`, `apps/bot`, `apps/miniapp`, `apps/worker`, `apps/host-daemon`.
+- Packages: approval, policy, protocol, runtime adapters, session engine, hooks, shared tooling.
+- Telegram Bot and Mini App surfaces.
+- Postgres/local runtime state where configured by the project.
+
+### Package manager
+
+- `pnpm@10.0.0` via `packageManager` and `pnpm-lock.yaml`.
+
+### Important commands
+
+Install:
+- `pnpm install`
+
+Dev:
+- `pnpm dev`
+- `pnpm dev:api`
+- `pnpm dev:bot`
+- `pnpm dev:miniapp`
+- `pnpm dev:worker`
+- `pnpm dev:daemon`
+
+Test:
+- `pnpm test`
+- `pnpm happytg doctor`
+- `pnpm happytg verify`
+
+Lint:
+- `pnpm lint`
+
+Build:
+- `pnpm build`
+
+Docker:
+- Inspect `infra/` before running Docker commands.
+
+### Repository layout
+
+- `apps/`: runtime applications.
+- `packages/`: shared engines, protocols, adapters and utilities.
+- `docs/`: engineering blueprint and operational documentation.
+- `infra/`: deployment and local infrastructure examples.
+- `.agent/tasks/`: canonical proof bundles.
+- `.codex/agents/`: proof-loop agent templates.
+
+### Local LLM notes
+
+- LM Studio is the local LLM runtime.
+- Common endpoint: `http://localhost:1234/v1`.
+- Do not add Ollama configuration unless explicitly requested.
+- Do not use Ollama as fallback.
+- If HappyTG integrates an OpenAI-compatible local endpoint, make the base URL configurable and preserve existing project config contracts.
+- Never commit secrets, bot tokens, API keys or local-only credentials.
+
+### Engineering rules
+
+- Make minimal, reviewable changes.
+- Preserve control-plane state as source of truth.
+- Do not turn Telegram into the internal transport for agent events.
+- Do not weaken policy/approval invariants through lower-level overrides.
+- Do not introduce unrelated formatting changes.
+- Run the smallest relevant validation and store raw proof in `.agent/tasks/<TASK_ID>/raw/` for substantial work.
+
+### Memory rules for this project
+
+- Save durable decisions, bugs, architecture findings and recurring workarounds to EchoVault when `memory` is available.
+- Use tags: `HappyTG`, `architecture`, `bugfix`, `telegram`, `miniapp`, `mcp`, `llm`, `lm-studio`, `backend`, `frontend`, `deployment`.
+- Do not save temporary logs, secrets, credentials, API keys, bot tokens or personal data.
+- If a new durable project rule is discovered, add it to `AGENTS.md` with its source.
+
+### Graphify
+
+- If `graphify-out/GRAPH_REPORT.md` exists, read it before broad architecture or dependency work.
+- `graphify` is optional. Do not run heavy graph generation automatically unless the task needs architecture/dependency understanding.
+- Do not treat Graphify as a replacement for reading source files.
+
+### Done criteria
+
+- Relevant files changed.
+- Relevant tests/lint/build run where possible, or the reason for not running them is stated.
+- Proof-loop artifacts are updated for non-trivial work.
+- Important decisions saved to EchoVault if useful.
+- `AGENTS.md` updated if a new durable project rule was discovered.
