@@ -8,9 +8,14 @@
       "evidence": "raw/test-unit.txt"
     },
     {
-      "name": "repo lint/build/test",
+      "name": "repo lint/typecheck/build/test",
       "status": "pass",
-      "evidence": "raw/lint-full.txt, raw/build-full.txt, raw/test-full.txt"
+      "evidence": "raw/lint-full.txt, raw/typecheck-full.txt, raw/build-full.txt, raw/test-full.txt"
+    },
+    {
+      "name": "release metadata",
+      "status": "pass",
+      "evidence": "raw/release-check-0.4.15.txt"
     },
     {
       "name": "Caddy Mini App identity",

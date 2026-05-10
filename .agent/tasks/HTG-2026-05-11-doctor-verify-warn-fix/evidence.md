@@ -37,6 +37,8 @@ Scope frozen before code or environment repair work.
 - `raw/lint-full.txt`: `pnpm lint` passed, 15/15 Turbo tasks.
 - `raw/build-full.txt`: `pnpm build` passed, 15/15 Turbo tasks.
 - `raw/test-full.txt`: `pnpm test` passed, 15/15 Turbo tasks.
+- `raw/typecheck-full.txt`: `pnpm typecheck` passed, 15/15 Turbo tasks.
+- `raw/release-check-0.4.15.txt`: `pnpm release:check --version 0.4.15` passed.
 - `raw/caddy-validate-after-header-fix.txt`: BaseDeploy Caddyfile validated successfully.
 - `raw/caddy-reload-after-header-fix.txt`: Caddy reload completed with exit 0.
 - `raw/caddy-public-body-after.html`: public `https://happytg.gerta.crazedns.ru/miniapp` returned HappyTG Mini App identity and `window.HAPPYTgApiBase = ""`.
@@ -55,5 +57,5 @@ Scope frozen before code or environment repair work.
 6. HealthOS owner: HealthOS public API health still returns HealthOS JSON after the Caddy change.
 7. Security reviewer: no tokens or private credentials were printed into final proof; API exposure remains limited to existing Mini App exceptions.
 8. Windows operator: validation used Windows `curl.exe`, local Caddy binary, and PowerShell paths.
-9. Release verifier: repo lint, build, test, `doctor`, `verify`, and task validation all exit 0.
+9. Release verifier: repo lint, typecheck, build, test, release metadata check, `doctor`, `verify`, and task validation all exit 0.
 10. Scope reviewer: BaseDeploy is not a git repo; environment repair is recorded as proof evidence, while repo code changes remain isolated to the HappyTG branch.

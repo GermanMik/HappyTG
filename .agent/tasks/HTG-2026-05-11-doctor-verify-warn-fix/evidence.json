@@ -66,10 +66,24 @@
       "result": "pass"
     },
     {
+      "command": "pnpm typecheck",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/typecheck-full.txt",
+      "result": "pass"
+    },
+    {
       "command": "pnpm test",
       "phase": "verification",
       "exitCode": 0,
       "raw": "raw/test-full.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm release:check --version 0.4.15",
+      "phase": "release",
+      "exitCode": 0,
+      "raw": "raw/release-check-0.4.15.txt",
       "result": "pass"
     },
     {

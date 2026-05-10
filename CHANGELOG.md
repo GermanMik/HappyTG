@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.15
+
+### Fixed
+
+- `pnpm happytg doctor` and `pnpm happytg verify` no longer warn when Codex returns the expected smoke `OK` reply while emitting benign Codex memory phase 403 or slow SQLite PRAGMA diagnostics.
+- Restored the local BaseDeploy Caddy HappyTG `/miniapp` route so the public Mini App URL returns HappyTG identity instead of the HealthOS fallback.
+- Mini App Caddy proxy headers now preserve the public HappyTG origin through Host/SNI collapse so the public page renders same-origin API calls.
+
+### Verification
+
+- Release validation covers workspace version metadata, repo lint/typecheck/build/test, doctor/verify PASS output, Caddy Mini App public identity proof, and the doctor/verify warning fix proof bundle.
+
 ## v0.4.14
 
 ### Added
