@@ -772,6 +772,8 @@ test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only
     "2026-05-03T18:19:35Z ERROR codex_models_manager::manager: failed to refresh available models: timeout waiting for child process to exit",
     "2026-05-03T13:52:18Z WARN codex_analytics::client: failed to send events request: error sending request for url (https://chatgpt.com/backend-api/codex/analytics-events/events)",
     "2026-05-03T13:57:41Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest(\"http/request failed: error sending request for url (https://chatgpt.com/backend-api/wham/apps)\")))",
+    "2026-05-10T23:36:40.943258Z WARN codex_core::memories::phase1::job::result: Phase 1 job failed for thread 019e141a: unexpected status 403 Forbidden: forbidden",
+    "2026-05-10T23:36:41.123456Z WARN sqlx::query: slow statement: execution time exceeded alert threshold summary=\"PRAGMA auto_vacuum = INCREMENTAL;\" db.statement=\"PRAGMA auto_vacuum = INCREMENTAL;\"",
     "2026-05-03T14:03:08Z ERROR codex_core::tools::router: error=`\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command 'memory context --project'` rejected: blocked by policy",
     "2026-05-03T14:07:22Z ERROR codex_core::tools::router: error=`\"C:\\\\Program Files\\\\PowerShell\\\\7\\\\pwsh.exe\" -Command 'memory search \"OK exact output\"'` rejected: blocked by policy",
     "<!DOCTYPE html>",
@@ -784,7 +786,7 @@ test("classifyCodexSmokeStderr ignores known benign Codex internal warnings only
 
   const classified = classifyCodexSmokeStderr(stderr);
 
-  assert.equal(classified.ignoredLines.length, 18);
+  assert.equal(classified.ignoredLines.length, 20);
   assert.deepEqual(classified.actionableLines, [
     "2026-04-08T14:03:07Z WARN custom warning"
   ]);

@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Server: Web server
+Date: Sun, 10 May 2026 23:44:23 GMT
+Content-Type: application/json
+Content-Length: 63
+Connection: keep-alive
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: https://localhost
+Vary: Origin
+Via: 1.1 Caddy
+

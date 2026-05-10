@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: https://localhost
+Content-Length: 63
+Content-Type: application/json
+Date: Sun, 10 May 2026 23:44:27 GMT
+Server: uvicorn
+Vary: Origin
+Via: 1.1 Caddy
+

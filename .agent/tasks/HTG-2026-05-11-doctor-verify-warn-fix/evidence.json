@@ -1,0 +1,125 @@
+{
+  "taskId": "HTG-2026-05-11-doctor-verify-warn-fix",
+  "status": "complete",
+  "commands": [
+    {
+      "command": "pnpm happytg doctor",
+      "phase": "reproduction",
+      "exitCode": 0,
+      "raw": "raw/doctor-before.txt",
+      "result": "warn"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "phase": "reproduction",
+      "exitCode": 0,
+      "raw": "raw/verify-before.txt",
+      "result": "warn"
+    },
+    {
+      "command": "curl.exe -k -L https://happytg.gerta.crazedns.ru/miniapp",
+      "phase": "reproduction",
+      "exitCode": 0,
+      "raw": "raw/caddy-public-body-before.html",
+      "result": "HealthOS identity"
+    },
+    {
+      "command": "curl.exe http://127.0.0.1:3007/",
+      "phase": "reproduction",
+      "exitCode": 0,
+      "raw": "raw/miniapp-local-body-before.html",
+      "result": "HappyTG Mini App identity"
+    },
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters test",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/test-unit.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters lint",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/lint.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters build",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/build.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm lint",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/lint-full.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm build",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/build-full.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm test",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/test-full.txt",
+      "result": "pass"
+    },
+    {
+      "command": "caddy_windows_amd64.exe validate --adapter caddyfile --config C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/caddy-validate-after-header-fix.txt",
+      "result": "pass"
+    },
+    {
+      "command": "caddy_windows_amd64.exe reload --adapter caddyfile --config C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile",
+      "phase": "environment-repair",
+      "exitCode": 0,
+      "raw": "raw/caddy-reload-after-header-fix.txt",
+      "result": "pass"
+    },
+    {
+      "command": "Get-Content C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile",
+      "phase": "evidence",
+      "exitCode": 0,
+      "raw": "raw/basedeploy-caddy-happytg-snippet-after.txt",
+      "result": "captured HappyTG route snippet"
+    },
+    {
+      "command": "curl.exe -k --ssl-no-revoke --http1.1 -4 -L https://happytg.gerta.crazedns.ru/miniapp",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/caddy-public-body-after.html",
+      "result": "HappyTG Mini App identity"
+    },
+    {
+      "command": "pnpm happytg doctor",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/doctor-after.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/test-integration.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-05-11-doctor-verify-warn-fix",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/task-validate.txt",
+      "result": "pass"
+    }
+  ]
+}
