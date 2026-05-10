@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Content-Length: 4523
+Content-Type: text/html; charset=utf-8
+Etag: "dif20hmybqts3hn"
+Last-Modified: Sun, 10 May 2026 14:08:01 GMT
+Server: Caddy
+Vary: Accept-Encoding
+Date: Sun, 10 May 2026 23:41:00 GMT
+

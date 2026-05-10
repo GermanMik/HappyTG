@@ -1,0 +1,35 @@
+
+> @happytg/runtime-adapters@0.4.14 test C:\Develop\Projects\HappyTG\packages\runtime-adapters
+> tsx --test src/*.test.ts
+
+✔ checkCodexReadiness reports available Codex and captures smoke warnings (158.8375ms)
+✔ tool execution model classifies actions and serializes mutations (1.3861ms)
+✔ Codex Desktop adapter parses projects from global state without private payloads (4.4789ms)
+✔ Codex Desktop adapter parses session_index and session files as sanitized sessions (19.5829ms)
+✔ Codex Desktop adapter controls sessions through Codex app-server JSON-RPC (112.9439ms)
+✔ Codex Desktop default adapter keeps experimental app-server control unsupported (5.5454ms)
+✔ Codex Desktop adapter tolerates missing and corrupt state (28.4018ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from Path (229.8113ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext (195.6612ms)
+✔ checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated (209.585ms)
+✔ checkCodexReadiness closes stdin so smoke runs do not hang waiting for EOF (203.3998ms)
+✔ checkCodexReadiness preserves spaced prompts when it runs through a Windows cmd wrapper (308.9589ms)
+✔ checkCodexReadiness runs smoke from a neutral cwd when provided (169.8429ms)
+✔ checkCodexReadiness treats a Windows shell command-not-found result as missing (4.3693ms)
+✔ checkCodexReadiness marks only true ENOENT failures as missing (76.7716ms)
+✔ classifyCodexSmokeStderr ignores known benign Codex internal warnings only (1.8168ms)
+✔ summarizeCodexSmokeStderr extracts concise actionable root causes (1.1804ms)
+✔ codexCliMissingMessage explains PATH diagnosis and reinstall fallback (0.1547ms)
+✔ runCodexExec reads summary from the Codex output file (86.2535ms)
+✔ runCodexExec marks timeout and returns a timeout summary (45.9784ms)
+✔ runCodexExec settles timeout even when the child ignores normal termination (30.2247ms)
+✔ runCodexExec caps stdout and stderr while reporting truncation metadata (77.3677ms)
+✔ runCodexExec returns actionable guidance when Codex CLI is missing (4.6599ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2269.6252

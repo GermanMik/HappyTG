@@ -1,0 +1,45 @@
+{
+  "taskId": "HTG-2026-05-11-doctor-verify-warn-fix",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "Codex smoke benign stderr classification",
+      "status": "pass",
+      "evidence": "raw/test-unit.txt"
+    },
+    {
+      "name": "repo lint/typecheck/build/test",
+      "status": "pass",
+      "evidence": "raw/lint-full.txt, raw/typecheck-full.txt, raw/build-full.txt, raw/test-full.txt"
+    },
+    {
+      "name": "release metadata",
+      "status": "pass",
+      "evidence": "raw/release-check-0.4.15.txt"
+    },
+    {
+      "name": "Caddy Mini App identity",
+      "status": "pass",
+      "evidence": "raw/caddy-public-body-after.html"
+    },
+    {
+      "name": "doctor",
+      "status": "pass",
+      "evidence": "raw/doctor-after.txt"
+    },
+    {
+      "name": "verify",
+      "status": "pass",
+      "evidence": "raw/test-integration.txt"
+    },
+    {
+      "name": "proof bundle validation",
+      "status": "pass",
+      "evidence": "raw/task-validate.txt"
+    }
+  ],
+  "residualRisks": [
+    "BaseDeploy Caddyfile has a pre-existing formatting warning from caddy validate; no runtime failure observed.",
+    "C:\\Develop\\Projects\\BaseDeploy is not a git repository, so the local Caddy environment repair is recorded in HappyTG proof evidence rather than as a BaseDeploy commit."
+  ]
+}
