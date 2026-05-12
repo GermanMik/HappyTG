@@ -1,0 +1,62 @@
+{
+  "taskId": "HTG-2026-05-11-project-memory-sync",
+  "status": "passed",
+  "commands": [
+    {
+      "command": "git status --short",
+      "artifact": "raw/git-status-short.txt",
+      "ok": true
+    },
+    {
+      "command": ".\\scripts\\install-git-hooks.ps1",
+      "artifact": "raw/install-git-hooks.txt",
+      "ok": true
+    },
+    {
+      "command": "git config core.hooksPath",
+      "artifact": "raw/core-hooks-path.txt",
+      "ok": true
+    },
+    {
+      "command": ".\\scripts\\after-pull-memory-sync.ps1 -Mode manual",
+      "artifact": "raw/after-pull-manual.txt",
+      "ok": true
+    },
+    {
+      "command": "git check-ignore -v graphify/db/log/lock samples",
+      "artifact": "raw/git-check-ignore.txt",
+      "ok": true
+    },
+    {
+      "command": "C:\\Program Files\\Git\\bin\\sh.exe .githooks/post-checkout HEAD HEAD 1",
+      "artifact": "no output, exit code 0",
+      "ok": true
+    }
+  ],
+  "acceptance": [
+    {
+      "criterion": "Project memory docs created",
+      "ok": true
+    },
+    {
+      "criterion": "AGENTS.md Project Memory guidance added",
+      "ok": true
+    },
+    {
+      "criterion": ".gitignore keeps safe Graphify outputs committable and ignores residue/local state",
+      "ok": true
+    },
+    {
+      "criterion": "Git hook installer works on Windows PowerShell",
+      "ok": true
+    },
+    {
+      "criterion": "After-pull sync script detects memory changes and skips EchoVault in manual dry-run",
+      "ok": true
+    },
+    {
+      "criterion": "Git hook wrappers call PowerShell best-effort",
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+Git hooks installed for this repository.
+core.hooksPath is set to .githooks
+Project memory sync will be checked after git pull and checkout.

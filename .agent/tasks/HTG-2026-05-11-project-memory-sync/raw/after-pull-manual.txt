@@ -1,0 +1,7 @@
+Project memory files changed:
+  - AGENTS.md
+  - docs/memory/architecture.md
+  - docs/memory/decisions.md
+  - docs/memory/README.md
+  - docs/memory/troubleshooting.md
+Manual mode: EchoVault pointer record skipped.

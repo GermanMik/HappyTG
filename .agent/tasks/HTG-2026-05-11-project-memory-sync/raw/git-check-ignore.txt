@@ -1,0 +1,7 @@
+.gitignore:48:graphify-out/cache/	"graphify-out\\cache\\ast\\08ef145c6cafad36cc680288b1c076275c52e6506fd0369a1721cde2fb8eda15.json"
+.gitignore:50:graphify-out/manifest.json	"graphify-out\\manifest.json"
+.gitignore:22:*.db	temp.db
+.gitignore:23:*.db-wal	temp.db-wal
+.gitignore:24:*.db-shm	temp.db-shm
+.gitignore:25:*.lock	temp.lock
+.gitignore:18:*.log	temp.log

@@ -1,0 +1,5 @@
+Script checks passed:
+
+- .\scripts\install-git-hooks.ps1
+- .\scripts\after-pull-memory-sync.ps1 -Mode manual
+- C:\Program Files\Git\bin\sh.exe .githooks/post-checkout HEAD HEAD 1

@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-05-11-project-memory-sync",
+  "status": "passed",
+  "verifier": {
+    "role": "manual-fresh-verify",
+    "runId": "fresh-verify-2026-05-11-project-memory-sync"
+  },
+  "checks": [
+    {
+      "name": "scope",
+      "ok": true,
+      "detail": "Changes are limited to project memory docs, AGENTS guidance, ignore rules, scripts, hooks, and proof artifacts."
+    },
+    {
+      "name": "secret-safety",
+      "ok": true,
+      "detail": "No secrets, tokens, API keys, private endpoints, credentials, or raw memory contents were added."
+    },
+    {
+      "name": "hook-install",
+      "ok": true,
+      "detail": "install-git-hooks.ps1 configured core.hooksPath=.githooks."
+    },
+    {
+      "name": "manual-sync",
+      "ok": true,
+      "detail": "after-pull-memory-sync.ps1 -Mode manual detected the changed project memory files and skipped EchoVault writes as dry-run behavior."
+    },
+    {
+      "name": "git-for-windows-wrapper",
+      "ok": true,
+      "detail": "post-checkout wrapper ran through Git for Windows sh with HEAD-to-HEAD refs and exited 0."
+    }
+  ],
+  "generatedAt": "2026-05-11T22:49:00+03:00"
+}

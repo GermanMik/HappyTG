@@ -1,0 +1,7 @@
+ M .gitignore
+ M AGENTS.md
+?? .agent/tasks/HTG-2026-05-11-project-memory-sync/
+?? .githooks/
+?? docs/memory/
+?? scripts/after-pull-memory-sync.ps1
+?? scripts/install-git-hooks.ps1

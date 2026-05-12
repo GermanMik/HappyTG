@@ -18,6 +18,12 @@ coverage/
 *.log
 logs/
 
+# local databases, locks, and indexes
+*.db
+*.db-wal
+*.db-shm
+*.lock
+
 # os/editor
 .DS_Store
 .idea/
@@ -35,6 +41,18 @@ logs/
 .agent/tasks/**/raw/*.pid
 
 # graphify local generation residue
+graphify-out/*
+!graphify-out/
+!graphify-out/GRAPH_REPORT.md
+!graphify-out/graph.json
 graphify-out/cache/
 graphify-out/.graphify_*
 graphify-out/manifest.json
+graphify-out/tmp/
+graphify-out/temp/
+graphify-out/intermediate/
+graphify-out/memory/
+graphify-out/*.tmp
+graphify-out/*.log
+graphify-out/*.db
+graphify-out/*.lock

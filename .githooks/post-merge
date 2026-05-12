@@ -1,0 +1,20 @@
+#!/bin/sh
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
+if [ -z "$repo_root" ]; then
+  exit 0
+fi
+
+script_path="$repo_root/scripts/after-pull-memory-sync.ps1"
+if command -v cygpath >/dev/null 2>&1; then
+  script_path=$(cygpath -w "$script_path")
+fi
+
+if command -v pwsh >/dev/null 2>&1; then
+  pwsh -NoProfile -ExecutionPolicy Bypass -File "$script_path" -Mode post-merge || echo "Project memory sync failed; continuing." >&2
+elif command -v powershell.exe >/dev/null 2>&1; then
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$script_path" -Mode post-merge || echo "Project memory sync failed; continuing." >&2
+else
+  echo "Project memory sync skipped: PowerShell was not found." >&2
+fi
+
+exit 0

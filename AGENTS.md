@@ -106,6 +106,14 @@ Rules:
 - For semantic refreshes, prefer the existing local LM Studio workflow recorded in `.agent/tasks/HTG-2026-05-06-graphify-lmstudio/`; do not use cloud Graphify backends or Ollama fallback unless explicitly requested.
 - Treat Graphify as navigation evidence, not as a replacement for reading the actual source files before edits.
 
+## Project Memory
+
+- At session start, read `docs/memory/README.md` when it exists.
+- Read `docs/memory/decisions.md`, `docs/memory/troubleshooting.md`, and `docs/memory/architecture.md` when they exist and are relevant to the task.
+- Read `graphify-out/GRAPH_REPORT.md` when it exists and the task involves architecture, dependencies, module relationships, or broad codebase navigation.
+- Never store secrets, API keys, tokens, private endpoints, credentials, or sensitive personal data in project memory.
+- EchoVault and Codex global memory are local agent memory layers and are not part of this repository.
+
 ## Project Codex Instructions — layered memory
 
 ### Language policy

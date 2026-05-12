@@ -1,0 +1,61 @@
+{
+  "task_id": "HTG-2026-05-11-project-memory-sync",
+  "session_id": "codex-project-memory-sync",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "init",
+      "entered_at": "2026-05-11T00:00:00+03:00",
+      "event": "TaskInitialized"
+    },
+    {
+      "phase": "freeze/spec",
+      "entered_at": "2026-05-11T00:00:00+03:00",
+      "event": "TaskSpecFrozen"
+    },
+    {
+      "phase": "build",
+      "entered_at": "2026-05-11T22:49:00+03:00",
+      "event": "BuilderCompleted"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-05-11T22:49:00+03:00",
+      "event": "EvidenceRecorded"
+    },
+    {
+      "phase": "fresh verify",
+      "entered_at": "2026-05-11T22:49:00+03:00",
+      "event": "VerifierCompleted"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-05-11T22:49:00+03:00",
+      "event": "TaskCompleted"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/spec.md",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/state.json",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/evidence.md",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/evidence.json",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/verdict.json",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/problems.md",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/raw/git-status-short.txt",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/raw/install-git-hooks.txt",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/raw/after-pull-manual.txt",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/raw/core-hooks-path.txt",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/raw/git-check-ignore.txt",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/raw/build.txt",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-05-11-project-memory-sync/raw/lint.txt"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-05-11T00:00:00+03:00",
+    "updated_at": "2026-05-11T22:49:00+03:00"
+  }
+}
