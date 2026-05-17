@@ -1,0 +1,60 @@
+name: Graphify
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  graphify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Graphify
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install graphifyy==0.8.8
+
+      - name: Rebuild Graphify
+        run: graphify update . --force
+
+      - name: Commit Graphify updates to PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          paths=(graphify-out/GRAPH_REPORT.md graphify-out/graph.json)
+          changed="$(git status --porcelain -- "${paths[@]}")"
+          if [ -n "$changed" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add "${paths[@]}"
+            git commit -m "chore: update graphify artifacts"
+            git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+          fi
+
+      - name: Verify Graphify artifacts are committed
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          paths=(graphify-out/GRAPH_REPORT.md graphify-out/graph.json)
+          changed="$(git status --porcelain -- "${paths[@]}")"
+          if [ -n "$changed" ]; then
+            echo "::error::Graphify artifacts are stale. For fork PRs or manual runs, run 'graphify update . --force' locally and commit graphify-out/GRAPH_REPORT.md plus graphify-out/graph.json."
+            echo "$changed"
+            git diff --stat -- "${paths[@]}" || true
+            exit 1
+          fi

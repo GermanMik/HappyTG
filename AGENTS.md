@@ -96,15 +96,15 @@ These are discipline sources, not substitutes for repository evidence. Final dec
 
 ## graphify
 
-This project has a Graphify knowledge graph at `graphify-out/`.
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
 
 Rules:
-- Before answering architecture, dependency, module-relationship or large codebase navigation questions, read `graphify-out/GRAPH_REPORT.md`.
-- Prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<node>"` for cross-module questions before falling back to broad source search.
-- After code changes, run `graphify update .` to refresh the deterministic AST graph when it is relevant to the task.
-- Do not run heavy semantic Graphify extraction automatically; use it only when the task needs architecture/dependency understanding.
-- For semantic refreshes, prefer the existing local LM Studio workflow recorded in `.agent/tasks/HTG-2026-05-06-graphify-lmstudio/`; do not use cloud Graphify backends or Ollama fallback unless explicitly requested.
-- Treat Graphify as navigation evidence, not as a replacement for reading the actual source files before edits.
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
 ## Project Memory
 

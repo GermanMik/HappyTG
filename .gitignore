@@ -17,6 +17,7 @@ coverage/
 # logs
 *.log
 logs/
+logs/echovault/
 
 # local databases, locks, and indexes
 *.db
