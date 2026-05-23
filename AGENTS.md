@@ -96,15 +96,23 @@ These are discipline sources, not substitutes for repository evidence. Final dec
 
 ## graphify
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+This project has a Graphify knowledge graph at `graphify-out/`.
 
 When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
 
 Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- For architecture, dependency, module-relationship or large codebase navigation questions, start with a focused Graphify query/path/explain call; read `graphify-out/GRAPH_REPORT.md` only when the scoped graph is insufficient.
+- Prefer `graphify query "<specific question>" --budget 1200`, `graphify path "<A>" "<B>"`, or `graphify explain "<node>"` for cross-module questions before falling back to broad source search.
+- If `graphify-out/wiki/index.md` exists, use it for broad navigation instead of raw source browsing.
+- After code changes, run Graphify update only on the smallest relevant path/corpus; avoid full-repo `graphify update .` when the change is limited to one app/package.
+- Do not run heavy semantic Graphify extraction automatically; use it only when the task needs architecture/dependency understanding.
+- For semantic refreshes, prefer the existing local LM Studio workflow recorded in `.agent/tasks/HTG-2026-05-06-graphify-lmstudio/`; do not use cloud Graphify backends or Ollama fallback unless explicitly requested.
+- Treat Graphify as navigation evidence, not as a replacement for reading the actual source files before edits.
+- Keep Graphify output narrow: prefer `graphify query "<specific question>" --budget 1200`, `graphify explain "<node>"`, or `graphify path "<A>" "<B>"` before reading full reports or doing broad source searches.
+- If the graph answer is too broad, refine by feature, domain, package, path, or named component and rerun with a smaller budget; do not paste large raw Graphify output into final answers.
+- For web/frontend work, scope Graphify to source-only paths such as `src`, `app`, `components`, `pages`, `routes`, `lib`, `hooks`, `stores`, `services`, API clients/server actions, and relevant tests/docs.
+- Exclude web noise from Graphify corpora: `node_modules`, `.next`, `dist`, `build`, `out`, `coverage`, `playwright-report`, `test-results`, `storybook-static`, static/public asset dumps, generated clients, screenshots, `graphify-out`, and bundled web assets from native shells.
+- In monorepos, run Graphify on the smallest package/app/corpus that matches the task; widen only after the scoped graph and direct source reads are insufficient.
 
 ## Project Memory
 
