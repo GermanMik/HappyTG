@@ -348,6 +348,24 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
       calls.push({ kind: "resume", userId, sessionId });
       throw new CodexDesktopControlError(501, "contract missing", "contract missing", "CODEX_DESKTOP_CONTROL_UNSUPPORTED");
     },
+    async continueCodexDesktopSession(userId: string, sessionId: string, body: { prompt: string }) {
+      calls.push({ kind: "continue", userId, sessionId, body });
+      return {
+        ok: true,
+        action: "continue",
+        source: "codex-desktop",
+        session: {
+          id: sessionId,
+          title: "Desktop task",
+          updatedAt: "2026-04-28T09:10:00.000Z",
+          status: "active",
+          source: "codex-desktop",
+          canResume: true,
+          canContinue: true,
+          canStop: true
+        }
+      };
+    },
     async stopCodexDesktopSession(userId: string, sessionId: string) {
       calls.push({ kind: "stop", userId, sessionId });
       throw new CodexDesktopControlError(501, "contract missing", "contract missing", "CODEX_DESKTOP_CONTROL_UNSUPPORTED");
@@ -419,6 +437,19 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
     assert.equal(unsupportedPayload.reason, "contract missing");
     assert.equal(unsupportedPayload.reasonCode, "CODEX_DESKTOP_CONTROL_UNSUPPORTED");
 
+    const continued = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/sessions/cds_1/continue`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer mas_token"
+      },
+      body: JSON.stringify({ prompt: "Continue Desktop task" })
+    });
+    const continuedPayload = await continued.json() as { action: string; session: { status: string } };
+    assert.equal(continued.status, 200);
+    assert.equal(continuedPayload.action, "continue");
+    assert.equal(continuedPayload.session.status, "active");
+
     const created = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/tasks`, {
       method: "POST",
       headers: {
@@ -436,8 +467,10 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
       "sessions:usr_bearer",
       "detail:usr_query",
       "resume:usr_query",
+      "continue:usr_bearer",
       "new-task:usr_bearer"
     ]);
+    assert.deepEqual(calls.find((call) => call.kind === "continue")?.body, { prompt: "Continue Desktop task" });
     assert.deepEqual(calls.find((call) => call.kind === "sessions")?.options, { limit: 25 });
   } finally {
     await closeServer(server);

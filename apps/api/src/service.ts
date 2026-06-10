@@ -30,6 +30,7 @@ import type {
   CodexDesktopSession,
   CodexDesktopSessionDetail,
   ClaimPairingRequest,
+  ContinueCodexDesktopSessionRequest,
   CreateCodexDesktopTaskRequest,
   CreateMiniAppLaunchGrantRequest,
   CreateMiniAppLaunchGrantResponse,
@@ -433,10 +434,11 @@ const CODEX_DESKTOP_APPROVAL_REQUIRED_REASON_CODE = "CODEX_DESKTOP_APPROVAL_REQU
 const CODEX_DESKTOP_SESSION_NOT_FOUND_REASON_CODE = "CODEX_DESKTOP_SESSION_NOT_FOUND";
 const CODEX_DESKTOP_USER_NOT_FOUND_REASON_CODE = "CODEX_DESKTOP_USER_NOT_FOUND";
 const CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE = "CODEX_DESKTOP_CONTROL_FAILED";
+const CODEX_DESKTOP_PROMPT_REQUIRED_REASON_CODE = "CODEX_DESKTOP_PROMPT_REQUIRED";
 
 export class CodexDesktopControlError extends Error {
   constructor(
-    readonly statusCode: 404 | 409 | 501 | 502,
+    readonly statusCode: 400 | 404 | 409 | 501 | 502,
     message: string,
     readonly reason = message,
     readonly reasonCode = CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE
@@ -847,6 +849,46 @@ export class HappyTGControlPlaneService {
       const reason = error instanceof Error ? error.message : "Codex Desktop resume failed.";
       const reasonCode = error instanceof CodexDesktopControlUnavailableError ? CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE : CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE;
       await this.auditCodexDesktopResult(userId, "codex_desktop.resume.failed", session.id, { reason, reasonCode });
+      throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason, reason, reasonCode);
+    }
+  }
+
+  async continueCodexDesktopSession(userId: string, sessionId: string, input: Omit<ContinueCodexDesktopSessionRequest, "userId">): Promise<CodexDesktopControlResult> {
+    const prompt = input.prompt?.trim();
+    if (!prompt) {
+      throw new CodexDesktopControlError(400, "prompt is required", "prompt is required", CODEX_DESKTOP_PROMPT_REQUIRED_REASON_CODE);
+    }
+
+    const session = await this.codexDesktop.getSession(sessionId);
+    if (!session) {
+      throw new CodexDesktopControlError(404, "Codex Desktop session not found", "Codex Desktop session not found", CODEX_DESKTOP_SESSION_NOT_FOUND_REASON_CODE);
+    }
+
+    await this.authorizeCodexDesktopAction({
+      userId,
+      actionKind: "codex_desktop_continue",
+      auditAction: "codex_desktop.continue",
+      targetRef: session.id,
+      metadata: { source: session.source, hasPrompt: true }
+    });
+
+    if (!(session.canContinue ?? session.canResume)) {
+      const reason = session.unsupportedReason ?? this.codexDesktop.controlUnsupportedReason();
+      const reasonCode = session.unsupportedReasonCode ?? this.codexDesktop.controlUnsupportedReasonCode();
+      await this.auditCodexDesktopResult(userId, "codex_desktop.continue.unsupported", session.id, { reason, reasonCode });
+      throw new CodexDesktopControlError(501, reason, reason, reasonCode);
+    }
+
+    try {
+      return await this.runCodexDesktopMutation(async () => {
+        const result = await this.codexDesktop.continueSession(session, { userId, prompt });
+        await this.auditCodexDesktopResult(userId, "codex_desktop.continue.completed", session.id, { ok: result.ok });
+        return result;
+      });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "Codex Desktop continuation failed.";
+      const reasonCode = error instanceof CodexDesktopControlUnavailableError ? CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE : CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE;
+      await this.auditCodexDesktopResult(userId, "codex_desktop.continue.failed", session.id, { reason, reasonCode });
       throw new CodexDesktopControlError(error instanceof CodexDesktopControlUnavailableError ? 409 : 502, reason, reason, reasonCode);
     }
   }

@@ -459,6 +459,10 @@ test("Codex Desktop controls block unavailable contracts and audit attempts", as
       (error) => error instanceof CodexDesktopControlError && error.statusCode === 501 && error.reasonCode === CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE
     );
     await assert.rejects(
+      () => service.continueCodexDesktopSession(userId, "desktop-session-1", { prompt: "Continue desktop work" }),
+      (error) => error instanceof CodexDesktopControlError && error.statusCode === 501 && error.reasonCode === CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE
+    );
+    await assert.rejects(
       () => service.stopCodexDesktopSession(userId, "desktop-session-1"),
       (error) => error instanceof CodexDesktopControlError && error.statusCode === 501 && error.reasonCode === CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE
     );
@@ -471,6 +475,8 @@ test("Codex Desktop controls block unavailable contracts and audit attempts", as
     const actions = auditRecords.map((record) => record.action);
     assert.equal(actions.includes("codex_desktop.resume.attempt"), true);
     assert.equal(actions.includes("codex_desktop.resume.unsupported"), true);
+    assert.equal(actions.includes("codex_desktop.continue.attempt"), true);
+    assert.equal(actions.includes("codex_desktop.continue.unsupported"), true);
     assert.equal(actions.includes("codex_desktop.stop.attempt"), true);
     assert.equal(actions.includes("codex_desktop.stop.unsupported"), true);
     assert.equal(actions.includes("codex_desktop.new_task.attempt"), true);
@@ -494,11 +500,16 @@ test("Codex Desktop controls execute only through supported adapter contract", a
       codexHome,
       controlContract: {
         supportsResume: true,
+        supportsContinue: true,
         supportsStop: true,
         supportsNewTask: true,
         async resumeSession(session) {
           calls.push(`resume:${session.id}`);
           return { ok: true, action: "resume", source: "codex-desktop", session };
+        },
+        async continueSession(session, input) {
+          calls.push(`continue:${session.id}:${input.prompt}`);
+          return { ok: true, action: "continue", source: "codex-desktop", session: { ...session, status: "active" } };
         },
         async stopSession(session) {
           calls.push(`stop:${session.id}`);
@@ -526,20 +537,24 @@ test("Codex Desktop controls execute only through supported adapter contract", a
     const userId = await createKnownUser(service, "03");
 
     const resume = await service.resumeCodexDesktopSession(userId, "desktop-session-1");
+    const continued = await service.continueCodexDesktopSession(userId, "desktop-session-1", { prompt: "Continue desktop work" });
     const stop = await service.stopCodexDesktopSession(userId, "desktop-session-1");
     const created = await service.createCodexDesktopTask({ userId, prompt: "Do desktop work", projectPath: "C:/Develop/Projects/HappyTG" });
 
     assert.equal(resume.action, "resume");
+    assert.equal(continued.action, "continue");
     assert.equal(stop.action, "stop");
     assert.equal(created.task?.id, "cdt_supported");
     assert.deepEqual(calls, [
       "resume:desktop-session-1",
+      "continue:desktop-session-1:Continue desktop work",
       "stop:desktop-session-1",
       "new-task:C:/Develop/Projects/HappyTG"
     ]);
 
     const actions = (await store.read()).auditRecords.map((record) => record.action);
     assert.equal(actions.includes("codex_desktop.resume.completed"), true);
+    assert.equal(actions.includes("codex_desktop.continue.completed"), true);
     assert.equal(actions.includes("codex_desktop.stop.completed"), true);
     assert.equal(actions.includes("codex_desktop.new_task.completed"), true);
   } finally {
@@ -570,11 +585,16 @@ test("Codex Desktop mutating controls are serialized through the API service", a
       codexHome,
       controlContract: {
         supportsResume: true,
+        supportsContinue: true,
         supportsStop: true,
         supportsNewTask: true,
         async resumeSession(session) {
           await recordMutation("resume");
           return { ok: true, action: "resume", source: "codex-desktop", session };
+        },
+        async continueSession(session) {
+          await recordMutation("continue");
+          return { ok: true, action: "continue", source: "codex-desktop", session };
         },
         async stopSession(session) {
           await recordMutation("stop");
@@ -603,14 +623,15 @@ test("Codex Desktop mutating controls are serialized through the API service", a
 
     await Promise.all([
       service.resumeCodexDesktopSession(userId, "desktop-session-1"),
+      service.continueCodexDesktopSession(userId, "desktop-session-1", { prompt: "Continue desktop work" }),
       service.stopCodexDesktopSession(userId, "desktop-session-1"),
       service.createCodexDesktopTask({ userId, prompt: "Do desktop work", projectPath: "C:/Develop/Projects/HappyTG" })
     ]);
 
     assert.equal(maxActive, 1);
-    assert.equal(order.length, 6);
-    assert.equal(order.filter((item) => item.startsWith("start:")).length, 3);
-    assert.equal(order.filter((item) => item.startsWith("end:")).length, 3);
+    assert.equal(order.length, 8);
+    assert.equal(order.filter((item) => item.startsWith("start:")).length, 4);
+    assert.equal(order.filter((item) => item.startsWith("end:")).length, 4);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
     if (serviceTempDir) {

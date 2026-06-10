@@ -1084,6 +1084,51 @@ export function renderPage(
             });
           });
         });
+        document.querySelector("[data-desktop-continue-form]")?.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var form = event.currentTarget;
+          var submit = form.querySelector("[type=submit]");
+          var feedback = form.querySelector("[data-continue-feedback]");
+          var sessionToken = token();
+          if (!sessionToken) {
+            setActionFeedback(feedback, "danger", "Нет Mini App session. Откройте экран заново из бота.");
+            return;
+          }
+          var data = new FormData(form);
+          var prompt = String(data.get("prompt") || "").trim();
+          if (!prompt) {
+            setActionFeedback(feedback, "danger", "prompt is required");
+            return;
+          }
+          if (submit) submit.disabled = true;
+          if (submit) submit.textContent = "Отправляем...";
+          setActionFeedback(feedback, "info", "Отправляем prompt в Codex Desktop session.");
+          fetch(miniAppUrl("/codex/desktop-continue"), {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "authorization": "Bearer " + sessionToken
+            },
+            body: JSON.stringify({
+              sessionId: data.get("sessionId"),
+              prompt: prompt
+            })
+          }).then(function (response) {
+            if (!response.ok) {
+              return readError(response, "Не удалось продолжить Desktop session.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
+            return response.json();
+          }).then(function () {
+            setActionFeedback(feedback, "success", "Prompt отправлен. Обновляем history.");
+            location.reload();
+          }).catch(function (error) {
+            if (submit) submit.disabled = false;
+            if (submit) submit.textContent = "Отправить";
+            setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось продолжить Desktop session.");
+          });
+        });
         document.querySelector("[data-new-task-form]")?.addEventListener("change", function (event) {
           if (event.target && event.target.name === "runtime") {
             var runtime = event.target.value || "codex-cli";
@@ -1308,6 +1353,49 @@ function projectTasksHref(source: "codex-cli" | "codex-desktop", project: string
   return `/codex?source=${encodeURIComponent(source)}&project=${encodeURIComponent(project)}`;
 }
 
+type CodexPanelSort = "updated-desc" | "updated-asc" | "title-asc" | "title-desc";
+type DesktopHistoryOrder = "oldest-first" | "newest-first";
+
+function normalizeCodexPanelSort(value: string | undefined): CodexPanelSort {
+  switch (value) {
+    case "updated-asc":
+    case "title-asc":
+    case "title-desc":
+      return value;
+    default:
+      return "updated-desc";
+  }
+}
+
+function compareSessionCards(left: MiniAppSessionCard, right: MiniAppSessionCard, sort: CodexPanelSort): number {
+  switch (sort) {
+    case "updated-asc":
+      return left.lastUpdatedAt.localeCompare(right.lastUpdatedAt);
+    case "title-asc":
+      return left.title.localeCompare(right.title);
+    case "title-desc":
+      return right.title.localeCompare(left.title);
+    case "updated-desc":
+    default:
+      return right.lastUpdatedAt.localeCompare(left.lastUpdatedAt);
+  }
+}
+
+function normalizeDesktopHistoryOrder(value: string | undefined): DesktopHistoryOrder {
+  return value === "newest-first" ? "newest-first" : "oldest-first";
+}
+
+function desktopSessionHistoryHref(sessionId: string, historyOrder: DesktopHistoryOrder, userId?: string): string {
+  const params = new URLSearchParams({
+    id: sessionId,
+    historyOrder
+  });
+  if (userId) {
+    params.set("userId", userId);
+  }
+  return `/codex/desktop-session?${params.toString()}`;
+}
+
 function renderSessionCards(sessions: MiniAppSessionCard[]): string {
   if (sessions.length === 0) {
     return renderEmptyState("Нет активных сессий", "Когда host будет подключен, новая задача появится здесь.", "Проверить hosts", "/hosts");
@@ -1404,6 +1492,22 @@ function renderDesktopActions(session: CodexDesktopSession): string {
   </div>`;
 }
 
+function renderDesktopContinueForm(session: CodexDesktopSession): string {
+  const canContinue = Boolean(session.canContinue ?? session.canResume);
+  const reason = desktopUnsupportedReason(session);
+  return `<section class="panel">
+    <h2>Продолжить сессию</h2>
+    <form data-desktop-continue-form class="grid">
+      <input type="hidden" name="sessionId" value="${escapeHtml(session.id)}">
+      <label><span class="eyebrow">Prompt</span><textarea name="prompt" placeholder="Новый запрос для этой Desktop-сессии"${canContinue ? "" : " disabled"}></textarea></label>
+      <div class="actions">
+        <button class="button button-primary" type="submit"${canContinue ? "" : ` disabled title="${escapeHtml(reason)}"`}>Отправить</button>
+      </div>
+      <div class="notice notice-info" data-continue-feedback hidden>Ждем prompt.</div>
+    </form>
+  </section>`;
+}
+
 function renderDesktopHistoryItem(entry: CodexDesktopHistoryEntry): string {
   const role = entry.role ? ` · ${entry.role}` : "";
   return `<li>
@@ -1413,20 +1517,30 @@ function renderDesktopHistoryItem(entry: CodexDesktopHistoryEntry): string {
   </li>`;
 }
 
-function renderDesktopHistory(detail: CodexDesktopSessionDetail): string {
+function renderDesktopHistory(detail: CodexDesktopSessionDetail, options: { historyOrder?: DesktopHistoryOrder; userId?: string } = {}): string {
+  const historyOrder = normalizeDesktopHistoryOrder(options.historyOrder);
+  const historyControls = `<div class="actions">
+    ${linkButton("Сначала старые", desktopSessionHistoryHref(detail.session.id, "oldest-first", options.userId), historyOrder === "oldest-first")}
+    ${linkButton("Сначала новые", desktopSessionHistoryHref(detail.session.id, "newest-first", options.userId), historyOrder === "newest-first")}
+  </div>`;
   if (detail.history.length === 0) {
     const unavailable = Boolean(detail.historyUnsupportedReasonCode);
-    return renderEmptyState(
+    return `${historyControls}${renderEmptyState(
       unavailable ? "History недоступна" : "История пока пуста",
       unavailable
         ? detail.historyUnsupportedReason ?? "No bounded Codex Desktop history records were found for this session."
         : "Codex Desktop еще не вернул bounded history records для этой сессии.",
       unavailable ? "Codex Desktop" : "Обновить",
       unavailable ? "/codex?source=codex-desktop" : `/codex/desktop-session?id=${encodeURIComponent(detail.session.id)}`
-    );
+    )}`;
   }
 
-  return `<ol class="timeline">${detail.history.map(renderDesktopHistoryItem).join("")}</ol>
+  const history = [...detail.history]
+    .sort((left, right) => historyOrder === "newest-first"
+      ? right.sequence - left.sequence
+      : left.sequence - right.sequence);
+
+  return `${historyControls}<ol class="timeline">${history.map(renderDesktopHistoryItem).join("")}</ol>
     ${detail.historyTruncated ? `<p class="muted">History truncated to a bounded read-only preview.</p>` : ""}`;
 }
 
@@ -1438,9 +1552,11 @@ function renderCodexPanel(input: {
   state?: string;
   project?: string;
   q?: string;
+  sort?: string;
 }): string {
   const source = input.source ?? "all";
   const query = input.q?.trim() ?? "";
+  const sort = normalizeCodexPanelSort(input.sort);
   const desktopCards = input.desktopSessions.map(desktopSessionCard);
   const cliCards = input.cliSessions.map((session) => ({
     ...session,
@@ -1452,7 +1568,7 @@ function renderCodexPanel(input: {
     .filter((card) => !input.state || input.state === "all" || card.state === input.state || card.desktopStatus === input.state || card.attention === input.state || (input.state === "unsupported" && Boolean(card.unsupportedReason)))
     .filter((card) => !input.project || input.project === "all" || card.repoName === input.project || card.projectPath === input.project)
     .filter((card) => matchesCodexSearch(card, query))
-    .sort((left, right) => right.lastUpdatedAt.localeCompare(left.lastUpdatedAt));
+    .sort((left, right) => compareSessionCards(left, right, sort));
   const desktopReasonSession = input.desktopSessions.find((session) => session.unsupportedReason);
   const desktopReason = desktopReasonSession ? desktopUnsupportedReason(desktopReasonSession) : undefined;
 
@@ -1467,8 +1583,17 @@ function renderCodexPanel(input: {
       <h2>Фильтры</h2>
       <form method="GET" action="/codex" class="grid">
         <input type="hidden" name="source" value="${escapeHtml(source)}">
+        ${input.project ? `<input type="hidden" name="project" value="${escapeHtml(input.project)}">` : ""}
         <label><span class="eyebrow">State</span><select name="state">
           ${["all", "active", "recent", "archived", "unknown", "running", "paused", "completed", "blocked", "unsupported"].map((state) => `<option value="${state}"${input.state === state ? " selected" : ""}>${state}</option>`).join("")}
+        </select></label>
+        <label><span class="eyebrow">Sort</span><select name="sort">
+          ${[
+            ["updated-desc", "Updated newest"],
+            ["updated-asc", "Updated oldest"],
+            ["title-asc", "Title A-Z"],
+            ["title-desc", "Title Z-A"]
+          ].map(([value, label]) => `<option value="${value}"${sort === value ? " selected" : ""}>${label}</option>`).join("")}
         </select></label>
         <label><span class="eyebrow">Search</span><input name="q" value="${escapeHtml(query)}" placeholder="title, project, path"></label>
         <div class="actions"><button class="button button-primary" type="submit">Применить</button>${linkButton("Сбросить", "/codex")}</div>
@@ -1492,8 +1617,9 @@ function renderCodexPanel(input: {
   `;
 }
 
-function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail): string {
+function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail, options: { historyOrder?: string; userId?: string } = {}): string {
   const session = detail.session;
+  const historyOrder = normalizeDesktopHistoryOrder(options.historyOrder);
   return `
     <section class="panel hero">
       <p class="eyebrow">Codex Desktop</p>
@@ -1509,9 +1635,10 @@ function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail): string {
       <div class="kv-item"><div class="eyebrow">Contract</div><strong>${session.canResume || session.canStop || session.canCreateTask ? "partial" : "unsupported"}</strong></div>
     </section>
     ${session.unsupportedReason ? `<section class="notice notice-warn">${escapeHtml(desktopUnsupportedReason(session))}</section>` : ""}
+    ${renderDesktopContinueForm(session)}
     <section class="panel">
       <h2>History</h2>
-      ${renderDesktopHistory(detail)}
+      ${renderDesktopHistory(detail, { historyOrder, userId: options.userId })}
     </section>
   `;
 }
@@ -1928,14 +2055,18 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             source: url.searchParams.get("source") ?? "all",
             state: url.searchParams.get("state") ?? undefined,
             project: url.searchParams.get("project") ?? undefined,
-            q: url.searchParams.get("q") ?? undefined
+            q: url.searchParams.get("q") ?? undefined,
+            sort: url.searchParams.get("sort") ?? undefined
           }), { navKey: "codex" }));
           return;
         }
         if (screen === "codex-session" && url.searchParams.get("id")) {
           const id = url.searchParams.get("id")!;
           const detail = await fetchForRequest<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`);
-          html(res, 200, renderForRequest(req, `Codex Desktop ${detail.session.id}`, renderDesktopSessionDetail(detail), { navKey: "codex" }));
+          html(res, 200, renderForRequest(req, `Codex Desktop ${detail.session.id}`, renderDesktopSessionDetail(detail, {
+            historyOrder: url.searchParams.get("historyOrder") ?? undefined,
+            userId: url.searchParams.get("userId") ?? undefined
+          }), { navKey: "codex" }));
           return;
         }
         if (screen === "sessions") {
@@ -1984,7 +2115,8 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           ...codex,
           source: url.searchParams.get("source") ?? "all",
           state: url.searchParams.get("state") ?? undefined,
-          q: url.searchParams.get("q") ?? undefined
+          q: url.searchParams.get("q") ?? undefined,
+          sort: url.searchParams.get("sort") ?? undefined
         }), { navKey: "sessions" }));
       }),
       route("GET", "/codex", async ({ req, res, url }) => {
@@ -1998,7 +2130,8 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           source: url.searchParams.get("source") ?? "all",
           state: url.searchParams.get("state") ?? undefined,
           project: url.searchParams.get("project") ?? undefined,
-          q: url.searchParams.get("q") ?? undefined
+          q: url.searchParams.get("q") ?? undefined,
+          sort: url.searchParams.get("sort") ?? undefined
         }), { navKey: "codex" }));
       }),
       route("GET", "/codex/desktop-session", async ({ req, res, url }) => {
@@ -2013,7 +2146,10 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const detail = await fetchForRequest<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`);
-        html(res, 200, renderForRequest(req, `Codex Desktop ${detail.session.id}`, renderDesktopSessionDetail(detail), { navKey: "codex" }));
+        html(res, 200, renderForRequest(req, `Codex Desktop ${detail.session.id}`, renderDesktopSessionDetail(detail, {
+          historyOrder: url.searchParams.get("historyOrder") ?? undefined,
+          userId: url.searchParams.get("userId") ?? undefined
+        }), { navKey: "codex" }));
       }),
       route("GET", "/approvals", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Подтверждения", "approvals")) {
@@ -2150,6 +2286,33 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
 
         const result = await postForRequest<CodexDesktopControlResult>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(body.sessionId)}/${body.action}`, {});
         json(res, 200, result);
+      }),
+      route("POST", "/codex/desktop-continue", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
+          return;
+        }
+
+        const body = await readJsonBody<{ sessionId?: string; prompt?: string }>(req);
+        if (!body.sessionId || !body.prompt?.trim()) {
+          json(res, 400, { error: "Desktop sessionId and prompt are required" });
+          return;
+        }
+
+        try {
+          const result = await postForRequest<CodexDesktopControlResult>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(body.sessionId)}/continue`, {
+            prompt: body.prompt
+          });
+          json(res, 200, result);
+        } catch (error) {
+          if (error instanceof MiniAppFetchError) {
+            json(res, error.status, {
+              error: error.detail,
+              detail: error.message
+            });
+            return;
+          }
+          throw error;
+        }
       }),
       route("POST", "/new-task", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Новая задача", "projects")) {

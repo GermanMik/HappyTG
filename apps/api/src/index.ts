@@ -230,6 +230,20 @@ export function createApiServer(service = new HappyTGControlPlaneService()) {
 
         await codexDesktopJson(res, () => service.resumeCodexDesktopSession(userId, params.id));
       }),
+      route("POST", "/api/v1/codex-desktop/sessions/:id/continue", async ({ req, res, params, url }) => {
+        const body = await readJsonBody<{ userId?: string; prompt?: string }>(req);
+        const userId = body.userId ?? await miniAppUserId(req, url);
+        if (!userId) {
+          json(res, 401, { error: "userId or Mini App session auth is required" });
+          return;
+        }
+        if (!body.prompt?.trim()) {
+          json(res, 400, { error: "prompt is required" });
+          return;
+        }
+
+        await codexDesktopJson(res, () => service.continueCodexDesktopSession(userId, params.id, { prompt: body.prompt! }));
+      }),
       route("POST", "/api/v1/codex-desktop/sessions/:id/stop", async ({ req, res, params, url }) => {
         const body = await readJsonBody<{ userId?: string }>(req);
         const userId = body.userId ?? await miniAppUserId(req, url);

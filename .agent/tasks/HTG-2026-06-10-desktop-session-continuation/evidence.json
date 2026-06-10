@@ -1,0 +1,76 @@
+{
+  "taskId": "HTG-2026-06-10-desktop-session-continuation",
+  "status": "complete_with_environment_notes",
+  "commands": [
+    {
+      "command": "pnpm --filter @happytg/protocol --filter @happytg/policy-engine --filter @happytg/runtime-adapters --filter @happytg/api --filter @happytg/miniapp typecheck",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/typecheck-targeted.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm --filter @happytg/protocol --filter @happytg/policy-engine --filter @happytg/runtime-adapters --filter @happytg/api --filter @happytg/miniapp test",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/test-targeted.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm lint",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/lint.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm test",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/test-unit.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm build",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/build.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm happytg doctor",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/doctor.txt",
+      "result": "environment_fail_missing_env_and_port_conflicts"
+    },
+    {
+      "command": "pnpm happytg verify",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/test-integration.txt",
+      "result": "environment_fail_missing_env_and_port_conflicts"
+    },
+    {
+      "command": "pnpm release:check --version 0.4.16",
+      "phase": "release",
+      "exitCode": 0,
+      "raw": "raw/release-check.txt",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-06-10-desktop-session-continuation",
+      "phase": "verification",
+      "exitCode": 0,
+      "raw": "raw/task-validate.txt",
+      "result": "pass"
+    },
+    {
+      "command": "graphify update .",
+      "phase": "graphify",
+      "exitCode": 0,
+      "raw": "raw/graphify-update.txt",
+      "result": "pass"
+    }
+  ]
+}

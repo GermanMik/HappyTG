@@ -67,6 +67,7 @@ export const ACTION_KINDS = [
   "daemon_pair",
   "session_resume",
   "codex_desktop_resume",
+  "codex_desktop_continue",
   "codex_desktop_stop",
   "codex_desktop_new_task",
   "verification_run"
@@ -669,6 +670,7 @@ export interface CodexDesktopSession {
   status: "active" | "recent" | "archived" | "unknown";
   source: "codex-desktop";
   canResume: boolean;
+  canContinue?: boolean;
   canStop: boolean;
   canCreateTask?: boolean;
   unsupportedReason?: string;
@@ -677,6 +679,7 @@ export interface CodexDesktopSession {
 
 export interface CodexDesktopControlStatus {
   canResume: boolean;
+  canContinue?: boolean;
   canStop: boolean;
   canCreateTask: boolean;
   unsupportedReason?: string;
@@ -704,7 +707,7 @@ export interface CodexDesktopSessionDetail {
 
 export interface CodexDesktopControlResult {
   ok: true;
-  action: "resume" | "stop" | "new-task";
+  action: "resume" | "continue" | "stop" | "new-task";
   source: "codex-desktop";
   session?: CodexDesktopSession;
   task?: {
@@ -714,6 +717,11 @@ export interface CodexDesktopControlResult {
     projectPath?: string;
     status: "created" | "queued" | "running" | "unknown";
   };
+}
+
+export interface ContinueCodexDesktopSessionRequest {
+  userId: string;
+  prompt: string;
 }
 
 export interface CreateCodexDesktopTaskRequest {

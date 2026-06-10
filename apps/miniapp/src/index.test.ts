@@ -446,6 +446,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
               status: "recent",
               source: "codex-desktop",
               canResume: false,
+              canContinue: false,
               canStop: false,
               canCreateTask: false,
               unsupportedReason: "contract missing",
@@ -466,6 +467,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
             status: "recent",
             source: "codex-desktop",
             canResume: false,
+            canContinue: false,
             canStop: false,
             canCreateTask: false,
             unsupportedReason: "contract missing",
@@ -525,12 +527,76 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
     assert.match(detailHtml, /Resume/);
     assert.match(detailHtml, /Stop/);
     assert.match(detailHtml, /New Desktop Task/);
+    assert.match(detailHtml, /Продолжить сессию/);
     assert.match(detailHtml, /disabled/);
     assert.match(detailHtml, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
     assert.match(detailHtml, /History/);
     assert.match(detailHtml, /Safe desktop answer/);
     assert.doesNotMatch(detailHtml, /data-desktop-action="resume"/);
     assert.doesNotMatch(detailHtml, /RAW_PROMPT_SECRET/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("codex panel applies requested session sort order", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return { projects: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "desktop-zeta",
+              title: "Zeta answer",
+              updatedAt: "2026-04-28T10:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: true,
+              canContinue: true,
+              canStop: true,
+              canCreateTask: true
+            },
+            {
+              id: "desktop-alpha",
+              title: "Alpha answer",
+              updatedAt: "2026-04-28T08:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: true,
+              canContinue: true,
+              canStop: true,
+              canCreateTask: true
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-desktop&sort=title-asc`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /name="sort"/);
+    assert.match(html, /value="title-asc" selected/);
+    assert.ok(html.indexOf("Alpha answer") < html.indexOf("Zeta answer"));
   } finally {
     await closeServer(server);
   }
@@ -547,6 +613,7 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
     status: "active",
     source: "codex-desktop",
     canResume: true,
+    canContinue: true,
     canStop: true,
     canCreateTask: true
   };
@@ -578,6 +645,7 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
         return {
           control: {
             canResume: true,
+            canContinue: true,
             canStop: true,
             canCreateTask: true
           }
@@ -614,6 +682,21 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
           session: desktopSession
         } as never;
       }
+      if (pathname === "/api/v1/codex-desktop/sessions/desktop-supported/continue?userId=usr_1") {
+        assert.equal(init?.method, "POST");
+        assert.deepEqual(JSON.parse(String(init?.body)), {
+          prompt: "Continue Desktop task"
+        });
+        return {
+          ok: true,
+          action: "continue",
+          source: "codex-desktop",
+          session: {
+            ...desktopSession,
+            status: "active"
+          }
+        } as never;
+      }
       throw new Error(`Unexpected path ${pathname}`);
     }
   });
@@ -630,6 +713,8 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
     assert.equal(detailResponse.status, 200);
     assert.match(detailHtml, /data-desktop-action="resume"/);
     assert.match(detailHtml, /data-desktop-action="stop"/);
+    assert.match(detailHtml, /data-desktop-continue-form/);
+    assert.match(detailHtml, /name="prompt"/);
     assert.match(detailHtml, /New Desktop Task/);
     assert.match(detailHtml, /История пока пуста/);
     assert.doesNotMatch(detailHtml, /CODEX_DESKTOP_HISTORY_UNAVAILABLE/);
@@ -647,6 +732,20 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
     const actionPayload = await action.json() as { action: string };
     assert.equal(action.status, 200);
     assert.equal(actionPayload.action, "resume");
+
+    const continued = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-continue?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        sessionId: "desktop-supported",
+        prompt: "Continue Desktop task"
+      })
+    });
+    const continuedPayload = await continued.json() as { action: string };
+    assert.equal(continued.status, 200);
+    assert.equal(continuedPayload.action, "continue");
 
     const created = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
       method: "POST",
@@ -666,6 +765,7 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
     assert.equal(payload.sessionHref, "/codex/desktop-session?id=cdt_1");
     assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/tasks?userId=usr_1"), true);
     assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/sessions/desktop-supported/resume?userId=usr_1"), true);
+    assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/sessions/desktop-supported/continue?userId=usr_1"), true);
   } finally {
     await closeServer(server);
   }
