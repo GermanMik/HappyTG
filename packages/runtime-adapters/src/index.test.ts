@@ -343,6 +343,7 @@ test("Codex Desktop host-proxy control contract delegates projects, sessions, an
       writeJson(res, 200, {
         control: {
           canResume: true,
+          canContinue: true,
           canStop: true,
           canCreateTask: true
         }
@@ -372,6 +373,19 @@ test("Codex Desktop host-proxy control contract delegates projects, sessions, an
         session,
         history: [],
         historyTruncated: false
+      });
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/v1/codex-desktop/sessions/session-1/continue") {
+      const body = await readRequestBody(req);
+      writeJson(res, 200, {
+        ok: true,
+        action: "continue",
+        source: "codex-desktop",
+        session: {
+          ...session,
+          title: body.prompt
+        }
       });
       return;
     }
@@ -410,6 +424,10 @@ test("Codex Desktop host-proxy control contract delegates projects, sessions, an
     const control = await adapter.controlStatus();
     const sessions = await adapter.listSessions({ limit: 10 });
     const detail = await adapter.getSessionDetail("session-1");
+    const continued = await adapter.continueSession(sessions[0]!, {
+      userId: "usr_1",
+      prompt: "Continue through proxy"
+    });
     const created = await adapter.createTask({
       userId: "usr_1",
       projectPath: "C:/Develop/Projects/HappyTG",
@@ -419,8 +437,10 @@ test("Codex Desktop host-proxy control contract delegates projects, sessions, an
 
     assert.equal(projects[0]?.id, "cdp_proxy");
     assert.equal(control.canCreateTask, true);
+    assert.equal(control.canContinue, true);
     assert.equal(sessions[0]?.id, "session-1");
     assert.equal(detail?.session.id, "session-1");
+    assert.equal(continued.session?.title, "Continue through proxy");
     assert.equal(created.task?.id, "session-new");
     assert.ok(seenAuthorization.every((value) => value === "Bearer secret"));
   } finally {

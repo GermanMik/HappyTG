@@ -223,16 +223,19 @@ test("Codex Desktop host proxy requires token and serializes mutating controls",
     status: "active" as const,
     source: "codex-desktop" as const,
     canResume: true,
+    canContinue: true,
     canStop: true,
     canCreateTask: true
   };
   const controlContract: CodexDesktopControlContract = {
     supportsResume: true,
+    supportsContinue: true,
     supportsStop: true,
     supportsNewTask: true,
     async capabilities() {
       return {
         supportsResume: true,
+        supportsContinue: true,
         supportsStop: true,
         supportsNewTask: true
       };
@@ -265,6 +268,16 @@ test("Codex Desktop host proxy requires token and serializes mutating controls",
       return {
         ok: true,
         action: "resume",
+        source: "codex-desktop",
+        session: inputSession
+      };
+    },
+    async continueSession(inputSession) {
+      events.push("continue-start");
+      events.push("continue-end");
+      return {
+        ok: true,
+        action: "continue",
         source: "codex-desktop",
         session: inputSession
       };
@@ -315,6 +328,21 @@ test("Codex Desktop host proxy requires token and serializes mutating controls",
     const headers = { authorization: "Bearer secret" };
     const projects = await (await fetch(`${baseUrl}/api/v1/codex-desktop/projects`, { headers })).json() as { projects: Array<{ label: string }> };
     assert.equal(projects.projects[0]?.label, "HappyTG");
+
+    const continued = await fetch(`${baseUrl}/api/v1/codex-desktop/sessions/session-1/continue`, {
+      method: "POST",
+      headers: {
+        ...headers,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        userId: "usr_1",
+        prompt: "Continue desktop task"
+      })
+    });
+    assert.equal(continued.status, 200);
+    assert.deepEqual(events, ["continue-start", "continue-end"]);
+    events.length = 0;
 
     const resume = fetch(`${baseUrl}/api/v1/codex-desktop/sessions/session-1/resume`, {
       method: "POST",

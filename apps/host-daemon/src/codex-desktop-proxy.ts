@@ -6,6 +6,7 @@ import type {
   CodexDesktopProject,
   CodexDesktopSession,
   CodexDesktopSessionDetail,
+  ContinueCodexDesktopSessionRequest,
   CreateCodexDesktopTaskRequest
 } from "../../../packages/protocol/src/index.js";
 import {
@@ -216,6 +217,29 @@ export function createCodexDesktopHostProxyServer(options: CodexDesktopProxyOpti
           }
 
           return adapter.resumeSession(session);
+        }));
+      }),
+      route("POST", "/api/v1/codex-desktop/sessions/:id/continue", async ({ req, res, params }) => {
+        if (!requireProxyAuth(req, res, token)) {
+          return;
+        }
+
+        const body = await readJsonBody<ContinueCodexDesktopSessionRequest>(req);
+        if (!body.prompt?.trim()) {
+          json(res, 400, {
+            error: "prompt is required",
+            source: "codex-desktop"
+          });
+          return;
+        }
+
+        await proxyJson<CodexDesktopControlResult>(res, async () => queue.run(async () => {
+          const session = await adapter.getSession(params.id);
+          if (!session) {
+            throw new CodexDesktopProxyHttpError(404, "Codex Desktop session not found", "CODEX_DESKTOP_SESSION_NOT_FOUND");
+          }
+
+          return adapter.continueSession(session, body);
         }));
       }),
       route("POST", "/api/v1/codex-desktop/sessions/:id/stop", async ({ req, res, params }) => {

@@ -1258,6 +1258,7 @@ export function createCodexDesktopHostProxyControlContract(options: CodexDesktop
 
   return {
     supportsResume: true,
+    supportsContinue: true,
     supportsStop: true,
     supportsNewTask: true,
     unsupportedReason: HOST_PROXY_UNAVAILABLE_REASON,
@@ -1267,6 +1268,7 @@ export function createCodexDesktopHostProxyControlContract(options: CodexDesktop
         const response = await request<{ control: CodexDesktopControlStatus }>("/api/v1/codex-desktop/control");
         return {
           supportsResume: response.control.canResume,
+          supportsContinue: Boolean(response.control.canContinue),
           supportsStop: response.control.canStop,
           supportsNewTask: response.control.canCreateTask,
           unsupportedReason: response.control.unsupportedReason,
@@ -1275,6 +1277,7 @@ export function createCodexDesktopHostProxyControlContract(options: CodexDesktop
       } catch (error) {
         return {
           supportsResume: false,
+          supportsContinue: false,
           supportsStop: false,
           supportsNewTask: false,
           unsupportedReason: error instanceof Error ? error.message : HOST_PROXY_UNAVAILABLE_REASON,
@@ -1303,6 +1306,15 @@ export function createCodexDesktopHostProxyControlContract(options: CodexDesktop
           "content-type": "application/json"
         },
         body: "{}"
+      });
+    },
+    async continueSession(session, input) {
+      return request<CodexDesktopControlResult>(`/api/v1/codex-desktop/sessions/${encodeURIComponent(session.id)}/continue`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(input)
       });
     },
     async stopSession(session) {
