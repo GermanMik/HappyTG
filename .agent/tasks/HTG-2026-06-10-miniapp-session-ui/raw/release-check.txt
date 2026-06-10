@@ -1,6 +1,6 @@
 
-> happytg@0.4.15 release:check C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui
-> node scripts/release/validate-release.mjs "--version" "0.4.15"
+> happytg@0.4.17 release:check C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui
+> node scripts/release/validate-release.mjs "--version" "0.4.17"
 
-Release validation passed for 0.4.15.
-Checked 16 package versions, CHANGELOG.md, and docs/releases/0.4.15.md.
+Release validation passed for 0.4.17.
+Checked 16 package versions, CHANGELOG.md, and docs/releases/0.4.17.md.

@@ -21,6 +21,12 @@
       "raw": "raw/build.txt"
     },
     {
+      "name": "repo typecheck",
+      "command": "pnpm typecheck",
+      "status": "passed",
+      "raw": "raw/root-typecheck.txt"
+    },
+    {
       "name": "repo lint",
       "command": "pnpm lint",
       "status": "passed",
@@ -40,13 +46,31 @@
     },
     {
       "name": "release check",
-      "command": "pnpm release:check -- --version 0.4.15",
+      "command": "pnpm release:check --version 0.4.17",
       "status": "passed",
       "raw": "raw/release-check.txt"
     },
     {
+      "name": "doctor",
+      "command": "pnpm happytg doctor",
+      "status": "environment-blocked",
+      "raw": "raw/doctor.txt"
+    },
+    {
+      "name": "verify",
+      "command": "pnpm happytg verify",
+      "status": "environment-blocked",
+      "raw": "raw/verify.txt"
+    },
+    {
+      "name": "task bundle validation",
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-06-10-miniapp-session-ui",
+      "status": "passed",
+      "raw": "raw/task-validate.txt"
+    },
+    {
       "name": "browser smoke",
-      "command": "fixture API + Mini App on 127.0.0.1:3310",
+      "command": "fixture API + Mini App on 127.0.0.1:3310 with 390x844 browser viewport",
       "status": "passed",
       "raw": "raw/browser-smoke.json"
     },
@@ -58,7 +82,7 @@
     },
     {
       "name": "graphify query",
-      "command": "graphify query \"Mini App result-first session UI task question intent rendering\" --budget 1200",
+      "command": "graphify query \"Mini App result-first session UI task question intent rendering Desktop continuation sorting\" --budget 1200",
       "status": "passed",
       "raw": "raw/graphify-query.txt"
     }
@@ -67,6 +91,10 @@
     ".agent/tasks/HTG-2026-06-10-miniapp-session-ui/spec.md",
     ".agent/tasks/HTG-2026-06-10-miniapp-session-ui/evidence.md",
     ".agent/tasks/HTG-2026-06-10-miniapp-session-ui/problems.md",
-    ".agent/tasks/HTG-2026-06-10-miniapp-session-ui/verdict.json"
+    ".agent/tasks/HTG-2026-06-10-miniapp-session-ui/verdict.json",
+    ".agent/tasks/HTG-2026-06-10-miniapp-session-ui/task.json",
+    ".agent/tasks/HTG-2026-06-10-miniapp-session-ui/state.json",
+    "docs/releases/0.4.17.md",
+    "CHANGELOG.md"
   ]
 }

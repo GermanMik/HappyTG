@@ -1,8 +1,6 @@
-<!doctype html>
-<html lang="ru">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<html lang="ru" style="--tg-viewport-height: 100vh; --tg-viewport-stable-height: 100vh;"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Новая задача</title>
     <style>
       :root {
@@ -487,8 +485,8 @@
         <h2>Есть незавершенный ввод</h2>
         <p class="muted">Можно продолжить с места остановки или начать заново. Это только локальный draft, backend state не меняется.</p>
         <div class="actions">
-          <button class="button button-primary" type="button" data-draft-restore>Продолжить</button>
-          <button class="button" type="button" data-draft-clear>Начать заново</button>
+          <button class="button button-primary" type="button" data-draft-restore="">Продолжить</button>
+          <button class="button" type="button" data-draft-clear="">Начать заново</button>
         </div>
       </section>
       <section class="panel hero">
@@ -496,35 +494,35 @@
     <div class="actions"><a class="button" href="/sessions">Сессии</a><a class="button" href="/projects">Проекты</a></div>
   </section>
   <section class="panel">
-    <form data-new-task-form class="inline-form">
+    <form data-new-task-form="" class="inline-form">
       <div class="intent-grid" role="radiogroup" aria-label="Intent">
-        <label><input type="radio" name="intent" value="implement"><span>Реализовать</span></label><label><input type="radio" name="intent" value="question" checked><span>Вопрос</span></label><label><input type="radio" name="intent" value="review"><span>Проверить результат</span></label>
+        <label><input type="radio" name="intent" value="implement"><span>Реализовать</span></label><label><input type="radio" name="intent" value="question" checked=""><span>Вопрос</span></label><label><input type="radio" name="intent" value="review"><span>Проверить результат</span></label>
       </div>
       <input type="hidden" name="hostId" value="host_visual">
       <input type="hidden" name="contextSessionId" value="">
-      <div class="notice notice-info" data-task-feedback hidden>Создаем сессию.</div>
-      
+      <div class="notice notice-info" data-task-feedback="" hidden="">Создаем сессию.</div>
+
       <label class="eyebrow" for="task-draft">Инструкция</label>
-      <textarea id="task-draft" name="prompt" data-draft placeholder="Что нужно уточнить по реализации?"></textarea>
+      <textarea id="task-draft" name="prompt" data-draft="" placeholder="Что нужно уточнить по реализации?"></textarea>
       <details class="meta-details">
         <summary>Настройки</summary>
         <div class="form-row">
           <label><span class="eyebrow">Source</span><select id="runtime" name="runtime">
-            <option value="codex-cli" selected>Codex CLI</option>
+            <option value="codex-cli" selected="">Codex CLI</option>
             <option value="codex-desktop">Codex Desktop</option>
           </select></label>
           <label><span class="eyebrow">Mode</span><select id="mode" name="mode">
             <option value="proof">proof</option>
-            <option value="quick" selected>quick</option>
+            <option value="quick" selected="">quick</option>
           </select></label>
         </div>
         <div data-source-fields="codex-cli">
           <label class="eyebrow" for="workspaceId">CLI проект</label>
-          <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''"><option value="ws_visual" data-host-id="host_visual" selected>HappyTG · devbox</option></select>
+          <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''"><option value="ws_visual" data-host-id="host_visual" selected="">HappyTG · devbox</option></select>
         </div>
-        <div data-source-fields="codex-desktop" hidden>
+        <div data-source-fields="codex-desktop" hidden="">
           <label class="eyebrow" for="projectId">Desktop проект</label>
-          <select id="projectId" name="projectId"><option value="cdp_visual" data-project-path="C:/Develop/Projects/HappyTG" selected>HappyTG Desktop · C:/Develop/Projects/HappyTG</option></select>
+          <select id="projectId" name="projectId"><option value="cdp_visual" data-project-path="C:/Develop/Projects/HappyTG" selected="">HappyTG Desktop · C:/Develop/Projects/HappyTG</option></select>
         </div>
         <label class="eyebrow" for="title">Название</label>
         <input id="title" name="title" value="Implementation question">
@@ -877,6 +875,51 @@
             });
           });
         });
+        document.querySelector("[data-desktop-continue-form]")?.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var form = event.currentTarget;
+          var submit = form.querySelector("[type=submit]");
+          var feedback = form.querySelector("[data-continue-feedback]");
+          var sessionToken = token();
+          if (!sessionToken) {
+            setActionFeedback(feedback, "danger", "Нет Mini App session. Откройте экран заново из бота.");
+            return;
+          }
+          var data = new FormData(form);
+          var prompt = String(data.get("prompt") || "").trim();
+          if (!prompt) {
+            setActionFeedback(feedback, "danger", "prompt is required");
+            return;
+          }
+          if (submit) submit.disabled = true;
+          if (submit) submit.textContent = "Отправляем...";
+          setActionFeedback(feedback, "info", "Отправляем prompt в Codex Desktop session.");
+          fetch(miniAppUrl("/codex/desktop-continue"), {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "authorization": "Bearer " + sessionToken
+            },
+            body: JSON.stringify({
+              sessionId: data.get("sessionId"),
+              prompt: prompt
+            })
+          }).then(function (response) {
+            if (!response.ok) {
+              return readError(response, "Не удалось продолжить Desktop session.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
+            return response.json();
+          }).then(function () {
+            setActionFeedback(feedback, "success", "Prompt отправлен. Обновляем history.");
+            location.reload();
+          }).catch(function (error) {
+            if (submit) submit.disabled = false;
+            if (submit) submit.textContent = "Отправить";
+            setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось продолжить Desktop session.");
+          });
+        });
         document.querySelector("[data-new-task-form]")?.addEventListener("change", function (event) {
           if (event.target && event.target.name === "runtime") {
             var runtime = event.target.value || "codex-cli";
@@ -951,5 +994,5 @@
         });
       })();
     </script>
-  </body>
-</html>
+
+</body><div id="codex-browser-sidebar-comments-root" style="position: fixed; inset: 0px; pointer-events: none; z-index: 2147483000;"></div></html>

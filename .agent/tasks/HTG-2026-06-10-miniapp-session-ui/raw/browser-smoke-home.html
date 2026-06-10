@@ -1,8 +1,6 @@
-<!doctype html>
-<html lang="ru">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<html lang="ru" style="--tg-viewport-height: 100vh; --tg-viewport-stable-height: 100vh;"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>HappyTG Mini App</title>
     <style>
       :root {
@@ -487,11 +485,11 @@
         <h2>Есть незавершенный ввод</h2>
         <p class="muted">Можно продолжить с места остановки или начать заново. Это только локальный draft, backend state не меняется.</p>
         <div class="actions">
-          <button class="button button-primary" type="button" data-draft-restore>Продолжить</button>
-          <button class="button" type="button" data-draft-clear>Начать заново</button>
+          <button class="button button-primary" type="button" data-draft-restore="">Продолжить</button>
+          <button class="button" type="button" data-draft-clear="">Начать заново</button>
         </div>
       </section>
-      
+
     <section class="panel hero">
       <p class="eyebrow">Сейчас</p>
       <h1>Работа по проектам</h1>
@@ -519,7 +517,7 @@
         <strong><a href="/session/ses_visual">Visual smoke result</a></strong>
       </div>
       <div class="meta-line">Codex CLI · HappyTG · 10 июн., 23:30</div>
-      
+
       <details class="meta-details">
     <summary>Технические детали</summary>
     <dl><div><dt>session</dt><dd>ses_visual</dd></div><div><dt>state</dt><dd>completed</dd></div><div><dt>phase</dt><dd>complete</dd></div><div><dt>verify</dt><dd>passed</dd></div><div><dt>host</dt><dd>devbox</dd></div><div><dt>path</dt><dd>C:/Develop/Projects/HappyTG</dd></div><div><dt>updated</dt><dd>2026-06-10T20:30:00.000Z</dd></div></dl>
@@ -548,7 +546,7 @@
     <div class="status-meta"><span class="badge badge-success">passed</span><a class="button" href="/task/HTG-VISUAL">Отчет</a></div>
   </li></ul>
     </details>
-  
+
     </main>
     <nav class="bottom-nav" aria-label="Основная навигация"><a href="/" aria-current="page">Главная</a><a href="/codex">Codex</a><a href="/sessions">Сессии</a><a href="/projects">Проекты</a><a href="/approvals">Решения</a><a href="/hosts">Хосты</a><a href="/reports">Отчеты</a></nav>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -892,6 +890,51 @@
             });
           });
         });
+        document.querySelector("[data-desktop-continue-form]")?.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var form = event.currentTarget;
+          var submit = form.querySelector("[type=submit]");
+          var feedback = form.querySelector("[data-continue-feedback]");
+          var sessionToken = token();
+          if (!sessionToken) {
+            setActionFeedback(feedback, "danger", "Нет Mini App session. Откройте экран заново из бота.");
+            return;
+          }
+          var data = new FormData(form);
+          var prompt = String(data.get("prompt") || "").trim();
+          if (!prompt) {
+            setActionFeedback(feedback, "danger", "prompt is required");
+            return;
+          }
+          if (submit) submit.disabled = true;
+          if (submit) submit.textContent = "Отправляем...";
+          setActionFeedback(feedback, "info", "Отправляем prompt в Codex Desktop session.");
+          fetch(miniAppUrl("/codex/desktop-continue"), {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "authorization": "Bearer " + sessionToken
+            },
+            body: JSON.stringify({
+              sessionId: data.get("sessionId"),
+              prompt: prompt
+            })
+          }).then(function (response) {
+            if (!response.ok) {
+              return readError(response, "Не удалось продолжить Desktop session.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
+            return response.json();
+          }).then(function () {
+            setActionFeedback(feedback, "success", "Prompt отправлен. Обновляем history.");
+            location.reload();
+          }).catch(function (error) {
+            if (submit) submit.disabled = false;
+            if (submit) submit.textContent = "Отправить";
+            setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось продолжить Desktop session.");
+          });
+        });
         document.querySelector("[data-new-task-form]")?.addEventListener("change", function (event) {
           if (event.target && event.target.name === "runtime") {
             var runtime = event.target.value || "codex-cli";
@@ -966,5 +1009,5 @@
         });
       })();
     </script>
-  </body>
-</html>
+
+</body><div id="codex-browser-sidebar-comments-root" style="position: fixed; inset: 0px; pointer-events: none; z-index: 2147483000;"></div></html>
