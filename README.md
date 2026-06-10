@@ -4,6 +4,32 @@ HappyTG is a Telegram-first, Codex-first, self-hosted control plane for remotely
 
 It is designed around one hard constraint: Telegram is a render surface for commands, approvals, summaries, and notifications, but it is not the execution core and it is not the source of truth. The source of truth lives in the control plane state, durable event log, materialized views, and repo-local proof artifacts.
 
+## Project Description
+
+### English
+
+HappyTG is a self-hosted control plane for developers who want to operate local AI coding sessions remotely without moving execution into a cloud-only agent. It connects a Telegram Bot and Telegram Mini App to a local control plane, worker, host daemon, runtime adapters, and repo-local proof system. The result is a workflow where a developer can start, inspect, approve, resume, and verify coding tasks from Telegram while the actual code execution stays on a trusted home machine, workstation, or server.
+
+The project is intentionally Codex-first. Codex CLI and Codex Desktop are treated as the primary AI coding runtimes, and HappyTG adds the surrounding operational layer: session state, project discovery, runtime readiness checks, approval gates, policy evaluation, task evidence, and durable status projections. Telegram is used for fast control and notifications, while the Mini App provides the richer inspection surface for sessions, project history, diffs, proof bundles, logs, verification results, and Desktop task details.
+
+HappyTG is built for local-first engineering discipline. Non-trivial work is expected to produce repo-local proof artifacts under `.agent/tasks/<TASK_ID>/`, including a frozen scope, raw command output, evidence, problems, and a final verdict. The control plane keeps durable state and event history, the worker performs orchestration, and the host daemon serializes mutating operations on the execution machine. This keeps the system resumable after disconnects, explicit about what was approved, and inspectable after a task finishes.
+
+The system is useful when a developer wants to keep models, source code, credentials, and build tooling on their own infrastructure, but still wants a mobile-friendly operational surface. It is designed first for one developer controlling one or more local projects, with architecture boundaries that can grow toward small-team self-hosting: typed protocol contracts, policy and approval engines, separate render/control/execution planes, and repeatable bootstrap, doctor, verify, and release workflows.
+
+HappyTG is not a replacement for Git, CI, or the underlying AI runtime. It is the coordination layer around them. It helps answer practical operational questions: which projects are available, which sessions are active, what changed, which action needs approval, whether verification passed, which Desktop task is running, and what evidence proves that a task is complete.
+
+### Русский
+
+HappyTG - это self-hosted control plane для разработчиков, которым нужно удалённо управлять локальными AI coding sessions, не перенося выполнение кода в cloud-only agent. Проект связывает Telegram Bot и Telegram Mini App с локальным control plane, worker, host daemon, runtime adapters и repo-local proof system. В результате разработчик может запускать, просматривать, подтверждать, возобновлять и проверять coding tasks из Telegram, а фактическое выполнение кода остаётся на доверенной домашней машине, рабочей станции или сервере.
+
+Проект намеренно построен как Codex-first. Codex CLI и Codex Desktop рассматриваются как основные AI coding runtimes, а HappyTG добавляет операционный слой вокруг них: состояние сессий, discovery проектов, проверки готовности runtime, approval gates, policy evaluation, task evidence и durable status projections. Telegram используется для быстрого управления и уведомлений, а Mini App даёт более глубокий интерфейс для просмотра сессий, истории проектов, diffs, proof bundles, logs, результатов verification и деталей Desktop tasks.
+
+HappyTG ориентирован на local-first engineering discipline. Для нетривиальных задач ожидаются repo-local proof artifacts в `.agent/tasks/<TASK_ID>/`: замороженный scope, raw command output, evidence, problems и final verdict. Control plane хранит durable state и event history, worker выполняет orchestration, а host daemon сериализует mutating operations на машине выполнения. Это делает систему resumable после disconnects, явно фиксирует approved actions и оставляет проверяемый след после завершения задачи.
+
+Система полезна, когда разработчик хочет держать models, source code, credentials и build tooling на собственной инфраструктуре, но при этом иметь удобную мобильную поверхность управления. HappyTG сначала спроектирован для одного разработчика, который управляет одним или несколькими локальными проектами, но архитектурные границы позволяют расти в сторону small-team self-hosting: typed protocol contracts, policy и approval engines, разделённые render/control/execution planes, а также повторяемые bootstrap, doctor, verify и release workflows.
+
+HappyTG не заменяет Git, CI или сам AI runtime. Это coordination layer вокруг них. Он помогает отвечать на практические операционные вопросы: какие проекты доступны, какие сессии активны, что изменилось, какое действие требует approval, прошла ли verification, какая Desktop task сейчас выполняется и какие evidence доказывают, что задача действительно завершена.
+
 ## One-Command Install
 
 ```mermaid
