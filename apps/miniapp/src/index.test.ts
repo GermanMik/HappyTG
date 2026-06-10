@@ -357,7 +357,7 @@ test("mini app forwards browser session cookie as bearer auth", async () => {
       if (pathname === "/api/v1/codex-desktop/projects") {
         return { projects: [] } as never;
       }
-      if (pathname === "/api/v1/codex-desktop/sessions") {
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50") {
         return { sessions: [] } as never;
       }
       throw new Error(`Unexpected path ${pathname}`);
@@ -388,7 +388,7 @@ test("mini app forwards browser session cookie as bearer auth", async () => {
         authorization: "Bearer mas_token"
       },
       {
-        pathname: "/api/v1/codex-desktop/sessions",
+        pathname: "/api/v1/codex-desktop/sessions?limit=50",
         authorization: "Bearer mas_token"
       }
     ]);
@@ -412,6 +412,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
               state: "ready",
               runtime: "codex-cli",
               repoName: "HappyTG",
+              projectPath: "C:/Develop/Projects/HappyTG",
               hostLabel: "devbox",
               lastUpdatedAt: "2026-04-28T08:00:00.000Z",
               href: "/session/ses_cli",
@@ -433,7 +434,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
           ]
         } as never;
       }
-      if (pathname === "/api/v1/codex-desktop/sessions?userId=usr_1") {
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
         return {
           sessions: [
             {
@@ -507,8 +508,16 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
     assert.match(html, /recent/);
     assert.match(html, /contract missing/);
     assert.match(html, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
+    assert.match(html, /Прошедшие задачи/);
+    assert.match(html, /href="\/codex\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG"/);
     assert.doesNotMatch(html, /CLI fixture/);
     assert.doesNotMatch(html, /RAW_PROMPT_SECRET/);
+
+    const cliProjectResponse = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-cli&project=C%3A%2FDevelop%2FProjects%2FHappyTG`);
+    const cliProjectHtml = await cliProjectResponse.text();
+    assert.equal(cliProjectResponse.status, 200);
+    assert.match(cliProjectHtml, /CLI fixture/);
+    assert.doesNotMatch(cliProjectHtml, /Desktop fixture/);
 
     const detailResponse = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-session?id=desktop-session-1&userId=usr_1`);
     const detailHtml = await detailResponse.text();
@@ -562,16 +571,23 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
           ]
         } as never;
       }
-      if (pathname === "/api/v1/codex-desktop/sessions?userId=usr_1") {
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
         return { sessions: [desktopSession] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/control?userId=usr_1") {
+        return {
+          control: {
+            canResume: true,
+            canStop: true,
+            canCreateTask: true
+          }
+        } as never;
       }
       if (pathname === "/api/v1/codex-desktop/sessions/desktop-supported?userId=usr_1") {
         return {
           session: desktopSession,
           history: [],
-          historyTruncated: false,
-          historyUnsupportedReason: "No Codex Desktop JSONL history file was found for this session.",
-          historyUnsupportedReasonCode: "CODEX_DESKTOP_HISTORY_UNAVAILABLE"
+          historyTruncated: false
         } as never;
       }
       if (pathname === "/api/v1/codex-desktop/tasks?userId=usr_1") {
@@ -615,6 +631,8 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
     assert.match(detailHtml, /data-desktop-action="resume"/);
     assert.match(detailHtml, /data-desktop-action="stop"/);
     assert.match(detailHtml, /New Desktop Task/);
+    assert.match(detailHtml, /История пока пуста/);
+    assert.doesNotMatch(detailHtml, /CODEX_DESKTOP_HISTORY_UNAVAILABLE/);
 
     const action = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-action?userId=usr_1`, {
       method: "POST",
@@ -645,7 +663,7 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
 
     assert.equal(created.status, 200);
     assert.equal(payload.task.id, "cdt_1");
-    assert.equal(payload.sessionHref, "/codex?source=codex-desktop");
+    assert.equal(payload.sessionHref, "/codex/desktop-session?id=cdt_1");
     assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/tasks?userId=usr_1"), true);
     assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/sessions/desktop-supported/resume?userId=usr_1"), true);
   } finally {
@@ -737,6 +755,19 @@ test("projects page renders workspaces and new task creates a Codex session", as
           ]
         } as never;
       }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "VideoCall",
+              path: "C:/Develop/Projects/VideoCall",
+              source: "codex-desktop",
+              active: false
+            }
+          ]
+        } as never;
+      }
       if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
         assert.equal(init?.method, "POST");
         assert.deepEqual(JSON.parse(String(init?.body)), {
@@ -779,9 +810,22 @@ test("projects page renders workspaces and new task creates a Codex session", as
     assert.equal(projectsResponse.status, 200);
     assert.match(projectsHtml, /HappyTG/);
     assert.match(projectsHtml, /C:\/Develop\/Projects\/HappyTG/);
+    assert.match(projectsHtml, /Codex Desktop projects/);
+    assert.match(projectsHtml, /VideoCall/);
+    assert.match(projectsHtml, /C:\/Develop\/Projects\/VideoCall/);
     assert.match(projectsHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1"/);
+    assert.match(projectsHtml, /Прошедшие задачи/);
+    assert.match(projectsHtml, /href="\/codex\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG"/);
+    assert.match(projectsHtml, /href="\/new-task\?source=codex-desktop&amp;projectId=cdp_1"/);
+    assert.match(projectsHtml, /href="\/codex\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FVideoCall"/);
     assert.match(projectsHtml, /Создать Codex-сессию/);
     assert.match(projectsHtml, /data-task-feedback/);
+
+    const projectDetailResponse = await fetch(`http://127.0.0.1:${address.port}/project/ws_1?userId=usr_1`);
+    const projectDetailHtml = await projectDetailResponse.text();
+    assert.equal(projectDetailResponse.status, 200);
+    assert.match(projectDetailHtml, /Прошедшие задачи/);
+    assert.match(projectDetailHtml, /href="\/codex\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG"/);
 
     const taskResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
       method: "POST",

@@ -708,6 +708,7 @@ test("mini app launch validates initData, issues app session, and exposes action
 
     const sessions = await service.listMiniAppSessions(claim.user.id);
     assert.equal(sessions.sessions[0]?.repoName, "miniapp-repo");
+    assert.equal(sessions.sessions[0]?.projectPath, workspaceDir);
 
     const verify = await service.getMiniAppVerifySummary(session.session.id, claim.user.id);
     assert.equal(verify.state, "not_started");

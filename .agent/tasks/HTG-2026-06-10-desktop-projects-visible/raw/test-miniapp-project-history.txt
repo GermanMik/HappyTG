@@ -1,0 +1,37 @@
+
+> @happytg/miniapp@0.4.15 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+✖ src\index.test.ts (4.075ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15.2275
+
+✖ failing tests:
+
+test at src\index.test.ts:1:1
+✖ src\index.test.ts (4.075ms)
+  Error: spawn EPERM
+      at ChildProcess.spawn (node:internal/child_process:441:11)
+      at spawn (node:child_process:796:9)
+      at TestContext.<anonymous> (node:internal/test_runner/runner:442:19)
+      at FileTest.runInAsyncScope (node:async_hooks:227:14)
+      at FileTest.run (node:internal/test_runner/test:1201:25)
+      at FileTest.start (node:internal/test_runner/test:1096:17)
+      at runTestFile (node:internal/test_runner/runner:524:32)
+      at node:internal/test_runner/runner:856:25
+      at node:internal/per_context/primordials:561:37
+      at new Promise (<anonymous>) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'spawn'
+  }
+C:\Develop\Projects\HappyTG\apps\miniapp:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @happytg/miniapp@0.4.15 test: `tsx --test src/*.test.ts`
+Exit status 1
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

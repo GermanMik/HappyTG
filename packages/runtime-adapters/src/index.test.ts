@@ -8,6 +8,7 @@ import {
   checkCodexReadiness,
   classifyActionKind,
   classifyCodexSmokeStderr,
+  CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE,
   CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE,
   CodexDesktopStateAdapter,
   codexCliMissingMessage,
@@ -328,6 +329,29 @@ test("Codex Desktop adapter parses session_index and session files as sanitized 
   }
 });
 
+test("Codex Desktop adapter limits session projections for list screens", async () => {
+  const codexHome = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-session-limit-"));
+  try {
+    await mkdir(codexHome, { recursive: true });
+    await writeFile(
+      path.join(codexHome, "session_index.jsonl"),
+      [
+        JSON.stringify({ id: "session-old", thread_name: "Old", updated_at: "2026-04-28T08:00:00.000Z" }),
+        JSON.stringify({ id: "session-new", thread_name: "New", updated_at: "2026-04-29T08:00:00.000Z" })
+      ].join("\n") + "\n",
+      "utf8"
+    );
+
+    const adapter = new CodexDesktopStateAdapter({ codexHome });
+    const sessions = await adapter.listSessions({ limit: 1 });
+
+    assert.equal(sessions.length, 1);
+    assert.equal(sessions[0]?.id, "session-new");
+  } finally {
+    await rm(codexHome, { recursive: true, force: true });
+  }
+});
+
 test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-control-"));
   let adapter: CodexDesktopStateAdapter | undefined;
@@ -373,6 +397,7 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
             turns: []
           };
         }
+        const threads = new Map([["session-1", thread("session-1")]]);
         function send(id, result) {
           process.stdout.write(JSON.stringify({ id, result }) + "\\n");
         }
@@ -384,8 +409,37 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
               send(message.id, { userAgent: "happytg-test", codexHome: ${JSON.stringify(codexHome)}, platformFamily: "windows", platformOs: "windows" });
               break;
             case "thread/list":
-              send(message.id, { data: [thread("session-1")], nextCursor: null, backwardsCursor: null });
+              send(message.id, { data: [...threads.values()], nextCursor: null, backwardsCursor: null });
               break;
+            case "thread/read": {
+              const current = threads.get(message.params.threadId) ?? thread(message.params.threadId);
+              send(message.id, {
+                thread: {
+                  ...current,
+                  turns: [
+                    {
+                      id: message.params.threadId === "new-thread" ? "turn-new" : "turn-existing",
+                      status: message.params.threadId === "new-thread" ? "inProgress" : "completed",
+                      startedAt: 1777626000,
+                      completedAt: message.params.threadId === "new-thread" ? null : 1777626060,
+                      items: [
+                        {
+                          id: "item-user",
+                          type: "userMessage",
+                          message: message.params.threadId === "new-thread" ? "Run Desktop task" : "Existing Desktop prompt"
+                        },
+                        {
+                          id: "item-agent",
+                          type: "agentMessage",
+                          message: message.params.threadId === "new-thread" ? "Desktop task started" : "Existing Desktop answer"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              });
+              break;
+            }
             case "thread/resume":
               send(message.id, { thread: thread(message.params.threadId) });
               break;
@@ -396,9 +450,16 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
               send(message.id, {});
               break;
             case "thread/start":
-              send(message.id, { thread: thread("new-thread", "active") });
+              threads.set("new-thread", thread("new-thread", "active"));
+              send(message.id, { thread: threads.get("new-thread") });
               break;
             case "turn/start":
+              if (threads.has(message.params.threadId)) {
+                const current = threads.get(message.params.threadId);
+                current.status = { type: "active" };
+                current.updatedAt = 1777626060;
+                threads.set(message.params.threadId, current);
+              }
               send(message.id, { turn: { id: "turn-new", status: "inProgress" } });
               break;
             default:
@@ -437,13 +498,25 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
     assert.equal(created.action, "new-task");
     assert.equal(created.task?.id, "new-thread");
     assert.equal(created.task?.status, "running");
+
+    const sessionsAfterCreate = await adapter.listSessions({ limit: 10 });
+    const createdSession = sessionsAfterCreate.find((session) => session.id === "new-thread");
+    assert.equal(createdSession?.title, "Desktop task");
+    assert.equal(createdSession?.status, "active");
+    assert.equal(createdSession?.canResume, true);
+
+    const createdDetail = await adapter.getSessionDetail("new-thread");
+    assert.equal(createdDetail?.session.id, "new-thread");
+    assert.equal(createdDetail?.historyUnsupportedReasonCode, undefined);
+    assert.equal(createdDetail?.history.length, 2);
+    assert.match(createdDetail?.history[0]?.summary ?? "", /Run Desktop task/);
   } finally {
     adapter?.dispose();
     await rm(tempDir, { recursive: true, force: true });
   }
 });
 
-test("Codex Desktop default adapter keeps experimental app-server control unsupported", async () => {
+test("Codex Desktop default adapter keeps unknown experimental control modes unsupported", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-default-unsupported-"));
   try {
     const codexHome = path.join(tempDir, "codex-home");
@@ -458,7 +531,7 @@ test("Codex Desktop default adapter keeps experimental app-server control unsupp
       codexHome,
       env: {
         ...process.env,
-        HAPPYTG_CODEX_DESKTOP_CONTROL: "app-server"
+        HAPPYTG_CODEX_DESKTOP_CONTROL: "experimental"
       }
     });
     const sessions = await adapter.listSessions();
@@ -471,6 +544,47 @@ test("Codex Desktop default adapter keeps experimental app-server control unsupp
     assert.equal(sessions[0]?.unsupportedReasonCode, CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE);
     assert.match(sessions[0]?.unsupportedReason ?? "", /experimental/i);
   } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("Codex Desktop default adapter enables app-server control when explicitly configured", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-default-app-server-"));
+  let adapter: CodexDesktopStateAdapter | undefined;
+  try {
+    const codexHome = path.join(tempDir, "codex-home");
+    await mkdir(codexHome, { recursive: true });
+    await writeFile(
+      path.join(codexHome, "session_index.jsonl"),
+      `${JSON.stringify({ id: "session-1", thread_name: "Desktop default app-server", updated_at: "2026-05-03T08:00:00.000Z" })}\n`,
+      "utf8"
+    );
+
+    adapter = new CodexDesktopStateAdapter({
+      codexHome,
+      env: {
+        ...process.env,
+        HAPPYTG_CODEX_DESKTOP_CONTROL: "app-server",
+        HAPPYTG_CODEX_DESKTOP_APP_SERVER_COMMAND: "happytg-missing-codex-binary",
+        HAPPYTG_CODEX_DESKTOP_APP_SERVER_TIMEOUT_MS: "100"
+      }
+    });
+    const sessions = await adapter.listSessions();
+    const fastControl = await adapter.controlStatus({ validateAvailability: false });
+    const validatedControl = await adapter.controlStatus();
+
+    assert.equal(adapter.canCreateTask(), true);
+    assert.equal(fastControl.canCreateTask, true);
+    assert.equal(validatedControl.canCreateTask, false);
+    assert.equal(validatedControl.unsupportedReasonCode, CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE);
+    assert.equal(adapter.controlUnsupportedReasonCode(), CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE);
+    assert.equal(sessions[0]?.canResume, false);
+    assert.equal(sessions[0]?.canStop, false);
+    assert.equal(sessions[0]?.canCreateTask, false);
+    assert.equal(sessions[0]?.unsupportedReasonCode, CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE);
+    assert.match(sessions[0]?.unsupportedReason ?? "", /unavailable|missing|enoent|not recognized|not found/i);
+  } finally {
+    adapter?.dispose();
     await rm(tempDir, { recursive: true, force: true });
   }
 });

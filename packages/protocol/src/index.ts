@@ -675,6 +675,14 @@ export interface CodexDesktopSession {
   unsupportedReasonCode?: string;
 }
 
+export interface CodexDesktopControlStatus {
+  canResume: boolean;
+  canStop: boolean;
+  canCreateTask: boolean;
+  unsupportedReason?: string;
+  unsupportedReasonCode?: string;
+}
+
 export interface CodexDesktopHistoryEntry {
   id: string;
   sequence: number;

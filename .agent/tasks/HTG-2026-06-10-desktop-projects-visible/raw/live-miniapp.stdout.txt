@@ -1,0 +1,11 @@
+
+> @happytg/miniapp@0.4.15 start C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx src/index.ts
+
+{"at":"2026-06-10T16:31:10.295Z","level":"INFO","scope":"miniapp","message":"Mini App listening","metadata":{"port":3008,"apiBaseUrl":"http://127.0.0.1:4001"}}
+{"at":"2026-06-10T16:32:42.167Z","level":"ERROR","scope":"miniapp","message":"Unhandled HTTP error","metadata":{"message":"Mini App fetch failed for /api/v1/codex-desktop/sessions/019eb260-7b41-7d63-b9a8-70fdb4f04d7f?userId=usr_1cb55f0494804d6dbbc26d37: 404","stack":"Error: Mini App fetch failed for /api/v1/codex-desktop/sessions/019eb260-7b41-7d63-b9a8-70fdb4f04d7f?userId=usr_1cb55f0494804d6dbbc26d37: 404\n    at Object.defaultFetchJson (C:\\Develop\\Projects\\HappyTG\\apps\\miniapp\\src\\index.ts:69:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Object.handler (C:\\Develop\\Projects\\HappyTG\\apps\\miniapp\\src\\index.ts:2013:24)\n    at async Server.<anonymous> (C:\\Develop\\Projects\\HappyTG\\packages\\shared\\src\\index.ts:948:7)"}}
+{"at":"2026-06-10T16:32:42.596Z","level":"ERROR","scope":"miniapp","message":"Unhandled HTTP error","metadata":{"message":"Mini App fetch failed for /api/v1/codex-desktop/sessions/019eb260-7b41-7d63-b9a8-70fdb4f04d7f?userId=usr_1cb55f0494804d6dbbc26d37: 404","stack":"Error: Mini App fetch failed for /api/v1/codex-desktop/sessions/019eb260-7b41-7d63-b9a8-70fdb4f04d7f?userId=usr_1cb55f0494804d6dbbc26d37: 404\n    at Object.defaultFetchJson (C:\\Develop\\Projects\\HappyTG\\apps\\miniapp\\src\\index.ts:69:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Object.handler (C:\\Develop\\Projects\\HappyTG\\apps\\miniapp\\src\\index.ts:2013:24)\n    at async Server.<anonymous> (C:\\Develop\\Projects\\HappyTG\\packages\\shared\\src\\index.ts:948:7)"}}
+C:\Develop\Projects\HappyTG\apps\miniapp:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @happytg/miniapp@0.4.15 start: `tsx src/index.ts`
+Exit status 4294967295
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

@@ -1,0 +1,9 @@
+
+> @happytg/api@0.4.15 start C:\Develop\Projects\HappyTG\apps\api
+> tsx src/index.ts
+
+{"at":"2026-06-10T16:31:10.351Z","level":"INFO","scope":"api","message":"API listening","metadata":{"port":4001}}
+C:\Develop\Projects\HappyTG\apps\api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @happytg/api@0.4.15 start: `tsx src/index.ts`
+Exit status 4294967295
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

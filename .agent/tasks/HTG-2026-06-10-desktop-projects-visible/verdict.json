@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-06-10-desktop-projects-visible",
+  "verdict": "WARN",
+  "reason": "Desktop app-server task creation now projects newly-created threads into Codex Desktop sessions immediately, Mini App returns a direct desktop-session href, Desktop detail reads bounded app-server thread/read history when JSONL files are absent, newly-created detail opens from fast in-memory history, live local/public/browser smoke passed, and full typecheck/test/build/lint passed. Remaining warning is the non-blocking Codex CLI memory-retention startup warning reported by doctor/verify."
+}

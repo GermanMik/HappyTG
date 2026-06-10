@@ -1,0 +1,184 @@
+# Evidence
+
+Status: complete with validation warning.
+
+## Raw outputs
+
+- `raw/adapter-smoke-before.txt`
+- `raw/test-miniapp.txt`
+- `raw/typecheck-miniapp.txt`
+- `raw/adapter-smoke-after.txt`
+- `raw/miniapp-projects-smoke.txt`
+- `raw/typecheck-root.txt`
+- `raw/test-root.txt`
+- `raw/build-root.txt`
+- `raw/lint-root.txt`
+- `raw/diff-check.txt`
+- `raw/dev-miniapp-3002.out.txt`
+- `raw/dev-miniapp-3002.err.txt`
+- `raw/browser-auth-shell-snapshot.yml`
+- `raw/browser-auth-shell-console.log`
+- `raw/host-api-4001.log`
+- `raw/host-miniapp-3008.log`
+- `raw/test-runtime-adapters.txt`
+- `raw/typecheck-runtime-adapters.txt`
+- `raw/test-miniapp-after-appserver.txt`
+- `raw/typecheck-miniapp-after-appserver.txt`
+- `raw/public-projects-5083-quiet.html`
+- `raw/public-new-task-5083.html`
+- `raw/browser-public-5083-note.txt`
+- `raw/browser-public-projects-443-snapshot.yml`
+- `raw/browser-public-projects-443-console.log`
+- `raw/browser-public-new-task-443-snapshot.yml`
+- `raw/browser-public-new-task-443-console.log`
+- `raw/typecheck-root-final.txt`
+- `raw/test-root-final.txt`
+- `raw/build-root-final.txt`
+- `raw/lint-root-final.txt`
+- `raw/happytg-doctor-final.txt`
+- `raw/happytg-verify-final.txt`
+- `raw/diff-check-final.txt`
+- `raw/caddy-validate-final.txt`
+- `raw/diff-check-after-proof.txt`
+- `raw/test-runtime-adapters-hang-fix.txt`
+- `raw/test-miniapp-hang-fix.txt`
+- `raw/test-api-hang-fix.txt`
+- `raw/typecheck-runtime-adapters-hang-fix.txt`
+- `raw/typecheck-miniapp-hang-fix.txt`
+- `raw/typecheck-api-hang-fix.txt`
+- `raw/typecheck-root-hang-fix.txt`
+- `raw/test-root-hang-fix.txt`
+- `raw/build-root-hang-fix.txt`
+- `raw/lint-root-hang-fix.txt`
+- `raw/happytg-doctor-hang-fix.txt`
+- `raw/happytg-verify-hang-fix.txt`
+- `raw/diff-check-hang-fix.txt`
+- `raw/host-api-4001-hang-fix.log`
+- `raw/host-miniapp-3008-hang-fix.log`
+- `raw/latency-hang-fix-local.json`
+- `raw/latency-hang-fix-public.txt`
+- `raw/post-new-task-empty-prompt-hang-fix-error-propagation.json`
+- `raw/test-miniapp-hang-fix-error-propagation.txt`
+- `raw/typecheck-miniapp-hang-fix-error-propagation.txt`
+- `raw/host-miniapp-3008-hang-fix-error-propagation.log`
+- `raw/typecheck-root-hang-fix-final.txt`
+- `raw/test-root-hang-fix-final.txt`
+- `raw/build-root-hang-fix-final.txt`
+- `raw/lint-root-hang-fix-final.txt`
+- `raw/diff-check-hang-fix-final.txt`
+- `raw/test-miniapp-project-history.txt`
+- `raw/test-api-project-history.txt`
+- `raw/test-miniapp-project-history-direct.txt`
+- `raw/test-api-project-history-direct.txt`
+- `raw/typecheck-miniapp-project-history.txt`
+- `raw/typecheck-api-project-history.txt`
+- `raw/diff-check-project-history.txt`
+- `raw/diff-check-project-history-after-proof.txt`
+- `raw/live-new-desktop-task-smoke-final.json`
+- `raw/typecheck-final.txt`
+- `raw/test-final.txt`
+- `raw/build-final.txt`
+- `raw/lint-final.txt`
+- `raw/doctor-final.txt`
+- `raw/verify-final.txt`
+- `raw/diff-check-final-current.txt`
+- `raw/test-runtime-adapters-history-fix.txt`
+- `raw/typecheck-runtime-adapters-history-fix.txt`
+- `raw/test-miniapp-history-fix.txt`
+- `raw/typecheck-miniapp-history-fix.txt`
+- `raw/live-api-history-fast.stdout.txt`
+- `raw/live-api-history-fast.stderr.txt`
+- `raw/live-miniapp-history-fast.stdout.txt`
+- `raw/live-miniapp-history-fast.stderr.txt`
+- `raw/live-desktop-history-fast-new.json`
+- `raw/live-desktop-history-fast-list.json`
+- `raw/browser-history-fast-detail.json`
+- `raw/typecheck-history-fast-final.txt`
+- `raw/test-history-fast-final.txt`
+- `raw/build-history-fast-final.txt`
+- `raw/lint-history-fast-final.txt`
+- `raw/doctor-history-fast-final.txt`
+- `raw/verify-history-fast-final.txt`
+- `raw/diff-check-history-fast-final.txt`
+
+## Results
+
+- Baseline adapter smoke found 12 local Codex Desktop projects and 946 Desktop sessions.
+- `/projects` Mini App smoke returned HTTP 200 and rendered a Codex Desktop projects section from the real adapter.
+- Docker API could not see Codex Desktop state because the container has no Codex home mount and no `codex` binary on `PATH`; live public Mini App/API were switched through BaseDeploy Caddy to host-side API `127.0.0.1:4001` and Mini App `127.0.0.1:3008`.
+- Host-side API `/ready` returned ok using `apps/api/.happytg-dev/control-plane.json`.
+- Host-side API returned 12 Codex Desktop projects and Desktop session capabilities with `canCreateTask`, `canResume`, and `canStop` true when `HAPPYTG_CODEX_DESKTOP_CONTROL=app-server`.
+- Public `https://happytg.gerta.crazedns.ru:5083/miniapp/projects?...` returned HTTP 200 in 0.194s and rendered `Desktop projects` count `12`.
+- Public `https://happytg.gerta.crazedns.ru:5083/miniapp/new-task?...&source=codex-desktop` returned HTTP 200 in 3.582s and did not contain `New Desktop Task disabled` or `Stable Codex Desktop New Task contract is unavailable`.
+- Playwright in-app browser backend timed out on the forwarded `:5083` URL, but opened the same Mini App paths on standard `443`: Projects rendered 12 Desktop projects and New Task rendered the enabled Codex Desktop form with a `Создать Codex-сессию` button. Console logs contained only Telegram WebApp SDK `postEvent` entries.
+- `pnpm --filter @happytg/miniapp test` passed: 18/18.
+- `pnpm --filter @happytg/miniapp typecheck` passed.
+- `pnpm --filter @happytg/runtime-adapters test` passed: 24/24, including explicit `app-server` default adapter coverage.
+- `pnpm --filter @happytg/runtime-adapters typecheck` passed.
+- `pnpm typecheck` passed across 15 packages.
+- `pnpm test` passed across 15 packages.
+- `pnpm build` passed across 15 packages.
+- `pnpm lint` passed across 15 packages.
+- `pnpm happytg doctor` exited 0 with one non-blocking Codex CLI smoke warning; Caddy `/miniapp` check returned HTTP 200 and HappyTG Mini App identity.
+- `pnpm happytg verify` exited 0 with the same non-blocking Codex CLI smoke warning.
+- `git diff --check` exited 0; it reported only CRLF/LF normalization warnings for touched TS files.
+- `caddy_windows_amd64.exe validate --config C:\Develop\Projects\BaseDeploy\caddy\Caddyfile --adapter caddyfile` exited 0 with `Valid configuration`; it reported only a non-blocking formatting warning.
+- Final `git diff --check` after proof updates also exited 0 with the same CRLF/LF normalization warnings only.
+- HappyTG Mini App started on `http://127.0.0.1:3002`; `/ready` returned ok.
+- In-app Browser opened `http://127.0.0.1:3002/`; auth-pending shell rendered as expected outside Telegram, with only Telegram WebApp SDK log entries in console.
+- Hang fix root cause: `GET /new-task?source=codex-desktop` fetched the full Desktop sessions projection only to decide if Desktop task creation was enabled. The full sessions projection took about 3035 ms and returned about 330 KB before the fix.
+- Added lightweight Codex Desktop control projection and changed New Task form to fetch `/api/v1/codex-desktop/control` instead of full sessions.
+- Added bounded Desktop sessions list projection; Mini App list screens request `/api/v1/codex-desktop/sessions?limit=50`.
+- Post-fix local timing: `/new-task?source=codex-desktop` returned HTTP 200 in 145 ms; `/api/v1/codex-desktop/control` returned in 45 ms.
+- Post-fix local timing: `/codex?source=codex-desktop` returned HTTP 200 in 967 ms and 57 KB; bounded sessions endpoint returned 50-session payload in 858 ms and 16 KB.
+- Post-fix public timing through `https://happytg.gerta.crazedns.ru:5083`: Projects returned HTTP 200 in 0.146s, New Task returned HTTP 200 in 0.222s.
+- New Task POST no longer blocks on Desktop session loading before API validation. Empty Desktop prompt validation returned HTTP 400 in 30 ms after error propagation fix, instead of a generic Mini App 500.
+- Fresh host-side API/Mini App processes were restarted on `4001/3008` and logs were captured.
+- `pnpm --filter @happytg/runtime-adapters test` passed: 25/25.
+- `pnpm --filter @happytg/api test` passed: 25/25.
+- `pnpm --filter @happytg/miniapp test` passed: 18/18.
+- `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm lint` passed across all 15 packages after the hang fix.
+- After the New Task error propagation fix, final `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm lint` passed across all 15 packages.
+- `pnpm happytg doctor` and `pnpm happytg verify` exited 0 with the same non-blocking Codex CLI memory-retention warning; Caddy `/miniapp` checks passed.
+- `git diff --check` exited 0 with CRLF/LF normalization warnings only.
+- Final `git diff --check` after error propagation changes exited 0 with CRLF/LF normalization warnings only.
+
+- Added explicit `Прошедшие задачи` project-scoped actions for CLI project cards, Desktop project cards, the CLI project detail page, and the Desktop project list in the Codex panel.
+- CLI Mini App session cards now include `projectPath`, so `/codex?source=codex-cli&project=<path>` can filter by the same project path used by project cards.
+- Added Mini App tests covering the visible `Прошедшие задачи` label, CLI/Desktop project-scoped hrefs, and CLI project-path filtering; added API test coverage for `projectPath` in `listMiniAppSessions`.
+- Standalone `pnpm` was not available in the current PowerShell `PATH`; `corepack pnpm --version` returned `10.0.0`, so validation was run through `corepack pnpm`.
+- `corepack pnpm --filter @happytg/miniapp test` and `corepack pnpm --filter @happytg/api test` did not reach assertions in this sandbox: Node test runner failed immediately with `spawn EPERM`.
+- Direct `corepack pnpm exec tsx ...` test execution was also blocked before assertions because `tsx`/`esbuild` could not spawn the esbuild service binary (`spawn EPERM`).
+- `corepack pnpm --filter @happytg/miniapp typecheck` passed.
+- `corepack pnpm --filter @happytg/api typecheck` passed.
+- `git diff --check` exited 0 with CRLF/LF normalization warnings only.
+- Final `git diff --check` after project-history proof updates exited 0 with CRLF/LF normalization warnings only.
+- Added app-server `thread/list` merging to the Codex Desktop session projection, so newly-started app-server threads are not dependent on `session_index.jsonl` visibility.
+- Added an in-memory recent Desktop control-session projection after `createTask`, and a fast detail path for those newly-created sessions when JSONL history is not available yet.
+- Mini App Desktop New Task POST now returns direct `/codex/desktop-session?id=<threadId>` hrefs instead of falling back to the generic `/codex?source=codex-desktop` list.
+- Live Desktop New Task smoke created thread `019eb260-4369-7f23-b129-b63ca824ca37`; `/api/v1/codex-desktop/sessions?limit=20` contained the thread, API detail returned in 158 ms with title `HappyTG smoke Desktop task 3`, local Mini App detail returned HTTP 200 in 71 ms, and public `:5083/miniapp/codex/desktop-session` returned HTTP 200 in 0.110s.
+- Final `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm lint` passed across all 15 packages.
+- Final `pnpm happytg doctor` and `pnpm happytg verify` exited 0 with the same non-blocking Codex CLI memory-retention warning; Caddy `/miniapp` checks passed.
+- Final `git diff --check` exited 0 with CRLF/LF normalization warnings only.
+- Added Codex app-server `thread/read` detail support with `includeTurns: true`, so Desktop detail can render bounded app-server turn/item history when JSONL history files are absent.
+- Mini App Desktop detail no longer renders the raw `CODEX_DESKTOP_HISTORY_UNAVAILABLE` notice for supported empty history; it shows a neutral `История пока пуста` empty state only when the adapter returns no unsupported reason.
+- Newly-created Desktop task detail now fast-returns the in-memory `createTask` history projection before attempting slow app-server `thread/read`.
+- Targeted history fix validation passed: `pnpm --filter @happytg/runtime-adapters test` 25/25, `pnpm --filter @happytg/runtime-adapters typecheck`, `pnpm --filter @happytg/miniapp test` 18/18, and `pnpm --filter @happytg/miniapp typecheck`.
+- Fresh host-side API/Mini App processes were restarted on `4001/3008`; API and Mini App logs were captured in `raw/live-api-history-fast.*` and `raw/live-miniapp-history-fast.*`.
+- Live Desktop history smoke created thread `019eb277-256e-7612-96e0-d068ddad3ad1` from Mini App POST. Create returned in 2832 ms with direct `/codex/desktop-session?id=019eb277-256e-7612-96e0-d068ddad3ad1`; immediate API detail returned in 67 ms with two history entries and no `historyUnsupportedReasonCode`; local Mini App detail returned HTTP 200 in 84 ms without `CODEX_DESKTOP_HISTORY_UNAVAILABLE` or `History недоступна`; public `:5083/miniapp` detail returned HTTP 200 in 1230 ms without those markers.
+- Existing app-server thread `019eb260-4369-7f23-b129-b63ca824ca37` returned API detail in 5114 ms with two history entries and no `historyUnsupportedReasonCode`, confirming old Desktop tasks no longer depend only on local JSONL files.
+- Desktop sessions list projection returned the new thread in `/api/v1/codex-desktop/sessions?limit=20` in 858 ms; Mini App `/codex?source=codex-desktop` rendered the new session/title in 1306 ms without the history unavailable marker.
+- In-app Browser opened the local Mini App detail page for `019eb277-256e-7612-96e0-d068ddad3ad1`; the page showed `History` and the smoke prompt, did not show `CODEX_DESKTOP_HISTORY_UNAVAILABLE`, `History недоступна`, or `История пока пуста`, and reported no warning/error console logs.
+- Final history-fix `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm lint` passed across all 15 packages.
+- Final history-fix `pnpm happytg doctor` and `pnpm happytg verify` exited 0 with the same non-blocking Codex CLI memory-retention warning; Caddy `/miniapp` checks passed.
+- Final history-fix `git diff --check` exited 0 with CRLF/LF normalization warnings only.
+
+## Notes
+
+- Spec frozen before implementation.
+- Scope was amended after the live New Task disabled state was reproduced.
+- The code change enables only the existing explicit `HAPPYTG_CODEX_DESKTOP_CONTROL=app-server` path; unknown experimental modes remain unsupported.
+- Generic public `/api/*` stays blocked by Caddy; Mini App server-side routes reach the host API instead of exposing broad Codex Desktop APIs publicly.
+- The live host-side API/Mini App processes are background PowerShell processes on `4001/3008`; make them a durable service/launcher before relying on this route after reboot.
+- The local/browser-network difference on forwarded `:5083` should be treated as a routing/hairpin diagnostic, not as a Mini App render failure: `curl.exe` and `pnpm happytg verify` confirmed `:5083/miniapp` health, while browser backend worked through `443`.
+- Viewing the full historical Desktop session list is still intentionally bounded on Mini App list screens. Use a detail route or add explicit pagination/search before exposing more than the recent bounded list.

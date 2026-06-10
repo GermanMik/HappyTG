@@ -1,0 +1,40 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - link "HappyTG" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - strong [ref=e5]: HappyTG
+      - generic [ref=e6]: Mini App
+    - generic [ref=e7]:
+      - paragraph [ref=e8]: Подключение
+      - heading "Открываем HappyTG" [level=1] [ref=e9]
+      - paragraph [ref=e10]: Mini App session проверяется через Telegram.
+      - generic [ref=e11]: Ждем initData от Telegram. Если экран открыт вне Telegram, подключение не завершится.
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - strong [ref=e14]: Telegram
+          - generic [ref=e15]: Получить initData
+        - generic [ref=e16]:
+          - strong [ref=e17]: Session
+          - generic [ref=e18]: Выдать короткий токен
+        - generic [ref=e19]:
+          - strong [ref=e20]: Экран
+          - generic [ref=e21]: Открыть нужный раздел
+      - generic [ref=e22]:
+        - button "Повторить подключение" [ref=e23]
+        - button "Обновить экран" [ref=e24]
+  - navigation "Основная навигация" [ref=e25]:
+    - link "Главная" [ref=e26] [cursor=pointer]:
+      - /url: /
+    - link "Codex" [ref=e27] [cursor=pointer]:
+      - /url: /codex
+    - link "Сессии" [ref=e28] [cursor=pointer]:
+      - /url: /sessions
+    - link "Проекты" [ref=e29] [cursor=pointer]:
+      - /url: /projects
+    - link "Решения" [ref=e30] [cursor=pointer]:
+      - /url: /approvals
+    - link "Хосты" [ref=e31] [cursor=pointer]:
+      - /url: /hosts
+    - link "Отчеты" [ref=e32] [cursor=pointer]:
+      - /url: /reports

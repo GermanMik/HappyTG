@@ -1,0 +1,2 @@
+https://happytg.gerta.crazedns.ru:5083/miniapp/projects?userId=<local-user-id> HTTP_CODE:200 TIME_TOTAL:0.146616 SIZE:37527
+https://happytg.gerta.crazedns.ru:5083/miniapp/new-task?userId=<local-user-id>&source=codex-desktop HTTP_CODE:200 TIME_TOTAL:0.222563 SIZE:34295

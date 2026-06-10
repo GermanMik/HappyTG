@@ -6,6 +6,7 @@ import path from "node:path";
 
 import type {
   CodexDesktopControlResult,
+  CodexDesktopControlStatus,
   CodexDesktopHistoryEntry,
   CodexDesktopProject,
   CodexDesktopSession,
@@ -79,6 +80,8 @@ export interface CodexDesktopControlContract {
   unsupportedReason?: string;
   unsupportedReasonCode?: string;
   capabilities?(): Promise<CodexDesktopControlCapabilities>;
+  listSessions?(options?: { limit?: number }): Promise<CodexDesktopSession[]>;
+  getSessionDetail?(session: CodexDesktopSession, options?: { maxRecords?: number }): Promise<CodexDesktopSessionDetail>;
   resumeSession?(session: CodexDesktopSession): Promise<CodexDesktopControlResult>;
   stopSession?(session: CodexDesktopSession): Promise<CodexDesktopControlResult>;
   createTask?(input: CreateCodexDesktopTaskRequest): Promise<CodexDesktopControlResult>;
@@ -125,6 +128,11 @@ interface AppServerThreadStatus {
 interface AppServerTurn {
   id: string;
   status: "completed" | "interrupted" | "failed" | "inProgress";
+  items?: Record<string, unknown>[];
+  startedAt?: number | null;
+  completedAt?: number | null;
+  durationMs?: number | null;
+  error?: unknown;
 }
 
 interface AppServerThread {
@@ -457,7 +465,36 @@ function nestedIso(record: Record<string, unknown>, key: string): string | undef
 
 function historyRole(record: Record<string, unknown>): CodexDesktopHistoryEntry["role"] | undefined {
   const role = nestedString(record, "role")?.toLowerCase();
-  return role === "user" || role === "assistant" || role === "system" || role === "tool" ? role : undefined;
+  if (role === "user" || role === "assistant" || role === "system" || role === "tool") {
+    return role;
+  }
+
+  const raw = [
+    nestedString(record, "type"),
+    nestedString(record, "kind"),
+    nestedString(record, "event")
+  ].filter(Boolean).join(" ").toLowerCase();
+
+  if (raw.includes("usermessage") || raw.includes("user_message") || raw.includes("user message")) {
+    return "user";
+  }
+  if (
+    raw.includes("agentmessage")
+    || raw.includes("agent_message")
+    || raw.includes("assistantmessage")
+    || raw.includes("assistant_message")
+    || raw.includes("assistant message")
+  ) {
+    return "assistant";
+  }
+  if (raw.includes("systemmessage") || raw.includes("system_message") || raw.includes("system message")) {
+    return "system";
+  }
+  if (raw.includes("toolmessage") || raw.includes("tool_message") || raw.includes("tool message")) {
+    return "tool";
+  }
+
+  return undefined;
 }
 
 function historyKind(record: Record<string, unknown>, role?: CodexDesktopHistoryEntry["role"]): CodexDesktopHistoryEntry["kind"] {
@@ -586,6 +623,63 @@ function appServerThreadStatus(thread: AppServerThread, fallback?: CodexDesktopS
     return "unknown";
   }
   return fallback === "archived" ? "archived" : "recent";
+}
+
+function appServerUnixSecondsToIso(value: unknown, fallback: string): string {
+  return typeof value === "number" && Number.isFinite(value)
+    ? new Date(value * 1000).toISOString()
+    : fallback;
+}
+
+function appServerTurnOccurredAt(turn: AppServerTurn, fallback: string): string {
+  return appServerUnixSecondsToIso(turn.completedAt ?? turn.startedAt, fallback);
+}
+
+function appServerHistoryFromThread(input: {
+  thread: AppServerThread;
+  fallbackOccurredAt: string;
+  maxRecords: number;
+}): { history: CodexDesktopHistoryEntry[]; historyTruncated: boolean } {
+  const history: CodexDesktopHistoryEntry[] = [];
+  let historyTruncated = false;
+
+  for (const turn of input.thread.turns ?? []) {
+    if (history.length >= input.maxRecords) {
+      historyTruncated = true;
+      break;
+    }
+
+    const occurredAt = appServerTurnOccurredAt(turn, input.fallbackOccurredAt);
+    const items = Array.isArray(turn.items) ? turn.items : [];
+    if (items.length === 0) {
+      history.push({
+        id: `cdh_${createHash("sha256").update(`app-server:${input.thread.id}:${turn.id}:turn`).digest("hex").slice(0, 16)}`,
+        sequence: history.length + 1,
+        occurredAt,
+        kind: "turn",
+        title: "turn",
+        summary: `Codex Desktop turn ${turn.status}.`,
+        source: "codex-desktop"
+      });
+      continue;
+    }
+
+    for (const item of items) {
+      if (history.length >= input.maxRecords) {
+        historyTruncated = true;
+        break;
+      }
+
+      history.push(historyEntryFromRecord({
+        filePath: `app-server:${input.thread.id}:${turn.id}`,
+        record: item,
+        sequence: history.length + 1,
+        fallbackOccurredAt: occurredAt
+      }));
+    }
+  }
+
+  return { history, historyTruncated };
 }
 
 class CodexAppServerJsonRpcClient {
@@ -903,6 +997,34 @@ export function createCodexDesktopAppServerControlContract(options: {
         };
       }
     },
+    async listSessions(options = {}) {
+      const response = await client.request<AppServerThreadListResponse>("thread/list", {
+        limit: Number.isInteger(options.limit) && options.limit && options.limit > 0 ? options.limit : 50,
+        sourceKinds: [],
+        useStateDbOnly: true
+      });
+      return response.data.map((thread) => toSession(thread));
+    },
+    async getSessionDetail(session, options = {}) {
+      const response = await client.request<AppServerThreadResponse>("thread/read", {
+        threadId: session.id,
+        includeTurns: true
+      });
+      const resolvedSession = toSession(response.thread, session);
+      const maxRecords = Number.isInteger(options.maxRecords) && options.maxRecords && options.maxRecords > 0
+        ? options.maxRecords
+        : DEFAULT_HISTORY_MAX_RECORDS;
+      const { history, historyTruncated } = appServerHistoryFromThread({
+        thread: response.thread,
+        fallbackOccurredAt: resolvedSession.updatedAt,
+        maxRecords
+      });
+      return {
+        session: resolvedSession,
+        history,
+        historyTruncated
+      };
+    },
     async resumeSession(session) {
       const response = await client.request<AppServerThreadResponse>("thread/resume", {
         threadId: session.id,
@@ -989,11 +1111,17 @@ export function createCodexDesktopAppServerControlContract(options: {
 
 function defaultControlContract(options: CodexDesktopStateAdapterOptions, codexHome: string): CodexDesktopControlContract {
   const env = options.env ?? process.env;
-  const mode = env.HAPPYTG_CODEX_DESKTOP_CONTROL;
+  const mode = env.HAPPYTG_CODEX_DESKTOP_CONTROL?.trim().toLowerCase();
+  if (mode === "app-server") {
+    return createCodexDesktopAppServerControlContract({
+      env,
+      codexHome
+    });
+  }
+
   const reason = mode && mode !== "off" && mode !== "unsupported" && mode !== "false"
     ? `${DEFAULT_UNSUPPORTED_REASON} ${APP_SERVER_EXPERIMENTAL_REASON}`
     : DEFAULT_UNSUPPORTED_REASON;
-  void codexHome;
   return {
     unsupportedReason: reason,
     unsupportedReasonCode: CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE
@@ -1005,6 +1133,8 @@ export class CodexDesktopStateAdapter {
   private readonly maxSessionFiles: number;
   private readonly maxHistoryRecords: number;
   private readonly controlContract: CodexDesktopControlContract;
+  private readonly recentControlSessions = new Map<string, CodexDesktopSession>();
+  private readonly recentControlHistory = new Map<string, CodexDesktopHistoryEntry[]>();
 
   constructor(private readonly options: CodexDesktopStateAdapterOptions = {}) {
     this.env = options.env ?? process.env;
@@ -1094,8 +1224,98 @@ export class CodexDesktopStateAdapter {
       }));
   }
 
-  async listSessions(): Promise<CodexDesktopSession[]> {
+  async controlStatus(options: { validateAvailability?: boolean } = {}): Promise<CodexDesktopControlStatus> {
+    const capabilities = options.validateAvailability === false
+      ? {
+          supportsResume: Boolean(this.controlContract.supportsResume && this.controlContract.resumeSession),
+          supportsStop: Boolean(this.controlContract.supportsStop && this.controlContract.stopSession),
+          supportsNewTask: Boolean(this.controlContract.supportsNewTask && this.controlContract.createTask),
+          unsupportedReason: this.unsupportedReason(),
+          unsupportedReasonCode: this.unsupportedReasonCode()
+        }
+      : await this.controlCapabilities();
+    const canResume = Boolean(capabilities.supportsResume && this.controlContract.resumeSession);
+    const canStop = Boolean(capabilities.supportsStop && this.controlContract.stopSession);
+    const canCreateTask = Boolean(capabilities.supportsNewTask && this.controlContract.createTask);
+    const unsupportedReason = canResume && canStop && canCreateTask
+      ? undefined
+      : capabilities.unsupportedReason ?? this.unsupportedReason();
+
+    return {
+      canResume,
+      canStop,
+      canCreateTask,
+      ...(unsupportedReason ? {
+        unsupportedReason,
+        unsupportedReasonCode: capabilities.unsupportedReasonCode ?? this.unsupportedReasonCode()
+      } : {})
+    };
+  }
+
+  private rememberControlSession(session: CodexDesktopSession): void {
+    this.recentControlSessions.set(session.id, session);
+    if (this.recentControlSessions.size <= 100) {
+      return;
+    }
+
+    const oldest = this.recentControlSessions.keys().next().value as string | undefined;
+    if (oldest) {
+      this.recentControlSessions.delete(oldest);
+    }
+  }
+
+  private sessionFromCreatedTask(input: CreateCodexDesktopTaskRequest, result: CodexDesktopControlResult): CodexDesktopSession | undefined {
+    const id = result.session?.id ?? result.task?.id;
+    if (!id) {
+      return undefined;
+    }
+
+    return {
+      id,
+      title: sanitizeTitle(result.task?.title ?? input.title ?? result.session?.title ?? input.prompt, `Codex Desktop ${id.slice(0, 8)}`),
+      projectPath: result.session?.projectPath ?? result.task?.projectPath ?? input.projectPath,
+      projectId: result.session?.projectId ?? result.task?.projectId ?? input.projectId,
+      updatedAt: result.session?.updatedAt ?? new Date().toISOString(),
+      status: result.session?.status ?? (result.task?.status === "running" ? "active" : "recent"),
+      source: "codex-desktop",
+      canResume: result.session?.canResume ?? true,
+      canStop: result.session?.canStop ?? true,
+      canCreateTask: result.session?.canCreateTask ?? true,
+      unsupportedReason: result.session?.unsupportedReason,
+      unsupportedReasonCode: result.session?.unsupportedReasonCode
+    };
+  }
+
+  private historyFromCreatedTask(input: CreateCodexDesktopTaskRequest, result: CodexDesktopControlResult, session: CodexDesktopSession): CodexDesktopHistoryEntry[] {
+    const taskStatus = result.task?.status ?? "created";
+    return [
+      {
+        id: `cdh_${createHash("sha256").update(`created:${session.id}:prompt`).digest("hex").slice(0, 16)}`,
+        sequence: 1,
+        occurredAt: session.updatedAt,
+        kind: "message",
+        role: "user",
+        title: "user message",
+        summary: redactHistoryText(input.prompt),
+        source: "codex-desktop"
+      },
+      {
+        id: `cdh_${createHash("sha256").update(`created:${session.id}:task`).digest("hex").slice(0, 16)}`,
+        sequence: 2,
+        occurredAt: session.updatedAt,
+        kind: "turn",
+        title: "turn",
+        summary: `Codex Desktop task ${taskStatus}.`,
+        source: "codex-desktop"
+      }
+    ];
+  }
+
+  async listSessions(options: { limit?: number } = {}): Promise<CodexDesktopSession[]> {
     const codexHome = this.codexHome();
+    const maxSessionFiles = Number.isInteger(options.limit) && options.limit && options.limit > 0
+      ? Math.min(options.limit, this.maxSessionFiles)
+      : this.maxSessionFiles;
     const projects = await this.listProjects();
     const projectByPath = new Map(projects.map((project) => [normalizePathKey(project.path).toLowerCase(), project]));
     const globalState = await readJsonObject(path.join(codexHome, ".codex-global-state.json"));
@@ -1138,14 +1358,14 @@ export class CodexDesktopStateAdapter {
       });
     }
 
-    for (const filePath of await collectJsonlFiles(path.join(codexHome, "sessions"), this.maxSessionFiles)) {
+    for (const filePath of await collectJsonlFiles(path.join(codexHome, "sessions"), maxSessionFiles)) {
       const metadata = metadataFromSessionRecords(filePath, await readJsonl(filePath, 40), false);
       if (metadata) {
         putDraft(metadata);
       }
     }
 
-    for (const filePath of await collectJsonlFiles(path.join(codexHome, "archived_sessions"), this.maxSessionFiles)) {
+    for (const filePath of await collectJsonlFiles(path.join(codexHome, "archived_sessions"), maxSessionFiles)) {
       const metadata = metadataFromSessionRecords(filePath, await readJsonl(filePath, 40), true);
       if (metadata) {
         putDraft(metadata);
@@ -1153,30 +1373,81 @@ export class CodexDesktopStateAdapter {
     }
 
     const capabilities = await this.controlCapabilities();
+    const sessionsById = new Map<string, CodexDesktopSession>();
+    const projectSession = (session: Omit<CodexDesktopSession, "canResume" | "canStop" | "canCreateTask" | "unsupportedReason" | "unsupportedReasonCode">): CodexDesktopSession => {
+      const normalizedProjectPath = session.projectPath ? normalizePathKey(session.projectPath) : undefined;
+      const project = normalizedProjectPath ? projectByPath.get(normalizedProjectPath.toLowerCase()) : undefined;
+      return this.decorateSession({
+        ...session,
+        projectPath: normalizedProjectPath,
+        projectId: session.projectId ?? project?.id
+      }, capabilities);
+    };
 
-    return [...drafts.values()]
-      .map((draft) => {
-        const normalizedProjectPath = draft.projectPath ? normalizePathKey(draft.projectPath) : undefined;
-        const project = normalizedProjectPath ? projectByPath.get(normalizedProjectPath.toLowerCase()) : undefined;
+    for (const draft of drafts.values()) {
         const status: CodexDesktopSession["status"] = draft.archived
           ? "archived"
           : draft.unknown
             ? "unknown"
             : "recent";
-        return this.decorateSession({
+        const session = projectSession({
           id: draft.id,
           title: sanitizeTitle(draft.title, `Codex Desktop ${draft.id.slice(0, 8)}`),
-          projectPath: normalizedProjectPath,
-          projectId: project?.id,
+          projectPath: draft.projectPath,
           updatedAt: draft.updatedAt ?? new Date(0).toISOString(),
           status,
           source: "codex-desktop"
-        }, capabilities);
-      })
-      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+        });
+        sessionsById.set(session.id, session);
+    }
+
+    for (const session of this.recentControlSessions.values()) {
+      sessionsById.set(session.id, projectSession({
+        id: session.id,
+        title: session.title,
+        projectPath: session.projectPath,
+        projectId: session.projectId,
+        updatedAt: session.updatedAt,
+        status: session.status,
+        source: "codex-desktop"
+      }));
+    }
+
+    if (this.controlContract.listSessions && (capabilities.supportsResume || capabilities.supportsStop || capabilities.supportsNewTask)) {
+      try {
+        const appServerSessions = await this.controlContract.listSessions({ limit: maxSessionFiles });
+        for (const session of appServerSessions) {
+          sessionsById.set(session.id, projectSession({
+            id: session.id,
+            title: session.title,
+            projectPath: session.projectPath,
+            projectId: session.projectId,
+            updatedAt: session.updatedAt,
+            status: session.status,
+            source: "codex-desktop"
+          }));
+        }
+      } catch {
+        // File-backed projections remain useful even when app-server listing is temporarily unavailable.
+      }
+    }
+
+    return [...sessionsById.values()]
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+      .slice(0, options.limit);
   }
 
   async getSession(sessionId: string): Promise<CodexDesktopSession | undefined> {
+    const cached = this.recentControlSessions.get(sessionId);
+    if (cached) {
+      return cached;
+    }
+
+    const recent = (await this.listSessions({ limit: 50 })).find((session) => session.id === sessionId);
+    if (recent || this.maxSessionFiles <= 50) {
+      return recent;
+    }
+
     return (await this.listSessions()).find((session) => session.id === sessionId);
   }
 
@@ -1207,10 +1478,19 @@ export class CodexDesktopStateAdapter {
       return undefined;
     }
 
-    const files = await this.sessionJsonlFiles(sessionId);
     const maxRecords = Number.isInteger(this.maxHistoryRecords) && this.maxHistoryRecords > 0
       ? this.maxHistoryRecords
       : DEFAULT_HISTORY_MAX_RECORDS;
+    const recentHistory = this.recentControlHistory.get(sessionId);
+    if (recentHistory) {
+      return {
+        session,
+        history: recentHistory.slice(0, maxRecords),
+        historyTruncated: recentHistory.length > maxRecords
+      };
+    }
+
+    const files = this.recentControlSessions.has(sessionId) ? [] : await this.sessionJsonlFiles(sessionId);
     const history: CodexDesktopHistoryEntry[] = [];
     let historyTruncated = false;
 
@@ -1230,6 +1510,21 @@ export class CodexDesktopStateAdapter {
           sequence: history.length + 1,
           fallbackOccurredAt: session.updatedAt
         }));
+      }
+    }
+
+    if (this.controlContract.getSessionDetail) {
+      try {
+        const appServerDetail = await this.controlContract.getSessionDetail(session, { maxRecords });
+        if (appServerDetail.history.length > 0 || files.length === 0) {
+          return {
+            session: appServerDetail.session,
+            history: appServerDetail.history,
+            historyTruncated: appServerDetail.historyTruncated
+          };
+        }
+      } catch {
+        // JSONL and recent in-memory projections remain usable when app-server history is unavailable.
       }
     }
 
@@ -1273,7 +1568,18 @@ export class CodexDesktopStateAdapter {
       throw new Error(this.unsupportedReason());
     }
 
-    return this.controlContract.createTask(input);
+    const result = await this.controlContract.createTask(input);
+    const session = this.sessionFromCreatedTask(input, result);
+    if (!session) {
+      return result;
+    }
+
+    this.rememberControlSession(session);
+    this.recentControlHistory.set(session.id, this.historyFromCreatedTask(input, result, session));
+    return {
+      ...result,
+      session
+    };
   }
 
   dispose(): void {

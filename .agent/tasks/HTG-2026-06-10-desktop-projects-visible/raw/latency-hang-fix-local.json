@@ -1,0 +1,38 @@
+[
+  {
+    "url": "http://127.0.0.1:3008/projects?userId=<local-user-id>",
+    "status": 200,
+    "ms": 208,
+    "bytes": 37285
+  },
+  {
+    "url": "http://127.0.0.1:3008/new-task?userId=<local-user-id>&source=codex-desktop",
+    "status": 200,
+    "ms": 145,
+    "bytes": 34253
+  },
+  {
+    "url": "http://127.0.0.1:3008/codex?userId=<local-user-id>&source=codex-desktop",
+    "status": 200,
+    "ms": 967,
+    "bytes": 57530
+  },
+  {
+    "url": "http://127.0.0.1:4001/api/v1/codex-desktop/control?userId=<local-user-id>",
+    "status": 200,
+    "ms": 45,
+    "bytes": 93
+  },
+  {
+    "url": "http://127.0.0.1:4001/api/v1/codex-desktop/projects?userId=<local-user-id>",
+    "status": 200,
+    "ms": 56,
+    "bytes": 2192
+  },
+  {
+    "url": "http://127.0.0.1:4001/api/v1/codex-desktop/sessions?limit=50&userId=<local-user-id>",
+    "status": 200,
+    "ms": 858,
+    "bytes": 16510
+  }
+]

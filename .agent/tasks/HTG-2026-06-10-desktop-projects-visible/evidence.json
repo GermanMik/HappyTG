@@ -1,0 +1,427 @@
+{
+  "taskId": "HTG-2026-06-10-desktop-projects-visible",
+  "status": "complete",
+  "checks": [
+    {
+      "name": "adapter-smoke-before",
+      "status": "pass",
+      "raw": "raw/adapter-smoke-before.txt"
+    },
+    {
+      "name": "miniapp-projects-smoke",
+      "status": "pass",
+      "raw": "raw/miniapp-projects-smoke.txt"
+    },
+    {
+      "name": "miniapp-test",
+      "status": "pass",
+      "raw": "raw/test-miniapp.txt"
+    },
+    {
+      "name": "miniapp-typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck-miniapp.txt"
+    },
+    {
+      "name": "browser-auth-shell-smoke",
+      "status": "pass",
+      "raw": "raw/browser-auth-shell-snapshot.yml",
+      "note": "In-app Browser loaded http://127.0.0.1:3002/ and rendered the expected Telegram auth-pending shell."
+    },
+    {
+      "name": "adapter-smoke-after",
+      "status": "pass",
+      "raw": "raw/adapter-smoke-after.txt"
+    },
+    {
+      "name": "runtime-adapters-test",
+      "status": "pass",
+      "raw": "raw/test-runtime-adapters.txt",
+      "note": "24/24, including explicit HAPPYTG_CODEX_DESKTOP_CONTROL=app-server coverage."
+    },
+    {
+      "name": "runtime-adapters-typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck-runtime-adapters.txt"
+    },
+    {
+      "name": "miniapp-test-after-appserver",
+      "status": "pass",
+      "raw": "raw/test-miniapp-after-appserver.txt",
+      "note": "18/18."
+    },
+    {
+      "name": "miniapp-typecheck-after-appserver",
+      "status": "pass",
+      "raw": "raw/typecheck-miniapp-after-appserver.txt"
+    },
+    {
+      "name": "public-projects-5083",
+      "status": "pass",
+      "raw": "raw/public-projects-5083-quiet.html",
+      "note": "HTTP 200, rendered Desktop projects count 12."
+    },
+    {
+      "name": "public-new-task-5083",
+      "status": "pass",
+      "raw": "raw/public-new-task-5083.html",
+      "note": "HTTP 200, no disabled Desktop task contract message."
+    },
+    {
+      "name": "browser-public-5083",
+      "status": "warn",
+      "raw": "raw/browser-public-5083-note.txt",
+      "note": "Playwright backend timed out on forwarded :5083, while curl.exe :5083 passed."
+    },
+    {
+      "name": "browser-public-projects-443",
+      "status": "pass",
+      "raw": "raw/browser-public-projects-443-snapshot.yml",
+      "note": "Rendered Projects page with 12 Desktop projects."
+    },
+    {
+      "name": "browser-public-new-task-443",
+      "status": "pass",
+      "raw": "raw/browser-public-new-task-443-snapshot.yml",
+      "note": "Rendered enabled Codex Desktop New Task form."
+    },
+    {
+      "name": "root-typecheck-final",
+      "status": "pass",
+      "raw": "raw/typecheck-root-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-test-final",
+      "status": "pass",
+      "raw": "raw/test-root-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-build-final",
+      "status": "pass",
+      "raw": "raw/build-root-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-lint-final",
+      "status": "pass",
+      "raw": "raw/lint-root-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "happytg-doctor-final",
+      "status": "warn",
+      "raw": "raw/happytg-doctor-final.txt",
+      "note": "Exit 0; one Codex CLI smoke warning, Caddy /miniapp check passed."
+    },
+    {
+      "name": "happytg-verify-final",
+      "status": "warn",
+      "raw": "raw/happytg-verify-final.txt",
+      "note": "Exit 0; same Codex CLI smoke warning, Caddy /miniapp check passed."
+    },
+    {
+      "name": "diff-check-final",
+      "status": "pass",
+      "raw": "raw/diff-check-final.txt",
+      "note": "Exit 0 with CRLF/LF normalization warnings only."
+    },
+    {
+      "name": "caddy-validate-final",
+      "status": "warn",
+      "raw": "raw/caddy-validate-final.txt",
+      "note": "Exit 0 Valid configuration with a non-blocking caddy fmt warning."
+    },
+    {
+      "name": "diff-check-after-proof",
+      "status": "pass",
+      "raw": "raw/diff-check-after-proof.txt",
+      "note": "Exit 0 with CRLF/LF normalization warnings only."
+    },
+    {
+      "name": "runtime-adapters-test-hang-fix",
+      "status": "pass",
+      "raw": "raw/test-runtime-adapters-hang-fix.txt",
+      "note": "25/25, including bounded session projection and fast control status coverage."
+    },
+    {
+      "name": "api-test-hang-fix",
+      "status": "pass",
+      "raw": "raw/test-api-hang-fix.txt",
+      "note": "25/25, including /api/v1/codex-desktop/control and sessions limit coverage."
+    },
+    {
+      "name": "miniapp-test-hang-fix",
+      "status": "pass",
+      "raw": "raw/test-miniapp-hang-fix.txt",
+      "note": "18/18."
+    },
+    {
+      "name": "root-typecheck-hang-fix",
+      "status": "pass",
+      "raw": "raw/typecheck-root-hang-fix.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-test-hang-fix",
+      "status": "pass",
+      "raw": "raw/test-root-hang-fix.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-build-hang-fix",
+      "status": "pass",
+      "raw": "raw/build-root-hang-fix.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-lint-hang-fix",
+      "status": "pass",
+      "raw": "raw/lint-root-hang-fix.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "latency-hang-fix-local",
+      "status": "pass",
+      "raw": "raw/latency-hang-fix-local.json",
+      "note": "Desktop New Task GET 145 ms; Codex list 967 ms; control endpoint 45 ms."
+    },
+    {
+      "name": "latency-hang-fix-public",
+      "status": "pass",
+      "raw": "raw/latency-hang-fix-public.txt",
+      "note": "Public :5083 Projects 0.146s and New Task 0.222s."
+    },
+    {
+      "name": "happytg-doctor-hang-fix",
+      "status": "warn",
+      "raw": "raw/happytg-doctor-hang-fix.txt",
+      "note": "Exit 0; same non-blocking Codex CLI memory warning, Caddy /miniapp check passed."
+    },
+    {
+      "name": "happytg-verify-hang-fix",
+      "status": "warn",
+      "raw": "raw/happytg-verify-hang-fix.txt",
+      "note": "Exit 0; same non-blocking Codex CLI memory warning, Caddy /miniapp check passed."
+    },
+    {
+      "name": "diff-check-hang-fix",
+      "status": "pass",
+      "raw": "raw/diff-check-hang-fix.txt",
+      "note": "Exit 0 with CRLF/LF normalization warnings only."
+    },
+    {
+      "name": "new-task-empty-prompt-error-propagation",
+      "status": "pass",
+      "raw": "raw/post-new-task-empty-prompt-hang-fix-error-propagation.json",
+      "note": "Returned HTTP 400 in 30 ms instead of generic Mini App 500."
+    },
+    {
+      "name": "root-typecheck-hang-fix-final",
+      "status": "pass",
+      "raw": "raw/typecheck-root-hang-fix-final.txt",
+      "note": "15/15 successful after error propagation fix."
+    },
+    {
+      "name": "root-test-hang-fix-final",
+      "status": "pass",
+      "raw": "raw/test-root-hang-fix-final.txt",
+      "note": "15/15 successful after error propagation fix."
+    },
+    {
+      "name": "root-build-hang-fix-final",
+      "status": "pass",
+      "raw": "raw/build-root-hang-fix-final.txt",
+      "note": "15/15 successful after error propagation fix."
+    },
+    {
+      "name": "root-lint-hang-fix-final",
+      "status": "pass",
+      "raw": "raw/lint-root-hang-fix-final.txt",
+      "note": "15/15 successful after error propagation fix."
+    },
+    {
+      "name": "diff-check-hang-fix-final",
+      "status": "pass",
+      "raw": "raw/diff-check-hang-fix-final.txt",
+      "note": "Exit 0 with CRLF/LF normalization warnings only."
+    },
+    {
+      "name": "miniapp-test-project-history",
+      "status": "warn",
+      "raw": "raw/test-miniapp-project-history.txt",
+      "note": "Blocked before assertions by Node test runner spawn EPERM."
+    },
+    {
+      "name": "api-test-project-history",
+      "status": "warn",
+      "raw": "raw/test-api-project-history.txt",
+      "note": "Blocked before assertions by Node test runner spawn EPERM."
+    },
+    {
+      "name": "miniapp-test-project-history-direct",
+      "status": "warn",
+      "raw": "raw/test-miniapp-project-history-direct.txt",
+      "note": "Direct tsx execution blocked before assertions by esbuild spawn EPERM."
+    },
+    {
+      "name": "api-test-project-history-direct",
+      "status": "warn",
+      "raw": "raw/test-api-project-history-direct.txt",
+      "note": "Direct tsx execution blocked before assertions by esbuild spawn EPERM."
+    },
+    {
+      "name": "miniapp-typecheck-project-history",
+      "status": "pass",
+      "raw": "raw/typecheck-miniapp-project-history.txt"
+    },
+    {
+      "name": "api-typecheck-project-history",
+      "status": "pass",
+      "raw": "raw/typecheck-api-project-history.txt"
+    },
+    {
+      "name": "diff-check-project-history",
+      "status": "pass",
+      "raw": "raw/diff-check-project-history.txt",
+      "note": "Exit 0 with CRLF/LF normalization warnings only."
+    },
+    {
+      "name": "diff-check-project-history-after-proof",
+      "status": "pass",
+      "raw": "raw/diff-check-project-history-after-proof.txt",
+      "note": "Exit 0 with CRLF/LF normalization warnings only."
+    },
+    {
+      "name": "live-new-desktop-task-smoke-final",
+      "status": "pass",
+      "raw": "raw/live-new-desktop-task-smoke-final.json",
+      "note": "Created Desktop thread was found in sessions; API detail 158 ms; local Mini App detail 71 ms; public :5083 detail HTTP 200 in 0.110s."
+    },
+    {
+      "name": "root-typecheck-final-current",
+      "status": "pass",
+      "raw": "raw/typecheck-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-test-final-current",
+      "status": "pass",
+      "raw": "raw/test-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-build-final-current",
+      "status": "pass",
+      "raw": "raw/build-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-lint-final-current",
+      "status": "pass",
+      "raw": "raw/lint-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "happytg-doctor-final-current",
+      "status": "warn",
+      "raw": "raw/doctor-final.txt",
+      "note": "Exit 0; one non-blocking Codex CLI memory-retention warning, Caddy /miniapp check passed."
+    },
+    {
+      "name": "happytg-verify-final-current",
+      "status": "warn",
+      "raw": "raw/verify-final.txt",
+      "note": "Exit 0; same non-blocking Codex CLI memory-retention warning, Caddy /miniapp check passed."
+    },
+    {
+      "name": "diff-check-final-current",
+      "status": "pass",
+      "raw": "raw/diff-check-final-current.txt",
+      "note": "Exit 0 with CRLF/LF normalization warnings only."
+    },
+    {
+      "name": "runtime-adapters-test-history-fix",
+      "status": "pass",
+      "raw": "raw/test-runtime-adapters-history-fix.txt",
+      "note": "25/25, including app-server history detail and fast createTask history projection coverage."
+    },
+    {
+      "name": "runtime-adapters-typecheck-history-fix",
+      "status": "pass",
+      "raw": "raw/typecheck-runtime-adapters-history-fix.txt"
+    },
+    {
+      "name": "miniapp-test-history-fix",
+      "status": "pass",
+      "raw": "raw/test-miniapp-history-fix.txt",
+      "note": "18/18, including supported empty history rendering without CODEX_DESKTOP_HISTORY_UNAVAILABLE."
+    },
+    {
+      "name": "miniapp-typecheck-history-fix",
+      "status": "pass",
+      "raw": "raw/typecheck-miniapp-history-fix.txt"
+    },
+    {
+      "name": "live-desktop-history-fast-new",
+      "status": "pass",
+      "raw": "raw/live-desktop-history-fast-new.json",
+      "note": "Created thread 019eb277-256e-7612-96e0-d068ddad3ad1; immediate API detail 67 ms; local Mini App detail 84 ms; public :5083 detail 1230 ms; no history unavailable markers."
+    },
+    {
+      "name": "live-desktop-history-fast-list",
+      "status": "pass",
+      "raw": "raw/live-desktop-history-fast-list.json",
+      "note": "New thread was present in API sessions list and Mini App Codex Desktop list."
+    },
+    {
+      "name": "browser-history-fast-detail",
+      "status": "pass",
+      "raw": "raw/browser-history-fast-detail.json",
+      "note": "In-app Browser rendered History and smoke prompt; no CODEX_DESKTOP_HISTORY_UNAVAILABLE, History недоступна, or warning/error console logs."
+    },
+    {
+      "name": "root-typecheck-history-fast-final",
+      "status": "pass",
+      "raw": "raw/typecheck-history-fast-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-test-history-fast-final",
+      "status": "pass",
+      "raw": "raw/test-history-fast-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-build-history-fast-final",
+      "status": "pass",
+      "raw": "raw/build-history-fast-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "root-lint-history-fast-final",
+      "status": "pass",
+      "raw": "raw/lint-history-fast-final.txt",
+      "note": "15/15 successful."
+    },
+    {
+      "name": "happytg-doctor-history-fast-final",
+      "status": "warn",
+      "raw": "raw/doctor-history-fast-final.txt",
+      "note": "Exit 0; one non-blocking Codex CLI memory-retention warning, Caddy /miniapp check passed."
+    },
+    {
+      "name": "happytg-verify-history-fast-final",
+      "status": "warn",
+      "raw": "raw/verify-history-fast-final.txt",
+      "note": "Exit 0; same non-blocking Codex CLI memory-retention warning, Caddy /miniapp check passed."
+    },
+    {
+      "name": "diff-check-history-fast-final",
+      "status": "pass",
+      "raw": "raw/diff-check-history-fast-final.txt",
+      "note": "Exit 0 with CRLF/LF normalization warnings only."
+    }
+  ]
+}

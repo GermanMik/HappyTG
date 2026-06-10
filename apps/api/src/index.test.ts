@@ -269,7 +269,7 @@ test("mini app project and session mutation endpoints require bearer user contex
 });
 
 test("codex desktop API is user-scoped and maps guarded control responses", async () => {
-  const calls: Array<{ kind: string; userId?: string; sessionId?: string; body?: unknown }> = [];
+  const calls: Array<{ kind: string; userId?: string; sessionId?: string; body?: unknown; options?: unknown }> = [];
   const service = {
     async resolveMiniAppUserId(token?: string, userIdHint?: string) {
       return token === "mas_token" ? "usr_bearer" : userIdHint;
@@ -287,8 +287,18 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
         ]
       };
     },
-    async listCodexDesktopSessions(userId: string) {
-      calls.push({ kind: "sessions", userId });
+    async getCodexDesktopControlStatus(userId: string) {
+      calls.push({ kind: "control", userId });
+      return {
+        control: {
+          canResume: false,
+          canStop: false,
+          canCreateTask: true
+        }
+      };
+    },
+    async listCodexDesktopSessions(userId: string, options?: { limit?: number }) {
+      calls.push({ kind: "sessions", userId, options });
       return {
         sessions: [
           {
@@ -373,7 +383,12 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
     assert.equal(projects.status, 200);
     assert.equal(projectsPayload.projects[0]?.source, "codex-desktop");
 
-    const sessions = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/sessions`, {
+    const control = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/control?userId=usr_query`);
+    const controlPayload = await control.json() as { control: { canCreateTask: boolean } };
+    assert.equal(control.status, 200);
+    assert.equal(controlPayload.control.canCreateTask, true);
+
+    const sessions = await fetch(`http://127.0.0.1:${address.port}/api/v1/codex-desktop/sessions?limit=25`, {
       headers: {
         authorization: "Bearer mas_token"
       }
@@ -417,11 +432,13 @@ test("codex desktop API is user-scoped and maps guarded control responses", asyn
     assert.equal(createdPayload.task.id, "cdt_1");
     assert.deepEqual(calls.map((call) => `${call.kind}:${call.userId ?? ""}`), [
       "projects:usr_query",
+      "control:usr_query",
       "sessions:usr_bearer",
       "detail:usr_query",
       "resume:usr_query",
       "new-task:usr_bearer"
     ]);
+    assert.deepEqual(calls.find((call) => call.kind === "sessions")?.options, { limit: 25 });
   } finally {
     await closeServer(server);
   }

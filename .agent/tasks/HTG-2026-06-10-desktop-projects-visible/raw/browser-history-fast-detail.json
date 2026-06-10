@@ -1,0 +1,13 @@
+{
+  "url": "http://127.0.0.1:3008/codex/desktop-session?id=019eb277-256e-7612-96e0-d068ddad3ad1&userId=usr_1cb55f0494804d6dbbc26d37",
+  "title": "Codex Desktop 019eb277-256e-7612-96e0-d068ddad3ad1",
+  "checks": {
+    "hasEmptyHistory": false,
+    "hasHistory": true,
+    "hasHistoryUnavailable": false,
+    "hasPrompt": true,
+    "hasUnavailableCode": false,
+    "headings": ["Есть незавершенный ввод", "HappyTG smoke history fast", "History"]
+  },
+  "warningAndErrorLogs": []
+}

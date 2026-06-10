@@ -25,6 +25,7 @@ import type {
   ApprovalRequest,
   ActionKind,
   CodexDesktopControlResult,
+  CodexDesktopControlStatus,
   CodexDesktopProject,
   CodexDesktopSession,
   CodexDesktopSessionDetail,
@@ -316,6 +317,7 @@ function sessionCard(store: HappyTGStore, session: Session): MiniAppSessionCard 
     verificationState: task?.verificationState,
     hostLabel: host?.label,
     repoName: workspace?.repoName,
+    projectPath: workspace?.path,
     lastUpdatedAt: session.updatedAt,
     attention: needsAttention,
     href: `/session/${encodeURIComponent(session.id)}`,
@@ -727,11 +729,18 @@ export class HappyTGControlPlaneService {
     }
   }
 
-  async listCodexDesktopSessions(userId: string): Promise<{ sessions: CodexDesktopSession[] }> {
+  async getCodexDesktopControlStatus(userId: string): Promise<{ control: CodexDesktopControlStatus }> {
+    await this.assertCodexDesktopUser(userId);
+    return {
+      control: await this.codexDesktop.controlStatus({ validateAvailability: false })
+    };
+  }
+
+  async listCodexDesktopSessions(userId: string, options: { limit?: number } = {}): Promise<{ sessions: CodexDesktopSession[] }> {
     await this.assertCodexDesktopUser(userId);
     try {
       return {
-        sessions: await this.codexDesktop.listSessions()
+        sessions: await this.codexDesktop.listSessions(options)
       };
     } catch {
       return {

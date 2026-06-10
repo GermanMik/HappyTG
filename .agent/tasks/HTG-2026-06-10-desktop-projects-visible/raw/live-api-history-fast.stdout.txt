@@ -1,0 +1,5 @@
+
+> @happytg/api@0.4.15 start C:\Develop\Projects\HappyTG\apps\api
+> tsx src/index.ts
+
+{"at":"2026-06-10T16:55:05.449Z","level":"INFO","scope":"api","message":"API listening","metadata":{"port":4001}}

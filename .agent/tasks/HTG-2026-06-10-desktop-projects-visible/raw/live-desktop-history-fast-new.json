@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-06-10T16:57:00.2828282Z",
+  "userId": "usr_1cb55f0494804d6dbbc26d37",
+  "control": {
+    "canResume": true,
+    "canStop": true,
+    "canCreateTask": true
+  },
+  "project": {
+    "label": "HappyTG",
+    "id": "cdp_0e79b96f869a5659",
+    "active": true,
+    "path": "C:\\Develop\\Projects\\HappyTG"
+  },
+  "create": {
+    "taskStatus": "running",
+    "sessionHref": "/codex/desktop-session?id=019eb277-256e-7612-96e0-d068ddad3ad1",
+    "ms": 2832,
+    "taskId": "019eb277-256e-7612-96e0-d068ddad3ad1",
+    "sessionId": "019eb277-256e-7612-96e0-d068ddad3ad1"
+  },
+  "apiDetail": {
+    "firstSummary": "HappyTG smoke history fast: reply OK.",
+    "firstRole": "user",
+    "ms": 67,
+    "historyUnsupportedReasonCode": null,
+    "historyCount": 2
+  },
+  "miniDetail": {
+    "hasUnavailableCode": false,
+    "ms": 84,
+    "hasHistoryHeading": true,
+    "status": 200,
+    "hasHistoryUnavailable": false
+  },
+  "existingApiDetail": {
+    "historyUnsupportedReasonCode": null,
+    "ms": 5114,
+    "sessionId": "019eb260-4369-7f23-b129-b63ca824ca37",
+    "firstSummary": "HappyTG smoke test 3: reply OK.",
+    "historyCount": 2
+  },
+  "publicMiniDetail": {
+    "hasUnavailableCode": false,
+    "ms": 1230,
+    "status": 200,
+    "hasHistoryUnavailable": false
+  }
+}

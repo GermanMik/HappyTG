@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-06-10T16:57:24.4884851Z",
+  "sessionId": "019eb277-256e-7612-96e0-d068ddad3ad1",
+  "apiSessions": {
+    "ms": 858,
+    "projectPath": "C:\\Develop\\Projects\\HappyTG",
+    "title": "HappyTG smoke history fast: reply OK.",
+    "count": 20,
+    "found": true,
+    "status": "active"
+  },
+  "miniCodexList": {
+    "containsTitle": true,
+    "status": 200,
+    "containsSessionId": true,
+    "hasUnavailableCode": false,
+    "ms": 1306
+  }
+}

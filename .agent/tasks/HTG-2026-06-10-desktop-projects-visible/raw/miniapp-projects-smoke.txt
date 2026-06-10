@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "desktopProjectCount": 12,
+  "sampleLabels": [
+    "BaseDeploy",
+    "Codex",
+    "CodexMD3"
+  ],
+  "hasDesktopSection": true,
+  "hasDesktopNewTaskLinks": true
+}

@@ -1,0 +1,22 @@
+{
+  "projectCount": 12,
+  "projectLabels": [
+    "BaseDeploy",
+    "Codex",
+    "CodexMD3",
+    "Contacts",
+    "Factory",
+    "HappyTG",
+    "HealthCheck",
+    "HealthCheck",
+    "NPortal",
+    "Obsid",
+    "Paperclip",
+    "VideoCall"
+  ],
+  "activeProjectLabels": [
+    "HappyTG"
+  ],
+  "sessionCount": 946,
+  "sessionProjectCount": 40
+}

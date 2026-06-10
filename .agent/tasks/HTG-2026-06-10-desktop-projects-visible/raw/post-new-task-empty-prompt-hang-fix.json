@@ -1,0 +1,6 @@
+{
+  "status": 500,
+  "ms": 44,
+  "body": "\r\n{\r\n  \"error\": \"Internal server error\",\r\n  \"detail\": \"Mini App fetch failed for /api/v1/codex-desktop/tasks?userId=usr_1cb55f0494804d6dbbc26d37: 400\"\r\n}",
+  "error": "Response status code does not indicate success: 500 (Internal Server Error)."
+}

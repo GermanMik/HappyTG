@@ -1,0 +1,6 @@
+{
+  "status": 400,
+  "ms": 30,
+  "body": "\r\n{\r\n  \"error\": \"prompt is required\",\r\n  \"detail\": \"Mini App fetch failed for /api/v1/codex-desktop/tasks?userId=usr_1cb55f0494804d6dbbc26d37: 400\"\r\n}",
+  "error": "Response status code does not indicate success: 400 (Bad Request)."
+}

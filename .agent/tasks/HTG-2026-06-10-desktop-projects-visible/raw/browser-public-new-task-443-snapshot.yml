@@ -1,0 +1,61 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - link "HappyTG" [ref=e4] [cursor=pointer]:
+        - /url: /miniapp/
+        - strong [ref=e5]: HappyTG
+      - generic [ref=e6]: Mini App
+    - generic [ref=e7]:
+      - heading "Новая Codex-задача" [level=1] [ref=e8]
+      - paragraph [ref=e9]: Сначала выберите runtime/source. CLI использует HappyTG host flow; Desktop доступен только при proven contract.
+    - generic [ref=e11]:
+      - text: Source
+      - combobox "Source" [ref=e12]:
+        - option "Codex CLI"
+        - option "Codex Desktop" [selected]
+      - generic [ref=e13]:
+        - text: Desktop проект
+        - combobox "Desktop проект" [ref=e14]:
+          - option "BaseDeploy · C:\\Develop\\Projects\\BaseDeploy" [selected]
+          - option "Codex · C:\\Users\\tikta\\Documents\\Codex"
+          - option "CodexMD3 · C:\\Develop\\Projects\\CodexMD3"
+          - option "Contacts · C:\\Develop\\Projects\\Contacts"
+          - option "Factory · C:\\Develop\\Projects\\Factory"
+          - option "HappyTG · C:\\Develop\\Projects\\HappyTG"
+          - option "HealthCheck · C:\\Develop\\Projects\\HealthCheck"
+          - option "HealthCheck · E:\\YandexDisk\\Develop\\HealthCheck"
+          - option "NPortal · C:\\Develop\\Projects\\NPortal"
+          - option "Obsid · C:\\Develop\\Projects\\Obsid"
+          - option "Paperclip · C:\\Develop\\Projects\\Paperclip"
+          - option "VideoCall · C:\\Develop\\Projects\\VideoCall"
+      - text: Режим
+      - combobox "Режим" [ref=e15]:
+        - option "proof" [selected]
+        - option "quick"
+      - text: Название
+      - textbox "Название" [ref=e16]: Mini App task
+      - text: Инструкция
+      - textbox "Инструкция" [ref=e17]:
+        - /placeholder: Опишите задачу коротко и конкретно
+      - text: Критерии приемки
+      - textbox "Критерии приемки" [ref=e18]:
+        - /placeholder: Каждый критерий с новой строки
+      - generic [ref=e19]:
+        - button "Создать Codex-сессию" [ref=e20]
+        - link "Отмена" [ref=e21] [cursor=pointer]:
+          - /url: /miniapp/projects
+  - navigation "Основная навигация" [ref=e22]:
+    - link "Главная" [ref=e23] [cursor=pointer]:
+      - /url: /miniapp/
+    - link "Codex" [ref=e24] [cursor=pointer]:
+      - /url: /miniapp/codex
+    - link "Сессии" [ref=e25] [cursor=pointer]:
+      - /url: /miniapp/sessions
+    - link "Проекты" [ref=e26] [cursor=pointer]:
+      - /url: /miniapp/projects
+    - link "Решения" [ref=e27] [cursor=pointer]:
+      - /url: /miniapp/approvals
+    - link "Хосты" [ref=e28] [cursor=pointer]:
+      - /url: /miniapp/hosts
+    - link "Отчеты" [ref=e29] [cursor=pointer]:
+      - /url: /miniapp/reports

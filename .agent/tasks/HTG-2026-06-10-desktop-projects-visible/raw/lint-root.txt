@@ -1,0 +1,89 @@
+
+> happytg@0.4.15 lint C:\Develop\Projects\HappyTG
+> turbo lint
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running lint in 15 packages
+   • Remote caching disabled
+
+@happytg/host-daemon:lint: cache miss, executing 008db533e4e09567
+@happytg/approval-engine:lint: cache miss, executing 6963be1146414428
+@happytg/bootstrap:lint: cache miss, executing 2916e9ced748f9ed
+@happytg/api:lint: cache miss, executing 7d95204d78c03043
+@happytg/session-engine:lint: cache miss, executing fe52b7d144e903ba
+@happytg/policy-engine:lint: cache miss, executing cf360a337ef28340
+@happytg/bot:lint: cache miss, executing 94afa7e4cd10da61
+@happytg/miniapp:lint: cache miss, executing 6530c0977c0940e9
+@happytg/runtime-adapters:lint: cache miss, executing e41a497060d3bd6d
+@happytg/repo-proof:lint: cache miss, executing f4a543eca06a38b7
+@happytg/api:lint:
+@happytg/api:lint: > @happytg/api@0.4.15 lint C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:lint: > tsc -p tsconfig.json --noEmit
+@happytg/api:lint:
+@happytg/host-daemon:lint:
+@happytg/host-daemon:lint: > @happytg/host-daemon@0.4.15 lint C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:lint: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:lint:
+@happytg/approval-engine:lint:
+@happytg/approval-engine:lint: > @happytg/approval-engine@0.4.15 lint C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:lint:
+@happytg/bot:lint:
+@happytg/bot:lint: > @happytg/bot@0.4.15 lint C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bot:lint:
+@happytg/bootstrap:lint:
+@happytg/bootstrap:lint: > @happytg/bootstrap@0.4.15 lint C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:lint:
+@happytg/policy-engine:lint:
+@happytg/policy-engine:lint: > @happytg/policy-engine@0.4.15 lint C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:lint:
+@happytg/runtime-adapters:lint:
+@happytg/runtime-adapters:lint: > @happytg/runtime-adapters@0.4.15 lint C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:lint: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:lint:
+@happytg/miniapp:lint:
+@happytg/miniapp:lint: > @happytg/miniapp@0.4.15 lint C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:lint: > tsc -p tsconfig.json --noEmit
+@happytg/miniapp:lint:
+@happytg/session-engine:lint:
+@happytg/session-engine:lint: > @happytg/session-engine@0.4.15 lint C:\Develop\Projects\HappyTG\packages\session-engine
+@happytg/session-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/session-engine:lint:
+@happytg/repo-proof:lint:
+@happytg/repo-proof:lint: > @happytg/repo-proof@0.4.15 lint C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:lint: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:lint:
+@happytg/telegram-kit:lint: cache miss, executing a38d8cb53ca6065a
+@happytg/worker:lint: cache miss, executing 6a8fff60d647aa32
+@happytg/protocol:lint: cache miss, executing 1b789085c57334a5
+@happytg/shared:lint: cache miss, executing 272089113280e02a
+@happytg/hooks:lint: cache miss, executing a7b173bef7efb9a5
+@happytg/telegram-kit:lint:
+@happytg/telegram-kit:lint: > @happytg/telegram-kit@0.4.15 lint C:\Develop\Projects\HappyTG\packages\telegram-kit
+@happytg/telegram-kit:lint: > tsc -p tsconfig.json --noEmit
+@happytg/telegram-kit:lint:
+@happytg/worker:lint:
+@happytg/worker:lint: > @happytg/worker@0.4.15 lint C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:lint: > tsc -p tsconfig.json --noEmit
+@happytg/worker:lint:
+@happytg/shared:lint:
+@happytg/shared:lint: > @happytg/shared@0.4.15 lint C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:lint: > tsc -p tsconfig.json --noEmit
+@happytg/shared:lint:
+@happytg/protocol:lint:
+@happytg/protocol:lint: > @happytg/protocol@0.4.15 lint C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:lint: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:lint:
+@happytg/hooks:lint:
+@happytg/hooks:lint: > @happytg/hooks@0.4.15 lint C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:lint: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:lint:
+
+ Tasks:    15 successful, 15 total
+Cached:    0 cached, 15 total
+  Time:    6.745s

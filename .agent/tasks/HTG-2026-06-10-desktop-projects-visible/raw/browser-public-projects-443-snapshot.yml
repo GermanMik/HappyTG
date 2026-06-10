@@ -1,0 +1,184 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - link "HappyTG" [ref=e4] [cursor=pointer]:
+        - /url: /miniapp/
+        - strong [ref=e5]: HappyTG
+      - generic [ref=e6]: Mini App
+    - generic [ref=e7]:
+      - heading "Проекты" [level=1] [ref=e8]
+      - paragraph [ref=e9]: Codex CLI workspaces and local Codex Desktop projects.
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: CLI projects
+        - strong [ref=e13]: "1"
+      - generic [ref=e14]:
+        - generic [ref=e15]: Desktop projects
+        - strong [ref=e16]: "12"
+      - generic [ref=e17]:
+        - generic [ref=e18]: Active Desktop
+        - strong [ref=e19]: "1"
+    - generic [ref=e20]:
+      - heading "Codex CLI projects" [level=2] [ref=e21]
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - generic [ref=e24]:
+            - strong [ref=e25]:
+              - link "host-daemon" [ref=e26] [cursor=pointer]:
+                - /url: /miniapp/project/ws_a98e06d0f5a54a278b953ea3
+            - generic [ref=e27]: C:\Develop\Projects\HappyTG\apps\host-daemon · ALFRED
+          - generic [ref=e28]:
+            - generic [ref=e29]: active
+            - generic [ref=e30]: active 1
+            - link "Новая задача" [ref=e31] [cursor=pointer]:
+              - /url: /miniapp/new-task?hostId=host_ee8c201dc8f44ba191ddaeae&workspaceId=ws_a98e06d0f5a54a278b953ea3
+    - generic [ref=e32]:
+      - heading "Codex Desktop projects" [level=2] [ref=e33]
+      - list [ref=e34]:
+        - listitem [ref=e35]:
+          - generic [ref=e36]:
+            - strong [ref=e37]: BaseDeploy
+            - generic [ref=e38]: C:\Develop\Projects\BaseDeploy
+          - generic [ref=e39]:
+            - generic [ref=e40]: Codex Desktop
+            - generic [ref=e41]: saved
+            - link "Codex" [ref=e42] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CBaseDeploy
+            - link "Новая задача" [ref=e43] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_38792738bf4caef1
+        - listitem [ref=e44]:
+          - generic [ref=e45]:
+            - strong [ref=e46]: Codex
+            - generic [ref=e47]: C:\Users\tikta\Documents\Codex
+          - generic [ref=e48]:
+            - generic [ref=e49]: Codex Desktop
+            - generic [ref=e50]: saved
+            - link "Codex" [ref=e51] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CUsers%5Ctikta%5CDocuments%5CCodex
+            - link "Новая задача" [ref=e52] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_b04b5deb01dd0710
+        - listitem [ref=e53]:
+          - generic [ref=e54]:
+            - strong [ref=e55]: CodexMD3
+            - generic [ref=e56]: C:\Develop\Projects\CodexMD3
+          - generic [ref=e57]:
+            - generic [ref=e58]: Codex Desktop
+            - generic [ref=e59]: saved
+            - link "Codex" [ref=e60] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CCodexMD3
+            - link "Новая задача" [ref=e61] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_39eab84001478d20
+        - listitem [ref=e62]:
+          - generic [ref=e63]:
+            - strong [ref=e64]: Contacts
+            - generic [ref=e65]: C:\Develop\Projects\Contacts
+          - generic [ref=e66]:
+            - generic [ref=e67]: Codex Desktop
+            - generic [ref=e68]: saved
+            - link "Codex" [ref=e69] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CContacts
+            - link "Новая задача" [ref=e70] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_54728ad608804437
+        - listitem [ref=e71]:
+          - generic [ref=e72]:
+            - strong [ref=e73]: Factory
+            - generic [ref=e74]: C:\Develop\Projects\Factory
+          - generic [ref=e75]:
+            - generic [ref=e76]: Codex Desktop
+            - generic [ref=e77]: saved
+            - link "Codex" [ref=e78] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CFactory
+            - link "Новая задача" [ref=e79] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_f5c7039374a6fdd9
+        - listitem [ref=e80]:
+          - generic [ref=e81]:
+            - strong [ref=e82]: HappyTG
+            - generic [ref=e83]: C:\Develop\Projects\HappyTG
+          - generic [ref=e84]:
+            - generic [ref=e85]: Codex Desktop
+            - generic [ref=e86]: active
+            - link "Codex" [ref=e87] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CHappyTG
+            - link "Новая задача" [ref=e88] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_0e79b96f869a5659
+        - listitem [ref=e89]:
+          - generic [ref=e90]:
+            - strong [ref=e91]: HealthCheck
+            - generic [ref=e92]: C:\Develop\Projects\HealthCheck
+          - generic [ref=e93]:
+            - generic [ref=e94]: Codex Desktop
+            - generic [ref=e95]: saved
+            - link "Codex" [ref=e96] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CHealthCheck
+            - link "Новая задача" [ref=e97] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_40eef3f30412c259
+        - listitem [ref=e98]:
+          - generic [ref=e99]:
+            - strong [ref=e100]: HealthCheck
+            - generic [ref=e101]: E:\YandexDisk\Develop\HealthCheck
+          - generic [ref=e102]:
+            - generic [ref=e103]: Codex Desktop
+            - generic [ref=e104]: saved
+            - link "Codex" [ref=e105] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=E%3A%5CYandexDisk%5CDevelop%5CHealthCheck
+            - link "Новая задача" [ref=e106] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_edb7989791ec2f57
+        - listitem [ref=e107]:
+          - generic [ref=e108]:
+            - strong [ref=e109]: NPortal
+            - generic [ref=e110]: C:\Develop\Projects\NPortal
+          - generic [ref=e111]:
+            - generic [ref=e112]: Codex Desktop
+            - generic [ref=e113]: saved
+            - link "Codex" [ref=e114] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CNPortal
+            - link "Новая задача" [ref=e115] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_62a8dd92d560cbb9
+        - listitem [ref=e116]:
+          - generic [ref=e117]:
+            - strong [ref=e118]: Obsid
+            - generic [ref=e119]: C:\Develop\Projects\Obsid
+          - generic [ref=e120]:
+            - generic [ref=e121]: Codex Desktop
+            - generic [ref=e122]: saved
+            - link "Codex" [ref=e123] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CObsid
+            - link "Новая задача" [ref=e124] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_cc09e3ddf757c327
+        - listitem [ref=e125]:
+          - generic [ref=e126]:
+            - strong [ref=e127]: Paperclip
+            - generic [ref=e128]: C:\Develop\Projects\Paperclip
+          - generic [ref=e129]:
+            - generic [ref=e130]: Codex Desktop
+            - generic [ref=e131]: saved
+            - link "Codex" [ref=e132] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CPaperclip
+            - link "Новая задача" [ref=e133] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_a2b1fdfce52caa27
+        - listitem [ref=e134]:
+          - generic [ref=e135]:
+            - strong [ref=e136]: VideoCall
+            - generic [ref=e137]: C:\Develop\Projects\VideoCall
+          - generic [ref=e138]:
+            - generic [ref=e139]: Codex Desktop
+            - generic [ref=e140]: saved
+            - link "Codex" [ref=e141] [cursor=pointer]:
+              - /url: /miniapp/codex?source=codex-desktop&project=C%3A%5CDevelop%5CProjects%5CVideoCall
+            - link "Новая задача" [ref=e142] [cursor=pointer]:
+              - /url: /miniapp/new-task?source=codex-desktop&projectId=cdp_693c717d8bfbbe57
+  - navigation "Основная навигация" [ref=e143]:
+    - link "Главная" [ref=e144] [cursor=pointer]:
+      - /url: /miniapp/
+    - link "Codex" [ref=e145] [cursor=pointer]:
+      - /url: /miniapp/codex
+    - link "Сессии" [ref=e146] [cursor=pointer]:
+      - /url: /miniapp/sessions
+    - link "Проекты" [ref=e147] [cursor=pointer]:
+      - /url: /miniapp/projects
+    - link "Решения" [ref=e148] [cursor=pointer]:
+      - /url: /miniapp/approvals
+    - link "Хосты" [ref=e149] [cursor=pointer]:
+      - /url: /miniapp/hosts
+    - link "Отчеты" [ref=e150] [cursor=pointer]:
+      - /url: /miniapp/reports

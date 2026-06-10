@@ -1,0 +1,18 @@
+Playwright in-app browser backend:
+
+- https://happytg.gerta.crazedns.ru:5083/miniapp/projects?userId=<local-user-id>
+- Result: net::ERR_TIMED_OUT while waiting for domcontentloaded.
+
+Same host/route through curl.exe:
+
+- raw/public-projects-5083-quiet.html
+- HTTP 200
+- TIME_TOTAL 0.194605
+- rendered Desktop projects count 12
+
+Same Mini App path through standard 443 in Playwright:
+
+- raw/browser-public-projects-443-snapshot.yml
+- raw/browser-public-new-task-443-snapshot.yml
+- Projects page rendered Desktop projects count 12.
+- New Task page rendered Codex Desktop form and did not show the disabled contract message.

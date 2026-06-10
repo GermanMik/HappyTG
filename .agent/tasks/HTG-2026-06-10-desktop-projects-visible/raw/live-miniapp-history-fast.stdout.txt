@@ -1,0 +1,5 @@
+
+> @happytg/miniapp@0.4.15 start C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx src/index.ts
+
+{"at":"2026-06-10T16:55:05.445Z","level":"INFO","scope":"miniapp","message":"Mini App listening","metadata":{"port":3008,"apiBaseUrl":"http://127.0.0.1:4001"}}

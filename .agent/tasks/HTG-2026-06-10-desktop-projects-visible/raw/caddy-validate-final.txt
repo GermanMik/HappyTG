@@ -1,0 +1,11 @@
+{"level":"info","ts":1781073512.8109515,"msg":"using config from file","file":"C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile"}
+{"level":"info","ts":1781073512.8213341,"msg":"adapted config to JSON","adapter":"caddyfile"}
+{"level":"warn","ts":1781073512.8213341,"msg":"Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies","adapter":"caddyfile","file":"C:\\Develop\\Projects\\BaseDeploy\\caddy\\Caddyfile","line":2}
+{"level":"info","ts":1781073512.8250246,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0xc0007b0700"}
+{"level":"info","ts":1781073512.8250246,"logger":"http.auto_https","msg":"automatic HTTP->HTTPS redirects are disabled","server_name":"srv5"}
+{"level":"info","ts":1781073512.8250246,"logger":"http.auto_https","msg":"automatic HTTP->HTTPS redirects are disabled","server_name":"srv2"}
+{"level":"info","ts":1781073512.8250246,"logger":"http.auto_https","msg":"automatic HTTP->HTTPS redirects are disabled","server_name":"srv3"}
+{"level":"info","ts":1781073512.8250246,"logger":"http.auto_https","msg":"automatic HTTP->HTTPS redirects are disabled","server_name":"srv4"}
+{"level":"info","ts":1781073512.830837,"logger":"http","msg":"servers shutting down with eternal grace period"}
+Valid configuration
+{"level":"info","ts":1781073512.830837,"logger":"tls.cache.maintenance","msg":"stopped background certificate maintenance","cache":"0xc0007b0700"}

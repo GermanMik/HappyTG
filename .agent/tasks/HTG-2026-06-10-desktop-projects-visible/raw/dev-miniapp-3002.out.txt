@@ -1,0 +1,10 @@
+
+> @happytg/miniapp@0.4.15 start C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx src/index.ts
+
+{"at":"2026-06-10T05:07:20.543Z","level":"INFO","scope":"miniapp","message":"Mini App listening","metadata":{"port":3002,"apiBaseUrl":"http://127.0.0.1:4000"}}
+{"at":"2026-06-10T05:08:03.535Z","level":"ERROR","scope":"miniapp","message":"Unhandled HTTP error","metadata":{"message":"Mini App fetch failed for /api/v1/codex-desktop/projects?userId=usr_1: 404","stack":"Error: Mini App fetch failed for /api/v1/codex-desktop/projects?userId=usr_1: 404\n    at Object.defaultFetchJson (C:\\Develop\\Projects\\HappyTG\\apps\\miniapp\\src\\index.ts:50:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Promise.all (index 1)\n    at async Object.handler (C:\\Develop\\Projects\\HappyTG\\apps\\miniapp\\src\\index.ts:2015:45)\n    at async Server.<anonymous> (C:\\Develop\\Projects\\HappyTG\\packages\\shared\\src\\index.ts:948:7)"}}
+C:\Develop\Projects\HappyTG\apps\miniapp:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @happytg/miniapp@0.4.15 start: `tsx src/index.ts`
+Exit status 4294967295
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?
