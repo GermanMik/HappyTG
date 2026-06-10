@@ -1,0 +1,50 @@
+{
+  "taskId": "HTG-2026-06-10-desktop-session-continuation",
+  "status": "pass_with_environment_notes",
+  "checks": [
+    {
+      "name": "Codex Desktop continuation contract",
+      "status": "pass",
+      "evidence": "raw/test-targeted.txt"
+    },
+    {
+      "name": "Mini App continuation and sorting UI",
+      "status": "pass",
+      "evidence": "raw/test-targeted.txt"
+    },
+    {
+      "name": "repo lint/test/build",
+      "status": "pass",
+      "evidence": "raw/lint.txt, raw/test-unit.txt, raw/build.txt"
+    },
+    {
+      "name": "release metadata",
+      "status": "pass",
+      "evidence": "raw/release-check.txt"
+    },
+    {
+      "name": "proof bundle validation",
+      "status": "pass",
+      "evidence": "raw/task-validate.txt"
+    },
+    {
+      "name": "Graphify refresh",
+      "status": "pass",
+      "evidence": "raw/graphify-update.txt"
+    },
+    {
+      "name": "doctor",
+      "status": "environment_fail",
+      "evidence": "raw/doctor.txt"
+    },
+    {
+      "name": "verify",
+      "status": "environment_fail",
+      "evidence": "raw/test-integration.txt"
+    }
+  ],
+  "residualRisks": [
+    "Clean release worktree does not include .env or TELEGRAM_BOT_TOKEN, so doctor/verify report setup blockers despite process exit 0.",
+    "Local ports 3001, 443, and 3000 are occupied by unrelated services on this machine."
+  ]
+}

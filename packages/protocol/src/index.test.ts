@@ -45,6 +45,7 @@ test("protocol enums include resumability, proof, and bootstrap contracts", () =
   assert.ok(VERIFICATION_STATES.includes("passed"));
   assert.ok(VERIFICATION_STATES.includes("inconclusive"));
   assert.ok(ACTION_KINDS.includes("session_resume"));
+  assert.ok(ACTION_KINDS.includes("codex_desktop_continue"));
   assert.ok(ACTION_KINDS.includes("verification_run"));
   assert.ok(ACTION_KINDS.includes("bootstrap_install"));
   assert.ok(APPROVAL_SCOPES.includes("phase"));

@@ -313,6 +313,7 @@ test("Codex Desktop adapter parses session_index and session files as sanitized 
     assert.equal(sessions[0]?.source, "codex-desktop");
     assert.equal(sessions[0]?.status, "recent");
     assert.equal(sessions[0]?.canResume, false);
+    assert.equal(sessions[0]?.canContinue, false);
     assert.equal(sessions[0]?.canStop, false);
     assert.match(sessions[0]?.unsupportedReason ?? "", /unsupported/i);
     assert.equal(sessions[0]?.unsupportedReasonCode, CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE);
@@ -481,10 +482,15 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
     const sessions = await adapter.listSessions();
 
     assert.equal(sessions[0]?.canResume, true);
+    assert.equal(sessions[0]?.canContinue, true);
     assert.equal(sessions[0]?.canStop, true);
     assert.equal(sessions[0]?.canCreateTask, true);
 
     const resumed = await adapter.resumeSession(sessions[0]!);
+    const continued = await adapter.continueSession(sessions[0]!, {
+      userId: "usr_1",
+      prompt: "Continue Desktop task"
+    });
     const stopped = await adapter.stopSession(sessions[0]!);
     const created = await adapter.createTask({
       userId: "usr_1",
@@ -494,6 +500,8 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
     });
 
     assert.equal(resumed.action, "resume");
+    assert.equal(continued.action, "continue");
+    assert.equal(continued.session?.status, "active");
     assert.equal(stopped.action, "stop");
     assert.equal(created.action, "new-task");
     assert.equal(created.task?.id, "new-thread");
@@ -504,6 +512,7 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
     assert.equal(createdSession?.title, "Desktop task");
     assert.equal(createdSession?.status, "active");
     assert.equal(createdSession?.canResume, true);
+    assert.equal(createdSession?.canContinue, true);
 
     const createdDetail = await adapter.getSessionDetail("new-thread");
     assert.equal(createdDetail?.session.id, "new-thread");
@@ -539,6 +548,7 @@ test("Codex Desktop default adapter keeps unknown experimental control modes uns
     assert.equal(adapter.canCreateTask(), false);
     assert.equal(adapter.controlUnsupportedReasonCode(), CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE);
     assert.equal(sessions[0]?.canResume, false);
+    assert.equal(sessions[0]?.canContinue, false);
     assert.equal(sessions[0]?.canStop, false);
     assert.equal(sessions[0]?.canCreateTask, false);
     assert.equal(sessions[0]?.unsupportedReasonCode, CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE);
@@ -574,11 +584,14 @@ test("Codex Desktop default adapter enables app-server control when explicitly c
     const validatedControl = await adapter.controlStatus();
 
     assert.equal(adapter.canCreateTask(), true);
+    assert.equal(fastControl.canContinue, true);
     assert.equal(fastControl.canCreateTask, true);
+    assert.equal(validatedControl.canContinue, false);
     assert.equal(validatedControl.canCreateTask, false);
     assert.equal(validatedControl.unsupportedReasonCode, CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE);
     assert.equal(adapter.controlUnsupportedReasonCode(), CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE);
     assert.equal(sessions[0]?.canResume, false);
+    assert.equal(sessions[0]?.canContinue, false);
     assert.equal(sessions[0]?.canStop, false);
     assert.equal(sessions[0]?.canCreateTask, false);
     assert.equal(sessions[0]?.unsupportedReasonCode, CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE);

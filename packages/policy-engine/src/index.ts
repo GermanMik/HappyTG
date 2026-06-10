@@ -129,6 +129,12 @@ export function createDefaultPolicies(): Policy[] {
           reason: "Codex Desktop resume attempts are allowed only through a proven adapter contract"
         },
         {
+          id: "rule_allow_codex_desktop_continue",
+          actionKind: "codex_desktop_continue",
+          effect: "allow",
+          reason: "Codex Desktop continuation prompts are allowed only through a proven adapter contract"
+        },
+        {
           id: "rule_allow_codex_desktop_stop",
           actionKind: "codex_desktop_stop",
           effect: "allow",

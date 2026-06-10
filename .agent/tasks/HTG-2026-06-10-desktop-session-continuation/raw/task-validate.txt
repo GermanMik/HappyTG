@@ -1,0 +1,9 @@
+
+> happytg@0.4.16 happytg C:\Develop\Projects\HappyTG-worktrees\desktop-session-continuation-20260610
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-06-10-desktop-session-continuation"
+
+Task: HTG-2026-06-10-desktop-session-continuation
+Bundle: C:\Develop\Projects\HappyTG-worktrees\desktop-session-continuation-20260610\.agent\tasks\HTG-2026-06-10-desktop-session-continuation
+Validation: ok
+Phase: unknown
+Verification: unknown

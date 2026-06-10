@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v0.4.16
+
+### Added
+
+- Codex Desktop session detail now includes a follow-up prompt form that sends a new request into the existing Desktop thread instead of relying on the generic `Resume` button.
+- Added a dedicated `codex_desktop_continue` action kind, policy rule, runtime adapter contract, API route, Mini App route, audit path, and serialized mutation coverage.
+- Codex Mini App lists can now be sorted by newest, oldest, title A-Z, or title Z-A; Desktop session history can be shown oldest-first or newest-first.
+
+### Fixed
+
+- Continuing a previous Codex Desktop session now uses app-server `turn/start` with the user prompt, while `thread/resume` remains a separate backend action.
+- Mini App Desktop continuation now returns structured unsupported/unavailable errors instead of surfacing only `Desktop action unsupported` from the old `Resume` path.
+
+### Verification
+
+- Release validation covers workspace version metadata, continuation API/runtime/Mini App tests, list/history sorting tests, serialized mutation safety, repo lint/build/test, and proof-bundle evidence.
+- `pnpm happytg doctor` and `pnpm happytg verify` were executed in the clean release worktree and reported local environment blockers: missing `.env`/`TELEGRAM_BOT_TOKEN` plus occupied local ports. The code gates (`pnpm lint`, `pnpm test`, `pnpm build`) passed.
+
 ## v0.4.15
 
 ### Fixed

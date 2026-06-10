@@ -1,0 +1,11 @@
+Scope: 5 of 16 workspace projects
+packages/protocol typecheck$ tsc -p tsconfig.json --noEmit
+packages/runtime-adapters typecheck$ tsc -p tsconfig.json --noEmit
+packages/policy-engine typecheck$ tsc -p tsconfig.json --noEmit
+apps/api typecheck$ tsc -p tsconfig.json --noEmit
+packages/protocol typecheck: Done
+apps/miniapp typecheck$ tsc -p tsconfig.json --noEmit
+packages/policy-engine typecheck: Done
+packages/runtime-adapters typecheck: Done
+apps/api typecheck: Done
+apps/miniapp typecheck: Done
