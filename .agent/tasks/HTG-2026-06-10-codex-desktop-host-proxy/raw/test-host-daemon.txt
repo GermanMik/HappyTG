@@ -1,0 +1,19 @@
+
+> @happytg/host-daemon@0.4.15 test C:\Develop\Projects\HappyTG\apps\host-daemon
+> tsx --test src/*.test.ts
+
+✔ defaultWorkspaces prefers configured workspace paths (2.3974ms)
+✔ compactJournal keeps running entries and trims stale completed entries (0.2745ms)
+✔ sandboxForDispatch preserves read-only safety for doctor and verify paths (0.2028ms)
+✔ parseVerifierVerdict keys off the first line only (0.1326ms)
+✔ startup guidance stays actionable and repeated notices are suppressed (0.4935ms)
+✔ summarizeBootstrapReport includes top finding codes (0.2453ms)
+✔ Codex Desktop host proxy requires token and serializes mutating controls (95.1001ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 739.8744

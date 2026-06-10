@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
+import { mkdtemp, rm } from "node:fs/promises";
+import type { Server } from "node:http";
+import type { AddressInfo } from "node:net";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import type { PendingDispatch } from "../../../packages/protocol/src/index.js";
-import { codexCliMissingMessage } from "../../../packages/runtime-adapters/src/index.js";
+import { CodexDesktopStateAdapter, codexCliMissingMessage, type CodexDesktopControlContract } from "../../../packages/runtime-adapters/src/index.js";
+import { createCodexDesktopHostProxyServer } from "./codex-desktop-proxy.js";
 
 import {
   compactJournal,
@@ -179,4 +185,152 @@ test("summarizeBootstrapReport includes top finding codes", () => {
   assert.match(summary, /Bootstrap verify warn/);
   assert.match(summary, /CODEX_SMOKE_WARNINGS/);
   assert.match(summary, /CODEX_CONFIG_MISSING/);
+});
+
+async function listenOnRandomPort(server: Server): Promise<string> {
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      server.off("error", reject);
+      resolve();
+    });
+  });
+
+  const address = server.address() as AddressInfo;
+  return `http://127.0.0.1:${address.port}`;
+}
+
+async function closeServer(server: Server): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+test("Codex Desktop host proxy requires token and serializes mutating controls", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-desktop-proxy-"));
+  const events: string[] = [];
+  const session = {
+    id: "session-1",
+    title: "Desktop session",
+    projectPath: "C:/Develop/Projects/HappyTG",
+    updatedAt: "2026-06-10T10:00:00.000Z",
+    status: "active" as const,
+    source: "codex-desktop" as const,
+    canResume: true,
+    canStop: true,
+    canCreateTask: true
+  };
+  const controlContract: CodexDesktopControlContract = {
+    supportsResume: true,
+    supportsStop: true,
+    supportsNewTask: true,
+    async capabilities() {
+      return {
+        supportsResume: true,
+        supportsStop: true,
+        supportsNewTask: true
+      };
+    },
+    async listProjects() {
+      return [
+        {
+          id: "cdp_1",
+          label: "HappyTG",
+          path: "C:/Develop/Projects/HappyTG",
+          source: "codex-desktop",
+          active: true
+        }
+      ];
+    },
+    async listSessions() {
+      return [session];
+    },
+    async getSessionDetail() {
+      return {
+        session,
+        history: [],
+        historyTruncated: false
+      };
+    },
+    async resumeSession(inputSession) {
+      events.push("resume-start");
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      events.push("resume-end");
+      return {
+        ok: true,
+        action: "resume",
+        source: "codex-desktop",
+        session: inputSession
+      };
+    },
+    async stopSession(inputSession) {
+      events.push("stop-start");
+      events.push("stop-end");
+      return {
+        ok: true,
+        action: "stop",
+        source: "codex-desktop",
+        session: inputSession
+      };
+    },
+    async createTask(input) {
+      return {
+        ok: true,
+        action: "new-task",
+        source: "codex-desktop",
+        task: {
+          id: "session-new",
+          title: input.title ?? "Desktop task",
+          projectPath: input.projectPath,
+          status: "running"
+        }
+      };
+    }
+  };
+  const adapter = new CodexDesktopStateAdapter({
+    codexHome: tempDir,
+    controlContract
+  });
+  const server = createCodexDesktopHostProxyServer({
+    adapter,
+    token: "secret",
+    logger: {
+      info() {},
+      warn() {},
+      error() {}
+    }
+  });
+
+  try {
+    const baseUrl = await listenOnRandomPort(server);
+    const unauthorized = await fetch(`${baseUrl}/api/v1/codex-desktop/projects`);
+    assert.equal(unauthorized.status, 401);
+
+    const headers = { authorization: "Bearer secret" };
+    const projects = await (await fetch(`${baseUrl}/api/v1/codex-desktop/projects`, { headers })).json() as { projects: Array<{ label: string }> };
+    assert.equal(projects.projects[0]?.label, "HappyTG");
+
+    const resume = fetch(`${baseUrl}/api/v1/codex-desktop/sessions/session-1/resume`, {
+      method: "POST",
+      headers
+    });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const stop = fetch(`${baseUrl}/api/v1/codex-desktop/sessions/session-1/stop`, {
+      method: "POST",
+      headers
+    });
+
+    assert.equal((await resume).status, 200);
+    assert.equal((await stop).status, 200);
+    assert.deepEqual(events, ["resume-start", "resume-end", "stop-start", "stop-end"]);
+  } finally {
+    await closeServer(server);
+    await rm(tempDir, { recursive: true, force: true });
+  }
 });

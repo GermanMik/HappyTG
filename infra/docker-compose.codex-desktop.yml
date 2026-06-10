@@ -1,0 +1,9 @@
+services:
+  api:
+    environment:
+      CODEX_HOME: /codex-home
+    volumes:
+      - type: bind
+        source: ${HAPPYTG_HOST_CODEX_HOME:?Set HAPPYTG_HOST_CODEX_HOME to the host Codex home, for example C:/Users/tikta/.codex}
+        target: /codex-home
+        read_only: true
