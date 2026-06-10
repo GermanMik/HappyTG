@@ -155,13 +155,14 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
 
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type") ?? "", /text\/html/);
-    assert.match(html, /Панель управления HappyTG/);
+    assert.match(html, /Работа по проектам/);
+    assert.match(html, /Результаты сессий/);
     assert.match(html, /Следующее действие/);
     assert.match(html, /Codex CLI/);
     assert.match(html, /devbox/);
     assert.match(html, /Нужно подтверждение/);
     assert.match(html, /Открыть approval/);
-    assert.match(html, /Внимание: Verify требует внимания/);
+    assert.match(html, /Verify требует внимания/);
     assert.match(html, /Открыть verify/);
     assert.match(html, /href="\/session\/ses_1"/);
     assert.match(html, /href="\/task\/HTG-0001"/);
@@ -526,11 +527,12 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
     assert.equal(detailResponse.status, 200);
     assert.match(detailHtml, /Resume/);
     assert.match(detailHtml, /Stop/);
-    assert.match(detailHtml, /New Desktop Task/);
     assert.match(detailHtml, /Продолжить сессию/);
+    assert.match(detailHtml, /Новая задача/);
+    assert.match(detailHtml, /Вопрос по реализации/);
     assert.match(detailHtml, /disabled/);
     assert.match(detailHtml, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
-    assert.match(detailHtml, /History/);
+    assert.match(detailHtml, /Результат и ход работы/);
     assert.match(detailHtml, /Safe desktop answer/);
     assert.doesNotMatch(detailHtml, /data-desktop-action="resume"/);
     assert.doesNotMatch(detailHtml, /RAW_PROMPT_SECRET/);
@@ -715,7 +717,8 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
     assert.match(detailHtml, /data-desktop-action="stop"/);
     assert.match(detailHtml, /data-desktop-continue-form/);
     assert.match(detailHtml, /name="prompt"/);
-    assert.match(detailHtml, /New Desktop Task/);
+    assert.match(detailHtml, /Новая задача/);
+    assert.match(detailHtml, /Вопрос по реализации/);
     assert.match(detailHtml, /История пока пуста/);
     assert.doesNotMatch(detailHtml, /CODEX_DESKTOP_HISTORY_UNAVAILABLE/);
 
@@ -870,15 +873,28 @@ test("projects page renders workspaces and new task creates a Codex session", as
       }
       if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
         assert.equal(init?.method, "POST");
-        assert.deepEqual(JSON.parse(String(init?.body)), {
-          hostId: "host_1",
-          workspaceId: "ws_1",
-          mode: "proof",
-          title: "Release check",
-          prompt: "Check project management",
-          acceptanceCriteria: ["Codex session visible"],
-          runtime: "codex-cli"
-        });
+        const body = JSON.parse(String(init?.body)) as { title: string; prompt: string };
+        if (body.title === "Implementation question") {
+          assert.deepEqual(body, {
+            hostId: "host_1",
+            workspaceId: "ws_1",
+            mode: "quick",
+            title: "Implementation question",
+            prompt: "Intent: implementation question.\nContext session: ses_42.\n\nWhat changed?",
+            acceptanceCriteria: [],
+            runtime: "codex-cli"
+          });
+        } else {
+          assert.deepEqual(body, {
+            hostId: "host_1",
+            workspaceId: "ws_1",
+            mode: "proof",
+            title: "Release check",
+            prompt: "Check project management",
+            acceptanceCriteria: ["Codex session visible"],
+            runtime: "codex-cli"
+          });
+        }
         return {
           session: {
             id: "ses_42",
@@ -916,7 +932,8 @@ test("projects page renders workspaces and new task creates a Codex session", as
     assert.match(projectsHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1"/);
     assert.match(projectsHtml, /Прошедшие задачи/);
     assert.match(projectsHtml, /href="\/codex\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG"/);
-    assert.match(projectsHtml, /href="\/new-task\?source=codex-desktop&amp;projectId=cdp_1"/);
+    assert.match(projectsHtml, /href="\/new-task\?source=codex-desktop&amp;projectId=cdp_1&amp;intent=implement"/);
+    assert.match(projectsHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question"/);
     assert.match(projectsHtml, /href="\/codex\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FVideoCall"/);
     assert.match(projectsHtml, /Создать Codex-сессию/);
     assert.match(projectsHtml, /data-task-feedback/);
@@ -946,6 +963,25 @@ test("projects page renders workspaces and new task creates a Codex session", as
     assert.equal(taskResponse.status, 200);
     assert.equal(payload.sessionHref, "/session/ses_42");
     assert.equal(payload.session.runtime, "codex-cli");
+
+    const questionResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        hostId: "host_1",
+        workspaceId: "ws_1",
+        mode: "quick",
+        title: "Implementation question",
+        prompt: "What changed?",
+        acceptanceCriteria: [],
+        intent: "question",
+        contextSessionId: "ses_42"
+      })
+    });
+
+    assert.equal(questionResponse.status, 200);
   } finally {
     await closeServer(server);
   }

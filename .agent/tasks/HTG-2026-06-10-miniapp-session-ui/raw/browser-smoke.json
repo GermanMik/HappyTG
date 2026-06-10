@@ -1,0 +1,176 @@
+{
+  "ranAt": "2026-06-10T21:40:26.062Z",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "home": {
+    "url": "http://127.0.0.1:3310/?userId=usr_1",
+    "facts": {
+      "details": [
+        {
+          "open": false,
+          "summary": "Технические детали"
+        },
+        {
+          "open": false,
+          "summary": "Очередь и отчеты"
+        }
+      ],
+      "h1": "Работа по проектам",
+      "hasNewTask": true,
+      "hasQuestion": true,
+      "hasResultWork": true,
+      "hasTechnicalDetailsHidden": true,
+      "hasVisualResult": true,
+      "links": [
+        {
+          "href": "/",
+          "text": "HappyTG"
+        },
+        {
+          "href": "/new-task",
+          "text": "Новая задача"
+        },
+        {
+          "href": "/new-task?intent=question&title=Implementation+question",
+          "text": "Задать вопрос"
+        },
+        {
+          "href": "/codex",
+          "text": "Codex"
+        },
+        {
+          "href": "/session/ses_visual",
+          "text": "Продолжить последнюю"
+        },
+        {
+          "href": "/sessions",
+          "text": "Все"
+        },
+        {
+          "href": "/session/ses_visual",
+          "text": "Visual smoke result"
+        },
+        {
+          "href": "/session/ses_visual",
+          "text": "Открыть"
+        },
+        {
+          "href": "/sessions",
+          "text": "Открыть sessions"
+        },
+        {
+          "href": "/task/HTG-VISUAL",
+          "text": "Visual smoke result"
+        },
+        {
+          "href": "/task/HTG-VISUAL",
+          "text": "Отчет"
+        },
+        {
+          "href": "/",
+          "text": "Главная"
+        },
+        {
+          "href": "/codex",
+          "text": "Codex"
+        },
+        {
+          "href": "/sessions",
+          "text": "Сессии"
+        },
+        {
+          "href": "/projects",
+          "text": "Проекты"
+        },
+        {
+          "href": "/approvals",
+          "text": "Решения"
+        },
+        {
+          "href": "/hosts",
+          "text": "Хосты"
+        },
+        {
+          "href": "/reports",
+          "text": "Отчеты"
+        }
+      ],
+      "selectedIntent": null,
+      "selectedMode": null,
+      "submit": null,
+      "title": "HappyTG Mini App"
+    },
+    "consoleErrors": []
+  },
+  "newTask": {
+    "url": "http://127.0.0.1:3310/new-task?userId=usr_1&intent=question",
+    "facts": {
+      "details": [
+        {
+          "open": false,
+          "summary": "Настройки"
+        }
+      ],
+      "h1": "Вопрос",
+      "hasNewTask": false,
+      "hasQuestion": true,
+      "hasResultWork": false,
+      "hasTechnicalDetailsHidden": true,
+      "hasVisualResult": false,
+      "links": [
+        {
+          "href": "/",
+          "text": "HappyTG"
+        },
+        {
+          "href": "/sessions",
+          "text": "Сессии"
+        },
+        {
+          "href": "/projects",
+          "text": "Проекты"
+        },
+        {
+          "href": "/projects",
+          "text": "Отмена"
+        },
+        {
+          "href": "/",
+          "text": "Главная"
+        },
+        {
+          "href": "/codex",
+          "text": "Codex"
+        },
+        {
+          "href": "/sessions",
+          "text": "Сессии"
+        },
+        {
+          "href": "/projects",
+          "text": "Проекты"
+        },
+        {
+          "href": "/approvals",
+          "text": "Решения"
+        },
+        {
+          "href": "/hosts",
+          "text": "Хосты"
+        },
+        {
+          "href": "/reports",
+          "text": "Отчеты"
+        }
+      ],
+      "selectedIntent": "question",
+      "selectedMode": "quick",
+      "submit": "Отправить вопрос",
+      "title": "Новая задача"
+    },
+    "consoleErrors": []
+  },
+  "passed": true
+}

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.17
+
+### Changed
+
+- Mini App session and project surfaces are now result-first: primary screens emphasize session outcome, next actions, and task/question entry while moving long paths, state metadata, counters, and technical details behind progressive disclosure.
+- The new-task flow now supports explicit implementation, question, and review intents without changing the backend task/session contract.
+- Codex Desktop and CLI session cards keep source-aware behavior while preserving Desktop continuation, sorting, unsupported-action truth, and raw prompt/log hiding.
+
+### Verification
+
+- Release validation covers workspace version metadata, result-first Mini App tests, Desktop continuation merge compatibility, browser smoke evidence, scoped Graphify evidence, repo lint/build/test, and proof-bundle evidence.
+
 ## v0.4.16
 
 ### Added

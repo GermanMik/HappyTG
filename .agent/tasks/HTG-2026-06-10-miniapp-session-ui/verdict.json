@@ -1,0 +1,7 @@
+{
+  "taskId": "HTG-2026-06-10-miniapp-session-ui",
+  "phase": "complete",
+  "verificationState": "passed",
+  "verdict": "PASS",
+  "summary": "Mini App UI is result-first, hides secondary technical details behind details blocks, supports task/question/review intent entry, preserves Codex CLI/Desktop continuation and sorting contracts, and has release metadata validated for 0.4.17. Doctor/verify are blocked only by local .env/token and port conflicts."
+}

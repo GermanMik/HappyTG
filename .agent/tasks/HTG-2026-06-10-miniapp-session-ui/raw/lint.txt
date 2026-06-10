@@ -1,0 +1,90 @@
+
+> happytg@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui
+> turbo lint
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running lint in 15 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/session-engine:lint: cache hit, replaying logs 60563eaf0f912300
+@happytg/session-engine:lint:
+@happytg/session-engine:lint: > @happytg/session-engine@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\session-engine
+@happytg/session-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/session-engine:lint:
+@happytg/hooks:lint: cache hit, replaying logs b232bc9f0411a35f
+@happytg/hooks:lint:
+@happytg/hooks:lint: > @happytg/hooks@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\hooks
+@happytg/hooks:lint: > tsc -p tsconfig.json --noEmit
+@happytg/hooks:lint:
+@happytg/shared:lint: cache hit, replaying logs 8251f5be2b223861
+@happytg/shared:lint:
+@happytg/shared:lint: > @happytg/shared@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\shared
+@happytg/shared:lint: > tsc -p tsconfig.json --noEmit
+@happytg/shared:lint:
+@happytg/api:lint: cache hit, replaying logs d5ad6e7dc3a07b67
+@happytg/api:lint:
+@happytg/api:lint: > @happytg/api@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\apps\api
+@happytg/api:lint: > tsc -p tsconfig.json --noEmit
+@happytg/api:lint:
+@happytg/repo-proof:lint: cache hit, replaying logs aaa9c072a8272d2a
+@happytg/repo-proof:lint:
+@happytg/repo-proof:lint: > @happytg/repo-proof@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\repo-proof
+@happytg/repo-proof:lint: > tsc -p tsconfig.json --noEmit
+@happytg/repo-proof:lint:
+@happytg/worker:lint: cache hit, replaying logs fde5f0144194f2c1
+@happytg/worker:lint:
+@happytg/worker:lint: > @happytg/worker@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\apps\worker
+@happytg/worker:lint: > tsc -p tsconfig.json --noEmit
+@happytg/worker:lint:
+@happytg/protocol:lint: cache hit, replaying logs 3293eb2bc196641b
+@happytg/protocol:lint:
+@happytg/protocol:lint: > @happytg/protocol@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\protocol
+@happytg/protocol:lint: > tsc -p tsconfig.json --noEmit
+@happytg/protocol:lint:
+@happytg/telegram-kit:lint: cache hit, replaying logs cf605babb97a93d5
+@happytg/telegram-kit:lint:
+@happytg/telegram-kit:lint: > @happytg/telegram-kit@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\telegram-kit
+@happytg/telegram-kit:lint: > tsc -p tsconfig.json --noEmit
+@happytg/telegram-kit:lint:
+@happytg/runtime-adapters:lint: cache miss, executing 902eff380bcb55b3
+@happytg/bot:lint: cache hit, replaying logs b7cf073ef5f2f6d9
+@happytg/bot:lint:
+@happytg/bot:lint: > @happytg/bot@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\apps\bot
+@happytg/bot:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bot:lint:
+@happytg/approval-engine:lint: cache hit, replaying logs e331674f8b6ef276
+@happytg/approval-engine:lint:
+@happytg/approval-engine:lint: > @happytg/approval-engine@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\approval-engine
+@happytg/approval-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/approval-engine:lint:
+@happytg/bootstrap:lint: cache hit, replaying logs fdeb33963df87842
+@happytg/miniapp:lint: cache hit, replaying logs 171c78cc4d954143
+@happytg/bootstrap:lint:
+@happytg/bootstrap:lint: > @happytg/bootstrap@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\bootstrap
+@happytg/bootstrap:lint: > tsc -p tsconfig.json --noEmit
+@happytg/bootstrap:lint:
+@happytg/miniapp:lint:
+@happytg/miniapp:lint: > @happytg/miniapp@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\apps\miniapp
+@happytg/miniapp:lint: > tsc -p tsconfig.json --noEmit
+@happytg/miniapp:lint:
+@happytg/policy-engine:lint: cache hit, replaying logs bce0e2f385eecc1e
+@happytg/policy-engine:lint:
+@happytg/policy-engine:lint: > @happytg/policy-engine@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\policy-engine
+@happytg/policy-engine:lint: > tsc -p tsconfig.json --noEmit
+@happytg/policy-engine:lint:
+@happytg/host-daemon:lint: cache miss, executing fe95aab491312adb
+@happytg/runtime-adapters:lint:
+@happytg/runtime-adapters:lint: > @happytg/runtime-adapters@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\packages\runtime-adapters
+@happytg/runtime-adapters:lint: > tsc -p tsconfig.json --noEmit
+@happytg/runtime-adapters:lint:
+@happytg/host-daemon:lint:
+@happytg/host-daemon:lint: > @happytg/host-daemon@0.4.17 lint C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\apps\host-daemon
+@happytg/host-daemon:lint: > tsc -p tsconfig.json --noEmit
+@happytg/host-daemon:lint:
+
+ Tasks:    15 successful, 15 total
+Cached:    13 cached, 15 total
+  Time:    3.128s
+

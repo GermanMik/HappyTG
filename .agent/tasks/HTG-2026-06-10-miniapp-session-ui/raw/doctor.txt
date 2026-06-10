@@ -1,0 +1,53 @@
+
+> happytg@0.4.17 happytg C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui
+> tsx packages/bootstrap/src/cli.ts "doctor"
+
+HappyTG doctor [FAIL]
+Summary: 1 error, 5 warnings, 1 info found.
+Profile: minimal
+
+Checks:
+- Env: .env missing
+- Codex: codex-cli 0.125.0
+- Telegram: missing
+- Telegram Mini App URL: Mini App URL is missing. Local polling can still use Telegram bot commands; Telegram WebApp buttons and menu setup require a public HTTPS /miniapp URL.
+- Caddy /miniapp: not checked
+- Telegram menu button: Telegram menu button state is not checked during doctor/verify to avoid leaking tokens through network diagnostics. Run `pnpm happytg telegram menu set --dry-run`, then `pnpm happytg telegram menu set`.
+- Redis: running on localhost:6379
+- Ports: conflicts: Mini App 3001, Caddy HTTPS host port 443, Grafana host port 3000; reuse: Redis host port 6379, Postgres host port 5432; free: API 4000, Bot 4100, Worker probe 4200, MinIO API host port 9000, MinIO console host port 9001, Caddy HTTP host port 80, Prometheus host port 9090
+
+Findings:
+- WARN  `.env` was not found. Create it with `Copy-Item .env.example .env`, or export the required variables before first start.
+- WARN  Codex CLI completed the smoke check with warnings: 2026-06-10T21:32:28.793182Z  WARN codex_core::memories::phase1: state db prune_stage1_outputs_for_retention failed during memories startup: error returned from database: (code: ... Run `pnpm happytg doctor --json` for stderr details.
+- ERROR Telegram bot token is not configured. Create `.env` with `Copy-Item .env.example .env`, set `TELEGRAM_BOT_TOKEN`, then rerun `pnpm happytg setup`.
+- INFO  Mini App URL is missing. Local polling can still use Telegram bot commands; Telegram WebApp buttons and menu setup require a public HTTPS /miniapp URL. Production menu setup stays blocked until `pnpm happytg telegram menu set` can use a public HTTPS /miniapp URL.
+- WARN  Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there. This is a conflict, not a supported HappyTG reuse path. Nearest free ports: 3004, 3005, 3006. Choose one with `HAPPYTG_MINIAPP_PORT/PORT` or enter your own port manually. For example: `$env:HAPPYTG_MINIAPP_PORT="3004"; pnpm dev:miniapp`.
+- WARN  Caddy HTTPS host port plans to use port 443, but another process or listener is already there. This is a conflict, not a supported HappyTG reuse path. Nearest free ports: 444, 446, 447. Choose one with `HAPPYTG_HTTPS_PORT` or enter your own port manually. For example: `$env:HAPPYTG_HTTPS_PORT="444"; docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d`.
+- WARN  Grafana host port plans to use port 3000, but HTTP listener (200) via Docker container `contacts-backend` (contacts-backend) is already there. This is a conflict, not a supported HappyTG reuse path. Nearest free ports: 3007, 3009, 3010. Choose one with `HAPPYTG_GRAFANA_PORT` or enter your own port manually. For example: `$env:HAPPYTG_GRAFANA_PORT="3007"; docker compose --env-file .env -f infra/docker-compose.example.yml up grafana`.
+
+Requires user:
+- Create `.env`: `Copy-Item .env.example .env`.
+- If PostgreSQL and S3-compatible storage are not already available, start the remaining shared infra: `docker compose --env-file .env -f infra/docker-compose.example.yml up postgres minio`.
+
+Blocked:
+- Telegram bot token is missing.
+  - Set `TELEGRAM_BOT_TOKEN` in `.env` or the shell.
+  - Rerun `pnpm happytg doctor` after the token is set.
+- Some HappyTG application ports are occupied, so another `pnpm dev` stack cannot start yet.
+  - Resolve the listed port conflicts below.
+  - Or reuse the running stack instead of starting another copy.
+- Pairing is blocked because Telegram bot configuration is incomplete.
+  - Fix the Telegram bot configuration first.
+  - Rerun `pnpm happytg doctor` after the bot token is valid.
+
+Reuse:
+- Redis is already running locally. Reuse it, and if `DATABASE_URL` plus `S3_ENDPOINT` already point at reachable services, you can skip Docker entirely.
+
+Conflicts:
+- Mini App plans to use port 3001, but HTTP listener (Contacts) via Docker container `contacts-frontend` (contacts-frontend) is already there.
+  - This is a conflict, not a supported HappyTG reuse path.
+  - Nearest free ports: 3004, 3005, 3006.
+  - Choose one with `HAPPYTG_MINIAPP_PORT/PORT` or enter your own port manually. For example: `$env:HAPPYTG_MINIAPP_PORT="3004"; pnpm dev:miniapp`.
+
+Diagnostics:
+- Run `pnpm happytg doctor --json` for machine-readable details.

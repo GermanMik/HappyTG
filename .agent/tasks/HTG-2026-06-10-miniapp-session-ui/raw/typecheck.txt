@@ -1,0 +1,4 @@
+
+> @happytg/miniapp@0.4.16 typecheck C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\apps\miniapp
+> tsc -p tsconfig.json --noEmit
+

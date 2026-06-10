@@ -1,0 +1,20 @@
+{
+  "id": "HTG-2026-06-10-miniapp-session-ui",
+  "sessionId": "ses_HTG_2026_06_10_miniapp_session_ui",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:/Develop/Projects/HappyTG-worktrees/miniapp-functional-session-ui/.agent/tasks/HTG-2026-06-10-miniapp-session-ui",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Result-first Mini App session UI",
+  "acceptanceCriteria": [
+    "Mini App session and project views emphasize result, next action, and task or question entry before technical metadata.",
+    "Long paths, raw payloads, event JSON, and verbose operational details are hidden behind progressive disclosure or removed from the primary scan path.",
+    "The new-task form supports implementation tasks and implementation questions without changing backend architecture contracts.",
+    "Codex Desktop and Codex CLI source-aware flows remain intact, including Desktop continuation and disabled unsupported actions.",
+    "Existing auth, base-path link prefixing, and no-raw-secret rendering behavior remain covered by tests.",
+    "Validation evidence is recorded under the task bundle."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-06-10T21:00:00.000Z",
+  "updatedAt": "2026-06-10T21:35:15.685Z"
+}

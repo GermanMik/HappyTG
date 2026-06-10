@@ -1,0 +1,9 @@
+
+> happytg@0.4.17 happytg C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-06-10-miniapp-session-ui"
+
+Task: HTG-2026-06-10-miniapp-session-ui
+Bundle: C:\Develop\Projects\HappyTG-worktrees\miniapp-functional-session-ui\.agent\tasks\HTG-2026-06-10-miniapp-session-ui
+Validation: ok
+Phase: complete
+Verification: passed
