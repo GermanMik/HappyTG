@@ -1,0 +1,7 @@
+{
+  "taskId": "HTG-2026-06-10-miniapp-session-ui",
+  "phase": "complete",
+  "verificationState": "passed",
+  "verdict": "PASS",
+  "summary": "Mini App UI is result-first, hides secondary technical details behind details blocks, supports task/question/review intent entry, and preserves Codex CLI/Desktop contracts."
+}

@@ -189,6 +189,7 @@ const proofProgressSteps = [
 ] as const;
 
 type BadgeTone = "neutral" | "info" | "success" | "warn" | "danger";
+type NewTaskIntent = "implement" | "question" | "review";
 
 function escapeHtml(value: string): string {
   return value
@@ -214,6 +215,147 @@ function toneForState(value: string): BadgeTone {
 
 function renderBadge(label: string, tone = toneForState(label)): string {
   return `<span class="badge badge-${tone}">${escapeHtml(label)}</span>`;
+}
+
+function compactDate(value: string | undefined): string {
+  if (!value) {
+    return "time n/a";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function compactPath(value: string | undefined): string {
+  if (!value) {
+    return "project n/a";
+  }
+
+  const parts = value.split(/[\\/]/u).filter(Boolean);
+  return parts.length > 1 ? parts.slice(-2).join("/") : parts[0] ?? value;
+}
+
+function renderDetails(label: string, rows: Array<{ label: string; value?: string | number | boolean }>): string {
+  const visibleRows = rows.filter((row) => row.value !== undefined && row.value !== "");
+  if (visibleRows.length === 0) {
+    return "";
+  }
+
+  return `<details class="meta-details">
+    <summary>${escapeHtml(label)}</summary>
+    <dl>${visibleRows.map((row) => `<div><dt>${escapeHtml(row.label)}</dt><dd>${escapeHtml(String(row.value))}</dd></div>`).join("")}</dl>
+  </details>`;
+}
+
+function sessionResultLabel(session: Pick<MiniAppSessionCard, "state" | "verificationState" | "attention">): string {
+  if (session.attention === "approval") {
+    return "Нужно решение";
+  }
+  if (session.verificationState === "passed") {
+    return "PASS";
+  }
+  if (session.verificationState === "failed" || session.verificationState === "stale") {
+    return "Нужна правка";
+  }
+  if (session.verificationState === "running" || session.state === "verifying") {
+    return "Проверка";
+  }
+  if (session.state === "completed") {
+    return "Готово";
+  }
+  if (session.state === "failed" || session.state === "cancelled") {
+    return "Ошибка";
+  }
+  if (session.state === "blocked" || session.state === "needs_approval") {
+    return "Блокер";
+  }
+  if (session.state === "running" || session.state === "resuming") {
+    return "В работе";
+  }
+  return "Открыть";
+}
+
+function sessionResultTone(session: Pick<MiniAppSessionCard, "state" | "verificationState" | "attention">): BadgeTone {
+  if (session.verificationState === "passed" || session.state === "completed") {
+    return "success";
+  }
+  if (session.verificationState === "failed" || session.verificationState === "stale" || session.state === "failed" || session.state === "cancelled") {
+    return "danger";
+  }
+  if (session.attention || session.state === "blocked" || session.state === "needs_approval") {
+    return "warn";
+  }
+  if (session.state === "running" || session.state === "verifying" || session.state === "resuming") {
+    return "info";
+  }
+  return "neutral";
+}
+
+function normalizeNewTaskIntent(value: unknown): NewTaskIntent {
+  return value === "question" || value === "review" ? value : "implement";
+}
+
+function intentLabel(intent: NewTaskIntent): string {
+  switch (intent) {
+    case "question":
+      return "Вопрос";
+    case "review":
+      return "Проверить результат";
+    default:
+      return "Реализовать";
+  }
+}
+
+function defaultModeForIntent(intent: NewTaskIntent): "quick" | "proof" {
+  return intent === "implement" ? "proof" : "quick";
+}
+
+function newTaskHref(input: {
+  source?: string;
+  hostId?: string;
+  workspaceId?: string;
+  projectId?: string;
+  intent?: NewTaskIntent;
+  title?: string;
+  contextSessionId?: string;
+}): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(input)) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  const query = params.toString();
+  return query ? `/new-task?${query}` : "/new-task";
+}
+
+function buildMiniAppTaskPrompt(input: { intent?: unknown; prompt?: unknown; contextSessionId?: unknown }): string {
+  const prompt = String(input.prompt ?? "").trim();
+  const hasIntentContext = typeof input.intent === "string" || typeof input.contextSessionId === "string";
+  if (!hasIntentContext) {
+    return prompt;
+  }
+
+  const intent = normalizeNewTaskIntent(input.intent);
+  const contextSessionId = String(input.contextSessionId ?? "").trim();
+  const header = intent === "question"
+    ? "Intent: implementation question."
+    : intent === "review"
+      ? "Intent: review the current implementation result."
+      : "Intent: implementation task.";
+  const context = contextSessionId ? `\nContext session: ${contextSessionId}.` : "";
+
+  return `${header}${context}\n\n${prompt}`.trim();
 }
 
 function renderProofProgress(task: { phase: string; verificationState: string }, options?: { sessionState?: string }): string {
@@ -348,20 +490,20 @@ export function renderPage(
     <title>${title}</title>
     <style>
       :root {
-        --bg: #f4f6f4;
-        --bg-accent: linear-gradient(180deg, #f8fbf7 0%, #eef2ee 100%);
-        --surface: rgba(255, 255, 255, 0.88);
-        --surface-soft: #eef6f3;
-        --surface-strong: #f5fbf8;
-        --ink: #17312b;
-        --muted: #5e6e69;
-        --accent: #0d7f66;
-        --accent-strong: #095847;
+        --bg: #f5f6f7;
+        --bg-accent: linear-gradient(180deg, #fbfcfd 0%, #eef2f5 100%);
+        --surface: rgba(255, 255, 255, 0.94);
+        --surface-soft: #f0f5f3;
+        --surface-strong: #ffffff;
+        --ink: #17211d;
+        --muted: #64716d;
+        --accent: #0a7c66;
+        --accent-strong: #075845;
         --warn: #9a6700;
         --danger: #b42318;
-        --info: #1c5d99;
-        --border: rgba(23, 49, 43, 0.12);
-        --shadow: 0 18px 36px rgba(17, 36, 31, 0.08);
+        --info: #2366a0;
+        --border: rgba(23, 33, 29, 0.12);
+        --shadow: 0 12px 26px rgba(21, 31, 27, 0.08);
       }
       * {
         box-sizing: border-box;
@@ -382,8 +524,8 @@ export function renderPage(
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 14px;
+        padding: 14px;
+        margin-bottom: 12px;
         box-shadow: var(--shadow);
         backdrop-filter: blur(10px);
       }
@@ -401,7 +543,7 @@ export function renderPage(
         letter-spacing: 0;
       }
       h1 {
-        font-size: 26px;
+        font-size: 24px;
         line-height: 1.12;
         margin-bottom: 8px;
       }
@@ -450,6 +592,7 @@ export function renderPage(
       .badge {
         display: inline-flex;
         align-items: center;
+        white-space: nowrap;
         border-radius: 999px;
         padding: 4px 10px;
         font-size: 11px;
@@ -486,7 +629,7 @@ export function renderPage(
         display: flex;
         flex-direction: column;
         gap: 12px;
-        padding: 14px 0;
+        padding: 12px 0;
         border-top: 1px solid var(--border);
       }
       .status-list li:first-child {
@@ -499,6 +642,89 @@ export function renderPage(
         align-items: center;
         flex-wrap: wrap;
         justify-content: flex-start;
+      }
+      .session-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .result-line {
+        margin-top: 8px;
+        color: var(--ink);
+      }
+      .meta-line {
+        margin-top: 4px;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+      }
+      .meta-details {
+        margin-top: 10px;
+      }
+      .meta-details summary {
+        cursor: pointer;
+        color: var(--accent-strong);
+        font-weight: 650;
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .meta-details dl {
+        margin: 8px 0 0;
+        display: grid;
+        gap: 8px;
+      }
+      .meta-details dl div {
+        display: grid;
+        gap: 2px;
+      }
+      .meta-details dt {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+      .meta-details dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      .inline-form {
+        display: grid;
+        gap: 10px;
+      }
+      .form-row {
+        display: grid;
+        gap: 10px;
+      }
+      .intent-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .intent-grid label {
+        display: block;
+        position: relative;
+      }
+      .intent-grid label span {
+        min-height: 48px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.92);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-weight: 650;
+      }
+      .intent-grid input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .intent-grid input:checked + span {
+        border-color: var(--accent);
+        background: rgba(10, 124, 102, 0.1);
+        color: var(--accent-strong);
       }
       .progress-list {
         list-style: none;
@@ -692,6 +918,9 @@ export function renderPage(
         border-left: 2px solid var(--border);
         padding: 0 0 12px 12px;
       }
+      .timeline li p {
+        margin-bottom: 6px;
+      }
       textarea, input, select {
         width: 100%;
         min-height: 46px;
@@ -705,12 +934,18 @@ export function renderPage(
         min-height: 108px;
         resize: vertical;
       }
+      #task-draft {
+        min-height: 150px;
+      }
       @media (min-width: 760px) {
         body {
           padding: 24px 24px 96px;
         }
         h1 {
-          font-size: 34px;
+          font-size: 30px;
+        }
+        .form-row {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .status-list li {
           flex-direction: row;
@@ -1136,6 +1371,17 @@ export function renderPage(
               section.hidden = section.getAttribute("data-source-fields") !== runtime;
             });
           }
+          if (event.target && event.target.name === "intent") {
+            var intent = event.target.value || "implement";
+            var mode = document.querySelector("[name=mode]");
+            var title = document.querySelector("[name=title]");
+            var submit = document.querySelector("[data-new-task-form] [type=submit]");
+            if (mode) mode.value = intent === "implement" ? "proof" : "quick";
+            if (title && (!title.value || title.value === "Mini App task" || title.value === "Implementation question" || title.value === "Review implementation result")) {
+              title.value = intent === "question" ? "Implementation question" : intent === "review" ? "Review implementation result" : "Mini App task";
+            }
+            if (submit) submit.textContent = intent === "question" ? "Отправить вопрос" : "Создать Codex-сессию";
+          }
         });
         document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
           event.preventDefault();
@@ -1159,6 +1405,8 @@ export function renderPage(
               runtime: runtime,
               projectId: runtime === "codex-desktop" ? data.get("projectId") : undefined,
               projectPath: runtime === "codex-desktop" && selectedDesktopProject ? selectedDesktopProject.getAttribute("data-project-path") : undefined,
+              intent: data.get("intent") || "implement",
+              contextSessionId: data.get("contextSessionId") || undefined,
               mode: data.get("mode") || "proof",
               title: data.get("title") || "Mini App task",
               prompt: data.get("prompt") || "",
@@ -1306,36 +1554,36 @@ function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
 
   return `
     <section class="panel hero">
-      <p class="eyebrow">Что важно сейчас</p>
-      <h1>Панель управления HappyTG</h1>
-      <p class="muted">Короткий статус, быстрые действия и переход к деталям без чтения raw logs.</p>
+      <p class="eyebrow">Сейчас</p>
+      <h1>Работа по проектам</h1>
       ${topAttentionBlock}
       <div class="actions">
         ${linkButton("Новая задача", "/new-task", true)}
+        ${linkButton("Задать вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}
         ${linkButton("Codex", "/codex")}
-        ${linkButton("Проекты", "/projects")}
-        ${linkButton("Подтверждения", "/approvals")}
         ${dashboard.recentSessions[0] ? linkButton("Продолжить последнюю", dashboard.recentSessions[0].href) : ""}
       </div>
     </section>
-    <section class="grid">
-      <div class="kv-item"><div class="eyebrow">Активные</div><strong>${dashboard.stats.activeSessions}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Подтв.</div><strong>${dashboard.stats.pendingApprovals}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Блокеры</div><strong>${dashboard.stats.blockedSessions}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Verify</div><strong>${dashboard.stats.verifyProblems}</strong></div>
-    </section>
     <section class="panel">
-      <h2>Требует внимания</h2>
-      ${attention}
-    </section>
-    <section class="panel">
-      <h2>Активные и последние сессии</h2>
+      <div class="panel-header">
+        <h2>Результаты сессий</h2>
+        ${linkButton("Все", "/sessions")}
+      </div>
       ${renderSessionCards(dashboard.recentSessions)}
     </section>
-    <section class="panel">
+    <details class="panel meta-details">
+      <summary>Очередь и отчеты</summary>
+      <section class="grid">
+        <div class="kv-item"><div class="eyebrow">Активные</div><strong>${dashboard.stats.activeSessions}</strong></div>
+        <div class="kv-item"><div class="eyebrow">Подтв.</div><strong>${dashboard.stats.pendingApprovals}</strong></div>
+        <div class="kv-item"><div class="eyebrow">Блокеры</div><strong>${dashboard.stats.blockedSessions}</strong></div>
+        <div class="kv-item"><div class="eyebrow">Verify</div><strong>${dashboard.stats.verifyProblems}</strong></div>
+      </section>
+      <h2>Требует внимания</h2>
+      ${attention}
       <h2>Последние отчеты</h2>
       ${renderReportCards(dashboard.recentReports)}
-    </section>
+    </details>
   `;
 }
 
@@ -1403,11 +1651,24 @@ function renderSessionCards(sessions: MiniAppSessionCard[]): string {
 
   return `<ul class="status-list">${sessions.map((session) => `<li>
     <div>
-      <strong><a href="${escapeHtml(session.href)}">${escapeHtml(session.title)}</a></strong>
-      <div class="muted">${escapeHtml(runtimeLabel(session.runtime))} · ${escapeHtml(session.repoName ?? "repo not selected")} · ${escapeHtml(session.hostLabel ?? "host n/a")} · ${escapeHtml(session.lastUpdatedAt)}</div>
-      ${session.attention ? `<div class="muted">Внимание: ${escapeHtml(attentionLabel(session.attention) ?? session.attention)}</div>` : ""}
+      <div class="session-title-row">
+        ${renderBadge(sessionResultLabel(session), sessionResultTone(session))}
+        <strong><a href="${escapeHtml(session.href)}">${escapeHtml(session.title)}</a></strong>
+      </div>
+      <div class="meta-line">${escapeHtml(runtimeLabel(session.runtime))} · ${escapeHtml(session.repoName ?? compactPath(session.projectPath))} · ${escapeHtml(compactDate(session.lastUpdatedAt))}</div>
+      ${session.attention ? `<div class="result-line">${escapeHtml(attentionLabel(session.attention) ?? session.attention)}</div>` : ""}
+      ${renderDetails("Технические детали", [
+        { label: "session", value: session.id },
+        { label: "state", value: session.desktopStatus ?? session.state },
+        { label: "phase", value: session.phase },
+        { label: "verify", value: session.verificationState },
+        { label: "host", value: session.hostLabel },
+        { label: "path", value: session.projectPath },
+        { label: "updated", value: session.lastUpdatedAt },
+        { label: "unsupported", value: session.unsupportedReasonCode ?? session.unsupportedReason }
+      ])}
     </div>
-    <div class="status-meta">${renderBadge(session.desktopStatus ?? session.state)}${session.phase ? renderBadge(session.phase, "info") : ""}${session.verificationState ? renderBadge(session.verificationState) : ""}${linkButton(nextActionLabel(session.nextAction), session.href, Boolean(session.attention))}</div>
+    <div class="status-meta">${linkButton(nextActionLabel(session.nextAction), session.href, Boolean(session.attention))}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -1488,7 +1749,8 @@ function renderDesktopActions(session: CodexDesktopSession): string {
   return `<div class="actions">
     ${session.canResume ? `<button class="button button-primary" type="button" data-desktop-action="resume" data-session-id="${escapeHtml(session.id)}">Resume</button>` : disabledButton("Resume", reason)}
     ${session.canStop ? `<button class="button button-danger" type="button" data-desktop-action="stop" data-session-id="${escapeHtml(session.id)}">Stop</button>` : disabledButton("Stop", reason)}
-    ${session.canCreateTask ? linkButton("New Desktop Task", `/new-task?source=codex-desktop&projectId=${encodeURIComponent(session.projectId ?? "")}`, true) : disabledButton("New Desktop Task", reason)}
+    ${session.canCreateTask ? linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: session.projectId, intent: "implement", contextSessionId: session.id }), true) : disabledButton("Новая задача", reason)}
+    ${session.canCreateTask ? linkButton("Вопрос по реализации", newTaskHref({ source: "codex-desktop", projectId: session.projectId, intent: "question", title: "Implementation question", contextSessionId: session.id })) : disabledButton("Вопрос по реализации", reason)}
   </div>`;
 }
 
@@ -1511,9 +1773,14 @@ function renderDesktopContinueForm(session: CodexDesktopSession): string {
 function renderDesktopHistoryItem(entry: CodexDesktopHistoryEntry): string {
   const role = entry.role ? ` · ${entry.role}` : "";
   return `<li>
-    <strong>${entry.sequence}. ${escapeHtml(entry.kind)}${escapeHtml(role)}</strong>
-    <div class="muted">${escapeHtml(entry.occurredAt)} · ${escapeHtml(entry.source)}</div>
-    <p>${escapeHtml(entry.summary)}</p>
+    <strong>${entry.sequence}. ${escapeHtml(entry.summary || entry.title || entry.kind)}</strong>
+    <div class="meta-line">${escapeHtml(compactDate(entry.occurredAt))}</div>
+    ${renderDetails("Event details", [
+      { label: "kind", value: entry.kind },
+      { label: "role", value: role.trim().replace(/^·\s*/u, "") },
+      { label: "source", value: entry.source },
+      { label: "occurred", value: entry.occurredAt }
+    ])}
   </li>`;
 }
 
@@ -1574,70 +1841,84 @@ function renderCodexPanel(input: {
 
   return `
     <section class="panel hero">
-      <p class="eyebrow">Codex control</p>
+      <p class="eyebrow">Сессии</p>
       <h1>Codex Desktop / CLI</h1>
-      <p class="muted">Source-aware task panel. Desktop data comes from the API adapter; raw prompts and logs stay hidden.</p>
-      ${renderSourceSwitcher(source)}
+      <div class="actions">
+        ${linkButton("Новая задача", "/new-task", true)}
+        ${linkButton("Задать вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}
+      </div>
     </section>
-    <section class="panel">
-      <h2>Фильтры</h2>
-      <form method="GET" action="/codex" class="grid">
-        <input type="hidden" name="source" value="${escapeHtml(source)}">
-        ${input.project ? `<input type="hidden" name="project" value="${escapeHtml(input.project)}">` : ""}
-        <label><span class="eyebrow">State</span><select name="state">
-          ${["all", "active", "recent", "archived", "unknown", "running", "paused", "completed", "blocked", "unsupported"].map((state) => `<option value="${state}"${input.state === state ? " selected" : ""}>${state}</option>`).join("")}
-        </select></label>
-        <label><span class="eyebrow">Sort</span><select name="sort">
-          ${[
-            ["updated-desc", "Updated newest"],
-            ["updated-asc", "Updated oldest"],
-            ["title-asc", "Title A-Z"],
-            ["title-desc", "Title Z-A"]
-          ].map(([value, label]) => `<option value="${value}"${sort === value ? " selected" : ""}>${label}</option>`).join("")}
-        </select></label>
-        <label><span class="eyebrow">Search</span><input name="q" value="${escapeHtml(query)}" placeholder="title, project, path"></label>
-        <div class="actions"><button class="button button-primary" type="submit">Применить</button>${linkButton("Сбросить", "/codex")}</div>
-      </form>
-    </section>
-    <section class="grid">
-      <div class="kv-item"><div class="eyebrow">Desktop projects</div><strong>${input.desktopProjects.length}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Desktop sessions</div><strong>${input.desktopSessions.length}</strong></div>
-      <div class="kv-item"><div class="eyebrow">CLI sessions</div><strong>${input.cliSessions.length}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Visible</div><strong>${cards.length}</strong></div>
-    </section>
+      <section class="panel">
+        <form method="GET" action="/codex" class="inline-form">
+          <input type="hidden" name="source" value="${escapeHtml(source)}">
+          ${input.project ? `<input type="hidden" name="project" value="${escapeHtml(input.project)}">` : ""}
+          <label><span class="eyebrow">Поиск</span><input name="q" value="${escapeHtml(query)}" placeholder="session, project, path"></label>
+          <div class="actions"><button class="button button-primary" type="submit">Найти</button>${linkButton("Сбросить", "/codex")}</div>
+          ${renderSourceSwitcher(source)}
+          <details class="meta-details">
+            <summary>Фильтры</summary>
+            <div class="form-row">
+              <label><span class="eyebrow">State</span><select name="state">
+                ${["all", "active", "recent", "archived", "unknown", "running", "paused", "completed", "blocked", "unsupported"].map((state) => `<option value="${state}"${input.state === state ? " selected" : ""}>${state}</option>`).join("")}
+              </select></label>
+              <label><span class="eyebrow">Sort</span><select name="sort">
+                ${[
+                  ["updated-desc", "Updated newest"],
+                  ["updated-asc", "Updated oldest"],
+                  ["title-asc", "Title A-Z"],
+                  ["title-desc", "Title Z-A"]
+                ].map(([value, label]) => `<option value="${value}"${sort === value ? " selected" : ""}>${label}</option>`).join("")}
+              </select></label>
+            </div>
+          </details>
+        </form>
+      </section>
     ${desktopReason ? `<section class="notice notice-warn">Desktop actions may be disabled: ${escapeHtml(desktopReason)}</section>` : ""}
     <section class="panel">
-      <h2>Sessions</h2>
+      <div class="panel-header">
+        <h2>Результаты</h2>
+        ${renderBadge(`${cards.length} visible`, "info")}
+      </div>
       ${renderSessionCards(cards)}
     </section>
-    <section class="panel">
+    <details class="panel meta-details">
+      <summary>Проекты и счетчики</summary>
+      <section class="grid">
+        <div class="kv-item"><div class="eyebrow">Desktop projects</div><strong>${input.desktopProjects.length}</strong></div>
+        <div class="kv-item"><div class="eyebrow">Desktop sessions</div><strong>${input.desktopSessions.length}</strong></div>
+        <div class="kv-item"><div class="eyebrow">CLI sessions</div><strong>${input.cliSessions.length}</strong></div>
+      </section>
       <h2>Codex Desktop projects</h2>
-      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="muted">${escapeHtml(project.path)}</div></div><div class="status-meta">${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path))}${linkButton("Новая задача", `/new-task?source=codex-desktop&projectId=${encodeURIComponent(project.id)}`, project.active)}</div></li>`).join("")}</ul>`}
-    </section>
+      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="meta-line">${escapeHtml(compactPath(project.path))}</div>${renderDetails("Project details", [{ label: "path", value: project.path }])}</div><div class="status-meta">${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div></li>`).join("")}</ul>`}
+    </details>
   `;
 }
 
 function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail, options: { historyOrder?: string; userId?: string } = {}): string {
   const session = detail.session;
   const historyOrder = normalizeDesktopHistoryOrder(options.historyOrder);
+  const latest = detail.history.at(-1);
+  const sessionCard = desktopSessionCard(session);
   return `
     <section class="panel hero">
       <p class="eyebrow">Codex Desktop</p>
       <h1>${escapeHtml(session.title)}</h1>
-      <p class="muted">${escapeHtml(session.projectPath ?? "project unknown")}</p>
+      <div class="session-title-row">${renderBadge(sessionResultLabel(sessionCard), sessionResultTone(sessionCard))}<span class="muted">${escapeHtml(compactPath(session.projectPath))} · ${escapeHtml(compactDate(session.updatedAt))}</span></div>
+      <p class="result-line">${escapeHtml(latest?.summary ?? "Результат появится после первого ответа Codex Desktop.")}</p>
       <div class="notice notice-info" data-action-feedback hidden>Ждем действие.</div>
       ${renderDesktopActions(session)}
-    </section>
-    <section class="grid">
-      <div class="kv-item"><div class="eyebrow">Source</div><strong>Codex Desktop</strong></div>
-      <div class="kv-item"><div class="eyebrow">Status</div><strong>${escapeHtml(session.status)}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Updated</div><strong>${escapeHtml(session.updatedAt)}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Contract</div><strong>${session.canResume || session.canStop || session.canCreateTask ? "partial" : "unsupported"}</strong></div>
+      ${renderDetails("Технические детали", [
+        { label: "session", value: session.id },
+        { label: "status", value: session.status },
+        { label: "updated", value: session.updatedAt },
+        { label: "path", value: session.projectPath },
+        { label: "contract", value: session.canResume || session.canStop || session.canCreateTask ? "partial" : "unsupported" }
+      ])}
     </section>
     ${session.unsupportedReason ? `<section class="notice notice-warn">${escapeHtml(desktopUnsupportedReason(session))}</section>` : ""}
     ${renderDesktopContinueForm(session)}
     <section class="panel">
-      <h2>History</h2>
+      <h2>Результат и ход работы</h2>
       ${renderDesktopHistory(detail, { historyOrder, userId: options.userId })}
     </section>
   `;
@@ -1651,9 +1932,14 @@ function renderProjectCards(projects: MiniAppProjectCard[]): string {
   return `<ul class="status-list">${projects.map((project) => `<li>
     <div>
       <strong><a href="${escapeHtml(project.href)}">${escapeHtml(project.repoName)}</a></strong>
-      <div class="muted">${escapeHtml(project.path)} · ${escapeHtml(project.hostLabel ?? "host n/a")}${project.defaultBranch ? ` · ${escapeHtml(project.defaultBranch)}` : ""}</div>
+      <div class="meta-line">${escapeHtml(project.hostLabel ?? "host n/a")} · active ${project.activeSessions}</div>
+      ${renderDetails("Project details", [
+        { label: "path", value: project.path },
+        { label: "branch", value: project.defaultBranch },
+        { label: "host", value: project.hostLabel }
+      ])}
     </div>
-    <div class="status-meta">${project.hostStatus ? renderBadge(project.hostStatus) : ""}${renderBadge(`active ${project.activeSessions}`, "info")}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path))}${linkButton("Новая задача", project.newSessionHref, true)}</div>
+    <div class="status-meta">${project.hostStatus ? renderBadge(project.hostStatus) : ""}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path))}${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -1665,9 +1951,10 @@ function renderDesktopProjectCards(projects: CodexDesktopProject[]): string {
   return `<ul class="status-list">${projects.map((project) => `<li>
     <div>
       <strong>${escapeHtml(project.label)}</strong>
-      <div class="muted">${escapeHtml(project.path)}</div>
+      <div class="meta-line">${escapeHtml(compactPath(project.path))}</div>
+      ${renderDetails("Project details", [{ label: "path", value: project.path }])}
     </div>
-    <div class="status-meta">${renderBadge("Codex Desktop", "info")}${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path))}${linkButton("Новая задача", `/new-task?source=codex-desktop&projectId=${encodeURIComponent(project.id)}`, project.active)}</div>
+    <div class="status-meta">${renderBadge("Codex Desktop", "info")}${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -1677,7 +1964,7 @@ function renderProjectsView(projects: MiniAppProjectCard[], desktopProjects: Cod
     ? `<section class="panel">${renderEmptyState("Проекты не найдены", "Подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список projects.", "Проверить хосты", "/hosts")}</section>`
     : "";
 
-  return `<section class="panel hero"><h1>Проекты</h1><p class="muted">Codex CLI workspaces and local Codex Desktop projects.</p></section>
+  return `<section class="panel hero"><h1>Проекты</h1><div class="actions">${linkButton("Новая задача", "/new-task", true)}${linkButton("Вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}</div></section>
     <section class="grid">
       <div class="kv-item"><div class="eyebrow">CLI projects</div><strong>${projects.length}</strong></div>
       <div class="kv-item"><div class="eyebrow">Desktop projects</div><strong>${desktopProjects.length}</strong></div>
@@ -1694,12 +1981,27 @@ function renderProjectsView(projects: MiniAppProjectCard[], desktopProjects: Cod
     </section>`;
 }
 
-function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?: string; workspaceId?: string; source?: string; projectId?: string }, desktop?: { projects: CodexDesktopProject[]; control?: CodexDesktopControlStatus }): string {
+function renderNewTaskForm(
+  projects: MiniAppProjectCard[],
+  selected?: {
+    hostId?: string;
+    workspaceId?: string;
+    source?: string;
+    projectId?: string;
+    intent?: string;
+    title?: string;
+    contextSessionId?: string;
+  },
+  desktop?: { projects: CodexDesktopProject[]; control?: CodexDesktopControlStatus }
+): string {
   const selectedWorkspaceId = selected?.workspaceId ?? projects[0]?.id;
   const selectedProject = projects.find((project) => project.id === selectedWorkspaceId) ?? projects[0];
   const desktopProjects = desktop?.projects ?? [];
   const desktopCanCreate = Boolean(desktop?.control?.canCreateTask);
   const selectedSource = selected?.source === "codex-desktop" || (projects.length === 0 && desktopCanCreate) ? "codex-desktop" : "codex-cli";
+  const selectedIntent = normalizeNewTaskIntent(selected?.intent);
+  const selectedMode = defaultModeForIntent(selectedIntent);
+  const title = selected?.title ?? (selectedIntent === "question" ? "Implementation question" : selectedIntent === "review" ? "Review implementation result" : "Mini App task");
   const desktopReason = desktop?.control?.unsupportedReason || desktop?.control?.unsupportedReasonCode
     ? desktopUnsupportedReason(desktop.control)
     : "Stable Codex Desktop New Task contract is unavailable.";
@@ -1709,39 +2011,46 @@ function renderNewTaskForm(projects: MiniAppProjectCard[], selected?: { hostId?:
   const hasAnyProjects = projects.length > 0 || desktopProjects.length > 0;
 
   return `<section class="panel hero">
-    <h1>Новая Codex-задача</h1>
-    <p class="muted">Сначала выберите runtime/source. CLI использует HappyTG host flow; Desktop доступен только при proven contract.</p>
+    <h1>${escapeHtml(intentLabel(selectedIntent))}</h1>
+    <div class="actions">${linkButton("Сессии", "/sessions")}${linkButton("Проекты", "/projects")}</div>
   </section>
   <section class="panel">
-    ${!hasAnyProjects ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form>
-      <label class="eyebrow" for="runtime">Source</label>
-      <select id="runtime" name="runtime">
-        <option value="codex-cli"${selectedSource === "codex-cli" ? " selected" : ""}${projects.length > 0 ? "" : " disabled"}>Codex CLI${projects.length > 0 ? "" : " (no host project)"}</option>
-        <option value="codex-desktop"${selectedSource === "codex-desktop" ? " selected" : ""}${desktopCanCreate ? "" : " disabled"}>Codex Desktop${desktopCanCreate ? "" : " (unsupported)"}</option>
-      </select>
+    ${!hasAnyProjects ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form class="inline-form">
+      <div class="intent-grid" role="radiogroup" aria-label="Intent">
+        ${(["implement", "question", "review"] as const).map((intent) => `<label><input type="radio" name="intent" value="${intent}"${selectedIntent === intent ? " checked" : ""}><span>${escapeHtml(intentLabel(intent))}</span></label>`).join("")}
+      </div>
       <input type="hidden" name="hostId" value="${escapeHtml(selectedProject?.hostId ?? selected?.hostId ?? "")}">
+      <input type="hidden" name="contextSessionId" value="${escapeHtml(selected?.contextSessionId ?? "")}">
       <div class="notice notice-info" data-task-feedback hidden>Создаем сессию.</div>
       ${desktopCanCreate ? "" : `<div class="notice notice-warn">New Desktop Task disabled: ${escapeHtml(desktopReason)}</div>`}
-      <div data-source-fields="codex-cli"${selectedSource === "codex-cli" ? "" : " hidden"}>
-        <label class="eyebrow" for="workspaceId">CLI проект</label>
-        <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''">${options}</select>
-      </div>
-      <div data-source-fields="codex-desktop"${selectedSource === "codex-desktop" ? "" : " hidden"}>
-        <label class="eyebrow" for="projectId">Desktop проект</label>
-        <select id="projectId" name="projectId">${desktopOptions}</select>
-      </div>
-      <label class="eyebrow" for="mode">Режим</label>
-      <select id="mode" name="mode">
-        <option value="proof" selected>proof</option>
-        <option value="quick">quick</option>
-      </select>
-      <label class="eyebrow" for="title">Название</label>
-      <input id="title" name="title" value="Mini App task">
       <label class="eyebrow" for="task-draft">Инструкция</label>
-      <textarea id="task-draft" name="prompt" data-draft placeholder="Опишите задачу коротко и конкретно"></textarea>
-      <label class="eyebrow" for="acceptanceCriteria">Критерии приемки</label>
-      <textarea id="acceptanceCriteria" name="acceptanceCriteria" placeholder="Каждый критерий с новой строки"></textarea>
-      <div class="actions"><button class="button button-primary" type="submit">Создать Codex-сессию</button>${linkButton("Отмена", "/projects")}</div>
+      <textarea id="task-draft" name="prompt" data-draft placeholder="${selectedIntent === "question" ? "Что нужно уточнить по реализации?" : selectedIntent === "review" ? "Что проверить в результате сессии?" : "Что нужно реализовать или исправить?"}"></textarea>
+      <details class="meta-details">
+        <summary>Настройки</summary>
+        <div class="form-row">
+          <label><span class="eyebrow">Source</span><select id="runtime" name="runtime">
+            <option value="codex-cli"${selectedSource === "codex-cli" ? " selected" : ""}${projects.length > 0 ? "" : " disabled"}>Codex CLI${projects.length > 0 ? "" : " (no host project)"}</option>
+            <option value="codex-desktop"${selectedSource === "codex-desktop" ? " selected" : ""}${desktopCanCreate ? "" : " disabled"}>Codex Desktop${desktopCanCreate ? "" : " (unsupported)"}</option>
+          </select></label>
+          <label><span class="eyebrow">Mode</span><select id="mode" name="mode">
+            <option value="proof"${selectedMode === "proof" ? " selected" : ""}>proof</option>
+            <option value="quick"${selectedMode === "quick" ? " selected" : ""}>quick</option>
+          </select></label>
+        </div>
+        <div data-source-fields="codex-cli"${selectedSource === "codex-cli" ? "" : " hidden"}>
+          <label class="eyebrow" for="workspaceId">CLI проект</label>
+          <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''">${options}</select>
+        </div>
+        <div data-source-fields="codex-desktop"${selectedSource === "codex-desktop" ? "" : " hidden"}>
+          <label class="eyebrow" for="projectId">Desktop проект</label>
+          <select id="projectId" name="projectId">${desktopOptions}</select>
+        </div>
+        <label class="eyebrow" for="title">Название</label>
+        <input id="title" name="title" value="${escapeHtml(title)}">
+        <label class="eyebrow" for="acceptanceCriteria">Критерии приемки</label>
+        <textarea id="acceptanceCriteria" name="acceptanceCriteria" placeholder="Каждый критерий с новой строки"></textarea>
+      </details>
+      <div class="actions"><button class="button button-primary" type="submit">${selectedIntent === "question" ? "Отправить вопрос" : "Создать Codex-сессию"}</button>${linkButton("Отмена", "/projects")}</div>
     </form>`}
   </section>`;
 }
@@ -1840,34 +2149,49 @@ function renderSessionDetail(detail: {
   events: SessionEvent[];
   actions: string[];
 }): string {
+  const questionHref = newTaskHref({
+    workspaceId: detail.task?.workspaceId,
+    intent: "question",
+    title: "Implementation question",
+    contextSessionId: detail.session.id
+  });
+  const taskHref = newTaskHref({
+    workspaceId: detail.task?.workspaceId,
+    intent: "implement",
+    contextSessionId: detail.session.id
+  });
   return `
     <section class="panel hero">
       <p class="eyebrow">Session</p>
       <h1>${escapeHtml(detail.session.title)}</h1>
-      <p class="muted">${escapeHtml(runtimeLabel(detail.session.runtime))} · ${escapeHtml(detail.session.repoName ?? "repo n/a")} · ${escapeHtml(detail.session.hostLabel ?? "host n/a")}</p>
+      <div class="session-title-row">${renderBadge(sessionResultLabel(detail.session), sessionResultTone(detail.session))}<span class="muted">${escapeHtml(runtimeLabel(detail.session.runtime))} · ${escapeHtml(detail.session.repoName ?? "repo n/a")} · ${escapeHtml(compactDate(detail.session.lastUpdatedAt))}</span></div>
       <div class="actions">
         ${detail.approval && detail.approval.state === "waiting_human" ? linkButton("Открыть approval", detail.approval.href, true) : ""}
+        ${linkButton("Задать вопрос", questionHref, !detail.approval || detail.approval.state !== "waiting_human")}
+        ${linkButton("Новая задача", taskHref)}
         ${detail.task ? linkButton("Proof timeline", `/task/${encodeURIComponent(detail.task.id)}`) : ""}
         ${linkButton("Diff", `/diff/${encodeURIComponent(detail.session.id)}`)}
         ${linkButton("Verify", `/verify/${encodeURIComponent(detail.session.id)}`)}
       </div>
-    </section>
-    <section class="grid">
-      <div class="kv-item"><div class="eyebrow">Status</div><strong>${escapeHtml(detail.session.state)}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Runtime</div><strong>${escapeHtml(runtimeLabel(detail.session.runtime))}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Phase</div><strong>${escapeHtml(detail.session.phase ?? "n/a")}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Verify</div><strong>${escapeHtml(detail.session.verificationState ?? "not_started")}</strong></div>
+      ${renderDetails("Технические детали", [
+        { label: "session", value: detail.session.id },
+        { label: "state", value: detail.session.state },
+        { label: "phase", value: detail.session.phase },
+        { label: "verify", value: detail.session.verificationState },
+        { label: "host", value: detail.session.hostLabel },
+        { label: "path", value: detail.session.projectPath }
+      ])}
     </section>
     <section class="panel">
-      <h2>Summary</h2>
+      <h2>Результат</h2>
       <p>${escapeHtml(detail.session.currentSummary ?? "Сводки пока нет.")}</p>
       ${detail.session.lastError ? `<p class="muted">${escapeHtml(detail.session.lastError)}</p>` : ""}
     </section>
     ${detail.task ? renderProofProgress(detail.task, { sessionState: detail.session.state }) : ""}
-    <section class="panel">
-      <h2>Timeline</h2>
+    <details class="panel meta-details">
+      <summary>Timeline</summary>
       <ol class="timeline">${detail.events.map((event) => `<li><strong>${event.sequence}. ${escapeHtml(event.type)}</strong><div class="muted">${escapeHtml(event.occurredAt)}</div><pre>${escapeHtml(JSON.stringify(event.payload, null, 2))}</pre></li>`).join("") || "<li>No events recorded.</li>"}</ol>
-    </section>
+    </details>
   `;
 }
 
@@ -2213,7 +2537,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           return;
         }
 
-        const body = `<section class="panel hero"><h1>${escapeHtml(project.repoName)}</h1><p class="muted">${escapeHtml(project.path)}</p><div class="actions">${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path))}${linkButton("Projects", "/projects")}</div></section>
+        const body = `<section class="panel hero"><h1>${escapeHtml(project.repoName)}</h1><p class="meta-line">${escapeHtml(project.hostLabel ?? "host n/a")} · active ${project.activeSessions}</p><div class="actions">${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path))}${linkButton("Projects", "/projects")}</div>${renderDetails("Project details", [{ label: "path", value: project.path }, { label: "host", value: project.hostLabel }, { label: "branch", value: project.defaultBranch }])}</section>
           <section class="grid">
             <div class="kv-item"><div class="eyebrow">Runtime</div><strong>Codex CLI</strong></div>
             <div class="kv-item"><div class="eyebrow">Host</div><strong>${escapeHtml(project.hostLabel ?? "host n/a")}</strong></div>
@@ -2270,7 +2594,10 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           hostId: url.searchParams.get("hostId") ?? undefined,
           workspaceId: url.searchParams.get("workspaceId") ?? undefined,
           source: url.searchParams.get("source") ?? undefined,
-          projectId: url.searchParams.get("projectId") ?? undefined
+          projectId: url.searchParams.get("projectId") ?? undefined,
+          intent: url.searchParams.get("intent") ?? undefined,
+          title: url.searchParams.get("title") ?? undefined,
+          contextSessionId: url.searchParams.get("contextSessionId") ?? undefined
         }, { projects: desktopProjects.projects, control: desktopControl.control }), { navKey: "projects" }));
       }),
       route("POST", "/codex/desktop-action", async ({ req, res, url }) => {
@@ -2319,13 +2646,25 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           return;
         }
 
-        const body = await readJsonBody<Omit<CreateSessionRequest, "userId" | "runtime"> & { runtime?: string; projectId?: string; projectPath?: string }>(req);
-        let desktopBody = body;
+        const body = await readJsonBody<Omit<CreateSessionRequest, "userId" | "runtime"> & {
+          runtime?: string;
+          projectId?: string;
+          projectPath?: string;
+          intent?: string;
+          contextSessionId?: string;
+        }>(req);
+        const prompt = buildMiniAppTaskPrompt(body);
+        const { intent: _intent, contextSessionId: _contextSessionId, ...sessionBody } = body;
+        const requestBody = {
+          ...sessionBody,
+          prompt
+        };
+        let desktopBody = requestBody;
         if (body.runtime === "codex-desktop" && body.projectId && !body.projectPath) {
           const desktopProjects = await fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects");
           const project = desktopProjects.projects.find((item) => item.id === body.projectId);
           desktopBody = {
-            ...body,
+            ...requestBody,
             projectPath: project?.path
           };
         }
@@ -2334,7 +2673,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           created = body.runtime === "codex-desktop"
             ? await postForRequest<CodexDesktopControlResult>(req, url, "/api/v1/codex-desktop/tasks", desktopBody)
             : await postForRequest<{ session: MiniAppSessionCard }>(req, url, "/api/v1/miniapp/sessions", {
-                ...body,
+                ...requestBody,
                 runtime: "codex-cli"
               });
         } catch (error) {
