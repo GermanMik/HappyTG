@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -270,6 +272,160 @@ test("Codex Desktop adapter parses projects from global state without private pa
     assert.equal(projects[0]?.active, true);
     assert.doesNotMatch(JSON.stringify(projects), /SECRET_TOKEN_SHOULD_NOT_APPEAR/);
   } finally {
+    await rm(codexHome, { recursive: true, force: true });
+  }
+});
+
+async function readRequestBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  const raw = Buffer.concat(chunks).toString("utf8").trim();
+  return raw ? JSON.parse(raw) as Record<string, unknown> : {};
+}
+
+async function listenTestServer(server: Server): Promise<string> {
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      server.off("error", reject);
+      resolve();
+    });
+  });
+
+  const address = server.address() as AddressInfo;
+  return `http://127.0.0.1:${address.port}`;
+}
+
+async function closeTestServer(server: Server): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+function writeJson(res: ServerResponse, statusCode: number, payload: unknown): void {
+  res.statusCode = statusCode;
+  res.setHeader("content-type", "application/json; charset=utf-8");
+  res.end(`${JSON.stringify(payload)}\n`);
+}
+
+test("Codex Desktop host-proxy control contract delegates projects, sessions, and tasks over HTTP", async () => {
+  const codexHome = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-host-proxy-"));
+  const session = {
+    id: "session-1",
+    title: "Proxy Desktop session",
+    projectPath: "C:/Develop/Projects/HappyTG",
+    updatedAt: "2026-06-10T11:00:00.000Z",
+    status: "active" as const,
+    source: "codex-desktop" as const,
+    canResume: true,
+    canStop: true,
+    canCreateTask: true
+  };
+  const seenAuthorization: string[] = [];
+  const server = createServer(async (req, res) => {
+    const url = new URL(req.url ?? "/", "http://localhost");
+    seenAuthorization.push(String(req.headers.authorization ?? ""));
+    if (req.headers.authorization !== "Bearer secret") {
+      writeJson(res, 401, { error: "unauthorized" });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/v1/codex-desktop/control") {
+      writeJson(res, 200, {
+        control: {
+          canResume: true,
+          canStop: true,
+          canCreateTask: true
+        }
+      });
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/v1/codex-desktop/projects") {
+      writeJson(res, 200, {
+        projects: [
+          {
+            id: "cdp_proxy",
+            label: "HappyTG",
+            path: "C:/Develop/Projects/HappyTG",
+            source: "codex-desktop",
+            active: true
+          }
+        ]
+      });
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/v1/codex-desktop/sessions") {
+      writeJson(res, 200, { sessions: [session] });
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/v1/codex-desktop/sessions/session-1") {
+      writeJson(res, 200, {
+        session,
+        history: [],
+        historyTruncated: false
+      });
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/v1/codex-desktop/tasks") {
+      const body = await readRequestBody(req);
+      writeJson(res, 200, {
+        ok: true,
+        action: "new-task",
+        source: "codex-desktop",
+        task: {
+          id: "session-new",
+          title: body.title,
+          projectPath: body.projectPath,
+          status: "running"
+        }
+      });
+      return;
+    }
+
+    writeJson(res, 404, { error: "not found" });
+  });
+  let adapter: CodexDesktopStateAdapter | undefined;
+
+  try {
+    const baseUrl = await listenTestServer(server);
+    adapter = new CodexDesktopStateAdapter({
+      codexHome,
+      env: {
+        HAPPYTG_CODEX_DESKTOP_CONTROL: "host-proxy",
+        HAPPYTG_CODEX_DESKTOP_PROXY_URL: baseUrl,
+        HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN: "secret"
+      } as NodeJS.ProcessEnv
+    });
+
+    const projects = await adapter.listProjects();
+    const control = await adapter.controlStatus();
+    const sessions = await adapter.listSessions({ limit: 10 });
+    const detail = await adapter.getSessionDetail("session-1");
+    const created = await adapter.createTask({
+      userId: "usr_1",
+      projectPath: "C:/Develop/Projects/HappyTG",
+      prompt: "Run through proxy",
+      title: "Proxy task"
+    });
+
+    assert.equal(projects[0]?.id, "cdp_proxy");
+    assert.equal(control.canCreateTask, true);
+    assert.equal(sessions[0]?.id, "session-1");
+    assert.equal(detail?.session.id, "session-1");
+    assert.equal(created.task?.id, "session-new");
+    assert.ok(seenAuthorization.every((value) => value === "Bearer secret"));
+  } finally {
+    adapter?.dispose();
+    await closeTestServer(server);
     await rm(codexHome, { recursive: true, force: true });
   }
 });

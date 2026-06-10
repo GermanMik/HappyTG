@@ -17,15 +17,19 @@ import { normalizeSpawnEnv, resolveExecutable } from "../../shared/src/index.js"
 
 export const CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE = "CODEX_DESKTOP_CONTROL_UNSUPPORTED";
 export const CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE = "CODEX_DESKTOP_APP_SERVER_UNAVAILABLE";
+export const CODEX_DESKTOP_HOST_PROXY_UNAVAILABLE_REASON_CODE = "CODEX_DESKTOP_HOST_PROXY_UNAVAILABLE";
 export const CODEX_DESKTOP_HISTORY_UNAVAILABLE_REASON_CODE = "CODEX_DESKTOP_HISTORY_UNAVAILABLE";
 
 const DEFAULT_UNSUPPORTED_REASON = "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.";
 const APP_SERVER_EXPERIMENTAL_REASON = "Codex Desktop app-server control remains disabled by default because the local Codex CLI marks app-server as experimental.";
 const APP_SERVER_UNAVAILABLE_REASON = "Codex Desktop app-server control is unavailable. Start Codex Desktop or make `codex app-server` available on this host.";
+const HOST_PROXY_UNAVAILABLE_REASON = "Codex Desktop host proxy is unavailable. Start `pnpm daemon:desktop-proxy` on the Windows host and verify Docker can reach `HAPPYTG_CODEX_DESKTOP_PROXY_URL`.";
 const DEFAULT_MAX_SESSION_FILES = 500;
 const DEFAULT_HISTORY_MAX_RECORDS = 80;
 const DEFAULT_HISTORY_SUMMARY_MAX_CHARS = 320;
 const DEFAULT_APP_SERVER_REQUEST_TIMEOUT_MS = 10_000;
+const DEFAULT_HOST_PROXY_URL = "http://127.0.0.1:4318";
+const DEFAULT_HOST_PROXY_REQUEST_TIMEOUT_MS = 10_000;
 const DEFAULT_APP_SERVER_STDERR_MAX_BYTES = 8_192;
 const SECRET_FIELD_RE = /(?:secret|token|password|passwd|credential|authorization|auth|api[_-]?key|private[_-]?key|access[_-]?token|refresh[_-]?token)/iu;
 const SECRET_VALUE_RE = /\b(?:RAW_[A-Z0-9_]*SECRET[A-Z0-9_]*|sk-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|gh[pousr]_[A-Za-z0-9_]{20,}|Bearer\s+[A-Za-z0-9._~-]+|(?:api[_-]?key|token|password|secret)\s*[:=]\s*\S+)/giu;
@@ -80,6 +84,7 @@ export interface CodexDesktopControlContract {
   unsupportedReason?: string;
   unsupportedReasonCode?: string;
   capabilities?(): Promise<CodexDesktopControlCapabilities>;
+  listProjects?(): Promise<CodexDesktopProject[]>;
   listSessions?(options?: { limit?: number }): Promise<CodexDesktopSession[]>;
   getSessionDetail?(session: CodexDesktopSession, options?: { maxRecords?: number }): Promise<CodexDesktopSessionDetail>;
   resumeSession?(session: CodexDesktopSession): Promise<CodexDesktopControlResult>;
@@ -98,6 +103,13 @@ export interface CodexDesktopStateAdapterOptions {
   controlContract?: CodexDesktopControlContract;
   appServerCommand?: string;
   appServerArgs?: string[];
+}
+
+export interface CodexDesktopHostProxyControlContractOptions {
+  baseUrl?: string;
+  token?: string;
+  fetchImpl?: typeof fetch;
+  requestTimeoutMs?: number;
 }
 
 interface JsonlReadResult {
@@ -1109,6 +1121,171 @@ export function createCodexDesktopAppServerControlContract(options: {
   };
 }
 
+function hostProxyUrl(pathname: string, baseUrl: string): URL {
+  const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  return new URL(pathname.replace(/^\//u, ""), normalizedBaseUrl);
+}
+
+function headerRecord(headers: HeadersInit | undefined): Record<string, string> {
+  if (!headers) {
+    return {};
+  }
+
+  if (headers instanceof Headers) {
+    const output: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      output[key] = value;
+    });
+    return output;
+  }
+
+  if (Array.isArray(headers)) {
+    return Object.fromEntries(headers);
+  }
+
+  return headers;
+}
+
+function hostProxyErrorMessage(status: number, payload: unknown, fallback: string): string {
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const record = payload as Record<string, unknown>;
+    const reason = safeString(record.reason) ?? safeString(record.error) ?? safeString(record.detail);
+    if (reason) {
+      return reason;
+    }
+  }
+
+  if (typeof payload === "string" && payload.trim()) {
+    return payload.trim();
+  }
+
+  return `${fallback} (${status}).`;
+}
+
+export function createCodexDesktopHostProxyControlContract(options: CodexDesktopHostProxyControlContractOptions = {}): CodexDesktopControlContract {
+  const baseUrl = options.baseUrl?.trim() || process.env.HAPPYTG_CODEX_DESKTOP_PROXY_URL?.trim() || DEFAULT_HOST_PROXY_URL;
+  const token = options.token ?? process.env.HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const requestTimeoutMs = options.requestTimeoutMs
+    ?? Number(process.env.HAPPYTG_CODEX_DESKTOP_PROXY_TIMEOUT_MS ?? DEFAULT_HOST_PROXY_REQUEST_TIMEOUT_MS);
+
+  async function request<T>(pathname: string, init: RequestInit = {}): Promise<T> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+    const headers = {
+      accept: "application/json",
+      ...headerRecord(init.headers),
+      ...(token ? { authorization: `Bearer ${token}` } : {})
+    };
+
+    try {
+      const response = await fetchImpl(hostProxyUrl(pathname, baseUrl), {
+        ...init,
+        headers,
+        signal: controller.signal
+      });
+      const text = await response.text();
+      const payload = text
+        ? (() => {
+            try {
+              return JSON.parse(text) as unknown;
+            } catch {
+              return text;
+            }
+          })()
+        : undefined;
+
+      if (!response.ok) {
+        throw new CodexDesktopControlUnavailableError(hostProxyErrorMessage(response.status, payload, `Codex Desktop host proxy request ${pathname} failed`));
+      }
+
+      return payload as T;
+    } catch (error) {
+      if (error instanceof CodexDesktopControlUnavailableError) {
+        throw error;
+      }
+
+      const message = error instanceof Error && error.name === "AbortError"
+        ? `Codex Desktop host proxy request ${pathname} timed out.`
+        : error instanceof Error
+          ? error.message
+          : HOST_PROXY_UNAVAILABLE_REASON;
+      throw new CodexDesktopControlUnavailableError(message);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  return {
+    supportsResume: true,
+    supportsStop: true,
+    supportsNewTask: true,
+    unsupportedReason: HOST_PROXY_UNAVAILABLE_REASON,
+    unsupportedReasonCode: CODEX_DESKTOP_HOST_PROXY_UNAVAILABLE_REASON_CODE,
+    async capabilities() {
+      try {
+        const response = await request<{ control: CodexDesktopControlStatus }>("/api/v1/codex-desktop/control");
+        return {
+          supportsResume: response.control.canResume,
+          supportsStop: response.control.canStop,
+          supportsNewTask: response.control.canCreateTask,
+          unsupportedReason: response.control.unsupportedReason,
+          unsupportedReasonCode: response.control.unsupportedReasonCode
+        };
+      } catch (error) {
+        return {
+          supportsResume: false,
+          supportsStop: false,
+          supportsNewTask: false,
+          unsupportedReason: error instanceof Error ? error.message : HOST_PROXY_UNAVAILABLE_REASON,
+          unsupportedReasonCode: CODEX_DESKTOP_HOST_PROXY_UNAVAILABLE_REASON_CODE
+        };
+      }
+    },
+    async listProjects() {
+      const response = await request<{ projects: CodexDesktopProject[] }>("/api/v1/codex-desktop/projects");
+      return response.projects;
+    },
+    async listSessions(options = {}) {
+      const params = Number.isInteger(options.limit) && options.limit && options.limit > 0
+        ? `?limit=${encodeURIComponent(String(options.limit))}`
+        : "";
+      const response = await request<{ sessions: CodexDesktopSession[] }>(`/api/v1/codex-desktop/sessions${params}`);
+      return response.sessions;
+    },
+    async getSessionDetail(session) {
+      return request<CodexDesktopSessionDetail>(`/api/v1/codex-desktop/sessions/${encodeURIComponent(session.id)}`);
+    },
+    async resumeSession(session) {
+      return request<CodexDesktopControlResult>(`/api/v1/codex-desktop/sessions/${encodeURIComponent(session.id)}/resume`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: "{}"
+      });
+    },
+    async stopSession(session) {
+      return request<CodexDesktopControlResult>(`/api/v1/codex-desktop/sessions/${encodeURIComponent(session.id)}/stop`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: "{}"
+      });
+    },
+    async createTask(input) {
+      return request<CodexDesktopControlResult>("/api/v1/codex-desktop/tasks", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(input)
+      });
+    }
+  };
+}
+
 function defaultControlContract(options: CodexDesktopStateAdapterOptions, codexHome: string): CodexDesktopControlContract {
   const env = options.env ?? process.env;
   const mode = env.HAPPYTG_CODEX_DESKTOP_CONTROL?.trim().toLowerCase();
@@ -1116,6 +1293,13 @@ function defaultControlContract(options: CodexDesktopStateAdapterOptions, codexH
     return createCodexDesktopAppServerControlContract({
       env,
       codexHome
+    });
+  }
+  if (mode === "host-proxy") {
+    return createCodexDesktopHostProxyControlContract({
+      baseUrl: env.HAPPYTG_CODEX_DESKTOP_PROXY_URL,
+      token: env.HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN,
+      requestTimeoutMs: Number(env.HAPPYTG_CODEX_DESKTOP_PROXY_TIMEOUT_MS ?? DEFAULT_HOST_PROXY_REQUEST_TIMEOUT_MS)
     });
   }
 
@@ -1201,6 +1385,14 @@ export class CodexDesktopStateAdapter {
   }
 
   async listProjects(): Promise<CodexDesktopProject[]> {
+    if (this.controlContract.listProjects) {
+      try {
+        return await this.controlContract.listProjects();
+      } catch {
+        // Local Codex Desktop state remains useful when a host proxy is temporarily unavailable.
+      }
+    }
+
     const globalState = await readJsonObject(path.join(this.codexHome(), ".codex-global-state.json"));
     if (!globalState) {
       return [];

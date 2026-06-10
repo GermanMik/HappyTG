@@ -14,6 +14,7 @@
 - Prometheus and Grafana for MVP observability.
 - `infra/Dockerfile.app` for packaged API, worker, bot, and Mini App surfaces.
 - `apps/host-daemon` running directly on each execution host, outside the control-plane container stack.
+- Optional `pnpm daemon:desktop-proxy` on Windows execution hosts when Docker API needs Codex Desktop `resume`, `stop`, or `new-task` controls through `host.docker.internal`.
 
 ## Public Topology
 
@@ -95,7 +96,7 @@ Leave `HAPPYTG_BROWSER_API_URL` empty for the public Telegram Mini App path. Whe
 
    System Caddy remains operator-owned. If valid HappyTG routes already exist and `caddy validate` passes, the installer reports reuse. If routes are missing, the default is to print a snippet; patching a Caddyfile requires a second confirmation, backup, validation, and reload.
 
-   Docker install does not start `apps/host-daemon`.
+   Docker install does not start `apps/host-daemon` or the Codex Desktop host proxy.
 
 4. Confirm API, bot, worker, and Mini App logs are healthy. The installer's Docker launch path validates:
    - `docker compose --env-file .env -f infra/docker-compose.example.yml config`
@@ -118,6 +119,39 @@ Leave `HAPPYTG_BROWSER_API_URL` empty for the public Telegram Mini App path. Whe
 3. Start `apps/host-daemon` directly on the execution host. This remains outside Compose by design.
 4. Pair the host through Telegram and wait for the control plane to record the host heartbeat.
 5. Run `pnpm happytg verify` and one quick Codex smoke session before allowing proof-loop tasks.
+
+## Codex Desktop Controls From Docker
+
+Docker containers are a durable place for the HappyTG API and Mini App, but they should not directly mutate Windows Codex Desktop state. For Desktop controls, run the proxy on the Windows host:
+
+```powershell
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN="<local-random-token>"
+pnpm daemon:desktop-proxy
+```
+
+Then enable the Docker API client side:
+
+```powershell
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_URL="http://host.docker.internal:4318"
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN="<same-local-random-token>"
+docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop-host-proxy.yml up -d api miniapp
+```
+
+Use the read-only projection override as an optional fallback:
+
+```powershell
+$env:HAPPYTG_HOST_CODEX_HOME="C:/Users/example/.codex"
+docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml -f infra/docker-compose.codex-desktop-host-proxy.yml up -d api miniapp
+```
+
+For a reboot-durable Windows setup, run `pnpm daemon:desktop-proxy` from a user Scheduled Task or service wrapper in the same user context that can run `codex app-server`. The helper below registers a user-logon Scheduled Task:
+
+```powershell
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN="<local-random-token>"
+.\scripts\install-codex-desktop-proxy-task.ps1 -Force -StartNow
+```
+
+Keep `HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN` local and do not expose the proxy through the public reverse proxy.
 
 ## Host Cleanup
 

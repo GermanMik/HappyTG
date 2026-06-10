@@ -28,6 +28,12 @@
 - `JWT_SIGNING_KEY`
 - `CODEX_CLI_BIN`
 - `CODEX_CONFIG_PATH`
+- `HAPPYTG_HOST_CODEX_HOME`
+- `HAPPYTG_CODEX_DESKTOP_CONTROL`
+- `HAPPYTG_CODEX_DESKTOP_PROXY_URL`
+- `HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN`
+- `HAPPYTG_CODEX_DESKTOP_PROXY_HOST`
+- `HAPPYTG_CODEX_DESKTOP_PROXY_PORT`
 - `HOST_DAEMON_MUTATION_QUEUE_CONCURRENCY`
 - `HAPPYTG_MINIAPP_PORT`
 - `HAPPYTG_API_PORT`
@@ -74,6 +80,51 @@ Lower layers may tighten but must not weaken higher layers.
 - Docker Compose maps `${HAPPYTG_MINIAPP_PORT:-3001}:3001` but forces the Mini App container listener to `3001`; this lets a host port such as `3007` coexist with Caddy's Docker-network upstream.
 - `HAPPYTG_MINIAPP_UPSTREAM` is for host-run Caddy. Set `HAPPYTG_MINIAPP_UPSTREAM=127.0.0.1:3007` only when Caddy runs on the host and Mini App runs directly on `3007`.
 - Leave `HAPPYTG_MINIAPP_UPSTREAM` unset for Docker Compose Caddy; the default upstream is `miniapp:3001` inside the Docker network.
+
+## Docker Codex Desktop Projection
+
+Use `infra/docker-compose.codex-desktop.yml` when the Docker API must read local Codex Desktop projects and sessions:
+
+```powershell
+$env:HAPPYTG_HOST_CODEX_HOME="C:/Users/tikta/.codex"
+docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml up -d api miniapp
+```
+
+The override mounts `HAPPYTG_HOST_CODEX_HOME` into the API container as read-only `/codex-home` and sets `CODEX_HOME=/codex-home`. This enables read-only Codex Desktop projections from Docker. It does not enable mutating Desktop `app-server` control inside the Linux container.
+
+## Docker Codex Desktop Host Proxy
+
+Use a Windows host-side proxy when Docker should keep the API and Mini App durable, but Codex Desktop mutating controls must run on the Windows host that owns `codex app-server`.
+
+Start the proxy on the Windows host:
+
+```powershell
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_HOST="127.0.0.1"
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_PORT="4318"
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN="<local-random-token>"
+pnpm daemon:desktop-proxy
+```
+
+For a user-logon Scheduled Task:
+
+```powershell
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN="<local-random-token>"
+.\scripts\install-codex-desktop-proxy-task.ps1 -Force -StartNow
+```
+
+Then start the Docker API with the host-proxy override:
+
+```powershell
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_URL="http://host.docker.internal:4318"
+$env:HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN="<same-local-random-token>"
+docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop-host-proxy.yml up -d api miniapp
+```
+
+The proxy exposes only local Codex Desktop endpoints under `/api/v1/codex-desktop/*`. Read calls can run in parallel; `resume`, `stop`, and `new-task` are serialized inside the proxy before they reach `codex app-server`.
+
+Default binding is `127.0.0.1`. If Docker Desktop cannot reach that listener through `host.docker.internal`, set `HAPPYTG_CODEX_DESKTOP_PROXY_HOST=0.0.0.0` only with `HAPPYTG_CODEX_DESKTOP_PROXY_TOKEN` configured and restrict Windows Firewall to the local Docker/host network. The proxy refuses non-loopback binds without a token.
+
+`infra/docker-compose.codex-desktop-host-proxy.yml` can be combined with `infra/docker-compose.codex-desktop.yml` when you want both read-only `/codex-home` projection fallback and host-side mutating control.
 
 ## Telegram Mini App Launch Surfaces
 

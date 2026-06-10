@@ -1,0 +1,3 @@
+
+> @happytg/host-daemon@0.4.15 typecheck C:\Develop\Projects\HappyTG\apps\host-daemon
+> tsc -p tsconfig.json --noEmit

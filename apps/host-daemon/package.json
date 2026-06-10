@@ -9,6 +9,7 @@
     "run": "tsx src/index.ts run",
     "pair": "tsx src/index.ts pair",
     "once": "tsx src/index.ts once",
+    "desktop-proxy": "tsx src/index.ts desktop-proxy",
     "build": "tsc -p tsconfig.json",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",

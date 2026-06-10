@@ -1,0 +1,49 @@
+{
+  "taskId": "HTG-2026-06-10-codex-desktop-host-proxy",
+  "status": "passed",
+  "goal": "Add deployable host-side Codex Desktop proxy for Docker API control.",
+  "changedAreas": [
+    "apps/host-daemon",
+    "packages/runtime-adapters",
+    "infra",
+    "docs",
+    "scripts"
+  ],
+  "verification": [
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck-runtime-adapters.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters test",
+      "status": "passed",
+      "raw": "raw/test-runtime-adapters.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/host-daemon typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck-host-daemon.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/host-daemon test",
+      "status": "passed",
+      "raw": "raw/test-host-daemon.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/api typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck-api.txt"
+    },
+    {
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop-host-proxy.yml config --quiet",
+      "status": "passed",
+      "raw": "raw/docker-compose-host-proxy-config-quiet.txt"
+    },
+    {
+      "command": "PowerShell parser syntax check for scripts/install-codex-desktop-proxy-task.ps1",
+      "status": "passed",
+      "raw": "raw/powershell-script-syntax.txt"
+    }
+  ]
+}

@@ -24,6 +24,7 @@ import {
   readJsonFile,
   writeJsonFileAtomic
 } from "../../../packages/shared/src/index.js";
+import { startCodexDesktopHostProxy } from "./codex-desktop-proxy.js";
 
 loadHappyTGEnv();
 const logger = createLogger("host-daemon");
@@ -649,6 +650,9 @@ async function main(): Promise<void> {
       return;
     case "once":
       await runOnce();
+      return;
+    case "desktop-proxy":
+      await startCodexDesktopHostProxy();
       return;
     case "run":
     default:
