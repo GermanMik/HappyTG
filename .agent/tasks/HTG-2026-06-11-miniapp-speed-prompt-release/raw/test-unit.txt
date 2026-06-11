@@ -1,0 +1,541 @@
+
+> happytg@0.4.19 test C:\Develop\Projects\HappyTG
+> turbo test
+
+• turbo 2.9.3
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running test in 15 packages
+   • Remote caching disabled
+
+@happytg/hooks:test: cache hit, replaying logs 65ecce3fc0f16eac
+@happytg/hooks:test: 
+@happytg/worker:test: cache hit, replaying logs 1181a9a11c54acad
+@happytg/hooks:test: > @happytg/hooks@0.4.19 test C:\Develop\Projects\HappyTG\packages\hooks
+@happytg/hooks:test: > tsx --test src/*.test.ts
+@happytg/hooks:test: 
+@happytg/hooks:test: ✔ defineHook creates an enabled hook definition for the requested point (1.8269ms)
+@happytg/hooks:test: ✔ executeHook returns a completed execution envelope (0.5695ms)
+@happytg/hooks:test: ℹ tests 2
+@happytg/hooks:test: ℹ suites 0
+@happytg/hooks:test: ℹ pass 2
+@happytg/hooks:test: ℹ fail 0
+@happytg/hooks:test: ℹ cancelled 0
+@happytg/hooks:test: ℹ skipped 0
+@happytg/hooks:test: ℹ todo 0
+@happytg/hooks:test: ℹ duration_ms 1188.7132
+@happytg/bootstrap:test: cache miss, executing e6d6249fea6f5344
+@happytg/worker:test: 
+@happytg/worker:test: > @happytg/worker@0.4.19 test C:\Develop\Projects\HappyTG\apps\worker
+@happytg/worker:test: > tsx --test src/*.test.ts
+@happytg/worker:test: 
+@happytg/worker:test: ✔ worker readiness becomes healthy after a successful tick (24.8355ms)
+@happytg/worker:test: ✔ worker ready endpoint returns 503 before first tick (56.6219ms)
+@happytg/worker:test: ✔ startWorkerServer listens and invokes onListening when the port is free (5.2296ms)
+@happytg/worker:test: ✔ startWorkerServer reuses an already-running HappyTG worker on the same port without starting local work (112.2916ms)
+@happytg/worker:test: ✔ startWorkerServer rejects when a different HappyTG service occupies the worker port (11.5152ms)
+@happytg/worker:test: ✔ startWorkerServer names a foreign HTTP listener when the port is occupied (15.6355ms)
+@happytg/worker:test: ✔ reconcileSessionsAndDispatches moves active sessions to resuming when host is stale (2.2424ms)
+@happytg/worker:test: ✔ markExpiredApprovalSessions pauses awaiting approval sessions (1.2754ms)
+@happytg/worker:test: ✔ compactControlPlaneRecords removes expired terminal records while preserving active records (2.4443ms)
+@happytg/worker:test: ℹ tests 9
+@happytg/worker:test: ℹ suites 0
+@happytg/worker:test: ℹ pass 9
+@happytg/worker:test: ℹ fail 0
+@happytg/worker:test: ℹ cancelled 0
+@happytg/worker:test: ℹ skipped 0
+@happytg/worker:test: ℹ todo 0
+@happytg/worker:test: ℹ duration_ms 1075.1343
+@happytg/policy-engine:test: cache hit, replaying logs b3ea547e847f83ff
+@happytg/policy-engine:test: 
+@happytg/policy-engine:test: > @happytg/policy-engine@0.4.19 test C:\Develop\Projects\HappyTG\packages\policy-engine
+@happytg/policy-engine:test: > tsx --test src/*.test.ts
+@happytg/policy-engine:test: 
+@happytg/policy-engine:test: ✔ evaluatePolicies returns deny before lower-layer approval or allow (2.9076ms)
+@happytg/policy-engine:test: ✔ evaluatePolicies requires approval when no deny matches (0.8151ms)
+@happytg/policy-engine:test: ✔ evaluatePolicies ignores policies outside the requested scope (0.6678ms)
+@happytg/policy-engine:test: ℹ tests 3
+@happytg/policy-engine:test: ℹ suites 0
+@happytg/policy-engine:test: ℹ pass 3
+@happytg/policy-engine:test: ℹ fail 0
+@happytg/policy-engine:test: ℹ cancelled 0
+@happytg/policy-engine:test: ℹ skipped 0
+@happytg/policy-engine:test: ℹ todo 0
+@happytg/policy-engine:test: ℹ duration_ms 947.7329
+@happytg/telegram-kit:test: cache hit, replaying logs d9794b6d5e294bc0
+@happytg/telegram-kit:test: 
+@happytg/telegram-kit:test: > @happytg/telegram-kit@0.4.19 test C:\Develop\Projects\HappyTG\packages\telegram-kit
+@happytg/telegram-kit:test: > tsx --test src/*.test.ts
+@happytg/telegram-kit:test: 
+@happytg/telegram-kit:test: ✔ validateTelegramMiniAppInitData accepts signed fresh init data (20.2544ms)
+@happytg/telegram-kit:test: ✔ validateTelegramMiniAppInitData rejects stale or tampered init data (1.5506ms)
+@happytg/telegram-kit:test: ✔ signed launch payloads are short and tamper-resistant (1.0339ms)
+@happytg/telegram-kit:test: ℹ tests 3
+@happytg/telegram-kit:test: ℹ suites 0
+@happytg/telegram-kit:test: ℹ pass 3
+@happytg/telegram-kit:test: ℹ fail 0
+@happytg/telegram-kit:test: ℹ cancelled 0
+@happytg/telegram-kit:test: ℹ skipped 0
+@happytg/telegram-kit:test: ℹ todo 0
+@happytg/telegram-kit:test: ℹ duration_ms 922.3321
+@happytg/approval-engine:test: cache hit, replaying logs a69144d445651529
+@happytg/approval-engine:test: 
+@happytg/approval-engine:test: > @happytg/approval-engine@0.4.19 test C:\Develop\Projects\HappyTG\packages\approval-engine
+@happytg/approval-engine:test: > tsx --test src/*.test.ts
+@happytg/approval-engine:test: 
+@happytg/approval-engine:test: ✔ createApprovalRequest creates waiting human approval with expiry (1.7768ms)
+@happytg/approval-engine:test: ✔ resolveApprovalRequest updates state and emits decision (0.4248ms)
+@happytg/approval-engine:test: ✔ refreshExpiredApproval marks waiting human request as expired (0.2461ms)
+@happytg/approval-engine:test: ✔ resolveApprovalRequestIdempotent validates nonce and does not duplicate resolved decisions (0.9669ms)
+@happytg/approval-engine:test: ℹ tests 4
+@happytg/approval-engine:test: ℹ suites 0
+@happytg/approval-engine:test: ℹ pass 4
+@happytg/approval-engine:test: ℹ fail 0
+@happytg/approval-engine:test: ℹ cancelled 0
+@happytg/approval-engine:test: ℹ skipped 0
+@happytg/approval-engine:test: ℹ todo 0
+@happytg/approval-engine:test: ℹ duration_ms 928.8003
+@happytg/miniapp:test: cache hit, replaying logs 638c79d7b2309df2
+@happytg/miniapp:test: 
+@happytg/miniapp:test: > @happytg/miniapp@0.4.19 test C:\Develop\Projects\HappyTG\apps\miniapp
+@happytg/miniapp:test: > tsx --test src/*.test.ts
+@happytg/miniapp:test: 
+@happytg/miniapp:test: ✔ mini app ready endpoint returns 503 when api health fails (46.1935ms)
+@happytg/miniapp:test: ✔ mini app favicon route avoids browser 404 noise (11.1491ms)
+@happytg/miniapp:test: ✔ overview page renders hosts, sessions, approvals, and tasks (36.501ms)
+@happytg/miniapp:test: ✔ mini app links honor the /miniapp reverse-proxy base path (8.4378ms)
+@happytg/miniapp:test: ✔ public reverse-proxied mini app uses same-origin browser API when local env points at localhost (15.1486ms)
+@happytg/miniapp:test: ✔ local direct mini app keeps the explicit local API origin without reverse-proxy headers (0.348ms)
+@happytg/miniapp:test: ✔ auth-pending shell exposes retry-safe auth feedback controls (9.771ms)
+@happytg/miniapp:test: ✔ mini app forwards browser session cookie as bearer auth (12.7525ms)
+@happytg/miniapp:test: ✔ codex panel renders source-aware Desktop and CLI sessions with disabled unsupported actions (20.7349ms)
+@happytg/miniapp:test: ✔ codex panel applies requested session sort order (10.7806ms)
+@happytg/miniapp:test: ✔ mini app renders supported Desktop actions and forwards new Desktop task to API (25.7634ms)
+@happytg/miniapp:test: ✔ task page renders scoped canonical artifacts (10.8437ms)
+@happytg/miniapp:test: ✔ projects page renders workspaces and new task creates a Codex session (29.7794ms)
+@happytg/miniapp:test: ✔ session page renders timeline, summary, and task link (8.4872ms)
+@happytg/miniapp:test: ✔ approval page renders real authenticated action buttons (6.7327ms)
+@happytg/miniapp:test: ✔ startMiniAppServer returns an actionable message when the port is already in use (5521.2112ms)
+@happytg/miniapp:test: ✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (63.1073ms)
+@happytg/miniapp:test: ✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (4.276ms)
+@happytg/miniapp:test: ✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (4.9822ms)
+@happytg/miniapp:test: ℹ tests 19
+@happytg/miniapp:test: ℹ suites 0
+@happytg/miniapp:test: ℹ pass 19
+@happytg/miniapp:test: ℹ fail 0
+@happytg/miniapp:test: ℹ cancelled 0
+@happytg/miniapp:test: ℹ skipped 0
+@happytg/miniapp:test: ℹ todo 0
+@happytg/miniapp:test: ℹ duration_ms 6850.7644
+@happytg/protocol:test: cache hit, replaying logs dcadc80e2bed25e6
+@happytg/protocol:test: 
+@happytg/protocol:test: > @happytg/protocol@0.4.19 test C:\Develop\Projects\HappyTG\packages\protocol
+@happytg/protocol:test: > tsx --test src/*.test.ts
+@happytg/protocol:test: 
+@happytg/protocol:test: ✔ createEmptyStore returns the canonical empty control-plane shape (2.1828ms)
+@happytg/protocol:test: ✔ protocol enums include resumability, proof, and bootstrap contracts (0.3764ms)
+@happytg/protocol:test: ✔ event contracts document producers, consumers, payloads, and idempotency (0.2895ms)
+@happytg/protocol:test: ℹ tests 3
+@happytg/protocol:test: ℹ suites 0
+@happytg/protocol:test: ℹ pass 3
+@happytg/protocol:test: ℹ fail 0
+@happytg/protocol:test: ℹ cancelled 0
+@happytg/protocol:test: ℹ skipped 0
+@happytg/protocol:test: ℹ todo 0
+@happytg/protocol:test: ℹ duration_ms 1231.0375
+@happytg/api:test: cache hit, replaying logs 953a2eeedfcf6b06
+@happytg/api:test: 
+@happytg/api:test: > @happytg/api@0.4.19 test C:\Develop\Projects\HappyTG\apps\api
+@happytg/api:test: > tsx --test src/*.test.ts
+@happytg/api:test: 
+@happytg/api:test: ✔ api ready endpoint returns store metadata (67.4692ms)
+@happytg/api:test: ✔ api exposes fast version and prometheus metrics endpoints (28.7821ms)
+@happytg/api:test: ✔ api dev CORS allows only explicit Mini App origins (15.5599ms)
+@happytg/api:test: ✔ mini app projection endpoints require session auth instead of falling back to global state (9.6123ms)
+@happytg/api:test: ✔ mini app approval resolve endpoint uses bearer session user (19.3934ms)
+@happytg/api:test: ✔ mini app project and session mutation endpoints require bearer user context (16.9207ms)
+@happytg/api:test: ✔ codex desktop API is user-scoped and maps guarded control responses (38.6132ms)
+@happytg/api:test: ✔ session cancel endpoint delegates to the control-plane service (8.9292ms)
+@happytg/api:test: ✔ startApiServer reuses an already-running HappyTG API on the same port (74.3894ms)
+@happytg/api:test: ✔ startApiServer rejects with an actionable message when another process occupies the port (15.8172ms)
+@happytg/api:test: ✔ startApiServer rejects when a different HappyTG service occupies the API port (7.3573ms)
+@happytg/api:test: ✔ startApiServer retries a transient HappyTG API handoff before classifying reuse (44.7409ms)
+@happytg/api:test: ✔ proof session creates task bundle and approval, then approval dispatches session (93.1036ms)
+@happytg/api:test: ✔ quick session dispatches immediately without approval (30.0535ms)
+@happytg/api:test: ✔ cancelSession cancels active sessions, dispatch records, event, and audit (171.2313ms)
+@happytg/api:test: ✔ session timeline and task artifact reads are available for mini app inspection (161.1377ms)
+@happytg/api:test: ✔ bootstrap sessions dispatch deterministic doctor runs and support resume state transitions (82.496ms)
+@happytg/api:test: ✔ bot projections list user-scoped workspaces, sessions, approvals, and reject stale callback nonce (120.9261ms)
+@happytg/api:test: ✔ Codex Desktop projections are user-scoped and sanitized (110.1533ms)
+@happytg/api:test: ✔ Codex Desktop controls block unavailable contracts and audit attempts (94.3001ms)
+@happytg/api:test: ✔ Codex Desktop controls execute only through supported adapter contract (124.0958ms)
+@happytg/api:test: ✔ Codex Desktop mutating controls are serialized through the API service (171.9879ms)
+@happytg/api:test: ✔ mini app launch validates initData, issues app session, and exposes action-first projections (430.9466ms)
+@happytg/api:test: ✔ proof task filesystem initialization runs outside the serialized store queue (150.1728ms)
+@happytg/api:test: ✔ proof approval record failure fails session and closes the waiting approval (134.7322ms)
+@happytg/api:test: ℹ tests 25
+@happytg/api:test: ℹ suites 0
+@happytg/api:test: ℹ pass 25
+@happytg/api:test: ℹ fail 0
+@happytg/api:test: ℹ cancelled 0
+@happytg/api:test: ℹ skipped 0
+@happytg/api:test: ℹ todo 0
+@happytg/api:test: ℹ duration_ms 3696.3998
+@happytg/repo-proof:test: cache hit, replaying logs d2a16c056f3f6169
+@happytg/repo-proof:test: 
+@happytg/repo-proof:test: > @happytg/repo-proof@0.4.19 test C:\Develop\Projects\HappyTG\packages\repo-proof
+@happytg/repo-proof:test: > tsx --test src/*.test.ts
+@happytg/repo-proof:test: 
+@happytg/repo-proof:test: ✔ repo proof bundle can be initialized, frozen, validated, and verified (68.7204ms)
+@happytg/repo-proof:test: ✔ repo proof state tracks explicit phase advances, approvals, and stale verification (434.563ms)
+@happytg/repo-proof:test: ℹ tests 2
+@happytg/repo-proof:test: ℹ suites 0
+@happytg/repo-proof:test: ℹ pass 2
+@happytg/repo-proof:test: ℹ fail 0
+@happytg/repo-proof:test: ℹ cancelled 0
+@happytg/repo-proof:test: ℹ skipped 0
+@happytg/repo-proof:test: ℹ todo 0
+@happytg/repo-proof:test: ℹ duration_ms 1629.9784
+@happytg/session-engine:test: cache hit, replaying logs c4720471bc97ee04
+@happytg/session-engine:test: 
+@happytg/session-engine:test: > @happytg/session-engine@0.4.19 test C:\Develop\Projects\HappyTG\packages\session-engine
+@happytg/session-engine:test: > tsx --test src/*.test.ts
+@happytg/session-engine:test: 
+@happytg/session-engine:test: ✔ transitionSession allows the canonical proof happy path (1.3933ms)
+@happytg/session-engine:test: ✔ transitionSession rejects illegal terminal transitions (0.6855ms)
+@happytg/session-engine:test: ✔ nextResumeState preserves terminal sessions and resumes active sessions (0.1848ms)
+@happytg/session-engine:test: ✔ reduceSessionEvents replays typed event state changes in sequence order (0.4555ms)
+@happytg/session-engine:test: ℹ tests 4
+@happytg/session-engine:test: ℹ suites 0
+@happytg/session-engine:test: ℹ pass 4
+@happytg/session-engine:test: ℹ fail 0
+@happytg/session-engine:test: ℹ cancelled 0
+@happytg/session-engine:test: ℹ skipped 0
+@happytg/session-engine:test: ℹ todo 0
+@happytg/session-engine:test: ℹ duration_ms 1142.7408
+@happytg/host-daemon:test: cache hit, replaying logs ccc88f5d479c9069
+@happytg/host-daemon:test: 
+@happytg/host-daemon:test: > @happytg/host-daemon@0.4.19 test C:\Develop\Projects\HappyTG\apps\host-daemon
+@happytg/host-daemon:test: > tsx --test src/*.test.ts
+@happytg/host-daemon:test: 
+@happytg/host-daemon:test: ✔ defaultWorkspaces prefers configured workspace paths (3.0514ms)
+@happytg/host-daemon:test: ✔ compactJournal keeps running entries and trims stale completed entries (0.4783ms)
+@happytg/host-daemon:test: ✔ sandboxForDispatch preserves read-only safety for doctor and verify paths (2.2254ms)
+@happytg/host-daemon:test: ✔ parseVerifierVerdict keys off the first line only (0.2176ms)
+@happytg/host-daemon:test: ✔ startup guidance stays actionable and repeated notices are suppressed (0.862ms)
+@happytg/host-daemon:test: ✔ summarizeBootstrapReport includes top finding codes (0.9992ms)
+@happytg/host-daemon:test: ✔ Codex Desktop host proxy requires token and serializes mutating controls (239.2042ms)
+@happytg/host-daemon:test: ℹ tests 7
+@happytg/host-daemon:test: ℹ suites 0
+@happytg/host-daemon:test: ℹ pass 7
+@happytg/host-daemon:test: ℹ fail 0
+@happytg/host-daemon:test: ℹ cancelled 0
+@happytg/host-daemon:test: ℹ skipped 0
+@happytg/host-daemon:test: ℹ todo 0
+@happytg/host-daemon:test: ℹ duration_ms 1764.917
+@happytg/shared:test: cache hit, replaying logs e4173cec26ff3790
+@happytg/shared:test: 
+@happytg/shared:test: > @happytg/shared@0.4.19 test C:\Develop\Projects\HappyTG\packages\shared
+@happytg/shared:test: > tsx --test src/*.test.ts
+@happytg/shared:test: 
+@happytg/shared:test: ✔ resolveHome and atomic file helpers round-trip data (32.5911ms)
+@happytg/shared:test: ✔ resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides (0.678ms)
+@happytg/shared:test: ✔ resolveHome honors Windows home overrides with case-insensitive env keys (0.4675ms)
+@happytg/shared:test: ✔ findExecutable searches PATH and appends Windows executable extensions (10.696ms)
+@happytg/shared:test: ✔ findExecutable honors Windows path and PATHEXT keys regardless of casing (6.3845ms)
+@happytg/shared:test: ✔ findExecutable prefers Windows wrapper companions over bare shim files (9.5116ms)
+@happytg/shared:test: ✔ findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys (8.315ms)
+@happytg/shared:test: ✔ loadHappyTGEnv fills missing values without overriding existing env (4.1084ms)
+@happytg/shared:test: ✔ normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT (0.4494ms)
+@happytg/shared:test: ✔ resolveMiniAppBaseUrl prefers local Mini App URL over local public API URL only when no public HTTPS URL is available (10.018ms)
+@happytg/shared:test: ✔ telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values (0.4183ms)
+@happytg/shared:test: ✔ FileStateStore serializes concurrent updates through its queue (85.2715ms)
+@happytg/shared:test: ✔ createJsonServer resolves route params and query data (75.4979ms)
+@happytg/shared:test: ✔ createJsonServer returns a structured 500 when handler throws (73.1511ms)
+@happytg/shared:test: ✔ redactSecrets and createLogger remove sensitive metadata values (3.1919ms)
+@happytg/shared:test: ✔ renderPrometheusMetrics returns stable service gauges (0.6202ms)
+@happytg/shared:test: ℹ tests 16
+@happytg/shared:test: ℹ suites 0
+@happytg/shared:test: ℹ pass 16
+@happytg/shared:test: ℹ fail 0
+@happytg/shared:test: ℹ cancelled 0
+@happytg/shared:test: ℹ skipped 0
+@happytg/shared:test: ℹ todo 0
+@happytg/shared:test: ℹ duration_ms 1381.769
+@happytg/bot:test: cache hit, replaying logs e6b92245f29d5ea1
+@happytg/bot:test: 
+@happytg/bot:test: > @happytg/bot@0.4.19 test C:\Develop\Projects\HappyTG\apps\bot
+@happytg/bot:test: > tsx --test src/*.test.ts
+@happytg/bot:test: 
+@happytg/bot:test: ✔ menu command renders a concise action-first main menu (15.6061ms)
+@happytg/bot:test: ✔ menu command omits Telegram web_app buttons when Mini App URL is local HTTP (0.7513ms)
+@happytg/bot:test: ✔ start command preserves the inline Mini App web_app button for public HTTPS URLs (0.685ms)
+@happytg/bot:test: ✔ mini app url resolver derives public https URL before legacy dev app URL (0.8184ms)
+@happytg/bot:test: ✔ mini app launch diagnostics prefer the local Mini App port over the local API URL (1.5797ms)
+@happytg/bot:test: ✔ mini app url resolver degrades invalid production URL (0.4013ms)
+@happytg/bot:test: ✔ inline web_app buttons use the production mini app URL (0.7866ms)
+@happytg/bot:test: ✔ task wizard uses smart defaults and creates a proof session from callback flow (3.1361ms)
+@happytg/bot:test: ✔ codex menu separates Desktop and CLI sessions and hides unsupported Desktop actions (4.2405ms)
+@happytg/bot:test: ✔ desktop session callbacks use short stable refs for long Desktop ids (1.6496ms)
+@happytg/bot:test: ✔ task wizard opportunistically sweeps expired drafts on unrelated updates (2.7396ms)
+@happytg/bot:test: ✔ verify command surfaces scoped approval keyboard with nonce (7.542ms)
+@happytg/bot:test: ✔ approval callback resolves with scope and nonce for the linked HappyTG user (1.1945ms)
+@happytg/bot:test: ✔ resume command posts resume and then renders a session card (0.812ms)
+@happytg/bot:test: ✔ session card shows cancel only for active sessions (0.5579ms)
+@happytg/bot:test: ✔ active sessions list includes a stop button for each active session (0.5354ms)
+@happytg/bot:test: ✔ session cancel callback posts cancel and renders updated card (0.7554ms)
+@happytg/bot:test: ✔ session approval report and callback detail flows never emit local HTTP web_app buttons (1.2639ms)
+@happytg/bot:test: ✔ bot ready endpoint returns healthy when api is reachable (122.9236ms)
+@happytg/bot:test: ✔ bot ready endpoint returns 503 when api is unreachable (24.7378ms)
+@happytg/bot:test: ✔ startBotServer reuses an already-running HappyTG bot on the same port (62.9048ms)
+@happytg/bot:test: ✔ startBotServer rejects when a different HappyTG service occupies the bot port (8.4527ms)
+@happytg/bot:test: ✔ startBotServer names a foreign HTTP listener when the port is occupied (12.6279ms)
+@happytg/bot:test: ✔ createBotRuntime reuses an existing HappyTG bot without starting a second Telegram delivery loop (86.232ms)
+@happytg/bot:test: ✔ botConfigurationMessage stays actionable without exposing secrets (0.4416ms)
+@happytg/bot:test: ✔ initializeBotEnvironment prefers a valid .env token over placeholder shell state (11.9885ms)
+@happytg/bot:test: ✔ createDefaultSendTelegramMessage falls back to Windows PowerShell after a Node transport timeout (1.1802ms)
+@happytg/bot:test: ✔ createDefaultSendTelegramMessage logs parsed Telegram 400 descriptions from the Windows fallback (0.7697ms)
+@happytg/bot:test: ✔ createDefaultSendTelegramMessage bounds the Windows Node attempt before fallback (33.6088ms)
+@happytg/bot:test: ✔ createDefaultSendTelegramMessage keeps Telegram HTTP failures truthful without using fallback (2.5007ms)
+@happytg/bot:test: ✔ resolveTelegramDeliveryMode selects polling for local auto mode (0.2443ms)
+@happytg/bot:test: ✔ resolveTelegramDeliveryMode selects webhook for public https auto mode (0.1824ms)
+@happytg/bot:test: ✔ resolveTelegramDeliveryMode keeps explicit webhook mode degraded when the public URL is not webhook-capable (0.2091ms)
+@happytg/bot:test: {"at":"2026-06-11T19:32:25.599Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+@happytg/bot:test: {"at":"2026-06-11T19:32:25.599Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:3007/"}}
+@happytg/bot:test: ✔ caddy and docs use the public /telegram/webhook contract (7.8557ms)
+@happytg/bot:test: ✔ ready endpoint reports disabled Mini App launch buttons with the local Mini App port (42.7095ms)
+@happytg/bot:test: {"at":"2026-06-11T19:32:25.721Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+@happytg/bot:test: {"at":"2026-06-11T19:32:25.722Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:4000/miniapp"}}
+@happytg/bot:test: ✔ webhook endpoint dispatches updates through the shared bot handlers (76.6667ms)
+@happytg/bot:test: {"at":"2026-06-11T19:32:25.769Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+@happytg/bot:test: {"at":"2026-06-11T19:32:25.769Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:4000/miniapp"}}
+@happytg/bot:test: ✔ local polling mode receives /start without a public webhook (51.665ms)
+@happytg/bot:test: ✔ local polling mode receives /pair and preserves the pairing claim API boundary (34.4827ms)
+@happytg/bot:test: ✔ local polling mode skips a failing update and continues with later updates (32.2525ms)
+@happytg/bot:test: ✔ local polling mode falls back to Windows PowerShell Bot API calls after a Node transport timeout (58.7024ms)
+@happytg/bot:test: ✔ polling control-plane bounds a hanging Node attempt and prefers PowerShell on the next polls (89.4649ms)
+@happytg/bot:test: ✔ polling preserves healthy Node long polling instead of applying the control-plane timeout to getUpdates (66.3797ms)
+@happytg/bot:test: ✔ polling control-plane keeps Telegram HTTP failures truthful without PowerShell fallback (3.0686ms)
+@happytg/bot:test: {"at":"2026-06-11T19:32:26.085Z","level":"WARN","scope":"bot","message":"Telegram polling degraded","metadata":{"detail":"Telegram deleteWebhook could not be confirmed through Node HTTPS (Connection to api.telegram.org exceeded the Windows Node pre-fallback timeout.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Proxy authentication required.. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine."}}
+@happytg/bot:test: {"at":"2026-06-11T19:32:26.085Z","level":"WARN","scope":"bot","message":"Bot listening with degraded Telegram delivery","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"auto","telegramDeliveryStatus":"degraded","telegramDeliveryDetail":"Telegram deleteWebhook could not be confirmed through Node HTTPS (Connection to api.telegram.org exceeded the Windows Node pre-fallback timeout.) or the Windows PowerShell Bot API fallback. Windows PowerShell Bot API fallback also failed: Proxy authentication required.. Check Node/undici proxy settings (`HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, `NO_PROXY`), WinHTTP proxy differences, firewall or AV TLS interception, and whether IPv4/IPv6 routing to api.telegram.org differs on this machine.","publicUrl":"http://localhost:4000/","expectedWebhookUrl":"http://localhost:4000/telegram/webhook","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:4000/miniapp"}}
+@happytg/bot:test: {"at":"2026-06-11T19:32:26.100Z","level":"WARN","scope":"bot","message":"Bot listening with degraded Telegram delivery","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"degraded","telegramDeliveryDetail":"Telegram webhook mode expects https://happy.example.com/telegram/webhook, but current webhook URL is empty.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":3,"miniAppLaunchStatus":"ready","miniAppLaunchDetail":"Telegram Mini App launch buttons are enabled with a public HTTPS URL.","miniAppLaunchUrl":"https://happy.example.com/miniapp"}}
+@happytg/bot:test: ✔ polling mode stays degraded with actionable detail when both Telegram transports fail on Windows (35.4453ms)
+@happytg/runtime-adapters:test: cache hit, replaying logs 96c1a9d477cd3d60
+@happytg/bot:test: {"at":"2026-06-11T19:32:26.115Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram webhook active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram webhook mode is active and matches the expected webhook URL.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","actualWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":0,"miniAppLaunchStatus":"ready","miniAppLaunchDetail":"Telegram Mini App launch buttons are enabled with a public HTTPS URL.","miniAppLaunchUrl":"https://happy.example.com/miniapp"}}
+@happytg/bot:test: ✔ webhook mode stays separate from polling and reports degraded readiness when Telegram webhook is not configured (25.2101ms)
+@happytg/bot:test: {"at":"2026-06-11T19:32:26.136Z","level":"INFO","scope":"bot","message":"Telegram polling active"}
+@happytg/bot:test: {"at":"2026-06-11T19:32:26.136Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram polling active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"polling","telegramDeliveryConfiguredMode":"polling","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram polling is active; webhook delivery was disabled at the Telegram API.","miniAppLaunchStatus":"disabled","miniAppLaunchDetail":"Local polling can still handle Telegram bot commands, but Mini App launch buttons are disabled because the resolved Mini App URL must use HTTPS. Set `HAPPYTG_MINIAPP_URL` or `HAPPYTG_APP_URL` to a public HTTPS /miniapp URL to enable Telegram WebApp buttons.","miniAppLaunchUrl":"http://localhost:3001/"}}
+@happytg/bot:test: ✔ bot runtime reports Mini App launch readiness without auto-configuring Telegram menu button (21.4971ms)
+@happytg/bot:test: {"at":"2026-06-11T19:32:26.188Z","level":"INFO","scope":"bot","message":"Telegram getWebhookInfo delivered via Windows PowerShell fallback","metadata":{"transportPreference":"updated","nodeElapsedMs":0,"fallbackElapsedMs":0,"powerShellTimeoutSec":10}}
+@happytg/bot:test: {"at":"2026-06-11T19:32:26.189Z","level":"INFO","scope":"bot","message":"Bot listening with Telegram webhook active","metadata":{"port":0,"apiBaseUrl":"http://localhost:4000","telegramConfigured":true,"telegramDeliveryMode":"webhook","telegramDeliveryConfiguredMode":"webhook","telegramDeliveryStatus":"ready","telegramDeliveryDetail":"Telegram webhook mode is active and matches the expected webhook URL.","publicUrl":"https://happy.example.com/","expectedWebhookUrl":"https://happy.example.com/telegram/webhook","actualWebhookUrl":"https://happy.example.com/telegram/webhook","pendingUpdateCount":0,"miniAppLaunchStatus":"ready","miniAppLaunchDetail":"Telegram Mini App launch buttons are enabled with a public HTTPS URL.","miniAppLaunchUrl":"https://happy.example.com/miniapp"}}
+@happytg/runtime-adapters:test: 
+@happytg/bot:test: ✔ bot ready keeps Telegram delivery healthy when Mini App public URL is invalid (50.3315ms)
+@happytg/bot:test: ✔ webhook inspection falls back to Windows PowerShell Bot API calls after a Node transport timeout (12.5384ms)
+@happytg/runtime-adapters:test: > @happytg/runtime-adapters@0.4.19 test C:\Develop\Projects\HappyTG\packages\runtime-adapters
+@happytg/runtime-adapters:test: > tsx --test src/*.test.ts
+@happytg/bot:test: ✔ webhook inspection bounds a hanging Node attempt before PowerShell fallback (34.1531ms)
+@happytg/bot:test: ℹ tests 49
+@happytg/bot:test: ℹ suites 0
+@happytg/bot:test: ℹ pass 49
+@happytg/runtime-adapters:test: 
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness reports available Codex and captures smoke warnings (925.1171ms)
+@happytg/runtime-adapters:test: ✔ tool execution model classifies actions and serializes mutations (1.5439ms)
+@happytg/bot:test: ℹ fail 0
+@happytg/bot:test: ℹ cancelled 0
+@happytg/runtime-adapters:test: ✔ Codex Desktop adapter parses projects from global state without private payloads (6.2128ms)
+@happytg/runtime-adapters:test: ✔ Codex Desktop host-proxy control contract delegates projects, sessions, and tasks over HTTP (103.64ms)
+@happytg/bot:test: ℹ skipped 0
+@happytg/bot:test: ℹ todo 0
+@happytg/bot:test: ℹ duration_ms 2162.5295
+@happytg/runtime-adapters:test: ✔ Codex Desktop adapter parses session_index and session files as sanitized sessions (143.4702ms)
+@happytg/runtime-adapters:test: ✔ Codex Desktop adapter limits session projections for list screens (56.3583ms)
+@happytg/runtime-adapters:test: ✔ Codex Desktop adapter controls sessions through Codex app-server JSON-RPC (388.5823ms)
+@happytg/runtime-adapters:test: ✔ Codex Desktop default adapter keeps unknown experimental control modes unsupported (6.5759ms)
+@happytg/runtime-adapters:test: ✔ Codex Desktop default adapter enables app-server control when explicitly configured (115.1249ms)
+@happytg/runtime-adapters:test: ✔ Codex Desktop adapter tolerates missing and corrupt state (20.384ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from Path (529.6143ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext (442.9245ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated (444.3127ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness closes stdin so smoke runs do not hang waiting for EOF (207.692ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness preserves spaced prompts when it runs through a Windows cmd wrapper (596.4661ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness runs smoke from a neutral cwd when provided (481.048ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness treats a Windows shell command-not-found result as missing (5.4368ms)
+@happytg/runtime-adapters:test: ✔ checkCodexReadiness marks only true ENOENT failures as missing (239.5192ms)
+@happytg/runtime-adapters:test: ✔ classifyCodexSmokeStderr ignores known benign Codex internal warnings only (2.6262ms)
+@happytg/runtime-adapters:test: ✔ summarizeCodexSmokeStderr extracts concise actionable root causes (1.9638ms)
+@happytg/runtime-adapters:test: ✔ codexCliMissingMessage explains PATH diagnosis and reinstall fallback (0.3999ms)
+@happytg/runtime-adapters:test: ✔ runCodexExec reads summary from the Codex output file (233.8768ms)
+@happytg/runtime-adapters:test: ✔ runCodexExec marks timeout and returns a timeout summary (43.3267ms)
+@happytg/runtime-adapters:test: ✔ runCodexExec settles timeout even when the child ignores normal termination (31.5033ms)
+@happytg/runtime-adapters:test: ✔ runCodexExec caps stdout and stderr while reporting truncation metadata (236.6369ms)
+@happytg/runtime-adapters:test: ✔ runCodexExec returns actionable guidance when Codex CLI is missing (6.1897ms)
+@happytg/runtime-adapters:test: ℹ tests 26
+@happytg/runtime-adapters:test: ℹ suites 0
+@happytg/runtime-adapters:test: ℹ pass 26
+@happytg/runtime-adapters:test: ℹ fail 0
+@happytg/runtime-adapters:test: ℹ cancelled 0
+@happytg/runtime-adapters:test: ℹ skipped 0
+@happytg/runtime-adapters:test: ℹ todo 0
+@happytg/runtime-adapters:test: ℹ duration_ms 6535.2574
+@happytg/bootstrap:test: 
+@happytg/bootstrap:test: > @happytg/bootstrap@0.4.19 test C:\Develop\Projects\HappyTG\packages\bootstrap
+@happytg/bootstrap:test: > tsx --test src/*.test.ts
+@happytg/bootstrap:test: 
+@happytg/bootstrap:test: ✔ parseHappyTGArgs maps config and env nested commands (3.9155ms)
+@happytg/bootstrap:test: ✔ parseHappyTGArgs maps Telegram menu commands (0.8843ms)
+@happytg/bootstrap:test: ✔ parseHappyTGArgs maps install flags into the installer request (1.1151ms)
+@happytg/bootstrap:test: ✔ parseHappyTGArgs maps update to current-checkout install defaults (0.3219ms)
+@happytg/bootstrap:test: ✔ parseHappyTGArgs ignores invalid launch mode consistently with other install option enums (0.2457ms)
+@happytg/bootstrap:test: ✔ parseHappyTGArgs uses CliUsageError for invalid CLI surfaces (1.0863ms)
+@happytg/bootstrap:test: ✔ executeHappyTG initializes and inspects repo-local task bundles (45.1958ms)
+@happytg/bootstrap:test: ✔ executeHappyTG returns a structured install failure when installer throws before its internal runtime boundary (128.7429ms)
+@happytg/bootstrap:test: ✔ executeHappyTG delegates install requests through the CLI wrapper without changing the installer result contract (2.0198ms)
+@happytg/bootstrap:test: ✔ executeHappyTG delegates update through the installer with safe day-2 defaults (2.9781ms)
+@happytg/bootstrap:test: ✔ executeHappyTG delegates uninstall requests through the CLI wrapper without changing the uninstall result contract (1.3508ms)
+@happytg/bootstrap:test: ✔ renderText returns a compact bootstrap summary with preflight and diagnostics hints (0.5581ms)
+@happytg/bootstrap:test: ✔ renderText includes the exact Telegram Mini App menu URL (0.1896ms)
+@happytg/bootstrap:test: ✔ renderText returns a compact install summary with structured finalization sections (0.3316ms)
+@happytg/bootstrap:test: ✔ renderText keeps warning-only follow-up separate from manual actions in install summaries (0.303ms)
+@happytg/bootstrap:test: ✔ renderText explains recoverable installer failures without claiming completion (0.2512ms)
+@happytg/bootstrap:test: ✔ renderText summarizes uninstall scope without claiming checkout deletion (0.222ms)
+@happytg/bootstrap:test: ✔ doctor writes a report, detects Git, and keeps Codex available on a Windows-like codex.cmd shim (456.6058ms)
+@happytg/bootstrap:test: ✔ verify surfaces Codex smoke warnings as warn when config exists (208.7233ms)
+@happytg/bootstrap:test: ✔ verify treats successful Codex HTTP fallback as non-warning diagnostics (205.0555ms)
+@happytg/bootstrap:test: ✔ doctor distinguishes unavailable Codex from a missing Codex binary (143.9254ms)
+@happytg/bootstrap:test: ✔ doctor recovers through the npm wrapper when Codex is off PATH and leaves a PATH follow-up warning (489.3693ms)
+@happytg/bootstrap:test: ✔ doctor recovers through a standard Windows APPDATA npm wrapper path when npm prefix probing is unavailable (341.3152ms)
+@happytg/bootstrap:test: ✔ doctor keeps Codex smoke green through a Windows wrapper when the prompt contains spaces (392.0552ms)
+@happytg/bootstrap:test: ✔ doctor recommends reinstall with PATH update when Codex wrapper files are missing from the global npm prefix (160.0694ms)
+@happytg/bootstrap:test: ✔ setup turns missing Telegram token into a short actionable first-run checklist and reuses running Redis (180.6391ms)
+@happytg/bootstrap:test: ✔ setup names existing PostgreSQL, Redis, and S3 endpoints when Redis is absent locally (179.1869ms)
+@happytg/bootstrap:test: ✔ doctor reports Redis installed but stopped (189.6157ms)
+@happytg/bootstrap:test: ✔ doctor reports an actionable mini app port conflict and distinguishes an already-running HappyTG service (400.2202ms)
+@happytg/bootstrap:test: ✔ setup treats compatible Redis, PostgreSQL, and MinIO listeners as supported reuse while flagging unrelated conflicts (218.0788ms)
+@happytg/bootstrap:test: ✔ setup treats legacy infra Compose MinIO containers as current stack instead of external conflicts (288.2435ms)
+@happytg/bootstrap:test: ✔ setup respects PORT fallback when app-specific port overrides are absent (201.7001ms)
+@happytg/bootstrap:test: ✔ config-init and env-snapshot remain deterministic plan-only commands (12.5609ms)
+@happytg/bootstrap:test: ✔ compose declares a stable HappyTG project name (18.3816ms)
+@happytg/bootstrap:test: ✔ compose keeps Mini App host port separate from container port for Caddy (10.3273ms)
+@happytg/bootstrap:test: ✔ compose publishes bot readiness on the host without changing worker exposure (4.0466ms)
+@happytg/bootstrap:test: ✔ Caddy Mini App upstream is configurable and defaults to Docker network (4.2266ms)
+@happytg/bootstrap:test: ✔ Caddy exposes only narrow public Mini App API exceptions before generic API deny (1.9794ms)
+@happytg/bootstrap:test: ✔ system Caddy snippet targets host-published Docker ports (0.9822ms)
+@happytg/bootstrap:test: ✔ system Caddy plan reuses existing validated HappyTG routes (14.0324ms)
+@happytg/bootstrap:test: ✔ system Caddy plan does not treat the repo starter Caddyfile as active system Caddy (37.1935ms)
+@happytg/bootstrap:test: ✔ system Caddy reuse requires the full HappyTG route surface (16.7814ms)
+@happytg/bootstrap:test: ✔ system Caddy print-snippet action writes snippet without editing the Caddyfile (26.1878ms)
+@happytg/bootstrap:test: ✔ system Caddy patch action requires confirmation and then backs up, validates, and reloads (17.939ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall defaults to local launch and does not start Docker (55.7322ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall launch-mode docker validates config, starts Compose, and probes published services (32.8892ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall Docker reuse mode skips reused infra/Caddy services and passes host endpoints (25.2383ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall launch-mode docker remaps occupied Compose host ports before Compose startup (29.108ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall launch-mode docker reports missing Docker as recoverable and keeps host daemon guidance outside Compose (16.8225ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall launch-mode docker reports daemon unavailable separately from a missing binary (16.1751ms)
+@happytg/bootstrap:test: ✔ runDockerLaunch reports Caddy bind failures with the failed port and override hint (3.4696ms)
+@happytg/bootstrap:test: ✔ interactive Docker launch receives Mini App port override saved by port preflight (160.7491ms)
+@happytg/bootstrap:test: ✔ interactive Docker Caddy snippet uses ports after port preflight remaps (175.0256ms)
+@happytg/bootstrap:test: ✔ syncRepository retries transient primary failures and reports attempt progress (5.8503ms)
+@happytg/bootstrap:test: ✔ syncRepository returns repo_retry_exhausted after 5 primary attempts (8.2741ms)
+@happytg/bootstrap:test: ✔ syncRepository falls back to the configured alternative source after exhausting primary retries (7.2986ms)
+@happytg/bootstrap:test: ✔ syncRepository reports repo_fallback_failure when both configured sources fail (11.2571ms)
+@happytg/bootstrap:test: ✔ syncRepository updates an existing checkout via the fetched commit without checking out the target branch (1.3993ms)
+@happytg/bootstrap:test: ✔ runCommand normalizes Windows shim companions like pnpm.cmd (120.703ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall classifies ignored build scripts as warning-only when the critical tsx/esbuild path stays healthy (20.3113ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall fails honestly when ignored build scripts leave the critical tsx/esbuild path broken (12.2497ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps the no-warning pnpm install path unchanged (14.9497ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall uses approve-builds guidance only when the runtime pnpm exposes that command (14.6724ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall returns a structured runtime error for Windows shim spawn failures instead of throwing usage-style failures (11.3277ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall returns a structured runtime error when non-interactive mode is missing a Telegram token (13.2426ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall rejects bot usernames like @name in the token field before runtime work starts (10.2327ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall resumes saved installer values on rerun (17.9842ms)
+@happytg/bootstrap:test: ✔ Telegram setup reducer treats pasted token chunks as text and preserves editing/navigation behavior (1.4911ms)
+@happytg/bootstrap:test: ✔ Telegram setup reducer commits pasted token and allowed user ID chunks that include trailing CRLF (0.4259ms)
+@happytg/bootstrap:test: ✔ Telegram setup reducer supports clearing a prefilled token and pasting a replacement (0.4822ms)
+@happytg/bootstrap:test: ✔ renderMaskedSecretPreview safely degrades for short values (0.1387ms)
+@happytg/bootstrap:test: ✔ Telegram setup reducer blocks invalid @bot usernames and keeps the user in the form (0.242ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall reports warning-only Telegram getMe failures as success-with-warnings without dropping configured Telegram state (19.9046ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall treats a transport-probe-validated Telegram identity as a normal success path (22.5002ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps invalid Telegram tokens as configuration failures after a transport fallback probe (23.3248ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive Telegram form starts blank even when draft and .env already contain a token (152.3964ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive existing env confirmation can reuse Telegram values (114.5497ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive existing env confirmation appears for optional Telegram IDs without prefill (148.7539ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall releases stdin after ENTER closes the final summary (124.7839ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive port preflight offers three suggested ports and saves the selected override (174.4166ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive port preflight shows progress while saving the selected override and rerunning preflight (146.7009ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive port preflight accepts a manual port override (156.4887ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive port preflight keeps the custom-port prompt active after invalid input and then accepts enter-confirmed retry (162.5048ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive port preflight skips port changes for supported reuse (141.4485ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall interactive port preflight can abort instead of silently rebinding (125.0249ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps an already-known Telegram username when getMe lookup fails (15.1954ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall normalizes completed post-check failures into recoverable installer failures (12.5781ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps the final result at warning level when post-checks only report Codex PATH follow-up (11.9525ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps Telegram and deduped Codex PATH follow-up visible in the final summary (17.6357ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall semantically dedupes repeated setup next steps and compresses repeated post-check warning sets (14.836ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall removes contradictory start commands when setup already says to reuse the running stack (9.1386ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall auto-requests a pairing code and suppresses the manual request step once the code is available (17.3141ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall refreshes the pairing code automatically when an existing local host is still registering (18.9812ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall reuses an already paired existing host without requesting a fresh pairing code (16.2802ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps pairing blocked and skips code requests when Telegram token validation fails (12.1403ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall renders an honest manual fallback when the existing-host probe is unavailable (16.1625ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall reports requested background automation as a warning when configuration falls back to manual (11.1881ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall suppresses warning duplicates when the same guidance is already classified as a conflict (12.902ms)
+@happytg/bootstrap:test: ✔ runHappyTGInstall keeps Windows APPDATA wrapper post-checks at warning level with real bootstrap checks (1533.9772ms)
+@happytg/bootstrap:test: ✔ install.ps1 clears only broken external NODE_OPTIONS preload and does not misdiagnose Node as missing (1345.6454ms)
+@happytg/bootstrap:test: ✔ install.ps1 keeps missing preload failures inside HAPPYTG_BOOTSTRAP_DIR as a hard error (873.7112ms)
+@happytg/bootstrap:test: ✔ install.ps1 normalizes ignored build script bootstrap warnings before handing off to the shared installer (977.8481ms)
+@happytg/bootstrap:test: ✔ install.ps1 prefers pnpm.cmd over the PowerShell pnpm shim (1113.1088ms)
+@happytg/bootstrap:test: ✔ install.sh mirrors the external NODE_OPTIONS preload sanitization without a false Node-missing diagnosis (3870.5689ms)
+@happytg/bootstrap:test: ✔ writeInstallState records only the current launcher ownership after install-time reset (35.5494ms)
+@happytg/bootstrap:test: ✔ resetBackgroundModeArtifacts removes default Windows Scheduled Task and Startup shortcut before reconfigure (19.0663ms)
+@happytg/bootstrap:test: ✔ resetBackgroundModeArtifacts keeps unowned default Windows global launchers for custom state dirs (15.6324ms)
+@happytg/bootstrap:test: ✔ detectLinuxFamily classifies Debian and Fedora os-release content (36.9095ms)
+@happytg/bootstrap:test: ✔ detectRepoModeChoices distinguishes current checkout, update path, and fresh clone path (1191.5754ms)
+@happytg/bootstrap:test: ✔ inspectRepo reports dirty worktrees and defaultDirtyWorktreeStrategy stays safe (631.5063ms)
+@happytg/bootstrap:test: ✔ mergeEnvTemplate preserves existing values and writeMergedEnvFile is idempotent on rerun (13.1999ms)
+@happytg/bootstrap:test: ✔ retro installer renderers include active cursor and keyboard hints (0.8602ms)
+@happytg/bootstrap:test: ✔ progress screen uses a readable ASCII running indicator instead of a unicode ellipsis (0.5947ms)
+@happytg/bootstrap:test: ✔ progress screen renders an aggregate ASCII progress bar from terminal step states (0.2852ms)
+@happytg/bootstrap:test: ✔ progress screen renders explicit per-step progress when a step reports subprogress (0.184ms)
+@happytg/bootstrap:test: ✔ Telegram screen renders a masked preview instead of the raw bot token (0.3798ms)
+@happytg/bootstrap:test: ✔ existing env confirmation masks Telegram token and shows safe existing values (0.4664ms)
+@happytg/bootstrap:test: ✔ existing env confirmation still renders when only optional Telegram values exist (0.1477ms)
+@happytg/bootstrap:test: ✔ final screen groups structured finalization items and dedupes warning text (0.8214ms)
+@happytg/bootstrap:test: ✔ waitForEnter resolves when ENTER close is pressed on the final screen (1.2173ms)
+@happytg/bootstrap:test: ✔ waitForEnter does not render the same final screen twice when ENTER closes it (0.2785ms)
+@happytg/bootstrap:test: ✔ promptSelect resolves on enter for single-select menus (0.3879ms)
+@happytg/bootstrap:test: ✔ promptPortValue keeps validation visible after invalid input and accepts a later enter-confirmed retry (0.815ms)
+@happytg/bootstrap:test: ✔ promptTelegramForm accepts pasted token and allowed user IDs with trailing CRLF in the interactive keypress path (1.9398ms)
+@happytg/bootstrap:test: ✔ fetchTelegramBotIdentity separates invalid-token API rejections from recoverable network lookups (2.2432ms)
+@happytg/bootstrap:test: ✔ fetchTelegramBotIdentity classifies DNS-style fetch failures and non-JSON responses (1.8963ms)
+@happytg/bootstrap:test: ✔ fetchTelegramBotIdentity accepts Windows PowerShell validation as a success fallback after a Node timeout (0.2725ms)
+@happytg/bootstrap:test: ✔ fetchTelegramBotIdentity promotes invalid tokens when a Windows follow-up probe reaches Telegram (0.2543ms)
+@happytg/bootstrap:test: ✔ Mini App URL resolution chooses configured public HTTPS URLs before local legacy app URLs (10.6417ms)
+@happytg/bootstrap:test: ✔ Mini App URL resolution keeps local Mini App port diagnostics separate from the local API URL (0.2922ms)
+@happytg/bootstrap:test: ✔ Telegram menu setup rejects invalid, local, private, and plain HTTP Mini App URLs (1.3313ms)
+@happytg/bootstrap:test: ✔ Telegram menu setup supports explicit public 8443 Mini App URLs (11.7788ms)
+@happytg/bootstrap:test: ✔ Telegram menu setup sends the MenuButtonWebApp payload after Caddy preflight (3.2005ms)
+@happytg/bootstrap:test: ✔ Telegram menu setup falls back to Windows PowerShell when Node fetch cannot reach Telegram (2.6986ms)
+@happytg/bootstrap:test: ✔ Telegram menu dry-run does not call Telegram Bot API (3.0153ms)
+@happytg/bootstrap:test: ✔ Telegram menu setup fails before network calls when the token is missing (1.3394ms)
+@happytg/bootstrap:test: ✔ Telegram menu setup blocks when public Caddy /miniapp preflight is unavailable (5.0822ms)
+@happytg/bootstrap:test: ✔ Telegram menu setup rejects public /miniapp routes that return another product (1.5043ms)
+@happytg/bootstrap:test: ✔ Telegram menu setup accepts explicit HappyTG Mini App service identity header (0.8465ms)
+@happytg/bootstrap:test: ✔ Telegram menu reset sends a default menu button payload (2.2526ms)
+@happytg/bootstrap:test: ✔ Telegram menu diagnostics report an unavailable Caddy route without checking menu state (0.8488ms)
+@happytg/bootstrap:test: ✔ Telegram menu diagnostics explain local polling separately from public HTTPS launch buttons (0.3338ms)
+@happytg/bootstrap:test: ✔ runHappyTGUninstall removes Linux user-service, state, and bootstrap artifacts while keeping the repo checkout (58.1241ms)
+@happytg/bootstrap:test: ✔ runHappyTGUninstall removes both recorded Windows autorun artifacts after repeated installs (26.5856ms)
+@happytg/bootstrap:test: ✔ runHappyTGUninstall does not query or remove unowned default Windows launchers for a custom state dir (41.4375ms)
+@happytg/bootstrap:test: ℹ tests 145
+@happytg/bootstrap:test: ℹ suites 0
+@happytg/bootstrap:test: ℹ pass 145
+@happytg/bootstrap:test: ℹ fail 0
+@happytg/bootstrap:test: ℹ cancelled 0
+@happytg/bootstrap:test: ℹ skipped 0
+@happytg/bootstrap:test: ℹ todo 0
+@happytg/bootstrap:test: ℹ duration_ms 8879.1808
+
+ Tasks:    15 successful, 15 total
+Cached:    14 cached, 15 total
+  Time:    9.923s 
+

@@ -1,0 +1,58 @@
+{
+  "task_id": "HTG-2026-06-11-miniapp-speed-prompt-release",
+  "session_id": "ses_HTG_2026_06_11_miniapp_speed_prompt_release",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "freeze",
+      "entered_at": "2026-06-11T19:20:00.000Z",
+      "event": "SpecFrozen"
+    },
+    {
+      "phase": "build",
+      "entered_at": "2026-06-11T19:24:00.000Z",
+      "event": "PromptAndReleaseMetadataUpdated"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-06-11T19:33:00.000Z",
+      "event": "ValidationEvidenceCaptured"
+    },
+    {
+      "phase": "verify",
+      "entered_at": "2026-06-11T19:38:00.000Z",
+      "event": "FreshVerifierPass"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-06-11T19:40:00.000Z",
+      "event": "TaskValidationPassed"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/spec.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/evidence.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/evidence.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/verdict.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/problems.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/raw/build.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/raw/test-unit.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/raw/test-integration.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/raw/lint.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/raw/typecheck.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/raw/test-rerun.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/raw/release-check.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/raw/graphify-query.txt"
+  ],
+  "unresolved_issues": [
+    "Initial pnpm test failed once in @happytg/bootstrap suggested-port assertion before targeted and full reruns passed.",
+    "doctor and verify exited 0 but reported a Codex memory startup warning.",
+    "This release ships a reusable prompt, not runtime Mini App performance changes."
+  ],
+  "timestamps": {
+    "created_at": "2026-06-11T19:20:00.000Z",
+    "updated_at": "2026-06-11T19:40:00.000Z"
+  }
+}

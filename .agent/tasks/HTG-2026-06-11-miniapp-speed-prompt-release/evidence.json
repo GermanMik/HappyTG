@@ -1,0 +1,129 @@
+{
+  "task_id": "HTG-2026-06-11-miniapp-speed-prompt-release",
+  "branch": "codex/miniapp-speed-prompt",
+  "release_version": "0.4.19",
+  "scope": "docs-only Mini App speed optimization prompt release",
+  "spec_frozen": true,
+  "production_runtime_changed": false,
+  "ten_role_review": {
+    "status": "recorded",
+    "roles": [
+      "Release Manager",
+      "QA/Test Engineer",
+      "Security/Secrets Reviewer",
+      "Architecture Invariants Reviewer",
+      "Mini App Performance Reviewer",
+      "Codex Desktop Adapter Reviewer",
+      "Cache/Data Correctness Reviewer",
+      "Graphify/Knowledge Reviewer",
+      "Git/Branch Hygiene Reviewer",
+      "Operator Impact Reviewer"
+    ]
+  },
+  "changed_files": [
+    "docs/prompts/happytg-miniapp-speed-optimization.md",
+    "CHANGELOG.md",
+    "docs/releases/0.4.19.md",
+    "package.json",
+    "apps/api/package.json",
+    "apps/bot/package.json",
+    "apps/host-daemon/package.json",
+    "apps/miniapp/package.json",
+    "apps/worker/package.json",
+    "packages/approval-engine/package.json",
+    "packages/bootstrap/package.json",
+    "packages/hooks/package.json",
+    "packages/policy-engine/package.json",
+    "packages/protocol/package.json",
+    "packages/repo-proof/package.json",
+    "packages/runtime-adapters/package.json",
+    "packages/session-engine/package.json",
+    "packages/shared/package.json",
+    "packages/telegram-kit/package.json",
+    ".agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/spec.md",
+    ".agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/evidence.md",
+    ".agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/evidence.json",
+    ".agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/problems.md",
+    ".agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release/verdict.json"
+  ],
+  "checks": [
+    {
+      "name": "graphify-query",
+      "command": "graphify query \"HappyTG Mini App prompt release 10 role docs prompts\" --budget 1200",
+      "raw_output": "raw/graphify-query.txt",
+      "status": "pass"
+    },
+    {
+      "name": "graphify-update-docs-prompts",
+      "command": "graphify update docs/prompts",
+      "raw_output": "raw/graphify-update-docs-prompts.txt",
+      "status": "pass_with_cleanup"
+    },
+    {
+      "name": "lint",
+      "command": "pnpm lint",
+      "raw_output": "raw/lint.txt",
+      "status": "pass"
+    },
+    {
+      "name": "typecheck",
+      "command": "pnpm typecheck",
+      "raw_output": "raw/typecheck.txt",
+      "status": "pass"
+    },
+    {
+      "name": "test-initial",
+      "command": "pnpm test",
+      "raw_output": "raw/test.txt",
+      "status": "fail_then_rerun"
+    },
+    {
+      "name": "bootstrap-test-rerun",
+      "command": "pnpm --filter @happytg/bootstrap test",
+      "raw_output": "raw/test-bootstrap-rerun.txt",
+      "status": "pass"
+    },
+    {
+      "name": "test-rerun",
+      "command": "pnpm test",
+      "raw_output": "raw/test-rerun.txt",
+      "status": "pass"
+    },
+    {
+      "name": "build",
+      "command": "pnpm build",
+      "raw_output": "raw/build.txt",
+      "status": "pass"
+    },
+    {
+      "name": "release-check",
+      "command": "pnpm release:check --version 0.4.19",
+      "raw_output": "raw/release-check.txt",
+      "status": "pass"
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "raw_output": "raw/diff-check.txt",
+      "status": "pass"
+    },
+    {
+      "name": "doctor",
+      "command": "pnpm happytg doctor",
+      "raw_output": "raw/doctor.txt",
+      "status": "warn_exit_0"
+    },
+    {
+      "name": "verify",
+      "command": "pnpm happytg verify",
+      "raw_output": "raw/verify.txt",
+      "status": "warn_exit_0"
+    },
+    {
+      "name": "task-validate",
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-06-11-miniapp-speed-prompt-release",
+      "raw_output": "raw/task-validate-rerun.txt",
+      "status": "pass"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+Fresh verifier pass for HTG-2026-06-11-miniapp-speed-prompt-release
+
+Verdict: PASS for local release candidate.
+
+Blocking findings:
+- None.
+
+Reviewed:
+- Frozen spec.md.
+- 10-role critical review and synthesis in evidence.md.
+- Prompt diff for docs/prompts/happytg-miniapp-speed-optimization.md.
+- Release metadata for 0.4.19 across 16 workspace package.json files.
+- CHANGELOG.md v0.4.19 entry.
+- docs/releases/0.4.19.md.
+- Raw validation outputs under raw/.
+- problems.md residual risks.
+
+Findings:
+- The branch is docs-only plus release/proof metadata; production runtime behavior is unchanged.
+- The prompt now requires independent 10-role performance review before implementation decisions.
+- The prompt preserves HappyTG architecture, auth, policy, approval, source-discrimination, and local LM Studio constraints.
+- Release metadata validates with pnpm release:check --version 0.4.19.
+- lint, typecheck, build, diff-check, targeted bootstrap rerun, and full test rerun passed.
+- doctor and verify exited 0 with a recorded Codex memory startup warning.
+- Graphify evidence was recorded through a focused query and a narrow docs/prompts update attempt; nested generated output was removed from the worktree.
+
+Residual risks:
+- Initial full pnpm test failed once in a bootstrap suggested-port assertion; reruns passed and the failure is recorded in raw/test.txt.
+- This release ships the reusable prompt, not the future Mini App runtime speed implementation.
