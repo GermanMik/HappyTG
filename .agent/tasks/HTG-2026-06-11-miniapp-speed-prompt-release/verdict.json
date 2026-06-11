@@ -1,0 +1,46 @@
+{
+  "task_id": "HTG-2026-06-11-miniapp-speed-prompt-release",
+  "verdict": "passed",
+  "verifier": {
+    "role": "fresh-verifier",
+    "run_id": "fresh-verifier-2026-06-11"
+  },
+  "blocking_findings": [],
+  "checks": [
+    {
+      "name": "spec-and-10-role-review",
+      "ok": true,
+      "detail": "Spec is frozen and evidence records 10 independent critical perspectives with synthesis."
+    },
+    {
+      "name": "prompt-artifact",
+      "ok": true,
+      "detail": "Mini App speed prompt requires measured baselines, bounded optimization choices, slow-dependency tests, Graphify discipline, and architecture invariants."
+    },
+    {
+      "name": "release-metadata",
+      "ok": true,
+      "detail": "All 16 workspace package versions, CHANGELOG.md, and docs/releases/0.4.19.md validate with pnpm release:check --version 0.4.19."
+    },
+    {
+      "name": "repo-validation",
+      "ok": true,
+      "detail": "lint, typecheck, build, diff-check, targeted bootstrap rerun, and full test rerun passed."
+    },
+    {
+      "name": "doctor-verify",
+      "ok": true,
+      "detail": "doctor and verify exited 0 with one Codex memory startup warning recorded as residual risk."
+    },
+    {
+      "name": "graphify",
+      "ok": true,
+      "detail": "Focused Graphify query and narrow docs/prompts update output are recorded; nested generated graph output was removed."
+    }
+  ],
+  "residual_risks": [
+    "Initial pnpm test failed once in @happytg/bootstrap suggested-port assertion before targeted and full reruns passed.",
+    "This release ships a reusable prompt, not runtime Mini App performance changes.",
+    "Root graphify-out report remains older navigation evidence; heavy semantic extraction was not rerun."
+  ]
+}

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.4.19
+
+### Added
+
+- Added a reusable Mini App speed optimization prompt that requires measured route/API/payload baselines before performance claims.
+- The prompt now includes 10 independent critical roles covering WebView performance, API latency, Codex Desktop adapter behavior, safety, privacy, cache correctness, QA, release operations, and Graphify navigation.
+
+### Verification
+
+- Release validation covers workspace version metadata, prompt artifact review, proof-bundle evidence, Graphify query evidence, and task validation for the Mini App speed prompt release.
+
 ## v0.4.18
 
 ### Fixed

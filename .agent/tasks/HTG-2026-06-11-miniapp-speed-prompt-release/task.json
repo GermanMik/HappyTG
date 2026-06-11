@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-06-11-miniapp-speed-prompt-release",
+  "sessionId": "ses_HTG_2026_06_11_miniapp_speed_prompt_release",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-11-miniapp-speed-prompt-release",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Mini App speed optimization prompt release",
+  "acceptanceCriteria": [
+    "Mini App speed prompt requires measured route/API/payload baselines before performance claims.",
+    "Prompt includes 10 independent critical roles and synthesis before implementation decisions.",
+    "Prompt preserves HappyTG architecture, auth, policy, approval, serialized mutation, source-discrimination, and local LM Studio constraints.",
+    "Release metadata validates for 0.4.19.",
+    "Proof bundle records validation evidence, Graphify evidence, residual risks, and fresh verifier verdict."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-06-11T19:20:00.000Z",
+  "updatedAt": "2026-06-11T19:40:00.000Z"
+}
