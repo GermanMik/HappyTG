@@ -1,0 +1,12 @@
+### Browser `happytg-docker-miniapp` opened with pid 22844.
+### Ran Playwright code
+```js
+await page.goto('https://happytg.gerta.crazedns.ru/miniapp');
+```
+### Page
+- Page URL: https://happytg.gerta.crazedns.ru/miniapp
+- Page Title: HappyTG Mini App
+### Snapshot
+- [Snapshot](.playwright-cli\page-2026-06-10T20-40-30-633Z.yml)
+### Events
+- New console entries: .playwright-cli\console-2026-06-10T20-40-29-777Z.log#L1-L6

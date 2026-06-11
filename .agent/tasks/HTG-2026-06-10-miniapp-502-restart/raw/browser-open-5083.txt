@@ -1,0 +1,6 @@
+### Browser `happytg-miniapp-restart` opened with pid 37476.
+### Error
+Error: net::ERR_TIMED_OUT at https://happytg.gerta.crazedns.ru:5083/miniapp
+Call log:
+[2m  - navigating to "https://happytg.gerta.crazedns.ru:5083/miniapp", waiting until "domcontentloaded"[22m
+

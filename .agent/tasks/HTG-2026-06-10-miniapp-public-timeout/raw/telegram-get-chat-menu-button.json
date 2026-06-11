@@ -1,0 +1,7 @@
+{
+  "type": "web_app",
+  "text": "HappyTG",
+  "web_app": {
+    "url": "https://happytg.gerta.crazedns.ru:5083/miniapp"
+  }
+}

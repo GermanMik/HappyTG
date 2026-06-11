@@ -1,0 +1,5 @@
+{
+  "ok": true,
+  "service": "miniapp",
+  "apiBaseUrl": "http://api:4000"
+}

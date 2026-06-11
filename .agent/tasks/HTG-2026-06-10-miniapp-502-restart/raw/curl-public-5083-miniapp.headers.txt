@@ -1,0 +1,8 @@
+HTTP/1.1 200 OK
+Server: Web server
+Date: Wed, 10 Jun 2026 17:56:03 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 31435
+Connection: keep-alive
+Via: 1.1 Caddy
+

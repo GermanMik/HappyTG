@@ -1,0 +1,2 @@
+/happytg-api-1 unless-stopped healthy
+/happytg-miniapp-1 unless-stopped healthy

@@ -1,0 +1,28 @@
+### Page
+- Page URL: chrome-error://chromewebdata/
+- Page Title: happytg.gerta.crazedns.ru
+### Snapshot
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e6]:
+    - heading "Не удается получить доступ к сайту" [level=1] [ref=e7]
+    - paragraph [ref=e8]:
+      - text: Превышено время ожидания ответа от сайта
+      - strong [ref=e9]: happytg.gerta.crazedns.ru
+      - text: .
+    - generic [ref=e10]:
+      - paragraph [ref=e11]: "Попробуйте сделать следующее:"
+      - list [ref=e12]:
+        - listitem [ref=e13]: Проверьте подключение к интернету.
+        - listitem [ref=e14]:
+          - link "Проверьте настройки прокси-сервера и брандмауэра" [ref=e15] [cursor=pointer]:
+            - /url: "#buttons"
+          - text: .
+        - listitem [ref=e16]:
+          - link "Выполните диагностику сети в Windows" [ref=e17] [cursor=pointer]:
+            - /url: javascript:diagnoseErrors()
+    - generic [ref=e18]: ERR_TIMED_OUT
+  - generic [ref=e19]:
+    - button "Перезагрузить" [ref=e21] [cursor=pointer]
+    - button "Сведения" [ref=e22] [cursor=pointer]
+```

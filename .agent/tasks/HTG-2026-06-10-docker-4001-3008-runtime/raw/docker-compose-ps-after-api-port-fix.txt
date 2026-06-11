@@ -1,0 +1,6 @@
+NAME                 IMAGE                                      COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+happytg-api-1        happytg-api                                "docker-entrypoint.s…"   api        27 seconds ago   Up 21 seconds (healthy)   0.0.0.0:4001->4000/tcp, [::]:4001->4000/tcp
+happytg-miniapp-1    happytg-miniapp                            "docker-entrypoint.s…"   miniapp    26 seconds ago   Up 20 seconds (healthy)   0.0.0.0:3008->3001/tcp, [::]:3008->3001/tcp
+happytg-minio-1      minio/minio:RELEASE.2025-09-07T16-13-09Z   "/usr/bin/docker-ent…"   minio      2 minutes ago    Up 2 minutes              0.0.0.0:9002->9000/tcp, [::]:9002->9000/tcp, 0.0.0.0:9006->9001/tcp, [::]:9006->9001/tcp
+happytg-postgres-1   postgres:16                                "docker-entrypoint.s…"   postgres   2 minutes ago    Up 2 minutes (healthy)    0.0.0.0:5433->5432/tcp, [::]:5433->5432/tcp
+happytg-redis-1      redis:7                                    "docker-entrypoint.s…"   redis      2 minutes ago    Up 2 minutes (healthy)    0.0.0.0:6380->6379/tcp, [::]:6380->6379/tcp

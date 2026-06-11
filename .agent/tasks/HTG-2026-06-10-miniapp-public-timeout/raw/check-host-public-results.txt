@@ -1,0 +1,164 @@
+URL=https://happytg.gerta.crazedns.ru/miniapp/ready
+{
+  "nodes": {
+    "ae1.node.check-host.net": [
+      "ae",
+      "UAE",
+      "Dubai",
+      "176.125.231.26",
+      "AS9009"
+    ],
+    "ru4.node.check-host.net": [
+      "ru",
+      "Russia",
+      "Ekaterinburg",
+      "147.45.113.30",
+      "AS41925"
+    ],
+    "se1.node.check-host.net": [
+      "se",
+      "Sweden",
+      "Stockholm",
+      "78.40.116.61",
+      "AS200019"
+    ],
+    "us3.node.check-host.net": [
+      "us",
+      "USA",
+      "Atlanta",
+      "147.45.60.14",
+      "AS215540"
+    ],
+    "us5.node.check-host.net": [
+      "us",
+      "USA",
+      "New York",
+      "162.217.248.181",
+      "AS213535"
+    ]
+  },
+  "ok": 1,
+  "permanent_link": "https://check-host.net/check-report/4187c5c3kb97",
+  "request_id": "4187c5c3kb97"
+}
+{
+  "ae1.node.check-host.net": [
+    [
+      0,
+      1.10699105262756,
+      "error:0A000438:SSL routines::tlsv1 alert internal error",
+      null,
+      "95.213.212.50"
+    ]
+  ],
+  "ru4.node.check-host.net": [
+    [
+      0,
+      1.81041097640991,
+      "error:0A000438:SSL routines::tlsv1 alert internal error",
+      null,
+      "95.213.212.50"
+    ]
+  ],
+  "se1.node.check-host.net": [
+    [
+      0,
+      5.80296897888184,
+      "error:0A000438:SSL routines::tlsv1 alert internal error",
+      null,
+      "87.228.71.67"
+    ]
+  ],
+  "us3.node.check-host.net": [
+    [
+      0,
+      1.3153121471405,
+      "error:0A000438:SSL routines::tlsv1 alert internal error",
+      null,
+      "95.213.212.50"
+    ]
+  ],
+  "us5.node.check-host.net": [
+    [
+      0,
+      5.98300099372864,
+      "error:0A000438:SSL routines::tlsv1 alert internal error",
+      null,
+      "87.228.71.67"
+    ]
+  ]
+}
+URL=https://happytg.gerta.crazedns.ru:5083/miniapp/ready
+{
+  "nodes": {
+    "in2.node.check-host.net": [
+      "in",
+      "India",
+      "Delhi",
+      "181.214.10.239",
+      "AS140641"
+    ],
+    "in5.node.check-host.net": [
+      "in",
+      "India",
+      "Kolkata",
+      "151.243.12.65",
+      "AS149573"
+    ],
+    "it2.node.check-host.net": [
+      "it",
+      "Italy",
+      "Milan",
+      "185.25.204.60",
+      "AS60798"
+    ],
+    "rs1.node.check-host.net": [
+      "rs",
+      "Serbia",
+      "Belgrade",
+      "194.146.57.64",
+      "AS35779"
+    ],
+    "ru4.node.check-host.net": [
+      "ru",
+      "Russia",
+      "Ekaterinburg",
+      "147.45.113.30",
+      "AS41925"
+    ]
+  },
+  "ok": 1,
+  "permanent_link": "https://check-host.net/check-report/4187c697kcf2",
+  "request_id": "4187c697kcf2"
+}
+{
+  "in2.node.check-host.net": null,
+  "in5.node.check-host.net": [
+    [
+      1,
+      1.41401100158691,
+      "OK",
+      "200",
+      "185.162.93.96"
+    ]
+  ],
+  "it2.node.check-host.net": [
+    [
+      1,
+      0.628950834274292,
+      "OK",
+      "200",
+      "178.250.154.58"
+    ]
+  ],
+  "rs1.node.check-host.net": null,
+  "ru4.node.check-host.net": [
+    [
+      1,
+      2.21792984008789,
+      "OK",
+      "200",
+      "95.213.212.50"
+    ]
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "ok": true,
+  "service": "api",
+  "stateStorePath": "/app/apps/api/.happytg-dev/control-plane.json"
+}

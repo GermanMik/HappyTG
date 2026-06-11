@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-06-10-docker-4001-3008-runtime",
+  "verdict": "pass",
+  "notes": [
+    "HappyTG API and Mini App now run through Docker on the host ports expected by external BaseDeploy Caddy.",
+    "Containers use unless-stopped restart policy.",
+    "Docker API reads Codex Desktop projects via a read-only host .codex mount.",
+    "Codex Desktop app-server mutating control is not enabled inside Docker."
+  ]
+}

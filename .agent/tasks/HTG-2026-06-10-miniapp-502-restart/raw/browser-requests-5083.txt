@@ -1,0 +1,4 @@
+### Result
+1. [GET] https://happytg.gerta.crazedns.ru:5083/miniapp => [FAILED] net::ERR_TIMED_OUT
+2. [GET] https://happytg.gerta.crazedns.ru:5083/miniapp => [FAILED] net::ERR_TIMED_OUT
+3. [GET] https://happytg.gerta.crazedns.ru:5083/miniapp

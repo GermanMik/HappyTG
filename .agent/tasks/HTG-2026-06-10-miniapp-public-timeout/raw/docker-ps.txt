@@ -1,0 +1,12 @@
+
+NAMES                         STATUS                   PORTS
+happytg-miniapp-1             Up 3 minutes (healthy)   0.0.0.0:3007->3001/tcp, [::]:3007->3001/tcp
+happytg-worker-1              Up 3 minutes (healthy)   
+happytg-postgres-1            Up 3 minutes (healthy)   0.0.0.0:5433->5432/tcp, [::]:5433->5432/tcp
+happytg-redis-1               Up 3 minutes (healthy)   0.0.0.0:6380->6379/tcp, [::]:6380->6379/tcp
+happytg-minio-1               Up 3 minutes             0.0.0.0:9002->9000/tcp, [::]:9002->9000/tcp, 0.0.0.0:9006->9001/tcp, [::]:9006->9001/tcp
+happytg-bot-1                 Up 3 minutes (healthy)   0.0.0.0:4100->4100/tcp, [::]:4100->4100/tcp
+happytg-api-1                 Up 3 minutes (healthy)   0.0.0.0:4000->4000/tcp, [::]:4000->4000/tcp
+happytg-grafana-1             Up 2 days                0.0.0.0:3004->3000/tcp, [::]:3004->3000/tcp
+happytg-prometheus-1          Up 2 days                0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp
+

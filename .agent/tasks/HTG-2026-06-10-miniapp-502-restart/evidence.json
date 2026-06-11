@@ -1,0 +1,18 @@
+{
+  "taskId": "HTG-2026-06-10-miniapp-502-restart",
+  "status": "complete",
+  "initialFinding": "Public :5083 route returned 502 because host-side 3008/4001 upstream listeners were absent.",
+  "actions": [
+    "Started host-side API on 4001.",
+    "Started host-side Mini App on 3008.",
+    "Switched HAPPYTG_MINIAPP_URL to https://happytg.gerta.crazedns.ru/miniapp after Chromium timed out on :5083 and passed on 443.",
+    "Ran pnpm happytg telegram menu set successfully."
+  ],
+  "verification": {
+    "curl5083Ready": "HTTP 200",
+    "browser5083": "ERR_TIMED_OUT",
+    "curl443Ready": "HTTP 200",
+    "browser443": "HappyTG Mini App loaded with no console errors",
+    "verify": "exit 0 with unrelated Codex CLI memory warning"
+  }
+}

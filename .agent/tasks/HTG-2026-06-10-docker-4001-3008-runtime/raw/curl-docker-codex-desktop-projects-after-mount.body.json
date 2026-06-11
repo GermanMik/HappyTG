@@ -1,0 +1,88 @@
+{
+  "projects": [
+    {
+      "id": "cdp_38792738bf4caef1",
+      "label": "C:\\Develop\\Projects\\BaseDeploy",
+      "path": "C:\\Develop\\Projects\\BaseDeploy",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_39eab84001478d20",
+      "label": "C:\\Develop\\Projects\\CodexMD3",
+      "path": "C:\\Develop\\Projects\\CodexMD3",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_54728ad608804437",
+      "label": "C:\\Develop\\Projects\\Contacts",
+      "path": "C:\\Develop\\Projects\\Contacts",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_f5c7039374a6fdd9",
+      "label": "C:\\Develop\\Projects\\Factory",
+      "path": "C:\\Develop\\Projects\\Factory",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_0e79b96f869a5659",
+      "label": "C:\\Develop\\Projects\\HappyTG",
+      "path": "C:\\Develop\\Projects\\HappyTG",
+      "source": "codex-desktop",
+      "active": true
+    },
+    {
+      "id": "cdp_40eef3f30412c259",
+      "label": "C:\\Develop\\Projects\\HealthCheck",
+      "path": "C:\\Develop\\Projects\\HealthCheck",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_62a8dd92d560cbb9",
+      "label": "C:\\Develop\\Projects\\NPortal",
+      "path": "C:\\Develop\\Projects\\NPortal",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_cc09e3ddf757c327",
+      "label": "C:\\Develop\\Projects\\Obsid",
+      "path": "C:\\Develop\\Projects\\Obsid",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_a2b1fdfce52caa27",
+      "label": "C:\\Develop\\Projects\\Paperclip",
+      "path": "C:\\Develop\\Projects\\Paperclip",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_693c717d8bfbbe57",
+      "label": "C:\\Develop\\Projects\\VideoCall",
+      "path": "C:\\Develop\\Projects\\VideoCall",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_b04b5deb01dd0710",
+      "label": "C:\\Users\\tikta\\Documents\\Codex",
+      "path": "C:\\Users\\tikta\\Documents\\Codex",
+      "source": "codex-desktop",
+      "active": false
+    },
+    {
+      "id": "cdp_edb7989791ec2f57",
+      "label": "E:\\YandexDisk\\Develop\\HealthCheck",
+      "path": "E:\\YandexDisk\\Develop\\HealthCheck",
+      "source": "codex-desktop",
+      "active": false
+    }
+  ]
+}

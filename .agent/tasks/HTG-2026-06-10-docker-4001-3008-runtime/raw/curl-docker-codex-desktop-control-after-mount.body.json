@@ -1,0 +1,9 @@
+{
+  "control": {
+    "canResume": false,
+    "canStop": false,
+    "canCreateTask": false,
+    "unsupportedReason": "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.",
+    "unsupportedReasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+  }
+}

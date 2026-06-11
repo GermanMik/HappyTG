@@ -1,0 +1,11 @@
+{
+  "taskId": "HTG-2026-06-10-miniapp-public-timeout",
+  "status": "pass_with_unrelated_warning",
+  "miniAppUrl": "https://happytg.gerta.crazedns.ru:5083/miniapp",
+  "telegramMenuUpdated": true,
+  "browserSmoke": "pass",
+  "caddyRoute": "pass",
+  "doctor": "warn_unrelated_codex_memory_db",
+  "verify": "warn_unrelated_codex_memory_db"
+}
+

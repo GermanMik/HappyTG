@@ -1,0 +1,9 @@
+{
+  "taskId": "HTG-2026-06-10-miniapp-502-restart",
+  "verdict": "pass",
+  "notes": [
+    "Mini App upstream was down and has been restarted on 3008/4001.",
+    ":5083 is curl-healthy but browser-times-out from Chromium; Telegram menu now uses the browser-verified standard HTTPS URL.",
+    "Runtime processes are background PowerShell/pnpm processes, not durable services."
+  ]
+}

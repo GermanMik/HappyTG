@@ -1,0 +1,6 @@
+{
+  "ok": false,
+  "service": "miniapp",
+  "apiBaseUrl": "http://api:4000",
+  "detail": "fetch failed"
+}

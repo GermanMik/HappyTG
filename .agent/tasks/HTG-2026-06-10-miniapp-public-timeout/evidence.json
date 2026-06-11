@@ -1,0 +1,43 @@
+{
+  "taskId": "HTG-2026-06-10-miniapp-public-timeout",
+  "timestamp": "2026-06-10T05:48:00+03:00",
+  "checks": [
+    {
+      "name": "bot-ready",
+      "command": "Invoke-RestMethod http://127.0.0.1:4100/ready",
+      "status": "pass",
+      "artifact": "raw/bot-ready.json"
+    },
+    {
+      "name": "public-miniapp-ready",
+      "command": "curl.exe -4 -k -i --max-time 15 https://happytg.gerta.crazedns.ru:5083/miniapp/ready",
+      "status": "pass",
+      "artifact": "raw/curl-miniapp-ready.txt"
+    },
+    {
+      "name": "telegram-menu-dry-run",
+      "command": "pnpm happytg telegram menu set --dry-run",
+      "status": "pass",
+      "artifact": "raw/telegram-menu-dry-run.txt"
+    },
+    {
+      "name": "browser-smoke",
+      "command": "in-app Browser opened https://happytg.gerta.crazedns.ru:5083/miniapp",
+      "status": "pass",
+      "artifact": "raw/page-2026-06-10T05-45-38-204Z.yml"
+    },
+    {
+      "name": "doctor",
+      "command": "pnpm happytg doctor",
+      "status": "warn_unrelated_codex_memory_db",
+      "artifact": "raw/doctor.txt"
+    },
+    {
+      "name": "verify",
+      "command": "pnpm happytg verify",
+      "status": "warn_unrelated_codex_memory_db",
+      "artifact": "raw/verify.txt"
+    }
+  ]
+}
+

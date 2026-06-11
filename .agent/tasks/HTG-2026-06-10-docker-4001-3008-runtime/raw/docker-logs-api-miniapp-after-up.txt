@@ -1,0 +1,10 @@
+miniapp-1  | 
+miniapp-1  | > @happytg/miniapp@0.4.15 start /app/apps/miniapp
+miniapp-1  | > tsx src/index.ts
+api-1      | 
+api-1      | > @happytg/api@0.4.15 start /app/apps/api
+api-1      | > tsx src/index.ts
+api-1      | 
+api-1      | {"at":"2026-06-10T20:37:06.743Z","level":"INFO","scope":"api","message":"API listening","metadata":{"port":4001}}
+miniapp-1  | 
+miniapp-1  | {"at":"2026-06-10T20:37:07.587Z","level":"INFO","scope":"miniapp","message":"Mini App listening","metadata":{"port":3001,"apiBaseUrl":"http://api:4000"}}

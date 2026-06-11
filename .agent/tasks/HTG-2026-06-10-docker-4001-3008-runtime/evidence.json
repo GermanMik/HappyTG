@@ -1,0 +1,22 @@
+{
+  "taskId": "HTG-2026-06-10-docker-4001-3008-runtime",
+  "status": "complete",
+  "goal": "Run HappyTG public Mini App API and frontend through Docker on host ports 4001 and 3008.",
+  "changes": [
+    "Added restart: unless-stopped to Compose services.",
+    "Mapped local Docker API/Mini App to host ports 4001/3008 through .env.",
+    "Forced API container listener to internal port 4000 so host 4001 maps correctly.",
+    "Set local Docker Mini App upstream to miniapp:3001.",
+    "Added a Codex Desktop Docker override that mounts host .codex read-only into the API container."
+  ],
+  "verification": {
+    "apiContainer": "healthy, 4001->4000",
+    "miniappContainer": "healthy, 3008->3001",
+    "restartPolicy": "unless-stopped",
+    "codexDesktopProjects": "12 projects returned through Docker API after read-only mount",
+    "codexDesktopControl": "mutating app-server controls intentionally unsupported in Docker",
+    "publicReady": "HTTP 200",
+    "browser": "HappyTG Mini App loaded with no console errors",
+    "verify": "exit 0 with unrelated Codex CLI memory warning"
+  }
+}

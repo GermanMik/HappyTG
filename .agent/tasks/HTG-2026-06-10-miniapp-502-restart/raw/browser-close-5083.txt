@@ -1,0 +1,2 @@
+Browser 'happytg-miniapp-restart' closed
+
