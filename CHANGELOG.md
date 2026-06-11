@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.18
+
+### Fixed
+
+- Mini App Codex Desktop project, session list, new-task, and session-detail screens now use bounded fetch fallbacks so slow or unavailable Desktop control does not block page rendering.
+- Codex Desktop runtime adapter now caches/deduplicates control capability checks and bounds Desktop control calls for project listing, session listing, and session detail reads.
+- Mini App now surfaces partial-load warnings instead of failing the full Codex/Projects view when only Desktop data is temporarily unavailable.
+
+### Verification
+
+- Release validation covers workspace version metadata and the targeted Mini App/runtime-adapter resilience changes for slow Codex Desktop control paths.
+
 ## v0.4.17
 
 ### Changed

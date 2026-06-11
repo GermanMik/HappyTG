@@ -31,6 +31,8 @@ const DEFAULT_HISTORY_SUMMARY_MAX_CHARS = 320;
 const DEFAULT_APP_SERVER_REQUEST_TIMEOUT_MS = 10_000;
 const DEFAULT_HOST_PROXY_URL = "http://127.0.0.1:4318";
 const DEFAULT_HOST_PROXY_REQUEST_TIMEOUT_MS = 10_000;
+const DEFAULT_CONTROL_CAPABILITIES_TIMEOUT_MS = 2500;
+const DEFAULT_CONTROL_CAPABILITIES_CACHE_MS = 8_000;
 const DEFAULT_APP_SERVER_STDERR_MAX_BYTES = 8_192;
 const SECRET_FIELD_RE = /(?:secret|token|password|passwd|credential|authorization|auth|api[_-]?key|private[_-]?key|access[_-]?token|refresh[_-]?token)/iu;
 const SECRET_VALUE_RE = /\b(?:RAW_[A-Z0-9_]*SECRET[A-Z0-9_]*|sk-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|gh[pousr]_[A-Za-z0-9_]{20,}|Bearer\s+[A-Za-z0-9._~-]+|(?:api[_-]?key|token|password|secret)\s*[:=]\s*\S+)/giu;
@@ -450,6 +452,15 @@ function collectHistoryText(value: unknown, output: string[], keyPath: string[] 
       collectHistoryText(nestedValue, output, [...keyPath, nestedKey], depth + 1);
     }
   }
+}
+
+function parsePositiveIntegerMs(raw: string | undefined, fallback: number): number {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+
+  return Math.floor(parsed);
 }
 
 function objectValue(record: Record<string, unknown>, key: string): Record<string, unknown> | undefined {
@@ -1368,14 +1379,23 @@ export class CodexDesktopStateAdapter {
   private readonly env: NodeJS.ProcessEnv;
   private readonly maxSessionFiles: number;
   private readonly maxHistoryRecords: number;
+  private readonly controlCapabilitiesTimeoutMs: number;
+  private readonly controlCapabilitiesCacheMs: number;
   private readonly controlContract: CodexDesktopControlContract;
   private readonly recentControlSessions = new Map<string, CodexDesktopSession>();
   private readonly recentControlHistory = new Map<string, CodexDesktopHistoryEntry[]>();
+  private controlCapabilitiesCache?: {
+    expiresAt: number;
+    capabilities: CodexDesktopControlCapabilities;
+  };
+  private controlCapabilitiesInFlight?: Promise<CodexDesktopControlCapabilities>;
 
   constructor(private readonly options: CodexDesktopStateAdapterOptions = {}) {
     this.env = options.env ?? process.env;
     this.maxSessionFiles = options.maxSessionFiles ?? Number(this.env.HAPPYTG_CODEX_DESKTOP_MAX_SESSION_FILES ?? DEFAULT_MAX_SESSION_FILES);
     this.maxHistoryRecords = options.maxHistoryRecords ?? Number(this.env.HAPPYTG_CODEX_DESKTOP_MAX_HISTORY_RECORDS ?? DEFAULT_HISTORY_MAX_RECORDS);
+    this.controlCapabilitiesTimeoutMs = parsePositiveIntegerMs(this.env.HAPPYTG_CODEX_DESKTOP_CONTROL_CAPABILITIES_TIMEOUT_MS, DEFAULT_CONTROL_CAPABILITIES_TIMEOUT_MS);
+    this.controlCapabilitiesCacheMs = parsePositiveIntegerMs(this.env.HAPPYTG_CODEX_DESKTOP_CONTROL_CAPABILITIES_TTL_MS, DEFAULT_CONTROL_CAPABILITIES_CACHE_MS);
     this.controlContract = options.controlContract ?? defaultControlContract(options, this.codexHome());
   }
 
@@ -1406,18 +1426,52 @@ export class CodexDesktopStateAdapter {
   }
 
   private async controlCapabilities(): Promise<CodexDesktopControlCapabilities> {
-    if (this.controlContract.capabilities) {
-      return this.controlContract.capabilities();
+    const now = Date.now();
+    if (this.controlCapabilitiesCache && this.controlCapabilitiesCache.expiresAt > now) {
+      return this.controlCapabilitiesCache.capabilities;
     }
 
-    return {
-      supportsResume: Boolean(this.controlContract.supportsResume && this.controlContract.resumeSession),
-      supportsContinue: Boolean(this.controlContract.supportsContinue && this.controlContract.continueSession),
-      supportsStop: Boolean(this.controlContract.supportsStop && this.controlContract.stopSession),
-      supportsNewTask: Boolean(this.controlContract.supportsNewTask && this.controlContract.createTask),
-      unsupportedReason: this.unsupportedReason(),
-      unsupportedReasonCode: this.unsupportedReasonCode()
-    };
+    if (this.controlCapabilitiesInFlight) {
+      return this.controlCapabilitiesInFlight;
+    }
+
+    this.controlCapabilitiesInFlight = (async () => {
+      try {
+        const capabilities = this.controlContract.capabilities
+          ? await this.withControlTimeout(this.controlContract.capabilities())
+          : {
+            supportsResume: Boolean(this.controlContract.supportsResume && this.controlContract.resumeSession),
+            supportsContinue: Boolean(this.controlContract.supportsContinue && this.controlContract.continueSession),
+            supportsStop: Boolean(this.controlContract.supportsStop && this.controlContract.stopSession),
+            supportsNewTask: Boolean(this.controlContract.supportsNewTask && this.controlContract.createTask),
+            unsupportedReason: this.unsupportedReason(),
+            unsupportedReasonCode: this.unsupportedReasonCode()
+          };
+        this.controlCapabilitiesCache = {
+          expiresAt: Date.now() + this.controlCapabilitiesCacheMs,
+          capabilities
+        };
+        return capabilities;
+      } catch (error) {
+        const fallback = {
+          supportsResume: false,
+          supportsContinue: false,
+          supportsStop: false,
+          supportsNewTask: false,
+          unsupportedReason: error instanceof Error ? error.message : this.unsupportedReason(),
+          unsupportedReasonCode: this.unsupportedReasonCode()
+        };
+        this.controlCapabilitiesCache = {
+          expiresAt: Date.now() + this.controlCapabilitiesCacheMs,
+          capabilities: fallback
+        };
+        return fallback;
+      } finally {
+        this.controlCapabilitiesInFlight = undefined;
+      }
+    })();
+
+    return this.controlCapabilitiesInFlight;
   }
 
   private decorateSession(session: Omit<CodexDesktopSession, "canResume" | "canContinue" | "canStop" | "canCreateTask" | "unsupportedReason" | "unsupportedReasonCode">, capabilities: CodexDesktopControlCapabilities): CodexDesktopSession {
@@ -1439,10 +1493,29 @@ export class CodexDesktopStateAdapter {
     };
   }
 
+  private async withControlTimeout<T>(promise: Promise<T>): Promise<T> {
+    return await new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new CodexDesktopControlUnavailableError(`Codex Desktop control request timed out after ${this.controlCapabilitiesTimeoutMs}ms.`));
+      }, this.controlCapabilitiesTimeoutMs);
+
+      promise.then(
+        (value) => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        (error) => {
+          clearTimeout(timer);
+          reject(error);
+        }
+      );
+    });
+  }
+
   async listProjects(): Promise<CodexDesktopProject[]> {
     if (this.controlContract.listProjects) {
       try {
-        return await this.controlContract.listProjects();
+        return await this.withControlTimeout(this.controlContract.listProjects());
       } catch {
         // Local Codex Desktop state remains useful when a host proxy is temporarily unavailable.
       }
@@ -1666,7 +1739,7 @@ export class CodexDesktopStateAdapter {
 
     if (this.controlContract.listSessions && (capabilities.supportsResume || capabilities.supportsContinue || capabilities.supportsStop || capabilities.supportsNewTask)) {
       try {
-        const appServerSessions = await this.controlContract.listSessions({ limit: maxSessionFiles });
+        const appServerSessions = await this.withControlTimeout(this.controlContract.listSessions({ limit: maxSessionFiles }));
         for (const session of appServerSessions) {
           sessionsById.set(session.id, projectSession({
             id: session.id,
@@ -1766,7 +1839,7 @@ export class CodexDesktopStateAdapter {
 
     if (this.controlContract.getSessionDetail) {
       try {
-        const appServerDetail = await this.controlContract.getSessionDetail(session, { maxRecords });
+        const appServerDetail = await this.withControlTimeout(this.controlContract.getSessionDetail(session, { maxRecords }));
         if (appServerDetail.history.length > 0 || files.length === 0) {
           return {
             session: appServerDetail.session,

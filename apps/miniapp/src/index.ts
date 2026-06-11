@@ -1815,6 +1815,20 @@ function renderCodexPanel(input: {
   cliSessions: MiniAppSessionCard[];
   desktopProjects: CodexDesktopProject[];
   desktopSessions: CodexDesktopSession[];
+  load?: {
+    cliSessions?: {
+      ok: boolean;
+      error?: string;
+    };
+    desktopProjects?: {
+      ok: boolean;
+      error?: string;
+    };
+    desktopSessions?: {
+      ok: boolean;
+      error?: string;
+    };
+  };
   source?: string;
   state?: string;
   project?: string;
@@ -1834,10 +1848,20 @@ function renderCodexPanel(input: {
     .filter((card) => source === "all" || card.source === source || card.runtime === source)
     .filter((card) => !input.state || input.state === "all" || card.state === input.state || card.desktopStatus === input.state || card.attention === input.state || (input.state === "unsupported" && Boolean(card.unsupportedReason)))
     .filter((card) => !input.project || input.project === "all" || card.repoName === input.project || card.projectPath === input.project)
-    .filter((card) => matchesCodexSearch(card, query))
-    .sort((left, right) => compareSessionCards(left, right, sort));
+  .filter((card) => matchesCodexSearch(card, query))
+  .sort((left, right) => compareSessionCards(left, right, sort));
   const desktopReasonSession = input.desktopSessions.find((session) => session.unsupportedReason);
   const desktopReason = desktopReasonSession ? desktopUnsupportedReason(desktopReasonSession) : undefined;
+  const loadWarnings: string[] = [];
+  if (input.load?.cliSessions && !input.load.cliSessions.ok) {
+    loadWarnings.push(`MiniApp sessions unavailable${input.load.cliSessions.error ? `: ${input.load.cliSessions.error}` : ""}.`);
+  }
+  if (input.load?.desktopProjects && !input.load.desktopProjects.ok) {
+    loadWarnings.push(`Desktop projects unavailable${input.load.desktopProjects.error ? `: ${input.load.desktopProjects.error}` : ""}.`);
+  }
+  if (input.load?.desktopSessions && !input.load.desktopSessions.ok) {
+    loadWarnings.push(`Desktop sessions unavailable${input.load.desktopSessions.error ? `: ${input.load.desktopSessions.error}` : ""}.`);
+  }
 
   return `
     <section class="panel hero">
@@ -1872,8 +1896,9 @@ function renderCodexPanel(input: {
             </div>
           </details>
         </form>
-      </section>
+    </section>
     ${desktopReason ? `<section class="notice notice-warn">Desktop actions may be disabled: ${escapeHtml(desktopReason)}</section>` : ""}
+    ${loadWarnings.length > 0 ? `<section class="notice notice-warn">${loadWarnings.map((warning) => `<div>${escapeHtml(warning)}</div>`).join("")}</section>` : ""}
     <section class="panel">
       <div class="panel-header">
         <h2>Результаты</h2>
@@ -1958,13 +1983,24 @@ function renderDesktopProjectCards(projects: CodexDesktopProject[]): string {
   </li>`).join("")}</ul>`;
 }
 
-function renderProjectsView(projects: MiniAppProjectCard[], desktopProjects: CodexDesktopProject[]): string {
+function renderProjectsView(
+  projects: MiniAppProjectCard[],
+  desktopProjects: CodexDesktopProject[],
+  options: {
+    desktopProjectsLoad?: {
+      ok: boolean;
+      error?: string;
+    };
+  } = {}
+): string {
   const totalProjects = projects.length + desktopProjects.length;
+  const desktopProjectsUnavailable = options?.desktopProjectsLoad && !options.desktopProjectsLoad.ok;
   const empty = totalProjects === 0
     ? `<section class="panel">${renderEmptyState("Проекты не найдены", "Подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список projects.", "Проверить хосты", "/hosts")}</section>`
     : "";
 
   return `<section class="panel hero"><h1>Проекты</h1><div class="actions">${linkButton("Новая задача", "/new-task", true)}${linkButton("Вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}</div></section>
+    ${desktopProjectsUnavailable ? `<section class="notice notice-warn">${escapeHtml(`Desktop projects unavailable${options?.desktopProjectsLoad?.error ? `: ${options.desktopProjectsLoad.error}` : ""}.`)}</section>` : ""}
     <section class="grid">
       <div class="kv-item"><div class="eyebrow">CLI projects</div><strong>${projects.length}</strong></div>
       <div class="kv-item"><div class="eyebrow">Desktop projects</div><strong>${desktopProjects.length}</strong></div>
@@ -2291,16 +2327,89 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       : undefined;
   };
   const fetchForRequest = <T>(req: { headers: Record<string, string | string[] | undefined> }, url: URL, pathname: string) => dependencies.fetchJson<T>(withUser(pathname, url), authInit(req));
+  const codexFetchTimeoutMs = Number(process.env.HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS ?? "2500");
+  const describeFetchError = (error: unknown): string | undefined => {
+    if (!(error instanceof Error)) {
+      return "Unknown mini app fetch error.";
+    }
+
+    return error.message || "Mini app fetch failed.";
+  };
+  const fetchForRequestWithFallback = async <T>(
+    req: { headers: Record<string, string | string[] | undefined> },
+    url: URL,
+    pathname: string,
+    fallback: T
+  ): Promise<{ ok: boolean; data: T; error?: string }> => {
+    const timeoutMs = Number.isFinite(codexFetchTimeoutMs) && codexFetchTimeoutMs > 0 ? codexFetchTimeoutMs : 2500;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+    }, timeoutMs);
+    try {
+      const response = await dependencies.fetchJson<T>(withUser(pathname, url), {
+        ...authInit(req),
+        signal: controller.signal
+      });
+      return {
+        ok: true,
+        data: response
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        data: fallback,
+        error: describeFetchError(error)
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  const fallbackCodexDesktopSessionDetail = (sessionId: string, error?: string): CodexDesktopSessionDetail => ({
+    session: {
+      id: sessionId,
+      title: `Codex Desktop ${sessionId}`,
+      updatedAt: new Date().toISOString(),
+      status: "unknown",
+      source: "codex-desktop",
+      canResume: false,
+      canContinue: false,
+      canStop: false,
+      canCreateTask: false,
+      unsupportedReason: error ?? "Codex Desktop session detail is temporarily unavailable.",
+      unsupportedReasonCode: "CODEX_DESKTOP_DETAIL_UNAVAILABLE"
+    },
+    history: [],
+    historyTruncated: false,
+    historyUnsupportedReason: error
+      ? `Codex Desktop session detail is temporarily unavailable: ${error}`
+      : "Codex Desktop did not return session detail.",
+    historyUnsupportedReasonCode: "CODEX_DESKTOP_HISTORY_UNAVAILABLE"
+  });
   const fetchCodexForRequest = async (req: { headers: Record<string, string | string[] | undefined> }, url: URL) => {
     const [cliSessions, desktopProjects, desktopSessions] = await Promise.all([
-      fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions"),
-      fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects"),
-      fetchForRequest<{ sessions: CodexDesktopSession[] }>(req, url, "/api/v1/codex-desktop/sessions?limit=50")
+      fetchForRequestWithFallback<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions", { sessions: [] }),
+      fetchForRequestWithFallback<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects", { projects: [] }),
+      fetchForRequestWithFallback<{ sessions: CodexDesktopSession[] }>(req, url, "/api/v1/codex-desktop/sessions?limit=50", { sessions: [] })
     ]);
     return {
-      cliSessions: cliSessions.sessions,
-      desktopProjects: desktopProjects.projects,
-      desktopSessions: desktopSessions.sessions
+      cliSessions: cliSessions.data.sessions,
+      desktopProjects: desktopProjects.data.projects,
+      desktopSessions: desktopSessions.data.sessions,
+      load: {
+        cliSessions: {
+          ok: cliSessions.ok,
+          error: cliSessions.error
+        },
+        desktopProjects: {
+          ok: desktopProjects.ok,
+          error: desktopProjects.error
+        },
+        desktopSessions: {
+          ok: desktopSessions.ok,
+          error: desktopSessions.error
+        }
+      }
     };
   };
   const postForRequest = <T>(
@@ -2386,8 +2495,18 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
         if (screen === "codex-session" && url.searchParams.get("id")) {
           const id = url.searchParams.get("id")!;
-          const detail = await fetchForRequest<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`);
-          html(res, 200, renderForRequest(req, `Codex Desktop ${detail.session.id}`, renderDesktopSessionDetail(detail, {
+          const detail = await fetchForRequestWithFallback<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`, fallbackCodexDesktopSessionDetail(id));
+          html(res, 200, renderForRequest(req, `Codex Desktop ${id}`, renderDesktopSessionDetail({
+            ...detail.data,
+            ...(detail.ok ? {} : { session: {
+              ...detail.data.session,
+              unsupportedReason: detail.data.session.unsupportedReason
+                ? `${detail.data.session.unsupportedReason}${detail.error ? `: ${detail.error}` : ""}`
+                : detail.error
+                  ? `Session detail request failed: ${detail.error}`
+                  : `Session detail request failed.`
+            } })
+          }, {
             historyOrder: url.searchParams.get("historyOrder") ?? undefined,
             userId: url.searchParams.get("userId") ?? undefined
           }), { navKey: "codex" }));
@@ -2469,8 +2588,18 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           return;
         }
 
-        const detail = await fetchForRequest<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`);
-        html(res, 200, renderForRequest(req, `Codex Desktop ${detail.session.id}`, renderDesktopSessionDetail(detail, {
+        const detail = await fetchForRequestWithFallback<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`, fallbackCodexDesktopSessionDetail(id));
+        html(res, 200, renderForRequest(req, `Codex Desktop ${id}`, renderDesktopSessionDetail({
+          ...detail.data,
+          ...(detail.ok ? {} : { session: {
+            ...detail.data.session,
+            unsupportedReason: detail.data.session.unsupportedReason
+              ? `${detail.data.session.unsupportedReason}${detail.error ? `: ${detail.error}` : ""}`
+              : detail.error
+                ? `Session detail request failed: ${detail.error}`
+                : `Session detail request failed.`
+          } })
+        }, {
           historyOrder: url.searchParams.get("historyOrder") ?? undefined,
           userId: url.searchParams.get("userId") ?? undefined
         }), { navKey: "codex" }));
@@ -2521,9 +2650,14 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
 
         const [projects, desktopProjects] = await Promise.all([
           fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects"),
-          fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects")
+          fetchForRequestWithFallback<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects", { projects: [] })
         ]);
-        html(res, 200, renderForRequest(req, "Проекты", renderProjectsView(projects.projects, desktopProjects.projects), { navKey: "projects" }));
+        html(res, 200, renderForRequest(req, "Проекты", renderProjectsView(projects.projects, desktopProjects.data.projects, {
+          desktopProjectsLoad: {
+            ok: desktopProjects.ok,
+            error: desktopProjects.error
+          }
+        }), { navKey: "projects" }));
       }),
       route("GET", "/project/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Проект", "projects")) {
@@ -2587,8 +2721,17 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
 
         const [projects, desktopProjects, desktopControl] = await Promise.all([
           fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects"),
-          fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects"),
-          fetchForRequest<{ control: CodexDesktopControlStatus }>(req, url, "/api/v1/codex-desktop/control")
+          fetchForRequestWithFallback<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects", { projects: [] }),
+          fetchForRequestWithFallback<{ control: CodexDesktopControlStatus }>(req, url, "/api/v1/codex-desktop/control", {
+            control: {
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false,
+              unsupportedReason: "Codex Desktop control contract is unavailable.",
+              unsupportedReasonCode: "CODEX_DESKTOP_CONTROL_UNAVAILABLE"
+            }
+          })
         ]);
         html(res, 200, renderForRequest(req, "Новая задача", renderNewTaskForm(projects.projects, {
           hostId: url.searchParams.get("hostId") ?? undefined,
@@ -2598,7 +2741,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           intent: url.searchParams.get("intent") ?? undefined,
           title: url.searchParams.get("title") ?? undefined,
           contextSessionId: url.searchParams.get("contextSessionId") ?? undefined
-        }, { projects: desktopProjects.projects, control: desktopControl.control }), { navKey: "projects" }));
+        }, { projects: desktopProjects.data.projects, control: desktopControl.data.control }), { navKey: "projects" }));
       }),
       route("POST", "/codex/desktop-action", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
