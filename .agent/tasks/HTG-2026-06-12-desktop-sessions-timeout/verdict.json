@@ -1,0 +1,27 @@
+{
+  "task_id": "HTG-2026-06-12-desktop-sessions-timeout",
+  "verdict": "passed",
+  "blocking_findings": [],
+  "checks": [
+    {
+      "name": "timeout-budget",
+      "ok": true,
+      "detail": "Live bounded Desktop sessions API latency was about 3.7s, below the new 6000ms Mini App default."
+    },
+    {
+      "name": "abort-message",
+      "ok": true,
+      "detail": "Regression test verifies AbortError text is normalized and raw This operation was aborted is not rendered."
+    },
+    {
+      "name": "live-smoke",
+      "ok": true,
+      "detail": "Local and public Codex Desktop pages rendered without Desktop sessions unavailable warning after Docker rebuild."
+    },
+    {
+      "name": "release-check",
+      "ok": true,
+      "detail": "Release validation passed for 0.4.23."
+    }
+  ]
+}

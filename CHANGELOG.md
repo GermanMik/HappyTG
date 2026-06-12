@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.23
+
+### Fixed
+
+- Mini App Codex Desktop session lists no longer hit the default fallback timeout during normal bounded `/sessions?limit=50` latency.
+- AbortError fallback text is normalized so raw `This operation was aborted` does not appear in the UI.
+
+### Verification
+
+- Release validation covers workspace version metadata, changelog, and release notes.
+- Scoped Mini App test, typecheck, lint, build, proof-bundle validation, Graphify query evidence, and local/public live Mini App smoke passed.
+
 ## v0.4.22
 
 ### Fixed

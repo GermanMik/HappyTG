@@ -568,6 +568,59 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
   }
 });
 
+test("codex panel renders readable timeout warning for slow Desktop sessions", async () => {
+  await withEnv({ HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS: "10" }, async () => {
+    const server = createMiniAppServer({
+      async fetchJson(pathname, init) {
+        if (pathname === "/health") {
+          return { ok: true } as never;
+        }
+        if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+          return { sessions: [] } as never;
+        }
+        if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+          return { projects: [] } as never;
+        }
+        if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+          const signal = init?.signal;
+          await new Promise((resolve, reject) => {
+            const abort = () => {
+              const error = new Error("This operation was aborted");
+              error.name = "AbortError";
+              reject(error);
+            };
+            if (signal?.aborted) {
+              abort();
+              return;
+            }
+            signal?.addEventListener("abort", abort, { once: true });
+            setTimeout(resolve, 50);
+          });
+          return { sessions: [] } as never;
+        }
+        throw new Error(`Unexpected path ${pathname}`);
+      }
+    });
+
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Mini App server did not bind to a TCP port");
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${address.port}/codex?source=codex-desktop&userId=usr_1`);
+      const html = await response.text();
+
+      assert.equal(response.status, 200);
+      assert.match(html, /Desktop sessions unavailable: request timed out after 10ms/);
+      assert.doesNotMatch(html, /This operation was aborted/);
+    } finally {
+      await closeServer(server);
+    }
+  });
+});
+
 test("codex panel applies requested session sort order", async () => {
   const server = createMiniAppServer({
     async fetchJson(pathname) {

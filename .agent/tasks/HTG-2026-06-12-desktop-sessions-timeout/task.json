@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-06-12-desktop-sessions-timeout",
+  "sessionId": "ses_HTG_2026_06_12_desktop_sessions_timeout",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Desktop sessions timeout warning",
+  "acceptanceCriteria": [
+    "Normal bounded Desktop session list latency does not hit the default Mini App timeout.",
+    "AbortError text does not render as This operation was aborted.",
+    "Scoped Mini App validation passes."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-06-12T00:00:00.000Z",
+  "updatedAt": "2026-06-12T00:35:00.000Z"
+}

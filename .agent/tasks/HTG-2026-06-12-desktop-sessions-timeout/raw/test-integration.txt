@@ -1,0 +1,1 @@
+No separate integration test command was required for this scoped Mini App timeout presentation fix; live API latency and post-rebuild Mini App smoke are recorded separately.
