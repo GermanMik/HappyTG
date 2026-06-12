@@ -1,5 +1,5 @@
- Image happytg-miniapp Building 
- Image happytg-api Building 
+ Image happytg-miniapp Building
+ Image happytg-api Building
 #1 [internal] load local bake definitions
 #1 reading from stdin 1.08kB 0.0s done
 #1 DONE 0.0s
@@ -59,7 +59,7 @@
 #13 1.070 ++++++++++
 #13 2.036 Progress: resolved 10, reused 0, downloaded 4, added 4
 #13 3.036 Progress: resolved 10, reused 0, downloaded 6, added 6
-#13 4.725 
+#13 4.725
 #13 4.725    ╭──────────────────────────────────────────────────────────────────╮
 #13 4.725    │                                                                  │
 #13 4.725    │                Update available! 10.0.0 → 11.6.0.                │
@@ -67,7 +67,7 @@
 #13 4.725    │         Run "corepack install -g pnpm@11.6.0" to update.         │
 #13 4.725    │                                                                  │
 #13 4.725    ╰──────────────────────────────────────────────────────────────────╯
-#13 4.725 
+#13 4.725
 #13 5.075 Progress: resolved 10, reused 0, downloaded 7, added 6
 #13 6.076 Progress: resolved 10, reused 0, downloaded 7, added 7
 #13 ...
@@ -81,7 +81,7 @@
 #14 2.033 Progress: resolved 10, reused 0, downloaded 2, added 2
 #14 3.033 Progress: resolved 10, reused 0, downloaded 6, added 6
 #14 4.474 Progress: resolved 10, reused 0, downloaded 7, added 6
-#14 4.988 
+#14 4.988
 #14 4.988    ╭──────────────────────────────────────────────────────────────────╮
 #14 4.988    │                                                                  │
 #14 4.988    │                Update available! 10.0.0 → 11.6.0.                │
@@ -89,7 +89,7 @@
 #14 4.988    │         Run "corepack install -g pnpm@11.6.0" to update.         │
 #14 4.988    │                                                                  │
 #14 4.988    ╰──────────────────────────────────────────────────────────────────╯
-#14 4.988 
+#14 4.988
 #14 5.475 Progress: resolved 10, reused 0, downloaded 7, added 7
 #14 ...
 
@@ -110,16 +110,16 @@
 #13 26.15 Progress: resolved 10, reused 0, downloaded 8, added 7
 #13 27.15 Progress: resolved 10, reused 0, downloaded 9, added 9
 #13 27.24 Progress: resolved 10, reused 0, downloaded 10, added 10, done
-#13 27.32 
+#13 27.32
 #13 27.32 devDependencies:
 #13 27.32 + @types/node 22.19.17
 #13 27.32 + tsx 4.21.0
 #13 27.32 + turbo 2.9.3
 #13 27.32 + typescript 5.9.3
-#13 27.32 
+#13 27.32
 #13 27.32 The following dependencies have build scripts that were ignored: esbuild
 #13 27.32 To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
-#13 27.32 
+#13 27.32
 #13 27.34 Done in 26.7s
 #13 DONE 27.5s
 
@@ -148,16 +148,16 @@
 #14 [miniapp 8/8] RUN pnpm install --frozen-lockfile
 #14 89.48 Progress: resolved 10, reused 0, downloaded 10, added 9
 #14 89.49 Progress: resolved 10, reused 0, downloaded 10, added 10, done
-#14 89.58 
+#14 89.58
 #14 89.58 devDependencies:
 #14 89.58 + @types/node 22.19.17
 #14 89.58 + tsx 4.21.0
 #14 89.58 + turbo 2.9.3
 #14 89.58 + typescript 5.9.3
-#14 89.58 
+#14 89.58
 #14 89.58 The following dependencies have build scripts that were ignored: esbuild
 #14 89.58 To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
-#14 89.58 
+#14 89.58
 #14 89.60 Done in 1m 29s
 #14 DONE 89.8s
 
@@ -175,16 +175,16 @@
 
 #18 [miniapp] resolving provenance for metadata file
 #18 DONE 0.0s
- Image happytg-api Built 
- Image happytg-miniapp Built 
- Container happytg-postgres-1 Running 
- Container happytg-minio-1 Running 
- Container happytg-redis-1 Running 
- Container happytg-api-1 Recreate 
- Container happytg-api-1 Recreated 
- Container happytg-miniapp-1 Recreate 
- Container happytg-miniapp-1 Recreated 
- Container happytg-api-1 Starting 
- Container happytg-api-1 Started 
- Container happytg-miniapp-1 Starting 
- Container happytg-miniapp-1 Started 
+ Image happytg-api Built
+ Image happytg-miniapp Built
+ Container happytg-postgres-1 Running
+ Container happytg-minio-1 Running
+ Container happytg-redis-1 Running
+ Container happytg-api-1 Recreate
+ Container happytg-api-1 Recreated
+ Container happytg-miniapp-1 Recreate
+ Container happytg-miniapp-1 Recreated
+ Container happytg-api-1 Starting
+ Container happytg-api-1 Started
+ Container happytg-miniapp-1 Starting
+ Container happytg-miniapp-1 Started
