@@ -1,0 +1,142 @@
+{
+  "task_id": "HTG-2026-06-12-desktop-session-readonly-warning",
+  "branch": "codex/desktop-past-session-warning",
+  "scope": "Mini App read-only Codex Desktop session warning fix",
+  "runtime_semantics_changed": false,
+  "live_runtime_recovery": {
+    "issue": "Desktop projects page showed the empty-state text after Docker was rebuilt without the Codex Desktop mount override.",
+    "fix": "Rebuilt API and Mini App with infra/docker-compose.codex-desktop.yml so API has CODEX_HOME=/codex-home.",
+    "projects_count": 12,
+    "local_projects_empty_state": false,
+    "public_projects_empty_state": false
+  },
+  "changed_files": [
+    "apps/miniapp/src/index.ts",
+    "apps/miniapp/src/index.test.ts",
+    "CHANGELOG.md",
+    "docs/releases/0.4.21.md",
+    "package.json",
+    "apps/*/package.json",
+    "packages/*/package.json"
+  ],
+  "checks": [
+    {
+      "name": "miniapp-test-initial",
+      "command": "pnpm --filter @happytg/miniapp test",
+      "raw_output": "raw/test-miniapp.txt",
+      "status": "fail_before_expectation_update"
+    },
+    {
+      "name": "miniapp-test-rerun",
+      "command": "pnpm --filter @happytg/miniapp test",
+      "raw_output": "raw/test-miniapp-final.txt",
+      "status": "pass"
+    },
+    {
+      "name": "miniapp-typecheck",
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "raw_output": "raw/typecheck-miniapp-final.txt",
+      "status": "pass"
+    },
+    {
+      "name": "miniapp-lint",
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "raw_output": "raw/lint-miniapp-final.txt",
+      "status": "pass"
+    },
+    {
+      "name": "miniapp-build",
+      "command": "pnpm --filter @happytg/miniapp build",
+      "raw_output": "raw/build-miniapp-final.txt",
+      "status": "pass"
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "raw_output": "raw/diff-check-release-final.txt",
+      "status": "pass"
+    },
+    {
+      "name": "task-validate-final",
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-06-12-desktop-session-readonly-warning",
+      "raw_output": "raw/task-validate-release-final.txt",
+      "status": "pass"
+    },
+    {
+      "name": "release-check-0.4.21",
+      "command": "pnpm release:check --version 0.4.21",
+      "raw_output": "raw/release-check-0.4.21.txt",
+      "status": "pass"
+    },
+    {
+      "name": "docker-miniapp-rebuild",
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml up -d --build miniapp",
+      "raw_output": "raw/docker-miniapp-rebuild.txt",
+      "status": "pass"
+    },
+    {
+      "name": "docker-codex-desktop-override-rebuild",
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml up -d --build api miniapp",
+      "raw_output": "raw/docker-codex-desktop-override-rebuild.txt",
+      "status": "pass"
+    },
+    {
+      "name": "live-desktop-codex-home-mount",
+      "command": "docker exec happytg-api-1 CODEX_HOME/session_index smoke",
+      "raw_output": "raw/live-desktop-codex-home-mount.txt",
+      "status": "pass"
+    },
+    {
+      "name": "live-desktop-projects-api-real-user",
+      "command": "GET /api/v1/codex-desktop/projects with local active user",
+      "raw_output": "raw/live-desktop-projects-api-real-user.json",
+      "status": "pass_projects_count_12"
+    },
+    {
+      "name": "live-desktop-projects-miniapp-local",
+      "command": "GET http://127.0.0.1:3008/projects?source=codex-desktop with local active user",
+      "raw_output": "raw/live-desktop-projects-miniapp-local.json",
+      "status": "pass_no_empty_state"
+    },
+    {
+      "name": "live-desktop-projects-miniapp-public",
+      "command": "GET https://happytg.gerta.crazedns.ru/miniapp/projects?source=codex-desktop with local active user",
+      "raw_output": "raw/live-desktop-projects-miniapp-public.json",
+      "status": "pass_no_empty_state"
+    },
+    {
+      "name": "docker-codex-desktop-ps",
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml ps api miniapp",
+      "raw_output": "raw/docker-codex-desktop-ps.txt",
+      "status": "pass_healthy"
+    },
+    {
+      "name": "critical-review-10-roles",
+      "command": "fresh verifier review",
+      "raw_output": "raw/critical-review-10-roles.md",
+      "status": "pass_with_operational_caveat"
+    },
+    {
+      "name": "graphify-update-miniapp-src",
+      "command": "graphify update apps/miniapp/src",
+      "raw_output": "raw/graphify-update-miniapp-src.txt",
+      "status": "pass_generated_scoped_graph_removed"
+    },
+    {
+      "name": "graphify-query-miniapp-warning-projects",
+      "command": "graphify query \"Mini App Codex Desktop unsupported warning and Desktop projects empty state\" --budget 1200",
+      "raw_output": "raw/graphify-query-miniapp-warning-projects.txt",
+      "status": "pass"
+    },
+    {
+      "name": "runtime-smoke-local",
+      "command": "Invoke-WebRequest http://127.0.0.1:3008/codex?source=codex-desktop&userId=usr_1",
+      "status": "pass_no_desktop_actions_warning"
+    },
+    {
+      "name": "runtime-smoke-public",
+      "command": "Invoke-WebRequest https://happytg.gerta.crazedns.ru/miniapp/codex?source=codex-desktop&userId=usr_1",
+      "status": "pass_no_desktop_actions_warning"
+    }
+  ]
+}

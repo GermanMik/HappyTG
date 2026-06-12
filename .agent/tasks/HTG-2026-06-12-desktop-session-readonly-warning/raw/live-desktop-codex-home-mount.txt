@@ -1,0 +1,3 @@
+CODEX_HOME=/codex-home
+session_index_lines=676
+has_global_state=yes

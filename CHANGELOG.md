@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.21
+
+### Fixed
+
+- Mini App Codex Desktop read-only session pages no longer show unsupported mutation controls as page-level warnings when browsing past sessions.
+- Docker-hosted Mini App runtime was verified with the Codex Desktop compose override so Desktop Projects render instead of the empty adapter state.
+
+### Verification
+
+- Release validation covers workspace version metadata, changelog, and release notes.
+- Scoped Mini App test, typecheck, lint, build, Graphify evidence, proof-bundle validation, and live local/public Docker Mini App smoke checks passed.
+
 ## v0.4.20
 
 ### Fixed

@@ -1,0 +1,35 @@
+{
+  "task_id": "HTG-2026-06-12-desktop-session-readonly-warning",
+  "verdict": "passed",
+  "verifier": {
+    "role": "fresh-verifier",
+    "run_id": "fresh-verifier-2026-06-12"
+  },
+  "blocking_findings": [],
+  "checks": [
+    {
+      "name": "read-only-entry",
+      "ok": true,
+      "detail": "Codex panel and Desktop session detail no longer render unsupported Desktop mutation state as a page-level warning."
+    },
+    {
+      "name": "unsupported-actions-remain-honest",
+      "ok": true,
+      "detail": "Disabled Desktop action controls still carry the unsupported reason, and API/runtime-adapter behavior was not changed."
+    },
+    {
+      "name": "validation",
+      "ok": true,
+      "detail": "Post-rebase Mini App test, typecheck, lint, build, git diff --check, task validation, and release check for 0.4.21 passed."
+    },
+    {
+      "name": "live-desktop-projects",
+      "ok": true,
+      "detail": "Docker API/Mini App were rebuilt with the Codex Desktop mount override; API returned 12 Desktop projects and local/public Projects pages no longer render the Desktop projects empty state."
+    }
+  ],
+  "residual_risks": [
+    "Full repository test suite was not run for this scoped Mini App presentation fix.",
+    "Future Docker restarts must include infra/docker-compose.codex-desktop.yml when Desktop project projections are expected."
+  ]
+}
