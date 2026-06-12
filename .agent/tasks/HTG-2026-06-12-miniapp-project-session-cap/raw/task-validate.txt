@@ -1,0 +1,9 @@
+
+> happytg@0.4.27 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-06-12-miniapp-project-session-cap"
+
+Task: HTG-2026-06-12-miniapp-project-session-cap
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-06-12-miniapp-project-session-cap
+Validation: ok
+Phase: complete
+Verification: passed

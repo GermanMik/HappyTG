@@ -1,0 +1,3 @@
+NAME                IMAGE             COMMAND                  SERVICE   CREATED          STATUS                    PORTS
+happytg-api-1       happytg-api       "docker-entrypoint.s…"   api       37 seconds ago   Up 32 seconds (healthy)   0.0.0.0:4001->4000/tcp, [::]:4001->4000/tcp
+happytg-miniapp-1   happytg-miniapp   "docker-entrypoint.s…"   miniapp   35 seconds ago   Up 32 seconds (healthy)   0.0.0.0:3008->3001/tcp, [::]:3008->3001/tcp

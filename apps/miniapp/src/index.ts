@@ -1789,10 +1789,7 @@ function matchesCodexProject(card: MiniAppSessionCard, project: string | undefin
   if (!project || project === "all") {
     return true;
   }
-  if (card.repoName === project || card.projectPath === project) {
-    return true;
-  }
-  return card.source === "codex-desktop" && !card.projectPath;
+  return card.repoName === project || card.projectPath === project;
 }
 
 function renderDesktopActions(session: CodexDesktopSession): string {
@@ -1891,6 +1888,7 @@ function renderCodexPanel(input: {
   const query = input.q?.trim() ?? "";
   const sort = normalizeCodexPanelSort(input.sort);
   const desktopSessionLimit = input.desktopSessionLimit ?? 50;
+  const hasProjectFilter = Boolean(input.project && input.project !== "all");
   const desktopCards = input.desktopSessions.map(desktopSessionCard);
   const cliCards = input.cliSessions.map((session) => ({
     ...session,
@@ -1903,8 +1901,8 @@ function renderCodexPanel(input: {
     .filter((card) => matchesCodexProject(card, input.project))
   .filter((card) => matchesCodexSearch(card, query))
   .sort((left, right) => compareSessionCards(left, right, sort));
+  const visibleCards = hasProjectFilter ? cards.slice(0, 5) : cards;
   const loadWarnings: string[] = [];
-  const loadNotes: string[] = [];
   if (input.load?.cliSessions && !input.load.cliSessions.ok) {
     loadWarnings.push(`MiniApp sessions unavailable${input.load.cliSessions.error ? `: ${input.load.cliSessions.error}` : ""}.`);
   }
@@ -1914,11 +1912,7 @@ function renderCodexPanel(input: {
   if (input.load?.desktopSessions && !input.load.desktopSessions.ok) {
     loadWarnings.push(`Desktop sessions unavailable${input.load.desktopSessions.error ? `: ${input.load.desktopSessions.error}` : ""}.`);
   }
-  const showsUnscopedDesktopForProject = Boolean(input.project && input.project !== "all" && cards.some((card) => card.source === "codex-desktop" && !card.projectPath));
-  if (showsUnscopedDesktopForProject) {
-    loadNotes.push("Codex Desktop did not attach a project path to some past sessions, so this project view includes unscoped Desktop sessions instead of hiding them.");
-  }
-  const canLoadMoreDesktop = input.desktopSessions.length >= desktopSessionLimit && desktopSessionLimit < 200;
+  const canLoadMoreDesktop = !hasProjectFilter && input.desktopSessions.length >= desktopSessionLimit && desktopSessionLimit < 200;
   const moreDesktopHref = codexPanelHref({
     source,
     state: input.state,
@@ -1964,13 +1958,12 @@ function renderCodexPanel(input: {
         </form>
     </section>
     ${loadWarnings.length > 0 ? `<section class="notice notice-warn">${loadWarnings.map((warning) => `<div>${escapeHtml(warning)}</div>`).join("")}</section>` : ""}
-    ${loadNotes.length > 0 ? `<section class="notice notice-info">${loadNotes.map((note) => `<div>${escapeHtml(note)}</div>`).join("")}</section>` : ""}
     <section class="panel">
       <div class="panel-header">
         <h2>Результаты</h2>
-        ${renderBadge(`${cards.length} visible`, "info")}
+        ${renderBadge(`${visibleCards.length} visible`, "info")}
       </div>
-      ${renderSessionCards(cards)}
+      ${renderSessionCards(visibleCards)}
       ${canLoadMoreDesktop ? `<div class="actions">${linkButton(`Показать до ${Math.min(200, Math.max(desktopSessionLimit * 2, 100))} Desktop sessions`, moreDesktopHref)}</div>` : ""}
     </section>
     <details class="panel meta-details">

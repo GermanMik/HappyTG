@@ -1,0 +1,37 @@
+
+> @happytg/miniapp@0.4.27 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+✔ mini app ready endpoint returns 503 when api health fails (34.4438ms)
+✔ mini app favicon route avoids browser 404 noise (6.7471ms)
+✔ mini app entrypoint accepts HEAD probes from launch clients (5.4294ms)
+✔ overview page renders hosts, sessions, approvals, and tasks (29.4776ms)
+✔ mini app links honor the /miniapp reverse-proxy base path (6.0665ms)
+✔ public reverse-proxied mini app uses same-origin browser API when local env points at localhost (10.363ms)
+✔ local direct mini app keeps the explicit local API origin without reverse-proxy headers (0.2016ms)
+✔ auth-pending shell exposes retry-safe auth feedback controls (5.2346ms)
+✔ mini app forwards browser session cookie as bearer auth (6.7738ms)
+✔ codex panel renders source-aware Desktop and CLI sessions with disabled unsupported actions (13.6826ms)
+✔ codex panel renders readable timeout warning for slow Desktop sessions (18.4463ms)
+✔ codex panel applies requested session sort order (6.0103ms)
+✔ codex project view shows only selected project sessions and caps results at five (6.6016ms)
+✔ codex project view gives widened Desktop session fetch an extended timeout budget (77.7634ms)
+✔ mini app renders supported Desktop actions and forwards new Desktop task to API (13.2057ms)
+✔ task page renders scoped canonical artifacts (18.9367ms)
+✔ projects page renders workspaces and new task creates a Codex session (17.6622ms)
+✔ session page renders timeline, summary, and task link (5.3359ms)
+✔ session page renders auth bridge when API session detail returns 401 (4.4112ms)
+✔ legacy screen=session route renders auth bridge when API session detail returns 401 (4.8419ms)
+✔ approval page renders real authenticated action buttons (4.8845ms)
+✔ startMiniAppServer returns an actionable message when the port is already in use (5531.8478ms)
+✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (48.7564ms)
+✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (4.955ms)
+✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (4.3957ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6335.6576

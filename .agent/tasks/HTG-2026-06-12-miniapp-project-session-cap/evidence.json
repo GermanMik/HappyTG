@@ -1,0 +1,59 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-project-session-cap",
+  "status": "passed",
+  "finding": "Project-filtered Codex Desktop views included unscoped Desktop sessions and could expose more than the requested compact result set.",
+  "change": [
+    "Project filtering now requires repoName or projectPath match.",
+    "Unscoped Desktop sessions are excluded from selected-project views.",
+    "Selected-project views render at most five session cards.",
+    "The unscoped-session notice and Desktop 200-session expansion action are removed from selected-project views.",
+    "Release metadata was bumped to 0.4.27."
+  ],
+  "validation": [
+    {
+      "command": "pnpm --filter @happytg/miniapp test",
+      "status": "passed",
+      "raw": "raw/test-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "status": "passed",
+      "raw": "raw/lint-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp build",
+      "status": "passed",
+      "raw": "raw/build-miniapp.txt"
+    },
+    {
+      "command": "pnpm release:check --version 0.4.27",
+      "status": "passed",
+      "raw": "raw/release-check.txt"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "raw": "raw/diff-check.txt"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-06-12-miniapp-project-session-cap",
+      "status": "passed",
+      "raw": "raw/task-validate.txt"
+    },
+    {
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml up -d --build miniapp",
+      "status": "passed",
+      "raw": "raw/docker-miniapp-rebuild.txt"
+    },
+    {
+      "command": "live Docker project-route smoke",
+      "status": "passed",
+      "raw": "raw/live-project-route-smoke.json"
+    }
+  ]
+}

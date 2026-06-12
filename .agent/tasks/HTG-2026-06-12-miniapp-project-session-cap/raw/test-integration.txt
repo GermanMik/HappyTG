@@ -1,0 +1,1 @@
+No separate integration suite was required for this scoped Mini App rendering/filtering change. Live Docker route smoke is recorded separately.

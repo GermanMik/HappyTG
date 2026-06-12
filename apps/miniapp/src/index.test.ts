@@ -684,7 +684,7 @@ test("codex panel applies requested session sort order", async () => {
   }
 });
 
-test("codex project view widens Desktop session window and keeps unscoped past sessions visible", async () => {
+test("codex project view shows only selected project sessions and caps results at five", async () => {
   const calls: string[] = [];
   const server = createMiniAppServer({
     async fetchJson(pathname) {
@@ -710,9 +710,23 @@ test("codex project view widens Desktop session window and keeps unscoped past s
       }
       if (pathname === "/api/v1/codex-desktop/sessions?limit=100&userId=usr_1") {
         return {
-          sessions: Array.from({ length: 100 }, (_, index) => ({
-              id: `desktop-unscoped-${index + 1}`,
-              title: index === 0 ? "Past Desktop task without project path" : `Past Desktop task ${index + 1}`,
+          sessions: [
+            ...Array.from({ length: 6 }, (_, index) => ({
+              id: `desktop-happytg-${index + 1}`,
+              title: `HappyTG Desktop task ${index + 1}`,
+              projectPath: "C:/Develop/Projects/HappyTG",
+              updatedAt: `2026-04-28T09:0${index}:00.000Z`,
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            })),
+            {
+              id: "desktop-other-project",
+              title: "Other project Desktop task",
+              projectPath: "C:/Develop/Projects/Other",
               updatedAt: "2026-04-28T09:00:00.000Z",
               status: "recent",
               source: "codex-desktop",
@@ -720,7 +734,19 @@ test("codex project view widens Desktop session window and keeps unscoped past s
               canContinue: false,
               canStop: false,
               canCreateTask: false
-            }))
+            },
+            {
+              id: "desktop-unscoped",
+              title: "Unscoped Desktop task",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            }
+          ]
         } as never;
       }
       throw new Error(`Unexpected path ${pathname}`);
@@ -739,10 +765,18 @@ test("codex project view widens Desktop session window and keeps unscoped past s
 
     assert.equal(response.status, 200);
     assert.ok(calls.includes("/api/v1/codex-desktop/sessions?limit=100&userId=usr_1"));
-    assert.match(html, /Past Desktop task without project path/);
-    assert.match(html, /did not attach a project path/);
+    assert.match(html, /HappyTG Desktop task 6/);
+    assert.match(html, /HappyTG Desktop task 5/);
+    assert.match(html, /HappyTG Desktop task 4/);
+    assert.match(html, /HappyTG Desktop task 3/);
+    assert.match(html, /HappyTG Desktop task 2/);
+    assert.doesNotMatch(html, /HappyTG Desktop task 1/);
+    assert.doesNotMatch(html, /Other project Desktop task/);
+    assert.doesNotMatch(html, /Unscoped Desktop task/);
+    assert.doesNotMatch(html, /did not attach a project path/);
     assert.match(html, /value="100"/);
-    assert.match(html, /Показать до 200 Desktop sessions/);
+    assert.doesNotMatch(html, /Показать до 200 Desktop sessions/);
+    assert.match(html, /5 visible/);
     assert.doesNotMatch(html, /Нет сессий/);
   } finally {
     await closeServer(server);
@@ -792,6 +826,7 @@ test("codex project view gives widened Desktop session fetch an extended timeout
               {
                 id: "desktop-slow-project",
                 title: "Slow project Desktop session",
+                projectPath: "C:/Develop/Projects/HappyTG",
                 updatedAt: "2026-04-28T09:00:00.000Z",
                 status: "recent",
                 source: "codex-desktop",
