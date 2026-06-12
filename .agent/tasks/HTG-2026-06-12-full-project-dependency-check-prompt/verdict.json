@@ -1,0 +1,8 @@
+{
+  "taskId": "HTG-2026-06-12-full-project-dependency-check-prompt",
+  "verdict": "pass",
+  "blockingFindings": [],
+  "residualRisks": [
+    "Project-wide runtime checks were not run because this task only adds a reusable docs prompt."
+  ]
+}

@@ -1,0 +1,1 @@
+Skipped: docs-only prompt change; no integration tests required for this task.
