@@ -1,0 +1,8 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-desktop-timeout-budget",
+  "verdict": "pass",
+  "blockingFindings": [],
+  "residualRisks": [
+    "Full Desktop history still needs pagination/search beyond the bounded 200-session window if latency continues to grow."
+  ]
+}

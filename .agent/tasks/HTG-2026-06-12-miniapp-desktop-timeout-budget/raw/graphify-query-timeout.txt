@@ -1,0 +1,26 @@
+Traversal: BFS depth=2 | Start: ['sessions', 'limit', 'limit'] | 36 nodes found
+
+NODE properties [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2123 community=429]
+NODE cwd [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L472 community=844]
+NODE limit [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2149 community=449]
+NODE ThreadTurnsListParams [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2254 community=449]
+NODE ThreadTurnsListParams.json [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/v2/ThreadTurnsListParams.json loc=L1 community=368]
+NODE counts [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/live-store-codex-sessions.json loc=L2 community=962]
+NODE properties [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/v2/ThreadTurnsListParams.json loc=L8 community=368]
+NODE cursor [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2131 community=449]
+NODE ThreadLoadedListParams [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2213 community=449]
+NODE ThreadListParams [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2119 community=429]
+NODE limit [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/v2/ThreadTurnsListParams.json loc=L16 community=368]
+NODE modelProviders [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2158 community=430]
+NODE live-store-codex-sessions.json [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/live-store-codex-sessions.json loc=L1 community=962]
+NODE sourceKinds [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2197 community=521]
+NODE sortKey [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2186 community=429]
+NODE sortDirection [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/v2/ThreadTurnsListParams.json loc=L25 community=368]
+NODE searchTerm [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2168 community=429]
+NODE properties [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2217 community=449]
+NODE sortDirection [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2175 community=429]
+NODE cursor [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/v2/ThreadTurnsListParams.json loc=L9 community=368]
+NODE archived [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2124 community=429]
+NODE useStateDbOnly [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server-schema/codex_app_server_protocol.v2.schemas.json loc=L2207 community=429]
+NODE properties [src=.agent/tasks/HTG-2026-06-10-desktop-projects-visible/raw/app-server
+... (truncated to ~1200 token budget)

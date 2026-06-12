@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.26
+
+### Fixed
+
+- Mini App project-filtered Codex Desktop session views no longer reuse the fragile `6000ms` timeout for the widened `100` session request.
+- Desktop session list fetches with `limit >= 100` now get a scoped minimum `10000ms` budget while the default unfiltered `50` session list keeps the configured/default timeout.
+- A regression test locks the slow project-view path so the UI does not fall back to `Desktop sessions unavailable: request timed out after 6000ms`.
+
+### Verification
+
+- Scoped Mini App test, typecheck, lint, build, release validation, diff check, Docker rebuild, and live route smoke passed.
+
 ## v0.4.25
 
 ### Fixed
