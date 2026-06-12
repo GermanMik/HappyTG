@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.25
+
+### Fixed
+
+- Mini App project-filtered Codex Desktop views no longer hide past sessions just because they were outside the default first `50` Desktop sessions.
+- Desktop sessions that arrive without a `projectPath` from Codex Desktop remain visible in project views with an explanatory note.
+- Project views now start with `100` Desktop sessions and offer a bounded `200` session expansion without slowing the default unfiltered list.
+
+### Verification
+
+- Scoped Mini App test, typecheck, lint, build, proof-bundle validation, release validation, Graphify query evidence, and local/public live Mini App project-route smoke passed.
+
 ## v0.4.24
 
 ### Fixed

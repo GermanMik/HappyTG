@@ -1611,6 +1611,37 @@ function projectTasksHref(source: "codex-cli" | "codex-desktop", project: string
   return `/codex?source=${encodeURIComponent(source)}&project=${encodeURIComponent(project)}`;
 }
 
+function codexPanelHref(input: {
+  source?: string;
+  state?: string;
+  project?: string;
+  q?: string;
+  sort?: string;
+  limit?: number;
+}): string {
+  const params = new URLSearchParams();
+  if (input.source && input.source !== "all") {
+    params.set("source", input.source);
+  }
+  if (input.state && input.state !== "all") {
+    params.set("state", input.state);
+  }
+  if (input.project && input.project !== "all") {
+    params.set("project", input.project);
+  }
+  if (input.q?.trim()) {
+    params.set("q", input.q.trim());
+  }
+  if (input.sort && input.sort !== "updated-desc") {
+    params.set("sort", input.sort);
+  }
+  if (input.limit && input.limit > 0) {
+    params.set("limit", String(input.limit));
+  }
+  const query = params.toString();
+  return query ? `/codex?${query}` : "/codex";
+}
+
 type CodexPanelSort = "updated-desc" | "updated-asc" | "title-asc" | "title-desc";
 type DesktopHistoryOrder = "oldest-first" | "newest-first";
 
@@ -1754,6 +1785,16 @@ function matchesCodexSearch(card: MiniAppSessionCard, query: string): boolean {
   return haystack.includes(query.toLowerCase());
 }
 
+function matchesCodexProject(card: MiniAppSessionCard, project: string | undefined): boolean {
+  if (!project || project === "all") {
+    return true;
+  }
+  if (card.repoName === project || card.projectPath === project) {
+    return true;
+  }
+  return card.source === "codex-desktop" && !card.projectPath;
+}
+
 function renderDesktopActions(session: CodexDesktopSession): string {
   const reason = desktopUnsupportedReason(session);
   return `<div class="actions">
@@ -1844,10 +1885,12 @@ function renderCodexPanel(input: {
   project?: string;
   q?: string;
   sort?: string;
+  desktopSessionLimit?: number;
 }): string {
   const source = input.source ?? "all";
   const query = input.q?.trim() ?? "";
   const sort = normalizeCodexPanelSort(input.sort);
+  const desktopSessionLimit = input.desktopSessionLimit ?? 50;
   const desktopCards = input.desktopSessions.map(desktopSessionCard);
   const cliCards = input.cliSessions.map((session) => ({
     ...session,
@@ -1857,10 +1900,11 @@ function renderCodexPanel(input: {
   const cards = [...desktopCards, ...cliCards]
     .filter((card) => source === "all" || card.source === source || card.runtime === source)
     .filter((card) => !input.state || input.state === "all" || card.state === input.state || card.desktopStatus === input.state || card.attention === input.state || (input.state === "unsupported" && Boolean(card.unsupportedReason)))
-    .filter((card) => !input.project || input.project === "all" || card.repoName === input.project || card.projectPath === input.project)
+    .filter((card) => matchesCodexProject(card, input.project))
   .filter((card) => matchesCodexSearch(card, query))
   .sort((left, right) => compareSessionCards(left, right, sort));
   const loadWarnings: string[] = [];
+  const loadNotes: string[] = [];
   if (input.load?.cliSessions && !input.load.cliSessions.ok) {
     loadWarnings.push(`MiniApp sessions unavailable${input.load.cliSessions.error ? `: ${input.load.cliSessions.error}` : ""}.`);
   }
@@ -1870,6 +1914,19 @@ function renderCodexPanel(input: {
   if (input.load?.desktopSessions && !input.load.desktopSessions.ok) {
     loadWarnings.push(`Desktop sessions unavailable${input.load.desktopSessions.error ? `: ${input.load.desktopSessions.error}` : ""}.`);
   }
+  const showsUnscopedDesktopForProject = Boolean(input.project && input.project !== "all" && cards.some((card) => card.source === "codex-desktop" && !card.projectPath));
+  if (showsUnscopedDesktopForProject) {
+    loadNotes.push("Codex Desktop did not attach a project path to some past sessions, so this project view includes unscoped Desktop sessions instead of hiding them.");
+  }
+  const canLoadMoreDesktop = input.desktopSessions.length >= desktopSessionLimit && desktopSessionLimit < 200;
+  const moreDesktopHref = codexPanelHref({
+    source,
+    state: input.state,
+    project: input.project,
+    q: query,
+    sort,
+    limit: Math.min(200, Math.max(desktopSessionLimit * 2, 100))
+  });
 
   return `
     <section class="panel hero">
@@ -1884,6 +1941,7 @@ function renderCodexPanel(input: {
         <form method="GET" action="/codex" class="inline-form">
           <input type="hidden" name="source" value="${escapeHtml(source)}">
           ${input.project ? `<input type="hidden" name="project" value="${escapeHtml(input.project)}">` : ""}
+          ${desktopSessionLimit !== 50 ? `<input type="hidden" name="limit" value="${escapeHtml(String(desktopSessionLimit))}">` : ""}
           <label><span class="eyebrow">Поиск</span><input name="q" value="${escapeHtml(query)}" placeholder="session, project, path"></label>
           <div class="actions"><button class="button button-primary" type="submit">Найти</button>${linkButton("Сбросить", "/codex")}</div>
           ${renderSourceSwitcher(source)}
@@ -1906,12 +1964,14 @@ function renderCodexPanel(input: {
         </form>
     </section>
     ${loadWarnings.length > 0 ? `<section class="notice notice-warn">${loadWarnings.map((warning) => `<div>${escapeHtml(warning)}</div>`).join("")}</section>` : ""}
+    ${loadNotes.length > 0 ? `<section class="notice notice-info">${loadNotes.map((note) => `<div>${escapeHtml(note)}</div>`).join("")}</section>` : ""}
     <section class="panel">
       <div class="panel-header">
         <h2>Результаты</h2>
         ${renderBadge(`${cards.length} visible`, "info")}
       </div>
       ${renderSessionCards(cards)}
+      ${canLoadMoreDesktop ? `<div class="actions">${linkButton(`Показать до ${Math.min(200, Math.max(desktopSessionLimit * 2, 100))} Desktop sessions`, moreDesktopHref)}</div>` : ""}
     </section>
     <details class="panel meta-details">
       <summary>Проекты и счетчики</summary>
@@ -2355,9 +2415,10 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     req: { headers: Record<string, string | string[] | undefined> },
     url: URL,
     pathname: string,
-    fallback: T
+    fallback: T,
+    options?: { timeoutMs?: number }
   ): Promise<{ ok: boolean; data: T; error?: string }> => {
-    const timeoutMs = Number.isFinite(codexFetchTimeoutMs) && codexFetchTimeoutMs > 0 ? codexFetchTimeoutMs : defaultCodexFetchTimeoutMs;
+    const timeoutMs = options?.timeoutMs ?? (Number.isFinite(codexFetchTimeoutMs) && codexFetchTimeoutMs > 0 ? codexFetchTimeoutMs : defaultCodexFetchTimeoutMs);
     const controller = new AbortController();
     const timer = setTimeout(() => {
       controller.abort();
@@ -2402,16 +2463,27 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       : "Codex Desktop did not return session detail.",
     historyUnsupportedReasonCode: "CODEX_DESKTOP_HISTORY_UNAVAILABLE"
   });
+  const desktopSessionLimitForRequest = (url: URL): number => {
+    const rawLimit = Number(url.searchParams.get("limit"));
+    if (Number.isInteger(rawLimit) && rawLimit > 0) {
+      return Math.min(Math.max(rawLimit, 50), 200);
+    }
+    return url.searchParams.get("project") && url.searchParams.get("source") !== "codex-cli" ? 100 : 50;
+  };
   const fetchCodexForRequest = async (req: { headers: Record<string, string | string[] | undefined> }, url: URL) => {
+    const desktopSessionLimit = desktopSessionLimitForRequest(url);
     const [cliSessions, desktopProjects, desktopSessions] = await Promise.all([
       fetchForRequestWithFallback<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions", { sessions: [] }),
       fetchForRequestWithFallback<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects", { projects: [] }),
-      fetchForRequestWithFallback<{ sessions: CodexDesktopSession[] }>(req, url, "/api/v1/codex-desktop/sessions?limit=50", { sessions: [] })
+      fetchForRequestWithFallback<{ sessions: CodexDesktopSession[] }>(req, url, `/api/v1/codex-desktop/sessions?limit=${desktopSessionLimit}`, { sessions: [] }, {
+        timeoutMs: desktopSessionLimit > 100 ? Math.max(defaultCodexFetchTimeoutMs, 10_000) : undefined
+      })
     ]);
     return {
       cliSessions: cliSessions.data.sessions,
       desktopProjects: desktopProjects.data.projects,
       desktopSessions: desktopSessions.data.sessions,
+      desktopSessionLimit,
       load: {
         cliSessions: {
           ok: cliSessions.ok,

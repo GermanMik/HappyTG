@@ -684,6 +684,71 @@ test("codex panel applies requested session sort order", async () => {
   }
 });
 
+test("codex project view widens Desktop session window and keeps unscoped past sessions visible", async () => {
+  const calls: string[] = [];
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      calls.push(pathname);
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "HappyTG",
+              path: "C:/Develop/Projects/HappyTG",
+              source: "codex-desktop",
+              active: true
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=100&userId=usr_1") {
+        return {
+          sessions: Array.from({ length: 100 }, (_, index) => ({
+              id: `desktop-unscoped-${index + 1}`,
+              title: index === 0 ? "Past Desktop task without project path" : `Past Desktop task ${index + 1}`,
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            }))
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-desktop&project=C%3A%2FDevelop%2FProjects%2FHappyTG`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.ok(calls.includes("/api/v1/codex-desktop/sessions?limit=100&userId=usr_1"));
+    assert.match(html, /Past Desktop task without project path/);
+    assert.match(html, /did not attach a project path/);
+    assert.match(html, /value="100"/);
+    assert.match(html, /Показать до 200 Desktop sessions/);
+    assert.doesNotMatch(html, /Нет сессий/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("mini app renders supported Desktop actions and forwards new Desktop task to API", async () => {
   const calls: Array<{ pathname: string; init?: RequestInit }> = [];
   const desktopSession = {

@@ -1,0 +1,1 @@
+Live local/public Mini App project-route smoke covered the integration-facing behavior for this scoped Mini App presentation fix.

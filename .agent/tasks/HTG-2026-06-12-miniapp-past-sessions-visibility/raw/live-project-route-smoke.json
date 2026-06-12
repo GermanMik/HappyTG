@@ -1,0 +1,31 @@
+{
+  "localProject": {
+    "status": 200,
+    "desktopCountLabel": "100",
+    "visibleLabel": "71 visible",
+    "hasNoSessions": false,
+    "hasUnscopedNotice": true,
+    "hasLoadWarning": false,
+    "hasLimit100": true,
+    "hasMore200": true
+  },
+  "publicProject": {
+    "status": 200,
+    "desktopCountLabel": "100",
+    "visibleLabel": "71 visible",
+    "hasNoSessions": false,
+    "hasUnscopedNotice": true,
+    "hasLoadWarning": false,
+    "hasLimit100": true,
+    "hasMore200": true
+  },
+  "localGeneral": {
+    "status": 200,
+    "desktopCountLabel": "50",
+    "visibleLabel": "50 visible",
+    "hasNoSessions": false,
+    "hasUnscopedNotice": false,
+    "hasLoadWarning": false,
+    "hasLimit100": false
+  }
+}

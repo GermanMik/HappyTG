@@ -1,0 +1,3 @@
+graphify query "Mini App past sessions not showing Codex Desktop sessions list filters" --budget 1200
+
+Relevant nodes included apps/miniapp/src/index.ts, createMiniAppServer(), apps/api/src/service.ts, packages/runtime-adapters/src/codex-desktop.ts, and prior Mini App visual fixtures.
