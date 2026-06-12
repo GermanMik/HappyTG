@@ -1,0 +1,74 @@
+{
+  "task_id": "HTG-2026-06-12-desktop-sessions-timeout",
+  "branch": "codex/miniapp-desktop-sessions-timeout",
+  "scope": "Mini App Desktop sessions timeout warning",
+  "changed_files": [
+    "apps/miniapp/src/index.ts",
+    "apps/miniapp/src/index.test.ts"
+  ],
+  "old_default_timeout_ms": 2500,
+  "new_default_timeout_ms": 6000,
+  "runtime_semantics_changed": false,
+  "checks": [
+    {
+      "name": "miniapp-test",
+      "command": "pnpm --filter @happytg/miniapp test",
+      "raw_output": "raw/test-miniapp.txt",
+      "status": "pass"
+    },
+    {
+      "name": "miniapp-typecheck",
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "raw_output": "raw/typecheck-miniapp.txt",
+      "status": "pass"
+    },
+    {
+      "name": "miniapp-lint",
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "raw_output": "raw/lint-miniapp.txt",
+      "status": "pass"
+    },
+    {
+      "name": "miniapp-build",
+      "command": "pnpm --filter @happytg/miniapp build",
+      "raw_output": "raw/build-miniapp.txt",
+      "status": "pass"
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "raw_output": "raw/diff-check.txt",
+      "status": "pass"
+    },
+    {
+      "name": "live-api-desktop-sessions-latency",
+      "command": "GET /api/v1/codex-desktop/sessions?limit=50",
+      "raw_output": "raw/live-api-desktop-sessions-latency.json",
+      "status": "pass_3737ms"
+    },
+    {
+      "name": "live-local-codex-desktop-smoke",
+      "command": "GET http://127.0.0.1:3008/codex?source=codex-desktop",
+      "raw_output": "raw/live-local-codex-desktop-smoke.json",
+      "status": "pass_no_timeout_warning"
+    },
+    {
+      "name": "live-public-codex-desktop-smoke",
+      "command": "GET https://happytg.gerta.crazedns.ru/miniapp/codex?source=codex-desktop",
+      "raw_output": "raw/live-public-codex-desktop-smoke.json",
+      "status": "pass_no_timeout_warning"
+    },
+    {
+      "name": "graphify-query-desktop-sessions-timeout",
+      "command": "graphify query \"Mini App Desktop sessions unavailable operation aborted timeout\" --budget 1200",
+      "raw_output": "raw/graphify-query-desktop-sessions-timeout.txt",
+      "status": "pass"
+    },
+    {
+      "name": "release-check-0.4.23",
+      "command": "pnpm release:check --version 0.4.23",
+      "raw_output": "raw/release-check-0.4.23.txt",
+      "status": "pass"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+## codex/miniapp-desktop-sessions-timeout...origin/main
+ M CHANGELOG.md
+ M apps/api/package.json
+ M apps/bot/package.json
+ M apps/host-daemon/package.json
+ M apps/miniapp/package.json
+ M apps/miniapp/src/index.test.ts
+ M apps/miniapp/src/index.ts
+ M apps/worker/package.json
+ M package.json
+ M packages/approval-engine/package.json
+ M packages/bootstrap/package.json
+ M packages/hooks/package.json
+ M packages/policy-engine/package.json
+ M packages/protocol/package.json
+ M packages/repo-proof/package.json
+ M packages/runtime-adapters/package.json
+ M packages/session-engine/package.json
+ M packages/shared/package.json
+ M packages/telegram-kit/package.json
+?? .agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/
+?? docs/releases/0.4.23.md

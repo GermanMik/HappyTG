@@ -2323,10 +2323,15 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       : undefined;
   };
   const fetchForRequest = <T>(req: { headers: Record<string, string | string[] | undefined> }, url: URL, pathname: string) => dependencies.fetchJson<T>(withUser(pathname, url), authInit(req));
-  const codexFetchTimeoutMs = Number(process.env.HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS ?? "2500");
-  const describeFetchError = (error: unknown): string | undefined => {
+  const defaultCodexFetchTimeoutMs = 6000;
+  const codexFetchTimeoutMs = Number(process.env.HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS ?? String(defaultCodexFetchTimeoutMs));
+  const describeFetchError = (error: unknown, timeoutMs: number): string | undefined => {
     if (!(error instanceof Error)) {
       return "Unknown mini app fetch error.";
+    }
+
+    if (error.name === "AbortError" || /operation was aborted|aborted/iu.test(error.message)) {
+      return `request timed out after ${timeoutMs}ms`;
     }
 
     return error.message || "Mini app fetch failed.";
@@ -2337,7 +2342,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     pathname: string,
     fallback: T
   ): Promise<{ ok: boolean; data: T; error?: string }> => {
-    const timeoutMs = Number.isFinite(codexFetchTimeoutMs) && codexFetchTimeoutMs > 0 ? codexFetchTimeoutMs : 2500;
+    const timeoutMs = Number.isFinite(codexFetchTimeoutMs) && codexFetchTimeoutMs > 0 ? codexFetchTimeoutMs : defaultCodexFetchTimeoutMs;
     const controller = new AbortController();
     const timer = setTimeout(() => {
       controller.abort();
@@ -2355,7 +2360,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       return {
         ok: false,
         data: fallback,
-        error: describeFetchError(error)
+        error: describeFetchError(error, timeoutMs)
       };
     } finally {
       clearTimeout(timer);

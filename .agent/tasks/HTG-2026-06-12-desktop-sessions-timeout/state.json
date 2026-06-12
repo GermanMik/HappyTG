@@ -1,0 +1,62 @@
+{
+  "task_id": "HTG-2026-06-12-desktop-sessions-timeout",
+  "session_id": "ses_HTG_2026_06_12_desktop_sessions_timeout",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "freeze",
+      "entered_at": "2026-06-12T00:00:00.000Z",
+      "event": "SpecFrozen"
+    },
+    {
+      "phase": "build",
+      "entered_at": "2026-06-12T00:05:00.000Z",
+      "event": "TimeoutRaisedAndAbortNormalized"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-06-12T00:10:00.000Z",
+      "event": "ScopedValidationStarted"
+    },
+    {
+      "phase": "verify",
+      "entered_at": "2026-06-12T00:25:00.000Z",
+      "event": "LiveSmokePassed"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-06-12T00:35:00.000Z",
+      "event": "TaskValidationReady"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/spec.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/evidence.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/evidence.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/verdict.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/problems.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/test-miniapp.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/typecheck-miniapp.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/lint-miniapp.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/build-miniapp.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/diff-check.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/live-api-desktop-sessions-latency.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/test-unit.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/test-integration.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/build.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/lint.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/task-validate.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/docker-ps.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/live-local-codex-desktop-smoke.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/live-public-codex-desktop-smoke.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/graphify-query-desktop-sessions-timeout.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-sessions-timeout/raw/release-check-0.4.23.txt"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-06-12T00:00:00.000Z",
+    "updated_at": "2026-06-12T00:35:00.000Z"
+  }
+}
