@@ -1,0 +1,7 @@
+{
+  "id": "HTG-2026-06-12-miniapp-auth-reload-loop",
+  "title": "Mini App auth reload loop fix",
+  "status": "complete",
+  "phase": "complete",
+  "verificationState": "passed"
+}

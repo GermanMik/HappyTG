@@ -1,0 +1,4 @@
+graphify query "Mini App session page loading flicker jank session detail" --budget 1200
+
+Traversal: BFS depth=2
+Relevant nodes included apps/miniapp/src/index.ts, apps/miniapp/src/index.test.ts, apps/api/src/index.ts, packages/protocol/src/index.ts, and packages/shared/src/index.ts.

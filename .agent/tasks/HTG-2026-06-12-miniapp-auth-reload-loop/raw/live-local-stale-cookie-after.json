@@ -1,0 +1,8 @@
+{
+  "StatusCode": 200,
+  "HasAuthStatus": true,
+  "ResetFlag": true,
+  "SetCookie": "happytg_miniapp_session=; path=/; max-age=0; samesite=lax; happytg_miniapp_session=; path=/; max-age=0; samesite=lax; secure",
+  "HasInternalError": false,
+  "HasFetchFailed": false
+}

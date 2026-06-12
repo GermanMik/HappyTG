@@ -1,0 +1,8 @@
+> @happytg/miniapp@0.4.24 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+tests 23
+pass 23
+fail 0
+
+Scoped Mini App unit/regression coverage passed.

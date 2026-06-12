@@ -1179,6 +1179,9 @@ test("session page renders auth bridge when API session detail returns 401", asy
     assert.match(html, /data-auth-status/);
     assert.match(html, /Повторить подключение/);
     assert.match(html, /window\.HAPPYTgNeedsAuth = true/);
+    assert.match(html, /window\.HAPPYTgResetSession = true/);
+    assert.ok(html.indexOf("if (window.HAPPYTgResetSession)") < html.indexOf("var savedSession = readSession()"));
+    assert.match(response.headers.get("set-cookie") ?? "", /happytg_miniapp_session=; path=\/; max-age=0; samesite=lax/);
     assert.doesNotMatch(html, /Internal server error/);
     assert.doesNotMatch(html, /Mini App fetch failed/);
   } finally {
@@ -1213,6 +1216,8 @@ test("legacy screen=session route renders auth bridge when API session detail re
     assert.match(response.headers.get("content-type") ?? "", /text\/html/);
     assert.match(html, /data-auth-status/);
     assert.match(html, /aria-current="page">Сессии/);
+    assert.match(html, /window\.HAPPYTgResetSession = true/);
+    assert.match(response.headers.get("set-cookie") ?? "", /happytg_miniapp_session=; path=\/; max-age=0; samesite=lax/);
     assert.doesNotMatch(html, /Internal server error/);
     assert.doesNotMatch(html, /Mini App fetch failed/);
   } finally {

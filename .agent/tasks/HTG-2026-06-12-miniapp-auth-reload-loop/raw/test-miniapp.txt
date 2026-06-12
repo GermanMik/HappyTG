@@ -1,0 +1,11 @@
+> @happytg/miniapp@0.4.24 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+tests 23
+pass 23
+fail 0
+
+Relevant regression assertions:
+- session page renders auth bridge when API session detail returns 401
+- legacy screen=session route renders auth bridge when API session detail returns 401
+- both 401 routes include window.HAPPYTgResetSession = true and expire happytg_miniapp_session
