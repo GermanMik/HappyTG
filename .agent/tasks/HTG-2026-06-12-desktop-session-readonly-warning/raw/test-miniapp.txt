@@ -1,0 +1,449 @@
+
+> @happytg/miniapp@0.4.19 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+✔ mini app ready endpoint returns 503 when api health fails (50.0924ms)
+✔ mini app favicon route avoids browser 404 noise (8.066ms)
+✔ overview page renders hosts, sessions, approvals, and tasks (80.5718ms)
+✔ mini app links honor the /miniapp reverse-proxy base path (7.6704ms)
+✔ public reverse-proxied mini app uses same-origin browser API when local env points at localhost (13.1222ms)
+✔ local direct mini app keeps the explicit local API origin without reverse-proxy headers (0.3135ms)
+✔ auth-pending shell exposes retry-safe auth feedback controls (6.5989ms)
+✔ mini app forwards browser session cookie as bearer auth (7.6023ms)
+✖ codex panel renders source-aware Desktop and CLI sessions with disabled unsupported actions (14.0911ms)
+✔ codex panel applies requested session sort order (12.7688ms)
+✔ mini app renders supported Desktop actions and forwards new Desktop task to API (38.3635ms)
+✔ task page renders scoped canonical artifacts (5.6514ms)
+✔ projects page renders workspaces and new task creates a Codex session (12.9514ms)
+✔ session page renders timeline, summary, and task link (5.201ms)
+✔ approval page renders real authenticated action buttons (5.4533ms)
+✔ startMiniAppServer returns an actionable message when the port is already in use (5541.0192ms)
+✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (61.0399ms)
+✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (4.3476ms)
+✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (5.2303ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 18
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6559.7416
+
+✖ failing tests:
+
+test at src\index.test.ts:1:9444
+✖ codex panel renders source-aware Desktop and CLI sessions with disabled unsupported actions (14.0911ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /contract missing/. Input:
+  
+  '<!doctype html>\n' +
+    '<html lang="ru">\n' +
+    '  <head>\n' +
+    '    <meta charset="utf-8" />\n' +
+    '    <meta name="viewport" content="width=device-width, initial-scale=1" />\n' +
+    '    <title>Codex</title>\n' +
+    '    <style>\n' +
+    '      :root {\n' +
+    '        --bg: #f5f6f7;\n' +
+    '        --bg-accent: linear-gradient(180deg, #fbfcfd 0%, #eef2f5 100%);\n' +
+    '        --surface: rgba(255, 255, 255, 0.94);\n' +
+    '        --surface-soft: #f0f5f3;\n' +
+    '        --surface-strong: #ffffff;\n' +
+    '        --ink: #17211d;\n' +
+    '        --muted: #64716d;\n' +
+    '        --accent: #0a7c66;\n' +
+    '        --accent-strong: #075845;\n' +
+    '        --warn: #9a6700;\n' +
+    '        --danger: #b42318;\n' +
+    '        --info: #2366a0;\n' +
+    '        --border: rgba(23, 33, 29, 0.12);\n' +
+    '        --shadow: 0 12px 26px rgba(21, 31, 27, 0.08);\n' +
+    '      }\n' +
+    '      * {\n' +
+    '        box-sizing: border-box;\n' +
+    '      }\n' +
+    '      body {\n' +
+    '        margin: 0;\n' +
+    '        padding: 14px 14px 124px;\n' +
+    '        background: var(--bg);\n' +
+    '        background-image: var(--bg-accent);\n' +
+    '        color: var(--ink);\n' +
+    '        font-family: "Segoe UI Variable Text", "Trebuchet MS", "Helvetica Neue", sans-serif;\n' +
+    '      }\n' +
+    '      main {\n' +
+    '        max-width: 1080px;\n' +
+    '        margin: 0 auto;\n' +
+    '      }\n' +
+    '      .panel {\n' +
+    '        background: var(--surface);\n' +
+    '        border: 1px solid var(--border);\n' +
+    '        border-radius: 8px;\n' +
+    '        padding: 14px;\n' +
+    '        margin-bottom: 12px;\n' +
+    '        box-shadow: var(--shadow);\n' +
+    '        backdrop-filter: blur(10px);\n' +
+    '      }\n' +
+    '      .hero {\n' +
+    '        background: var(--surface-strong);\n' +
+    '        border-color: rgba(13, 127, 102, 0.16);\n' +
+    '      }\n' +
+    '      .grid {\n' +
+    '        display: grid;\n' +
+    '        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));\n' +
+    '        gap: 10px;\n' +
+    '      }\n' +
+    '      h1, h2 {\n' +
+    '        margin-top: 0;\n' +
+    '        letter-spacing: 0;\n' +
+    '      }\n' +
+    '      h1 {\n' +
+    '        font-size: 24px;\n' +
+    '        line-height: 1.12;\n' +
+    '        margin-bottom: 8px;\n' +
+    '      }\n' +
+    '      h2 {\n' +
+    '        font-size: 18px;\n' +
+    '        line-height: 1.25;\n' +
+    '        margin-bottom: 12px;\n' +
+    '      }\n' +
+    '      code, pre {\n' +
+    '        font-family: "SFMono-Regular", ui-monospace, monospace;\n' +
+    '      }\n' +
+    '      pre {\n' +
+    '        white-space: pre-wrap;\n' +
+    '        overflow-wrap: anywhere;\n' +
+    '        max-height: 48vh;\n' +
+    '        overflow: auto;\n' +
+    '      }\n' +
+    '      a {\n' +
+    '        color: var(--accent);\n' +
+    '        text-decoration-thickness: 1px;\n' +
+    '      }\n' +
+    '      ul {\n' +
+    '        padding-left: 20px;\n' +
+    '      }\n' +
+    '      .muted {\n' +
+    '        color: var(--muted);\n' +
+    '      }\n' +
+    '      .topbar {\n' +
+    '        display: flex;\n' +
+    '        justify-content: space-between;\n' +
+    '        align-items: center;\n' +
+    '        gap: 10px;\n' +
+    '        margin-bottom: 14px;\n' +
+    '      }\n' +
+    '      .topbar a {\n' +
+    '        text-decoration: none;\n' +
+    '        color: var(--accent-strong);\n' +
+    '      }\n' +
+    '      .panel-header {\n' +
+    '        display: flex;\n' +
+    '        justify-content: space-between;\n' +
+    '        align-items: center;\n' +
+    '        gap: 12px;\n' +
+    '        margin-bottom: 12px;\n' +
+    '      }\n' +
+    '      .badge {\n' +
+    '        display: inline-flex;\n' +
+    '        align-items: center;\n' +
+    '        white-space: nowrap;\n' +
+    '        border-radius: 999px;\n' +
+    '        padding: 4px 10px;\n' +
+    '        font-size: 11px;\n' +
+    '        letter-spacing: 0.06em;\n' +
+    '        text-transform: uppercase;\n' +
+    '        border: 1px solid currentColor;\n' +
+    '      }\n' +
+    '      .badge-neutral {\n' +
+    '        color: #6f675c;\n' +
+    '        background: rgba(111, 103, 92, 0.08);\n' +
+    '      }\n' +
+    '      .badge-info {\n' +
+    '        color: #2d5b7c;\n' +
+    '        background: rgba(45, 91, 124, 0.1);\n' +
+    '      }\n' +
+    '      .badge-success {\n' +
+    '        color: #0c7c59;\n' +
+    '        background: rgba(12, 124, 89, 0.1);\n' +
+    '      }\n' +
+    '      .badge-warn {\n' +
+    '        color: #8b5e10;\n' +
+    '        background: rgba(139, 94, 16, 0.1);\n' +
+    '      }\n' +
+    '      .badge-danger {\n' +
+    '        color: #a7382a;\n' +
+    '        background: rgba(167, 56, 42, 0.1);\n' +
+    '      }\n' +
+    '      .status-list {\n' +
+    '        list-style: none;\n' +
+    '        padding: 0;\n' +
+    '        margin: 0;\n' +
+    '      }\n' +
+    '      .status-list li {\n' +
+    '        display: flex;\n' +
+    '        flex-direction: column;\n' +
+    '        gap: 12px;\n' +
+    '        padding: 12px 0;\n' +
+    '        border-top: 1px solid var(--border);\n' +
+    '      }\n' +
+    '      .status-list li:first-child {\n' +
+    '        border-top: 0;\n' +
+    '        padding-top: 0;\n' +
+    '      }\n' +
+    '      .status-meta {\n' +
+    '        display: flex;\n' +
+    '        gap: 8px;\n' +
+    '        align-items: center;\n' +
+    '        flex-wrap: wrap;\n' +
+    '        justify-content: flex-start;\n' +
+    '      }\n' +
+    '      .session-title-row {\n' +
+    '        display: flex;\n' +
+    '        align-items: center;\n' +
+    '        gap: 8px;\n' +
+    '        flex-wrap: wrap;\n' +
+    '      }\n' +
+    '      .result-line {\n' +
+    '        margin-top: 8px;\n' +
+    '        color: var(--ink);\n' +
+    '      }\n' +
+    '      .meta-line {\n' +
+    '        margin-top: 4px;\n' +
+    '        color: var(--muted);\n' +
+    '        overflow-wrap: anywhere;\n' +
+    '      }\n' +
+    '      .meta-details {\n' +
+    '        margin-top: 10px;\n' +
+    '      }\n' +
+    '      .meta-details summary {\n' +
+    '        cursor: pointer;\n' +
+    '        color: var(--accent-strong);\n' +
+    '        font-weight: 650;\n' +
+    '        min-height: 34px;\n' +
+    '        display: inline-flex;\n' +
+    '        align-items: center;\n' +
+    '      }\n' +
+    '      .meta-details dl {\n' +
+    '        margin: 8px 0 0;\n' +
+    '        display: grid;\n' +
+    '        gap: 8px;\n' +
+    '      }\n' +
+    '      .meta-details dl div {\n' +
+    '        display: grid;\n' +
+    '        gap: 2px;\n' +
+    '      }\n' +
+    '      .meta-details dt {\n' +
+    '        color: var(--muted);\n' +
+    '        font-size: 12px;\n' +
+    '        text-transform: uppercase;\n' +
+    '      }\n' +
+    '      .meta-details dd {\n' +
+    '        margin: 0;\n' +
+    '        overflow-wrap: anywhere;\n' +
+    '      }\n' +
+    '      .inline-form {\n' +
+    '        display: grid;\n' +
+    '        gap: 10px;\n' +
+    '      }\n' +
+    '      .form-row {\n' +
+    '        display: grid;\n' +
+    '        gap: 10px;\n' +
+    '      }\n' +
+    '      .intent-grid {\n' +
+    '        display: grid;\n' +
+    '        grid-template-columns: repeat(3, minmax(0, 1fr));\n' +
+    '        gap: 8px;\n' +
+    '      }\n' +
+    '      .intent-grid label {\n' +
+    '        display: block;\n' +
+    '        position: relative;\n' +
+    '      }\n' +
+    '      .intent-grid label span {\n' +
+    '        min-height: 48px;\n' +
+    '        border: 1px solid var(--border);\n' +
+    '        border-radius: 8px;\n' +
+    '        padding: 10px;\n' +
+    '        background: rgba(255, 255, 255, 0.92);\n' +
+    '        display: flex;\n' +
+    '        align-items: center;\n' +
+    '        justify-content: center;\n' +
+    '        text-align: center;\n' +
+    '        font-weight: 650;\n' +
+    '      }\n' +
+    '      .intent-grid input {\n' +
+    '        position: absolute;\n' +
+    '        opacity: 0;\n' +
+    '        pointer-events: none;\n' +
+    '      }\n' +
+    '      .intent-grid input:checked + span {\n' +
+    '        border-color: var(--accent);\n' +
+    '        background: rgba(10, 124, 102, 0.1);\n' +
+    '        color: var(--accent-strong);\n' +
+    '      }\n' +
+    '      .progress-list {\n' +
+    '        list-style: none;\n' +
+    '        padding: 0;\n' +
+    '        margin: 0;\n' +
+    '        display: grid;\n' +
+    '        gap: 10px;\n' +
+    '      }\n' +
+    '      .progress-step {\n' +
+    '        display: flex;\n' +
+    '        gap: 12px;\n' +
+    '        align-items: flex-start;\n' +
+    '        padding: 12px 14px;\n' +
+    '        border-radius: 8px;\n' +
+    '        border: 1px solid var(--border);\n' +
+    '        background: #fff;\n' +
+    '      }\n' +
+    '      .progress-step-done {\n' +
+    '        border-color: rgba(12, 124, 89, 0.35);\n' +
+    '        background: rgba(12, 124, 89, 0.08);\n' +
+    '      }\n' +
+    '      .progress-step-current {\n' +
+    '        border-color: rgba(45, 91, 124, 0.35);\n' +
+    '        background: rgba(45, 91, 124, 0.08);\n' +
+    '      }\n' +
+    '      .progress-marker {\n' +
+    '        width: 28px;\n' +
+    '        height: 28px;\n' +
+    '        border-radius: 999px;\n' +
+    '        display: inline-flex;\n' +
+    '        align-items: center;\n' +
+    '        justify-content: center;\n' +
+    '        font-size: 12px;\n' +
+    '        border: 1px solid var(--border);\n' +
+    '        background: #fff;\n' +
+    '      }\n' +
+    '      .kv-grid {\n' +
+    '        display: grid;\n' +
+    '        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));\n' +
+    '        gap: 12px;\n' +
+    '      }\n' +
+    '      .kv-item {\n' +
+    '        padding: 12px 14px;\n' +
+    '        border-radius: 8px;\n' +
+    '        border: 1px solid var(--border);\n' +
+    '        background: rgba(255, 255, 255, 0.82);\n' +
+    '      }\n' +
+    '      .eyebrow {\n' +
+    '        margin: 0 0 8px;\n' +
+    '        font-size: 12px;\n' +
+    '        letter-spacing: 0;\n' +
+    '        text-transform: uppercase;\n' +
+    '        color: var(--muted);\n' +
+    '      }\n' +
+    '      .actions {\n' +
+    '        display: flex;\n' +
+    '        flex-wrap: wrap;\n' +
+    '        gap: 8px;\n' +
+    '        margin-top: 12px;\n' +
+    '      }\n' +
+    '      .button {\n' +
+    '        min-height: 46px;\n' +
+    '        display: inline-flex;\n' +
+    '        align-items: center;\n' +
+    '        justify-content: center;\n' +
+    '        padding: 10px 14px;\n' +
+    '        border-radius: 8px;\n' +
+    '        border: 1px solid var(--border);\n' +
+    '        background: rgba(255, 255, 255, 0.95);\n' +
+    '        color: var(--ink);\n' +
+    '        text-decoration: none;\n' +
+    '        font-weight: 650;\n' +
+    '        transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;\n' +
+    '      }\n' +
+    '      .button-primary {\n' +
+    '        border-color: var(--accent);\n' +
+    '        background: var(--accent);\n' +
+    '        color: #fff;\n' +
+    '      }\n' +
+    '      .button-danger {\n' +
+    '        border-color: var(--danger);\n' +
+    '        color: var(--danger);\n' +
+    '      }\n' +
+    '      .button:disabled {\n' +
+    '        opacity: 0.64;\n' +
+    '        cursor: wait;\n' +
+    '        transform: none;\n' +
+    '      }\n' +
+    '      .button:not(:disabled):active {\n' +
+    '        transform: translateY(1px);\n' +
+    '      }\n' +
+    '      .notice {\n' +
+    '        border-radius: 8px;\n' +
+    '        padding: 12px 14px;\n' +
+    '        border: 1px solid var(--border);\n' +
+    '        background: rgba(255, 255, 255, 0.92);\n' +
+    '      }\n' +
+    '      .notice-info {\n' +
+    '        border-color: rgba(28, 93, 153, 0.2);\n' +
+    '        background: rgba(28, 93, 153, 0.08);\n' +
+    '      }\n' +
+    '      .notice-success {\n' +
+    '        border-color: rgba(12, 124, 89, 0.24);\n' +
+    '        background: rgba(12, 124, 89, 0.08);\n' +
+    '      }\n' +
+    '      .notice-warn {\n' +
+    '        border-color: rgba(154, 103, 0, 0.24);\n' +
+    '        background: rgba(154, 103, 0, 0.08);\n' +
+    '      }\n' +
+    '      .notice-danger {\n' +
+    '        border-color: rgba(180, 35, 24, 0.22);\n' +
+    '        background: rgba(180, 35, 24, 0.08);\n' +
+    '      }\n' +
+    '      .auth-steps {\n' +
+    '        display: grid;\n' +
+    '        gap: 8px;\n' +
+    '        margin-top: 14px;\n' +
+    '      }\n' +
+    '      .auth-step {\n' +
+    '        display: flex;\n' +
+    '        align-items: center;\n' +
+    '        gap: 10px;\n' +
+    '        padding: 10px 12px;\n' +
+    '        border-radius: 8px;\n' +
+    '        border: 1px solid var(--border);\n' +
+    '        background: rgba(255, 255, 255, 0.84);\n' +
+    '      }\n' +
+    '      .auth-step::before {\n' +
+    '        content: "";\n' +
+    '        width: 10px;\n' +
+    '        height: 10px;\n' +
+    '        border-radius: 999px;\n' +
+    '        background: #bcc8c4;\n' +
+    '      }\n' +
+    '      .auth-step[data-state="running"]::before {\n' +
+    '        background: var(--info);\n' +
+    '        box-shadow: 0 0 0 6px rgba(28, 93, 153, 0.12);\n' +
+    '      }\n' +
+    '      .auth-step[data-state="done"]::before {\n' +
+    '        background: var(--accent);\n' +
+    '      }\n' +
+    '      .auth-step[data-state="error"]::before {\n' +
+    '        background: var(--danger);\n' +
+    '      }\n' +
+    '      .bottom-nav {\n' +
+    '        position: fixed;\n' +
+    '        left: 0;\n' +
+    '        right: 0;\n' +
+    '        bottom: 0;\n' +
+    '        z-index: 20;\n' +
+    '        display: grid;\n' +
+    '        grid-template-columns: repeat(3, 1fr);'... 28651 more characters
+  
+      at TestContext.<anonymous> (C:\Develop\Projects\HappyTG\apps\miniapp\src\index.test.ts:512:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<!doctype html>\n<html lang="ru">\n  <head>\n    <meta charset="utf-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1" />\n    <title>Codex</title>\n    <style>\n      :root {\n        --bg: #f5f6f7;\n        --bg-accent: linear-gradient(180deg, #fbfcfd 0%, #eef2f5 100%);\n        --surface: rgba(255, 255, 255, 0.94);\n        --surface-soft: #f0f5f3;\n        --surface-strong: #ffffff;\n        --ink: #17211d;\n        --muted: #64716d;\n        --accent: #0a7c66;\n        --accent-strong: #075845;\n        --warn: #9a6700;\n        --danger: #b42318;\n        --info: #2366a0;\n        --border: rgba(23, 33, 29, 0.12);\n        --shadow: 0 12px 26px rgba(21, 31, 27, 0.08);\n      }\n      * {\n        box-sizing: border-box;\n      }\n      body {\n        margin: 0;\n        padding: 14px 14px 124px;\n        background: var(--bg);\n        background-image: var(--bg-accent);\n        color: var(--ink);\n        font-family: "Segoe UI Variable Text", "Trebuchet MS", "Helvetica Neue", sans-serif;\n      }\n      main {\n        max-width: 1080px;\n        margin: 0 auto;\n      }\n      .panel {\n        background: var(--surface);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 14px;\n        margin-bottom: 12px;\n        box-shadow: var(--shadow);\n        backdrop-filter: blur(10px);\n      }\n      .hero {\n        background: var(--surface-strong);\n        border-color: rgba(13, 127, 102, 0.16);\n      }\n      .grid {\n        display: grid;\n        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));\n        gap: 10px;\n      }\n      h1, h2 {\n        margin-top: 0;\n        letter-spacing: 0;\n      }\n      h1 {\n        font-size: 24px;\n        line-height: 1.12;\n        margin-bottom: 8px;\n      }\n      h2 {\n        font-size: 18px;\n        line-height: 1.25;\n        margin-bottom: 12px;\n      }\n      code, pre {\n        font-family: "SFMono-Regular", ui-monospace, monospace;\n      }\n      pre {\n        white-space: pre-wrap;\n        overflow-wrap: anywhere;\n        max-height: 48vh;\n        overflow: auto;\n      }\n      a {\n        color: var(--accent);\n        text-decoration-thickness: 1px;\n      }\n      ul {\n        padding-left: 20px;\n      }\n      .muted {\n        color: var(--muted);\n      }\n      .topbar {\n        display: flex;\n        justify-content: space-between;\n        align-items: center;\n        gap: 10px;\n        margin-bottom: 14px;\n      }\n      .topbar a {\n        text-decoration: none;\n        color: var(--accent-strong);\n      }\n      .panel-header {\n        display: flex;\n        justify-content: space-between;\n        align-items: center;\n        gap: 12px;\n        margin-bottom: 12px;\n      }\n      .badge {\n        display: inline-flex;\n        align-items: center;\n        white-space: nowrap;\n        border-radius: 999px;\n        padding: 4px 10px;\n        font-size: 11px;\n        letter-spacing: 0.06em;\n        text-transform: uppercase;\n        border: 1px solid currentColor;\n      }\n      .badge-neutral {\n        color: #6f675c;\n        background: rgba(111, 103, 92, 0.08);\n      }\n      .badge-info {\n        color: #2d5b7c;\n        background: rgba(45, 91, 124, 0.1);\n      }\n      .badge-success {\n        color: #0c7c59;\n        background: rgba(12, 124, 89, 0.1);\n      }\n      .badge-warn {\n        color: #8b5e10;\n        background: rgba(139, 94, 16, 0.1);\n      }\n      .badge-danger {\n        color: #a7382a;\n        background: rgba(167, 56, 42, 0.1);\n      }\n      .status-list {\n        list-style: none;\n        padding: 0;\n        margin: 0;\n      }\n      .status-list li {\n        display: flex;\n        flex-direction: column;\n        gap: 12px;\n        padding: 12px 0;\n        border-top: 1px solid var(--border);\n      }\n      .status-list li:first-child {\n        border-top: 0;\n        padding-top: 0;\n      }\n      .status-meta {\n        display: flex;\n        gap: 8px;\n        align-items: center;\n        flex-wrap: wrap;\n        justify-content: flex-start;\n      }\n      .session-title-row {\n        display: flex;\n        align-items: center;\n        gap: 8px;\n        flex-wrap: wrap;\n      }\n      .result-line {\n        margin-top: 8px;\n        color: var(--ink);\n      }\n      .meta-line {\n        margin-top: 4px;\n        color: var(--muted);\n        overflow-wrap: anywhere;\n      }\n      .meta-details {\n        margin-top: 10px;\n      }\n      .meta-details summary {\n        cursor: pointer;\n        color: var(--accent-strong);\n        font-weight: 650;\n        min-height: 34px;\n        display: inline-flex;\n        align-items: center;\n      }\n      .meta-details dl {\n        margin: 8px 0 0;\n        display: grid;\n        gap: 8px;\n      }\n      .meta-details dl div {\n        display: grid;\n        gap: 2px;\n      }\n      .meta-details dt {\n        color: var(--muted);\n        font-size: 12px;\n        text-transform: uppercase;\n      }\n      .meta-details dd {\n        margin: 0;\n        overflow-wrap: anywhere;\n      }\n      .inline-form {\n        display: grid;\n        gap: 10px;\n      }\n      .form-row {\n        display: grid;\n        gap: 10px;\n      }\n      .intent-grid {\n        display: grid;\n        grid-template-columns: repeat(3, minmax(0, 1fr));\n        gap: 8px;\n      }\n      .intent-grid label {\n        display: block;\n        position: relative;\n      }\n      .intent-grid label span {\n        min-height: 48px;\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px;\n        background: rgba(255, 255, 255, 0.92);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        text-align: center;\n        font-weight: 650;\n      }\n      .intent-grid input {\n        position: absolute;\n        opacity: 0;\n        pointer-events: none;\n      }\n      .intent-grid input:checked + span {\n        border-color: var(--accent);\n        background: rgba(10, 124, 102, 0.1);\n        color: var(--accent-strong);\n      }\n      .progress-list {\n        list-style: none;\n        padding: 0;\n        margin: 0;\n        display: grid;\n        gap: 10px;\n      }\n      .progress-step {\n        display: flex;\n        gap: 12px;\n        align-items: flex-start;\n        padding: 12px 14px;\n        border-radius: 8px;\n        border: 1px solid var(--border);\n        background: #fff;\n      }\n      .progress-step-done {\n        border-color: rgba(12, 124, 89, 0.35);\n        background: rgba(12, 124, 89, 0.08);\n      }\n      .progress-step-current {\n        border-color: rgba(45, 91, 124, 0.35);\n        background: rgba(45, 91, 124, 0.08);\n      }\n      .progress-marker {\n        width: 28px;\n        height: 28px;\n        border-radius: 999px;\n        display: inline-flex;\n        align-items: center;\n        justify-content: center;\n        font-size: 12px;\n        border: 1px solid var(--border);\n        background: #fff;\n      }\n      .kv-grid {\n        display: grid;\n        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));\n        gap: 12px;\n      }\n      .kv-item {\n        padding: 12px 14px;\n        border-radius: 8px;\n        border: 1px solid var(--border);\n        background: rgba(255, 255, 255, 0.82);\n      }\n      .eyebrow {\n        margin: 0 0 8px;\n        font-size: 12px;\n        letter-spacing: 0;\n        text-transform: uppercase;\n        color: var(--muted);\n      }\n      .actions {\n        display: flex;\n        flex-wrap: wrap;\n        gap: 8px;\n        margin-top: 12px;\n      }\n      .button {\n        min-height: 46px;\n        display: inline-flex;\n        align-items: center;\n        justify-content: center;\n        padding: 10px 14px;\n        border-radius: 8px;\n        border: 1px solid var(--border);\n        background: rgba(255, 255, 255, 0.95);\n        color: var(--ink);\n        text-decoration: none;\n        font-weight: 650;\n        transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;\n      }\n      .button-primary {\n        border-color: var(--accent);\n        background: var(--accent);\n        color: #fff;\n      }\n      .button-danger {\n        border-color: var(--danger);\n        color: var(--danger);\n      }\n      .button:disabled {\n        opacity: 0.64;\n        cursor: wait;\n        transform: none;\n      }\n      .button:not(:disabled):active {\n        transform: translateY(1px);\n      }\n      .notice {\n        border-radius: 8px;\n        padding: 12px 14px;\n        border: 1px solid var(--border);\n        background: rgba(255, 255, 255, 0.92);\n      }\n      .notice-info {\n        border-color: rgba(28, 93, 153, 0.2);\n        background: rgba(28, 93, 153, 0.08);\n      }\n      .notice-success {\n        border-color: rgba(12, 124, 89, 0.24);\n        background: rgba(12, 124, 89, 0.08);\n      }\n      .notice-warn {\n        border-color: rgba(154, 103, 0, 0.24);\n        background: rgba(154, 103, 0, 0.08);\n      }\n      .notice-danger {\n        border-color: rgba(180, 35, 24, 0.22);\n        background: rgba(180, 35, 24, 0.08);\n      }\n      .auth-steps {\n        display: grid;\n        gap: 8px;\n        margin-top: 14px;\n      }\n      .auth-step {\n        display: flex;\n        align-items: center;\n        gap: 10px;\n        padding: 10px 12px;\n        border-radius: 8px;\n        border: 1px solid var(--border);\n        background: rgba(255, 255, 255, 0.84);\n      }\n      .auth-step::before {\n        content: "";\n        width: 10px;\n        height: 10px;\n        border-radius: 999px;\n        background: #bcc8c4;\n      }\n      .auth-step[data-state="running"]::before {\n        background: var(--info);\n        box-shadow: 0 0 0 6px rgba(28, 93, 153, 0.12);\n      }\n      .auth-step[data-state="done"]::before {\n        background: var(--accent);\n      }\n      .auth-step[data-state="error"]::before {\n        background: var(--danger);\n      }\n      .bottom-nav {\n        position: fixed;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: 20;\n        display: grid;\n        grid-template-columns: repeat(3, 1fr);'... 28651 more characters,
+    expected: /contract missing/,
+    operator: 'match',
+    diff: 'simple'
+  }
+C:\Develop\Projects\HappyTG\apps\miniapp:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @happytg/miniapp@0.4.19 test: `tsx --test src/*.test.ts`
+Exit status 1
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

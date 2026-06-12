@@ -1,0 +1,74 @@
+{
+  "task_id": "HTG-2026-06-12-desktop-session-readonly-warning",
+  "session_id": "ses_HTG_2026_06_12_desktop_session_readonly_warning",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "freeze",
+      "entered_at": "2026-06-12T00:00:00.000Z",
+      "event": "SpecFrozen"
+    },
+    {
+      "phase": "build",
+      "entered_at": "2026-06-12T00:08:00.000Z",
+      "event": "MiniAppRenderAdjusted"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-06-12T00:18:00.000Z",
+      "event": "ValidationEvidenceCaptured"
+    },
+    {
+      "phase": "verify",
+      "entered_at": "2026-06-12T00:23:00.000Z",
+      "event": "FreshVerifierPass"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-06-12T00:25:00.000Z",
+      "event": "TaskValidationPassed"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-06-12T01:00:00.000Z",
+      "event": "LiveDesktopProjectsRuntimeSmokeCaptured"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-06-12T01:05:00.000Z",
+      "event": "LiveDockerCodexDesktopOverrideVerified"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/spec.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/evidence.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/evidence.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/verdict.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/problems.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/build.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/test-unit.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/test-integration.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/lint.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/docker-codex-desktop-override-rebuild.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/live-desktop-codex-home-mount.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/live-desktop-projects-api-real-user.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/live-desktop-projects-miniapp-local.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/live-desktop-projects-miniapp-public.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/docker-codex-desktop-ps.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/critical-review-10-roles.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/graphify-update-miniapp-src.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/graphify-query-miniapp-warning-projects.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/diff-check-final-2.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning/raw/task-validate-final-2.txt"
+  ],
+  "unresolved_issues": [
+    "Full repository test suite was not run for this scoped Mini App presentation fix.",
+    "Future Docker restarts must include infra/docker-compose.codex-desktop.yml when Desktop project projections are expected."
+  ],
+  "timestamps": {
+    "created_at": "2026-06-12T00:00:00.000Z",
+    "updated_at": "2026-06-12T01:05:00.000Z"
+  }
+}

@@ -534,8 +534,8 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
     assert.match(html, /Codex CLI/);
     assert.match(html, /Desktop fixture/);
     assert.match(html, /recent/);
-    assert.match(html, /contract missing/);
     assert.match(html, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
+    assert.doesNotMatch(html, /Desktop actions may be disabled/);
     assert.match(html, /Прошедшие задачи/);
     assert.match(html, /href="\/codex\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG"/);
     assert.doesNotMatch(html, /CLI fixture/);
@@ -557,6 +557,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
     assert.match(detailHtml, /Вопрос по реализации/);
     assert.match(detailHtml, /disabled/);
     assert.match(detailHtml, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
+    assert.doesNotMatch(detailHtml, /<section class="notice notice-warn">\[CODEX_DESKTOP_CONTROL_UNSUPPORTED\]/);
     assert.match(detailHtml, /Результат и ход работы/);
     assert.match(detailHtml, /Safe desktop answer/);
     assert.doesNotMatch(detailHtml, /data-desktop-action="resume"/);

@@ -1,0 +1,19 @@
+{
+  "id": "HTG-2026-06-12-desktop-session-readonly-warning",
+  "sessionId": "ses_HTG_2026_06_12_desktop_session_readonly_warning",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-desktop-session-readonly-warning",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Desktop session read-only warning fix",
+  "acceptanceCriteria": [
+    "Opening a past Codex Desktop session remains HTTP 200 and shows read-only history.",
+    "Unsupported Desktop mutation state is not rendered as a page-level error for read-only browsing.",
+    "Disabled Desktop action controls still expose unsupported reasons where actions are attempted.",
+    "Mini App scoped validation passes.",
+    "Live Docker Mini App Projects renders Codex Desktop projects when the codex-desktop compose override is enabled."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-06-12T00:00:00.000Z",
+  "updatedAt": "2026-06-12T01:05:00.000Z"
+}

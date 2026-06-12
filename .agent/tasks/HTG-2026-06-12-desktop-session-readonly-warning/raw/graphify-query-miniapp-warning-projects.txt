@@ -1,0 +1,40 @@
+Traversal: BFS depth=2 | Start: ['projects', 'state', 'unsupported'] | 24 nodes found
+
+NODE index.ts [src=apps/miniapp/src/index.ts loc=L1 community=6]
+NODE createMiniAppServer() [src=apps/miniapp/src/index.ts loc=L2312 community=6]
+NODE verdict.json [src=.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json loc=L1 community=972]
+NODE release-pr.json [src=.agent/tasks/HTG-2026-04-24-release-045-miniapp-launch-dashboard/raw/release-pr.json loc=L1 community=967]
+NODE miniapp-visual-server.ts [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L1 community=6]
+NODE mergeCommit [src=.agent/tasks/HTG-2026-04-24-release-045-miniapp-launch-dashboard/raw/release-pr.json loc=L1 community=967]
+NODE state [src=.agent/tasks/HTG-2026-04-24-release-045-miniapp-launch-dashboard/raw/release-pr.json loc=L1 community=967]
+NODE projects [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L19 community=6]
+NODE evidence [src=.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json loc=L6 community=972]
+NODE headRefName [src=.agent/tasks/HTG-2026-04-24-release-045-miniapp-launch-dashboard/raw/release-pr.json loc=L1 community=967]
+NODE port [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L86 community=6]
+NODE url [src=.agent/tasks/HTG-2026-04-24-release-045-miniapp-launch-dashboard/raw/release-pr.json loc=L1 community=967]
+NODE summary [src=.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json loc=L5 community=972]
+NODE pass [src=.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json loc=L4 community=972]
+NODE server [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L34 community=6]
+NODE sessions [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L3 community=6]
+NODE freshVerifier [src=.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json loc=L46 community=972]
+NODE risks [src=.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json loc=L41 community=972]
+NODE unsupported [src=.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json loc=L22 community=972]
+NODE baseRefName [src=.agent/tasks/HTG-2026-04-24-release-045-miniapp-launch-dashboard/raw/release-pr.json loc=L1 community=967]
+NODE taskId [src=.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json loc=L2 community=972]
+NODE status [src=.agent/tasks/HTG-2026-05-03-codex-vision-history-complete/verdict.json loc=L3 community=972]
+NODE mergedAt [src=.agent/tasks/HTG-2026-04-24-release-045-miniapp-launch-dashboard/raw/release-pr.json loc=L1 community=967]
+NODE number [src=.agent/tasks/HTG-2026-04-24-release-045-miniapp-launch-dashboard/raw/release-pr.json loc=L1 community=967]
+EDGE projects --contains [EXTRACTED]--> miniapp-visual-server.ts
+EDGE unsupported --contains [EXTRACTED]--> verdict.json
+EDGE state --contains [EXTRACTED]--> release-pr.json
+EDGE verdict.json --contains [EXTRACTED]--> taskId
+EDGE verdict.json --contains [EXTRACTED]--> status
+EDGE verdict.json --contains [EXTRACTED]--> pass
+EDGE verdict.json --contains [EXTRACTED]--> summary
+EDGE verdict.json --contains [EXTRACTED]--> evidence
+EDGE verdict.json --contains [EXTRACTED]--> risks
+EDGE verdict.json --contains [EXTRACTED]--> freshVerifier
+EDGE miniapp-visual-server.ts --imports_from [EXTRACTED context=import]--> index.ts
+EDGE miniapp-visual-server.ts --imports [EXTRACTED context=import]--> createMiniAppServer()
+EDGE miniapp-visual-server.ts --contains [EXTRACTED]
+... (truncated to ~1200 token budget)

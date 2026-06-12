@@ -1850,8 +1850,6 @@ function renderCodexPanel(input: {
     .filter((card) => !input.project || input.project === "all" || card.repoName === input.project || card.projectPath === input.project)
   .filter((card) => matchesCodexSearch(card, query))
   .sort((left, right) => compareSessionCards(left, right, sort));
-  const desktopReasonSession = input.desktopSessions.find((session) => session.unsupportedReason);
-  const desktopReason = desktopReasonSession ? desktopUnsupportedReason(desktopReasonSession) : undefined;
   const loadWarnings: string[] = [];
   if (input.load?.cliSessions && !input.load.cliSessions.ok) {
     loadWarnings.push(`MiniApp sessions unavailable${input.load.cliSessions.error ? `: ${input.load.cliSessions.error}` : ""}.`);
@@ -1897,7 +1895,6 @@ function renderCodexPanel(input: {
           </details>
         </form>
     </section>
-    ${desktopReason ? `<section class="notice notice-warn">Desktop actions may be disabled: ${escapeHtml(desktopReason)}</section>` : ""}
     ${loadWarnings.length > 0 ? `<section class="notice notice-warn">${loadWarnings.map((warning) => `<div>${escapeHtml(warning)}</div>`).join("")}</section>` : ""}
     <section class="panel">
       <div class="panel-header">
@@ -1940,7 +1937,6 @@ function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail, options: 
         { label: "contract", value: session.canResume || session.canStop || session.canCreateTask ? "partial" : "unsupported" }
       ])}
     </section>
-    ${session.unsupportedReason ? `<section class="notice notice-warn">${escapeHtml(desktopUnsupportedReason(session))}</section>` : ""}
     ${renderDesktopContinueForm(session)}
     <section class="panel">
       <h2>Результат и ход работы</h2>

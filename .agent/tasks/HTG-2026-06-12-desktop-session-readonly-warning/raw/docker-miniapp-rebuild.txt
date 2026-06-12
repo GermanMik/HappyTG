@@ -1,0 +1,268 @@
+ Image happytg-api Building 
+ Image happytg-miniapp Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.08kB 0.1s done
+#1 DONE 0.1s
+
+#2 [api internal] load build definition from Dockerfile.app
+#2 transferring dockerfile: 769B 0.0s done
+#2 DONE 0.1s
+
+#3 [miniapp internal] load metadata for docker.io/library/node:22-bookworm-slim
+#3 DONE 2.6s
+
+#4 [api internal] load .dockerignore
+#4 transferring context: 180B 0.0s done
+#4 DONE 0.0s
+
+#5 [miniapp 1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752
+#5 resolve docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752 0.0s done
+#5 sha256:6122a3c9fecb1517028667d439f706ed4441beeaf316b5f4f18f5d912be0e0f4 448B / 448B 0.3s done
+#5 sha256:005e091ec5205320dae7839c58761274f4adbf008e9c0b29b94b7a4c37f5f56c 0B / 1.71MB 0.2s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 0B / 49.93MB 0.2s
+#5 sha256:911b8249aa1ae1cbce06c9d7e1d0985b6e6db95465e7eef2ec918aa2475794eb 0B / 3.31kB 0.2s
+#5 sha256:6122a3c9fecb1517028667d439f706ed4441beeaf316b5f4f18f5d912be0e0f4 448B / 448B 0.3s done
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 0B / 28.24MB 0.2s
+#5 sha256:911b8249aa1ae1cbce06c9d7e1d0985b6e6db95465e7eef2ec918aa2475794eb 3.31kB / 3.31kB 0.9s done
+#5 ...
+
+#6 [miniapp internal] load build context
+#6 transferring context: 5.66MB 1.4s done
+#6 DONE 1.4s
+
+#5 [miniapp 1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752
+#5 ...
+
+#6 [api internal] load build context
+#6 DONE 1.4s
+
+#5 [miniapp 1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752
+#5 sha256:005e091ec5205320dae7839c58761274f4adbf008e9c0b29b94b7a4c37f5f56c 1.05MB / 1.71MB 3.9s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 1.05MB / 49.93MB 5.3s
+#5 sha256:005e091ec5205320dae7839c58761274f4adbf008e9c0b29b94b7a4c37f5f56c 1.71MB / 1.71MB 5.5s done
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 1.05MB / 28.24MB 5.3s
+#5 sha256:005e091ec5205320dae7839c58761274f4adbf008e9c0b29b94b7a4c37f5f56c 1.71MB / 1.71MB 5.5s done
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 3.15MB / 28.24MB 8.3s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 3.15MB / 49.93MB 10.3s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 4.19MB / 28.24MB 13.4s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 5.24MB / 49.93MB 15.5s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 5.24MB / 28.24MB 18.5s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 7.34MB / 49.93MB 20.6s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 7.34MB / 28.24MB 21.9s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 9.44MB / 49.93MB 25.6s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 8.39MB / 28.24MB 27.0s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 10.49MB / 49.93MB 30.8s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 10.49MB / 28.24MB 32.1s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 12.58MB / 49.93MB 35.9s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 11.53MB / 28.24MB 37.2s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 13.63MB / 49.93MB 40.9s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 12.58MB / 28.24MB 42.3s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 15.73MB / 49.93MB 46.0s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 14.68MB / 28.24MB 46.0s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 16.78MB / 49.93MB 51.1s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 15.73MB / 28.24MB 51.1s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 17.83MB / 28.24MB 54.9s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 18.87MB / 49.93MB 56.2s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 19.92MB / 28.24MB 59.8s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 22.02MB / 49.93MB 61.2s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 20.97MB / 28.24MB 64.9s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 24.12MB / 49.93MB 66.3s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 23.07MB / 28.24MB 66.7s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 25.17MB / 28.24MB 70.8s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 26.21MB / 49.93MB 71.4s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 27.26MB / 28.24MB 74.8s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 29.36MB / 49.93MB 75.7s
+#5 sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 28.24MB / 28.24MB 76.6s done
+#5 extracting sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0
+#5 extracting sha256:b9136609bef0128191aa157637b98dd7b98e52154ca60c18258d65957a01c6d0 2.3s done
+#5 extracting sha256:911b8249aa1ae1cbce06c9d7e1d0985b6e6db95465e7eef2ec918aa2475794eb 0.0s done
+#5 extracting sha256:911b8249aa1ae1cbce06c9d7e1d0985b6e6db95465e7eef2ec918aa2475794eb 0.0s done
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 31.46MB / 49.93MB 80.8s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 34.60MB / 49.93MB 85.8s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 36.70MB / 49.93MB 90.9s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 39.85MB / 49.93MB 94.3s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 42.99MB / 49.93MB 99.3s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 45.09MB / 49.93MB 104.4s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 48.23MB / 49.93MB 108.9s
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 49.93MB / 49.93MB 111.7s done
+#5 sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 49.93MB / 49.93MB 111.7s done
+#5 extracting sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a
+#5 extracting sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 3.7s done
+#5 DONE 115.7s
+
+#5 [api 1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752
+#5 extracting sha256:419ef9ca8c7d654daa20932f9c6fbb8b17e74be0fa0d54045a6b1847ebbab25a 3.7s done
+#5 extracting sha256:005e091ec5205320dae7839c58761274f4adbf008e9c0b29b94b7a4c37f5f56c
+#5 extracting sha256:005e091ec5205320dae7839c58761274f4adbf008e9c0b29b94b7a4c37f5f56c 0.2s done
+#5 DONE 115.9s
+
+#5 [miniapp 1/8] FROM docker.io/library/node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752
+#5 extracting sha256:005e091ec5205320dae7839c58761274f4adbf008e9c0b29b94b7a4c37f5f56c 0.2s done
+#5 extracting sha256:6122a3c9fecb1517028667d439f706ed4441beeaf316b5f4f18f5d912be0e0f4 0.0s done
+#5 DONE 115.9s
+
+#7 [miniapp 2/8] WORKDIR /app
+#7 DONE 0.4s
+
+#7 [miniapp 2/8] WORKDIR /app
+#7 DONE 0.4s
+
+#8 [miniapp 3/8] RUN corepack enable
+#8 DONE 0.7s
+
+#8 [api 3/8] RUN corepack enable
+#8 DONE 0.7s
+
+#9 [api 4/8] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+#9 DONE 0.2s
+
+#9 [miniapp 4/8] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+#9 DONE 0.2s
+
+#10 [miniapp 5/8] RUN set -eux;     PNPM_SPEC="$(node -p "require('./package.json').packageManager")";     for attempt in 1 2 3; do       corepack prepare "${PNPM_SPEC}" --activate && break;       if [ "${attempt}" = "3" ]; then         exit 1;       fi;       sleep $((attempt * 5));     done;     pnpm --version
+#10 0.321 + node -p require('./package.json').packageManager
+#10 0.371 + PNPM_SPEC=pnpm@10.0.0
+#10 0.371 + corepack prepare pnpm@10.0.0 --activate
+#10 0.438 Preparing pnpm@10.0.0 for immediate activation...
+#10 9.709 + break
+#10 9.709 + pnpm --version
+#10 10.20 10.0.0
+#10 DONE 10.3s
+
+#11 [api 6/8] COPY apps ./apps
+#11 DONE 0.3s
+
+#11 [miniapp 6/8] COPY apps ./apps
+#11 DONE 0.3s
+
+#12 [miniapp 7/8] COPY packages ./packages
+#12 DONE 0.2s
+
+#12 [miniapp 7/8] COPY packages ./packages
+#12 DONE 0.2s
+
+#13 [api 8/8] RUN pnpm install --frozen-lockfile
+#13 0.813 Scope: all 16 workspace projects
+#13 0.874 Lockfile is up to date, resolution step is skipped
+#13 0.898 Progress: resolved 1, reused 0, downloaded 0, added 0
+#13 0.920 Packages: +10
+#13 0.920 ++++++++++
+#13 1.900 Progress: resolved 10, reused 0, downloaded 5, added 5
+#13 2.901 Progress: resolved 10, reused 0, downloaded 6, added 6
+#13 2.993 
+#13 2.993    ╭──────────────────────────────────────────────────────────────────╮
+#13 2.993    │                                                                  │
+#13 2.993    │                Update available! 10.0.0 → 11.6.0.                │
+#13 2.993    │   Changelog: https://github.com/pnpm/pnpm/releases/tag/v11.6.0   │
+#13 2.993    │         Run "corepack install -g pnpm@11.6.0" to update.         │
+#13 2.993    │                                                                  │
+#13 2.993    ╰──────────────────────────────────────────────────────────────────╯
+#13 2.993 
+#13 3.901 Progress: resolved 10, reused 0, downloaded 7, added 7
+#13 ...
+
+#14 [miniapp 8/8] RUN pnpm install --frozen-lockfile
+#14 0.829 Scope: all 16 workspace projects
+#14 0.892 Lockfile is up to date, resolution step is skipped
+#14 0.927 Progress: resolved 1, reused 0, downloaded 0, added 0
+#14 0.952 Packages: +10
+#14 0.952 ++++++++++
+#14 1.928 Progress: resolved 10, reused 0, downloaded 4, added 4
+#14 2.928 Progress: resolved 10, reused 0, downloaded 5, added 5
+#14 3.093 
+#14 3.093    ╭──────────────────────────────────────────────────────────────────╮
+#14 3.093    │                                                                  │
+#14 3.093    │                Update available! 10.0.0 → 11.6.0.                │
+#14 3.093    │   Changelog: https://github.com/pnpm/pnpm/releases/tag/v11.6.0   │
+#14 3.093    │         Run "corepack install -g pnpm@11.6.0" to update.         │
+#14 3.093    │                                                                  │
+#14 3.093    ╰──────────────────────────────────────────────────────────────────╯
+#14 3.093 
+#14 3.928 Progress: resolved 10, reused 0, downloaded 6, added 6
+#14 6.760 Progress: resolved 10, reused 0, downloaded 7, added 6
+#14 7.761 Progress: resolved 10, reused 0, downloaded 7, added 7
+#14 ...
+
+#13 [api 8/8] RUN pnpm install --frozen-lockfile
+#13 15.14 Progress: resolved 10, reused 0, downloaded 8, added 7
+#13 16.14 Progress: resolved 10, reused 0, downloaded 8, added 8
+#13 17.14 Progress: resolved 10, reused 0, downloaded 9, added 9
+#13 ...
+
+#14 [miniapp 8/8] RUN pnpm install --frozen-lockfile
+#14 16.55 Progress: resolved 10, reused 0, downloaded 8, added 7
+#14 17.55 Progress: resolved 10, reused 0, downloaded 9, added 9
+#14 ...
+
+#13 [api 8/8] RUN pnpm install --frozen-lockfile
+#13 41.63 Progress: resolved 10, reused 0, downloaded 10, added 9
+#13 41.64 Progress: resolved 10, reused 0, downloaded 10, added 10, done
+#13 41.70 
+#13 41.70 devDependencies:
+#13 41.70 + @types/node 22.19.17
+#13 41.70 + tsx 4.21.0
+#13 41.70 + turbo 2.9.3
+#13 41.70 + typescript 5.9.3
+#13 41.70 
+#13 41.70 The following dependencies have build scripts that were ignored: esbuild
+#13 41.70 To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
+#13 41.70 
+#13 41.72 Done in 41.2s
+#13 DONE 41.9s
+
+#14 [miniapp 8/8] RUN pnpm install --frozen-lockfile
+#14 42.02 Progress: resolved 10, reused 0, downloaded 10, added 9
+#14 42.03 Progress: resolved 10, reused 0, downloaded 10, added 10, done
+#14 42.11 
+#14 42.11 devDependencies:
+#14 42.11 + @types/node 22.19.17
+#14 42.11 + tsx 4.21.0
+#14 42.11 + turbo 2.9.3
+#14 42.11 + typescript 5.9.3
+#14 42.11 
+#14 42.11 The following dependencies have build scripts that were ignored: esbuild
+#14 42.11 To allow the execution of build scripts for these packages, add their names to "pnpm.onlyBuiltDependencies" in your "package.json", then run "pnpm rebuild"
+#14 42.11 
+#14 42.12 Done in 41.6s
+#14 DONE 42.3s
+
+#15 [api] exporting to image
+#15 exporting layers
+#15 exporting layers 3.3s done
+#15 exporting manifest sha256:8a3d916c3e74cf6fb7506af5116ee227003687463d8ccdc2b0b7c24752861c9f 0.0s done
+#15 exporting config sha256:09fece21003bb11bfeb0f2e8d59b98d9e6aa773d1b0f4dee3a2d95570c17c066 0.0s done
+#15 exporting attestation manifest sha256:94ad7b8987d961cde1df4ef3edb58c0e16532f13741929edf4a145532ee186f5 0.0s done
+#15 exporting manifest list sha256:37f2babbd8a291fde8ffe28070aab7f6c4c67f41fde00aef5fd353584e06790e 0.0s done
+#15 naming to docker.io/library/happytg-api:latest done
+#15 unpacking to docker.io/library/happytg-api:latest
+#15 unpacking to docker.io/library/happytg-api:latest 2.6s done
+#15 DONE 6.1s
+
+#16 [miniapp] exporting to image
+#16 exporting layers 3.1s done
+#16 exporting manifest sha256:5b764546d768754985c65a1a4652bab99017122effb7fff0ad825cb53943be2f 0.0s done
+#16 exporting config sha256:dfa816320b89287edaa51adfa26443fa86ca35c270bea86b18163661ad4fe4b4 0.0s done
+#16 exporting attestation manifest sha256:0c9801edf383f4124c5e2e8b1c6a07df2d3006934483ff8fb0bc54f61f38644e 0.0s done
+#16 exporting manifest list sha256:2930ac6df733cf8062249f55aa6e27f1e745bc3f887a296462f59d4fad5194f1 0.0s done
+#16 naming to docker.io/library/happytg-miniapp:latest done
+#16 unpacking to docker.io/library/happytg-miniapp:latest 2.6s done
+#16 DONE 5.8s
+
+#17 [api] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [miniapp] resolving provenance for metadata file
+#18 DONE 0.0s
+ Image happytg-api Built 
+ Image happytg-miniapp Built 
+ Container happytg-redis-1 Running 
+ Container happytg-postgres-1 Running 
+ Container happytg-minio-1 Running 
+ Container happytg-api-1 Recreate 
+ Container happytg-api-1 Recreated 
+ Container happytg-miniapp-1 Recreate 
+ Container happytg-miniapp-1 Recreated 
+ Container happytg-api-1 Starting 
+ Container happytg-api-1 Started 
+ Container happytg-miniapp-1 Starting 
+ Container happytg-miniapp-1 Started 
