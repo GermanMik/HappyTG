@@ -1,0 +1,14 @@
+{
+  "taskId": "HTG-2026-06-12-full-project-dependency-check-prompt",
+  "phase": "complete",
+  "verificationState": "passed",
+  "steps": [
+    { "name": "init", "status": "complete" },
+    { "name": "freeze/spec", "status": "complete" },
+    { "name": "build", "status": "skipped", "reason": "docs-only prompt change" },
+    { "name": "evidence", "status": "complete" },
+    { "name": "fresh verify", "status": "complete" },
+    { "name": "minimal fix", "status": "not_needed" },
+    { "name": "complete", "status": "complete" }
+  ]
+}

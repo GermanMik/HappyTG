@@ -1,0 +1,20 @@
+{
+  "taskId": "HTG-2026-06-12-full-project-dependency-check-prompt",
+  "status": "passed",
+  "change": [
+    "Added a dependency-aware full-project verification prompt under docs/prompts.",
+    "Captured proof-loop expectations, dependency surfaces, per-fix validation rules, final matrix, and fresh verifier criteria."
+  ],
+  "validation": [
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-06-12-full-project-dependency-check-prompt",
+      "status": "passed",
+      "raw": "raw/task-validate.txt"
+    }
+  ]
+}
