@@ -538,7 +538,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
     assert.match(html, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
     assert.doesNotMatch(html, /Desktop actions may be disabled/);
     assert.match(html, /Прошедшие задачи/);
-    assert.match(html, /href="\/codex\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG"/);
+    assert.match(html, /href="\/codex\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG&amp;userId=usr_1"/);
     assert.doesNotMatch(html, /CLI fixture/);
     assert.doesNotMatch(html, /RAW_PROMPT_SECRET/);
 
@@ -1128,7 +1128,7 @@ test("projects page renders workspaces and new task creates a Codex session", as
           ]
         } as never;
       }
-      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1" && init?.method === "POST") {
         assert.equal(init?.method, "POST");
         const body = JSON.parse(String(init?.body)) as { title: string; prompt: string };
         if (body.title === "Implementation question") {
@@ -1166,6 +1166,27 @@ test("projects page renders workspaces and new task creates a Codex session", as
           }
         } as never;
       }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "ses_past",
+              title: "Past CLI task",
+              state: "completed",
+              runtime: "codex-cli",
+              hostLabel: "devbox",
+              repoName: "HappyTG",
+              projectPath: "C:/Develop/Projects/HappyTG",
+              lastUpdatedAt: "2026-04-22T03:00:00.000Z",
+              href: "/session/ses_past",
+              nextAction: "open"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+        return { sessions: [] } as never;
+      }
       throw new Error(`Unexpected path ${pathname}`);
     }
   });
@@ -1188,10 +1209,11 @@ test("projects page renders workspaces and new task creates a Codex session", as
     assert.match(projectsHtml, /C:\/Develop\/Projects\/VideoCall/);
     assert.match(projectsHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1"/);
     assert.match(projectsHtml, /Прошедшие задачи/);
-    assert.match(projectsHtml, /href="\/codex\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG"/);
+    const cliTasksHref = projectsHtml.match(/href="(\/projects\/tasks\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG&amp;userId=usr_1)"/)?.[1];
+    assert.ok(cliTasksHref);
     assert.match(projectsHtml, /href="\/new-task\?source=codex-desktop&amp;projectId=cdp_1&amp;intent=implement"/);
     assert.match(projectsHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question"/);
-    assert.match(projectsHtml, /href="\/codex\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FVideoCall"/);
+    assert.match(projectsHtml, /href="\/projects\/tasks\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FVideoCall&amp;userId=usr_1"/);
     assert.match(projectsHtml, /Создать Codex-сессию/);
     assert.match(projectsHtml, /data-task-feedback/);
 
@@ -1199,7 +1221,17 @@ test("projects page renders workspaces and new task creates a Codex session", as
     const projectDetailHtml = await projectDetailResponse.text();
     assert.equal(projectDetailResponse.status, 200);
     assert.match(projectDetailHtml, /Прошедшие задачи/);
-    assert.match(projectDetailHtml, /href="\/codex\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG"/);
+    assert.match(projectDetailHtml, /href="\/projects\/tasks\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG&amp;userId=usr_1"/);
+
+    const pastTasksResponse = await fetch(`http://127.0.0.1:${address.port}${cliTasksHref.replaceAll("&amp;", "&")}`);
+    const pastTasksHtml = await pastTasksResponse.text();
+    assert.equal(pastTasksResponse.status, 200);
+    assert.match(pastTasksHtml, /Past CLI task/);
+    assert.match(pastTasksHtml, /<a href="\/projects" aria-current="page">Проекты<\/a>/);
+    assert.doesNotMatch(pastTasksHtml, /<a href="\/codex" aria-current="page">Codex<\/a>/);
+    assert.match(pastTasksHtml, /<form method="GET" action="\/projects\/tasks"/);
+    assert.match(pastTasksHtml, /name="userId" value="usr_1"/);
+    assert.match(pastTasksHtml, /href="\/projects\?userId=usr_1"/);
 
     const taskResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
       method: "POST",

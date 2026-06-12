@@ -1,0 +1,3 @@
+Not run.
+
+Reason: this Mini App routing regression is covered by the package unit/SSR HTTP tests in `pnpm --filter @happytg/miniapp test`; the repository does not define a separate Mini App integration-test script for this scope.

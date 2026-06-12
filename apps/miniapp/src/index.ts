@@ -1607,17 +1607,19 @@ function runtimeLabel(runtime: string | undefined): string {
   return runtime ?? "runtime n/a";
 }
 
-function projectTasksHref(source: "codex-cli" | "codex-desktop", project: string): string {
-  return `/codex?source=${encodeURIComponent(source)}&project=${encodeURIComponent(project)}`;
+function projectTasksHref(source: "codex-cli" | "codex-desktop", project: string, options: { path?: string; userId?: string } = {}): string {
+  return codexPanelHref({ path: options.path ?? "/projects/tasks", source, project, userId: options.userId });
 }
 
 function codexPanelHref(input: {
+  path?: string;
   source?: string;
   state?: string;
   project?: string;
   q?: string;
   sort?: string;
   limit?: number;
+  userId?: string;
 }): string {
   const params = new URLSearchParams();
   if (input.source && input.source !== "all") {
@@ -1638,8 +1640,12 @@ function codexPanelHref(input: {
   if (input.limit && input.limit > 0) {
     params.set("limit", String(input.limit));
   }
+  if (input.userId) {
+    params.set("userId", input.userId);
+  }
   const query = params.toString();
-  return query ? `/codex?${query}` : "/codex";
+  const path = input.path ?? "/codex";
+  return query ? `${path}?${query}` : path;
 }
 
 type CodexPanelSort = "updated-desc" | "updated-asc" | "title-asc" | "title-desc";
@@ -1760,13 +1766,22 @@ function desktopUnsupportedReason(session: Pick<CodexDesktopSession, "unsupporte
   return session.unsupportedReasonCode ? `[${session.unsupportedReasonCode}] ${reason}` : reason;
 }
 
-function renderSourceSwitcher(activeSource: string): string {
+function renderSourceSwitcher(activeSource: string, options: { path?: string; project?: string; state?: string; q?: string; sort?: string; limit?: number; userId?: string } = {}): string {
   const items = [
     { value: "all", label: "Все" },
     { value: "codex-desktop", label: "Codex Desktop" },
     { value: "codex-cli", label: "Codex CLI" }
   ];
-  return `<div class="actions">${items.map((item) => linkButton(item.label, `/codex?source=${encodeURIComponent(item.value)}`, item.value === activeSource)).join("")}</div>`;
+  return `<div class="actions">${items.map((item) => linkButton(item.label, codexPanelHref({
+    path: options.path,
+    source: item.value,
+    project: options.project,
+    state: options.state,
+    q: options.q,
+    sort: options.sort,
+    limit: options.limit,
+    userId: options.userId
+  }), item.value === activeSource)).join("")}</div>`;
 }
 
 function matchesCodexSearch(card: MiniAppSessionCard, query: string): boolean {
@@ -1883,12 +1898,17 @@ function renderCodexPanel(input: {
   q?: string;
   sort?: string;
   desktopSessionLimit?: number;
+  routePath?: string;
+  resetHref?: string;
+  userId?: string;
 }): string {
   const source = input.source ?? "all";
   const query = input.q?.trim() ?? "";
   const sort = normalizeCodexPanelSort(input.sort);
   const desktopSessionLimit = input.desktopSessionLimit ?? 50;
   const hasProjectFilter = Boolean(input.project && input.project !== "all");
+  const routePath = input.routePath ?? "/codex";
+  const resetHref = input.resetHref ?? routePath;
   const desktopCards = input.desktopSessions.map(desktopSessionCard);
   const cliCards = input.cliSessions.map((session) => ({
     ...session,
@@ -1914,12 +1934,14 @@ function renderCodexPanel(input: {
   }
   const canLoadMoreDesktop = !hasProjectFilter && input.desktopSessions.length >= desktopSessionLimit && desktopSessionLimit < 200;
   const moreDesktopHref = codexPanelHref({
+    path: routePath,
     source,
     state: input.state,
     project: input.project,
     q: query,
     sort,
-    limit: Math.min(200, Math.max(desktopSessionLimit * 2, 100))
+    limit: Math.min(200, Math.max(desktopSessionLimit * 2, 100)),
+    userId: input.userId
   });
 
   return `
@@ -1932,13 +1954,14 @@ function renderCodexPanel(input: {
       </div>
     </section>
       <section class="panel">
-        <form method="GET" action="/codex" class="inline-form">
+        <form method="GET" action="${escapeHtml(routePath)}" class="inline-form">
           <input type="hidden" name="source" value="${escapeHtml(source)}">
           ${input.project ? `<input type="hidden" name="project" value="${escapeHtml(input.project)}">` : ""}
           ${desktopSessionLimit !== 50 ? `<input type="hidden" name="limit" value="${escapeHtml(String(desktopSessionLimit))}">` : ""}
+          ${input.userId ? `<input type="hidden" name="userId" value="${escapeHtml(input.userId)}">` : ""}
           <label><span class="eyebrow">Поиск</span><input name="q" value="${escapeHtml(query)}" placeholder="session, project, path"></label>
-          <div class="actions"><button class="button button-primary" type="submit">Найти</button>${linkButton("Сбросить", "/codex")}</div>
-          ${renderSourceSwitcher(source)}
+          <div class="actions"><button class="button button-primary" type="submit">Найти</button>${linkButton("Сбросить", resetHref)}</div>
+          ${renderSourceSwitcher(source, { path: routePath, project: input.project, state: input.state, q: query, sort, limit: desktopSessionLimit !== 50 ? desktopSessionLimit : undefined, userId: input.userId })}
           <details class="meta-details">
             <summary>Фильтры</summary>
             <div class="form-row">
@@ -1974,7 +1997,7 @@ function renderCodexPanel(input: {
         <div class="kv-item"><div class="eyebrow">CLI sessions</div><strong>${input.cliSessions.length}</strong></div>
       </section>
       <h2>Codex Desktop projects</h2>
-      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="meta-line">${escapeHtml(compactPath(project.path))}</div>${renderDetails("Project details", [{ label: "path", value: project.path }])}</div><div class="status-meta">${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div></li>`).join("")}</ul>`}
+      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="meta-line">${escapeHtml(compactPath(project.path))}</div>${renderDetails("Project details", [{ label: "path", value: project.path }])}</div><div class="status-meta">${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { path: routePath, userId: input.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div></li>`).join("")}</ul>`}
     </details>
   `;
 }
@@ -2008,7 +2031,7 @@ function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail, options: 
   `;
 }
 
-function renderProjectCards(projects: MiniAppProjectCard[]): string {
+function renderProjectCards(projects: MiniAppProjectCard[], options: { userId?: string } = {}): string {
   if (projects.length === 0) {
     return renderEmptyState("CLI проекты не найдены", "Подключите host daemon и дождитесь hello со списком workspaces.", "Проверить хосты", "/hosts");
   }
@@ -2023,11 +2046,11 @@ function renderProjectCards(projects: MiniAppProjectCard[]): string {
         { label: "host", value: project.hostLabel }
       ])}
     </div>
-    <div class="status-meta">${project.hostStatus ? renderBadge(project.hostStatus) : ""}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path))}${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}</div>
+    <div class="status-meta">${project.hostStatus ? renderBadge(project.hostStatus) : ""}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId: options.userId }))}${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}</div>
   </li>`).join("")}</ul>`;
 }
 
-function renderDesktopProjectCards(projects: CodexDesktopProject[]): string {
+function renderDesktopProjectCards(projects: CodexDesktopProject[], options: { userId?: string } = {}): string {
   if (projects.length === 0) {
     return renderEmptyState("Desktop projects не найдены", "Codex Desktop adapter did not return local projects.", "Codex Desktop", "/codex?source=codex-desktop");
   }
@@ -2038,7 +2061,7 @@ function renderDesktopProjectCards(projects: CodexDesktopProject[]): string {
       <div class="meta-line">${escapeHtml(compactPath(project.path))}</div>
       ${renderDetails("Project details", [{ label: "path", value: project.path }])}
     </div>
-    <div class="status-meta">${renderBadge("Codex Desktop", "info")}${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div>
+    <div class="status-meta">${renderBadge("Codex Desktop", "info")}${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { userId: options.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -2050,6 +2073,7 @@ function renderProjectsView(
       ok: boolean;
       error?: string;
     };
+    userId?: string;
   } = {}
 ): string {
   const totalProjects = projects.length + desktopProjects.length;
@@ -2068,11 +2092,11 @@ function renderProjectsView(
     ${empty}
     <section class="panel">
       <h2>Codex CLI projects</h2>
-      ${renderProjectCards(projects)}
+      ${renderProjectCards(projects, { userId: options.userId })}
     </section>
     <section class="panel">
       <h2>Codex Desktop projects</h2>
-      ${renderDesktopProjectCards(desktopProjects)}
+      ${renderDesktopProjectCards(desktopProjects, { userId: options.userId })}
     </section>`;
 }
 
@@ -2643,7 +2667,8 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             state: url.searchParams.get("state") ?? undefined,
             project: url.searchParams.get("project") ?? undefined,
             q: url.searchParams.get("q") ?? undefined,
-            sort: url.searchParams.get("sort") ?? undefined
+            sort: url.searchParams.get("sort") ?? undefined,
+            userId: url.searchParams.get("userId") ?? undefined
           }), { navKey: "codex" }));
           return;
         }
@@ -2713,7 +2738,8 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           source: url.searchParams.get("source") ?? "all",
           state: url.searchParams.get("state") ?? undefined,
           q: url.searchParams.get("q") ?? undefined,
-          sort: url.searchParams.get("sort") ?? undefined
+          sort: url.searchParams.get("sort") ?? undefined,
+          userId: url.searchParams.get("userId") ?? undefined
         }), { navKey: "sessions" }));
       }),
       route("GET", "/codex", async ({ req, res, url }) => {
@@ -2728,7 +2754,9 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           state: url.searchParams.get("state") ?? undefined,
           project: url.searchParams.get("project") ?? undefined,
           q: url.searchParams.get("q") ?? undefined,
-          sort: url.searchParams.get("sort") ?? undefined
+          sort: url.searchParams.get("sort") ?? undefined,
+          resetHref: withUser("/codex", url),
+          userId: url.searchParams.get("userId") ?? undefined
         }), { navKey: "codex" }));
       }),
       route("GET", "/codex/desktop-session", async ({ req, res, url }) => {
@@ -2810,7 +2838,30 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           desktopProjectsLoad: {
             ok: desktopProjects.ok,
             error: desktopProjects.error
-          }
+          },
+          userId: url.searchParams.get("userId") ?? undefined
+        }), { navKey: "projects" }));
+      }),
+      route("GET", "/projects/tasks", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Прошедшие задачи", "projects")) {
+          return;
+        }
+
+        const data = await fetchCodexForRequest(req, url);
+        html(res, 200, renderForRequest(req, "Прошедшие задачи", renderCodexPanel({
+          cliSessions: data.cliSessions,
+          desktopProjects: data.desktopProjects,
+          desktopSessions: data.desktopSessions,
+          desktopSessionLimit: data.desktopSessionLimit,
+          load: data.load,
+          source: url.searchParams.get("source") ?? "all",
+          state: url.searchParams.get("state") ?? "all",
+          project: url.searchParams.get("project") ?? undefined,
+          q: url.searchParams.get("q") ?? undefined,
+          sort: url.searchParams.get("sort") ?? undefined,
+          routePath: "/projects/tasks",
+          resetHref: withUser("/projects", url),
+          userId: url.searchParams.get("userId") ?? undefined
         }), { navKey: "projects" }));
       }),
       route("GET", "/project/:id", async ({ req, res, params, url }) => {
@@ -2825,7 +2876,8 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           return;
         }
 
-        const body = `<section class="panel hero"><h1>${escapeHtml(project.repoName)}</h1><p class="meta-line">${escapeHtml(project.hostLabel ?? "host n/a")} · active ${project.activeSessions}</p><div class="actions">${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path))}${linkButton("Projects", "/projects")}</div>${renderDetails("Project details", [{ label: "path", value: project.path }, { label: "host", value: project.hostLabel }, { label: "branch", value: project.defaultBranch }])}</section>
+        const userId = url.searchParams.get("userId") ?? undefined;
+        const body = `<section class="panel hero"><h1>${escapeHtml(project.repoName)}</h1><p class="meta-line">${escapeHtml(project.hostLabel ?? "host n/a")} · active ${project.activeSessions}</p><div class="actions">${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId }))}${linkButton("Projects", withUser("/projects", url))}</div>${renderDetails("Project details", [{ label: "path", value: project.path }, { label: "host", value: project.hostLabel }, { label: "branch", value: project.defaultBranch }])}</section>
           <section class="grid">
             <div class="kv-item"><div class="eyebrow">Runtime</div><strong>Codex CLI</strong></div>
             <div class="kv-item"><div class="eyebrow">Host</div><strong>${escapeHtml(project.hostLabel ?? "host n/a")}</strong></div>

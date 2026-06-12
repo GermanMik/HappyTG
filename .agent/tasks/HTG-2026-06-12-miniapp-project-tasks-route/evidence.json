@@ -1,0 +1,65 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-project-tasks-route",
+  "status": "passed",
+  "finding": "Project past-task links opened /codex, which activated the Codex bottom-nav tab even when the user clicked from Projects.",
+  "change": [
+    "Project past-task links now target /projects/tasks.",
+    "/projects/tasks renders the existing Codex history panel with the Projects nav key.",
+    "Codex history links are route-aware for search, source switching, and Desktop load-more actions.",
+    "Direct userId session context is preserved across project past-task links and the history-panel GET form.",
+    "The direct /codex route keeps its existing Codex-tab behavior.",
+    "Release metadata was bumped to 0.4.28."
+  ],
+  "validation": [
+    {
+      "command": "pnpm --filter @happytg/miniapp test",
+      "status": "passed",
+      "raw": "raw/test-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "status": "passed",
+      "raw": "raw/lint-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp build",
+      "status": "passed",
+      "raw": "raw/build-miniapp.txt"
+    },
+    {
+      "command": "pnpm release:check --version 0.4.28",
+      "status": "passed",
+      "raw": "raw/release-check.txt"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "raw": "raw/diff-check.txt"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-06-12-miniapp-project-tasks-route",
+      "status": "passed",
+      "raw": "raw/task-validate.txt"
+    },
+    {
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml up -d --build miniapp",
+      "status": "passed",
+      "raw": "raw/docker-miniapp-rebuild.txt"
+    },
+    {
+      "command": "live Docker Projects-route smoke",
+      "status": "passed",
+      "raw": "raw/live-projects-route-smoke.json"
+    },
+    {
+      "command": "graphify query \"Mini App Projects Proshhedshie zadachi route preserves userId and stays in Projects tab\" --budget 1200",
+      "status": "passed",
+      "raw": "raw/graphify-query.txt"
+    }
+  ]
+}

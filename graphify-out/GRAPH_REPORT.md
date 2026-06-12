@@ -1,16 +1,16 @@
 # Graph Report - HappyTG  (2026-06-12)
 
 ## Corpus Check
-- 1780 files · ~1,886,627 words
+- 1789 files · ~1,890,123 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 23672 nodes · 27443 edges · 2064 communities (1945 shown, 119 thin omitted)
+- 23793 nodes · 27609 edges · 2049 communities (1932 shown, 117 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 373 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `791cca40`
+- Built from commit: `d16481fb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -2020,125 +2020,106 @@
 - [[_COMMUNITY_Community 2027|Community 2027]]
 - [[_COMMUNITY_Community 2028|Community 2028]]
 - [[_COMMUNITY_Community 2029|Community 2029]]
-- [[_COMMUNITY_Community 2030|Community 2030]]
 - [[_COMMUNITY_Community 2031|Community 2031]]
 - [[_COMMUNITY_Community 2032|Community 2032]]
-- [[_COMMUNITY_Community 2033|Community 2033]]
 - [[_COMMUNITY_Community 2034|Community 2034]]
-- [[_COMMUNITY_Community 2035|Community 2035]]
-- [[_COMMUNITY_Community 2036|Community 2036]]
-- [[_COMMUNITY_Community 2037|Community 2037]]
 - [[_COMMUNITY_Community 2038|Community 2038]]
 - [[_COMMUNITY_Community 2039|Community 2039]]
-- [[_COMMUNITY_Community 2040|Community 2040]]
-- [[_COMMUNITY_Community 2041|Community 2041]]
 - [[_COMMUNITY_Community 2042|Community 2042]]
 - [[_COMMUNITY_Community 2043|Community 2043]]
 - [[_COMMUNITY_Community 2044|Community 2044]]
 - [[_COMMUNITY_Community 2045|Community 2045]]
-- [[_COMMUNITY_Community 2046|Community 2046]]
-- [[_COMMUNITY_Community 2047|Community 2047]]
 - [[_COMMUNITY_Community 2048|Community 2048]]
 - [[_COMMUNITY_Community 2049|Community 2049]]
 - [[_COMMUNITY_Community 2050|Community 2050]]
-- [[_COMMUNITY_Community 2051|Community 2051]]
-- [[_COMMUNITY_Community 2052|Community 2052]]
-- [[_COMMUNITY_Community 2053|Community 2053]]
 - [[_COMMUNITY_Community 2055|Community 2055]]
 - [[_COMMUNITY_Community 2056|Community 2056]]
 - [[_COMMUNITY_Community 2057|Community 2057]]
 - [[_COMMUNITY_Community 2058|Community 2058]]
 - [[_COMMUNITY_Community 2059|Community 2059]]
 - [[_COMMUNITY_Community 2060|Community 2060]]
-- [[_COMMUNITY_Community 2061|Community 2061]]
-- [[_COMMUNITY_Community 2062|Community 2062]]
-- [[_COMMUNITY_Community 2063|Community 2063]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `runHappyTGInstall()` - 73 edges
 2. `HappyTGControlPlaneService` - 70 edges
 3. `definitions` - 60 edges
-4. `Changelog` - 56 edges
+4. `Changelog` - 57 edges
 5. `definitions` - 55 edges
 6. `definitions` - 54 edges
 7. `definitions` - 53 edges
 8. `definitions` - 53 edges
 9. `definitions` - 53 edges
-10. `definitions` - 52 edges
+10. `v0.4.3` - 53 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `syncWorkspaces()` --calls--> `nowIso()`  [INFERRED]
+  apps/api/src/service.ts → packages/shared/src/index.ts
+- `currentTimestamp()` --calls--> `nowIso()`  [INFERRED]
+  apps/worker/src/reconcile.ts → packages/shared/src/index.ts
 - `callTelegramBotApi()` --calls--> `fetchImpl()`  [INFERRED]
   packages/bootstrap/src/telegram-menu.ts → apps/api/src/index.test.ts
 - `Release 0.3.0` --references--> `Installer Pairing State Machine`  [EXTRACTED]
   docs/releases/0.3.0.md → packages/bootstrap/src/install/pairing.ts
 - `Installer Pairing State Machine` --rationale_for--> `Host State Management`  [INFERRED]
   packages/bootstrap/src/install/pairing.ts → docs/releases/0.3.16.md
-- `processProofDispatch()` --calls--> `freezeTaskSpec()`  [INFERRED]
-  apps/host-daemon/src/index.ts → packages/repo-proof/src/index.ts
-- `runVerifier()` --calls--> `writeRawArtifact()`  [INFERRED]
-  apps/host-daemon/src/index.ts → packages/repo-proof/src/index.ts
 
-## Communities (2064 total, 119 thin omitted)
+## Communities (2049 total, 117 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.05
-Nodes (46): appServerHistoryFromThread(), AppServerThread, AppServerThreadListResponse, AppServerThreadResponse, AppServerThreadStatus, appServerThreadTitle(), AppServerTurn, appServerTurnOccurredAt() (+38 more)
+Cohesion: 0.06
+Nodes (41): appServerHistoryFromThread(), AppServerThread, AppServerThreadListResponse, AppServerThreadResponse, AppServerThreadStatus, AppServerTurn, appServerTurnOccurredAt(), AppServerTurnsListResponse (+33 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.07
-Nodes (78): activeTelegramField(), appendAutomationSection(), appendInputChunk(), appendWarningSection(), bright(), clearScreen(), COLORS, dim() (+70 more)
+Cohesion: 0.06
+Nodes (88): activeTelegramField(), appendAutomationSection(), appendInputChunk(), appendWarningSection(), bright(), clearScreen(), COLORS, createTelegramFormController() (+80 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.04
-Nodes (105): BackgroundResetCommandRecord, BackgroundResetResult, configureBackgroundMode(), configureLaunchAgent(), configureScheduledTask(), configureStartupShortcut(), configureSystemdUser(), defaultBackgroundArtifacts() (+97 more)
+Cohesion: 0.05
+Nodes (104): BackgroundResetCommandRecord, BackgroundResetResult, configureBackgroundMode(), configureLaunchAgent(), configureScheduledTask(), configureStartupShortcut(), configureSystemdUser(), defaultBackgroundArtifacts() (+96 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.04
-Nodes (125): resolveInstallerRepoSources(), buildDockerServiceStrategyPlan(), recommendedDockerServiceStrategy(), createInstallRuntimeError(), isRetryableCommandOutput(), addNpmGlobalBinToPath(), AppliedPortOverride, automationItemsFromBootstrapReport() (+117 more)
+Cohesion: 0.03
+Nodes (123): recommendedDockerServiceStrategy(), detailFromUnknown(), isInstallRuntimeError(), isRetryableCommandOutput(), toInstallRuntimeErrorDetail(), addNpmGlobalBinToPath(), AppliedPortOverride, automationItemsFromBootstrapReport() (+115 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.02
-Nodes (96): InstallRuntimeError, createTelegramFormController(), InstallCommandOptions, InstallDraftState, InstallResult, appendAutomationSection(), appendAutomationSections(), CliRequest (+88 more)
-
-### Community 5 - "Community 5"
 Cohesion: 0.05
-Nodes (7): approvalCard(), HappyTGControlPlaneService, hostCard(), reportCards(), scopedMiniAppStore(), sessionCard(), createCodexDesktopHome()
+Nodes (56): InstallCommandOptions, InstallResult, assertCondition(), main(), normalizeVersion(), readArg(), CliRequest, CliUsageError (+48 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.05
-Nodes (75): port, projects, server, sessions, approvalActionButton(), attentionLabel(), BadgeTone, buildMiniAppTaskPrompt() (+67 more)
+Nodes (76): port, projects, server, sessions, approvalActionButton(), attentionLabel(), BadgeTone, buildMiniAppTaskPrompt() (+68 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.06
-Nodes (66): BootstrapCommand, BootstrapFinding, buildOnboardingItems(), buildPortConflictItem(), buildPortConflictMessage(), buildTokenMessage(), canConnect(), classifyCodexSmokeStderr() (+58 more)
+Cohesion: 0.03
+Nodes (175): ackDispatch(), ACTION_TOOL_CATEGORIES, ApiStartupResult, BENIGN_CODEX_SMOKE_WARNING_PATTERNS, BoundedOutputBuffer, buildOnboardingItems(), buildPortConflictItem(), buildPortConflictMessage() (+167 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.06
-Nodes (45): approvalActionLabel(), approvalCallbackData(), codexMenuKeyboard(), createBotHandlers(), desktopProjectsKeyboard(), desktopSessionCallbackRef(), desktopSessionKeyboard(), desktopSessionMatchesRef() (+37 more)
+Cohesion: 0.04
+Nodes (74): Host, approvalActionLabel(), approvalCallbackData(), BotDependencies, codexMenuKeyboard(), createBotHandlers(), defaultMiniAppBaseUrl(), desktopProjectsKeyboard() (+66 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.04
-Nodes (86): Host, main(), usage(), BotDependencies, apiFetch(), approval(), calls, CapturedMessage (+78 more)
+Cohesion: 0.1
+Nodes (31): buildDockerServiceStrategyPlan(), buildSystemCaddyPlan(), candidateCaddyfilePaths(), COMPOSE_APP_SERVICES, COMPOSE_APP_SERVICES_WITH_CADDY, detectExistingHappyTGCaddy(), generateSystemCaddySnippet(), hasHappyTGRoutes() (+23 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.02
-Nodes (63): ClientRequest, FuzzyFileSearchParams, FuzzyFileSearchSessionStartParams, FuzzyFileSearchSessionStopParams, FuzzyFileSearchSessionUpdateParams, GetAuthStatusParams, GitDiffToRemoteParams, ThreadMemoryMode (+55 more)
+Nodes (67): ClientRequest, FuzzyFileSearchParams, FuzzyFileSearchSessionStartParams, FuzzyFileSearchSessionStopParams, FuzzyFileSearchSessionUpdateParams, GetAuthStatusParams, GitDiffToRemoteParams, ThreadMemoryMode (+59 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.08
-Nodes (33): Backup Procedure, Bootstrap/Installation Workflow, CLI Commands, Codex CLI, Codex Desktop/CLI Control, Control Plane, Start Deployment, Docker Compose (+25 more)
+Cohesion: 0.1
+Nodes (29): Bootstrap/Installation Workflow, CLI Commands, Codex CLI, Codex Desktop/CLI Control, Control Plane, Docker Port Overrides, Docker Compose Setup, Documentation Files (+21 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.02
-Nodes (181): compaction, now, samples, store, isActiveSession(), ACTION_KINDS, ActionKind, APPROVAL_SCOPES (+173 more)
+Cohesion: 0.01
+Nodes (189): compaction, now, samples, store, authorizationToken(), CodexDesktopProxyHttpError, CodexDesktopProxyOptions, isLoopbackBindHost() (+181 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.07
 Nodes (26): localGeneral, desktopCountLabel, hasLimit100, hasLoadWarning, hasNoSessions, hasUnscopedNotice, status, visibleLabel (+18 more)
 
 ### Community 14 - "Community 14"
-Cohesion: 0.05
-Nodes (31): AbsolutePathBuf, InitializeResponse, AppSummary, FsCopyParams, FsGetMetadataParams, FsWatchParams, FsWatchResponse, MarketplaceAddResponse (+23 more)
+Cohesion: 0.04
+Nodes (42): AbsolutePathBuf, InitializeResponse, AppSummary, FsCopyParams, FsCreateDirectoryParams, FsGetMetadataParams, FsReadFileParams, FsWatchParams (+34 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.07
@@ -2149,12 +2130,12 @@ Cohesion: 0.11
 Nodes (25): HappyTG Release 0.3.7, Bootstrap Architecture, apps/bot/src/index.ts, Codex Execution Engine, Windows Codex Readiness Checks, Codex PATH Handling, CODEX_PATH_PENDING Warnings, Installer Diagnostics (+17 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.03
-Nodes (113): buildWindowsShellCommand(), CommandExecutionError, hasWindowsShellExtension(), isExecutableFile(), isJavaScriptEntrypoint(), isPathLike(), recoverLaunchPlan(), ResolvedLaunchPlan (+105 more)
+Cohesion: 0.05
+Nodes (50): buildWindowsShellCommand(), CommandExecutionError, CommandRunResult, hasWindowsShellExtension(), isExecutableFile(), isJavaScriptEntrypoint(), isPathLike(), recoverLaunchPlan() (+42 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.09
-Nodes (29): InvokeTelegramBotApiViaWindowsPowerShell, isInternalHostname(), isPrivateIpv6(), loadHappyTGEnv(), telegramOk(), validatePublicHttpsUrl(), windowsPowerShellPath(), CaddyRoutePreflight (+21 more)
+Cohesion: 0.08
+Nodes (33): mergeEnvTemplate(), parseTemplateKeys(), serializeEnvValue(), writeMergedEnvFile(), EnvWriteResult, assertNever(), AuditRecord, CorsOptions (+25 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.08
@@ -2165,12 +2146,12 @@ Cohesion: 0.12
 Nodes (16): 14. Monorepo Structure, 15. File-by-File Starter Blueprint, 16. GitHub Repository Documentation Pack, 20. First 30 Tasks, 23. Recommended First Vertical Slice, 2. Product Principles, 9. Domain Model, code:text (HappyTG/) (+8 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.09
-Nodes (30): ForcedLoginMethod, Personality, ReasoningSummary, ServiceTier, Verbosity, WebSearchMode, ApprovalsReviewer, AskForApproval (+22 more)
+Cohesion: 0.07
+Nodes (37): CollaborationMode, ForcedLoginMethod, ModeKind, Personality, ReasoningEffort, ReasoningSummary, ServiceTier, Settings (+29 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.03
-Nodes (71): description, type, type, description, oneOf, description, enum, type (+63 more)
+Nodes (67): description, type, type, description, oneOf, description, oneOf, enum (+59 more)
 
 ### Community 23 - "Community 23"
 Cohesion: 0.03
@@ -2178,7 +2159,7 @@ Nodes (71): type, oneOf, description, oneOf, enum, type, oneOf, enum (+63 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.02
-Nodes (198): authPayload, main(), authorizationToken(), CodexDesktopProxyHttpError, CodexDesktopProxyOptions, createCodexDesktopHostProxyServer(), createDefaultCodexDesktopAdapter(), isLoopbackBindHost() (+190 more)
+Nodes (178): authPayload, main(), createCodexDesktopHostProxyServer(), TelegramMiniAppLaunchSnapshot, botConfigurationMessage(), botEnvironment, BotStartupResult, clearWindowsPowerShellTelegramApiPreference() (+170 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.15
@@ -2205,12 +2186,12 @@ Cohesion: 0.11
 Nodes (17): 10 Independent Roles, Branch, PR, Merge, Release, code:bash (memory context --project), code:bash (git status --short --branch), code:text (.agent/tasks/<TASK_ID>/), code:text (Finding | Supporting roles | Severity | Decision | Evidence), code:bash (pnpm lint), code:bash (pnpm release:check --version <VERSION>) (+9 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.11
-Nodes (14): AgentPath, ConversationGitInfo, ConversationSummary, GetConversationSummaryResponse, SessionSource, SubAgentSource, GitInfo, SessionSource (+6 more)
+Cohesion: 0.12
+Nodes (16): description, type, description, items, type, $ref, ExecCommandApprovalParams, properties (+8 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.03
-Nodes (103): buildSystemCaddyPlan(), candidateCaddyfilePaths(), COMPOSE_APP_SERVICES, COMPOSE_APP_SERVICES_WITH_CADDY, detectExistingHappyTGCaddy(), generateSystemCaddySnippet(), hasHappyTGRoutes(), isLoopbackHost() (+95 more)
+Cohesion: 0.02
+Nodes (143): resolveInstallerRepoSources(), createInstallRuntimeError(), isRetryableRepoFailureMessage(), repoFailureCode(), repoFailureSuggestedAction(), Sync-BootstrapRepo(), commandOutput(), commandResult() (+135 more)
 
 ### Community 33 - "Community 33"
 Cohesion: 0.03
@@ -2233,8 +2214,8 @@ Cohesion: 0.12
 Nodes (16): 19. Implementation Roadmap, Epic 10. Mini App, Epic 11. Observability, Epic 12. Security Hardening, Epic 13. Docs Pack, Epic 14. Self-Hosted Packaging, Epic 15. QA/Release, Epic 1. Repo Bootstrap (+8 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.08
-Nodes (24): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+16 more)
+Cohesion: 0.16
+Nodes (5): approvalCard(), hostCard(), reportCards(), scopedMiniAppStore(), sessionCard()
 
 ### Community 39 - "Community 39"
 Cohesion: 0.15
@@ -2250,19 +2231,19 @@ Nodes (14): Access Lifecycle, Action Hierarchy, Compatibility Notes, Component M
 
 ### Community 42 - "Community 42"
 Cohesion: 0.03
-Nodes (72): description, type, oneOf, oneOf, definitions, AbsolutePathBuf, AskForApproval, ContentItem (+64 more)
+Nodes (69): description, type, oneOf, oneOf, definitions, AbsolutePathBuf, AskForApproval, ContentItem (+61 more)
 
 ### Community 43 - "Community 43"
 Cohesion: 0.12
 Nodes (21): base64Url(), dataCheckString(), fromBase64Url(), makeLaunchGrantId(), makeMiniAppSessionToken(), safeEqualHex(), signMiniAppLaunchPayload(), TelegramMiniAppUser (+13 more)
 
 ### Community 44 - "Community 44"
-Cohesion: 0.04
-Nodes (36): FuzzyFileSearchSessionCompletedNotification, ServerNotification, AccountLoginCompletedNotification, AgentMessageDeltaNotification, CommandExecutionOutputDeltaNotification, ContextCompactedNotification, DeprecationNoticeNotification, ExternalAgentConfigImportCompletedNotification (+28 more)
+Cohesion: 0.03
+Nodes (57): FuzzyFileSearchSessionCompletedNotification, RealtimeConversationVersion, ServerNotification, AccountLoginCompletedNotification, AgentMessageDeltaNotification, CommandExecOutputDeltaNotification, CommandExecOutputStream, CommandExecutionOutputDeltaNotification (+49 more)
 
 ### Community 45 - "Community 45"
 Cohesion: 0.03
-Nodes (63): description, type, oneOf, oneOf, oneOf, definitions, AbsolutePathBuf, ChatgptAuthTokensRefreshReason (+55 more)
+Nodes (64): description, type, oneOf, oneOf, oneOf, definitions, AbsolutePathBuf, ChatgptAuthTokensRefreshReason (+56 more)
 
 ### Community 46 - "Community 46"
 Cohesion: 0.15
@@ -2322,7 +2303,7 @@ Nodes (13): API Service, Approval Semantics, Grafana Provisioning, Mini App Secu
 
 ### Community 60 - "Community 60"
 Cohesion: 0.02
-Nodes (120): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+112 more)
+Nodes (129): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+121 more)
 
 ### Community 61 - "Community 61"
 Cohesion: 0.17
@@ -2426,11 +2407,11 @@ Nodes (8): Always Require Explicit Approval, Audit Checklist, Auto-Allow Candida
 
 ### Community 86 - "Community 86"
 Cohesion: 0.03
-Nodes (60): Added, Added, Added, Added, Added, Added, Added, Added (+52 more)
+Nodes (65): Added, Added, Added, Added, Added, Added, Added, Added (+57 more)
 
 ### Community 87 - "Community 87"
 Cohesion: 0.03
-Nodes (68): Added, Added, Added, Added, Added, Added, Added, Added (+60 more)
+Nodes (74): Added, Added, Added, Added, Added, Added, Added, Added (+66 more)
 
 ### Community 88 - "Community 88"
 Cohesion: 0.05
@@ -2566,11 +2547,11 @@ Nodes (6): code:env (HAPPYTG_MINIAPP_URL=https://<domain>/miniapp), code:caddyfi
 
 ### Community 121 - "Community 121"
 Cohesion: 0.05
-Nodes (42): Added, Added, Added, Added, Added, Added, Added, Added (+34 more)
+Nodes (45): Added, Added, Added, Added, Added, Added, Added, Added (+37 more)
 
 ### Community 122 - "Community 122"
 Cohesion: 0.04
-Nodes (51): description, type, type, enum, type, enum, type, oneOf (+43 more)
+Nodes (53): description, type, type, enum, type, enum, type, oneOf (+45 more)
 
 ### Community 123 - "Community 123"
 Cohesion: 0.11
@@ -2578,15 +2559,15 @@ Nodes (25): details, h1, hasNewTask, hasQuestion, hasResultWork, hasTechnicalDet
 
 ### Community 124 - "Community 124"
 Cohesion: 0.02
-Nodes (110): Added, Added, Added, Added, Added, Added, Added, Added (+102 more)
+Nodes (116): Added, Added, Added, Added, Added, Added, Added, Added (+108 more)
 
 ### Community 125 - "Community 125"
-Cohesion: 0.09
-Nodes (52): Added, Changed, Changelog, Fixed, Fixed, Fixed, Fixed, Fixed (+44 more)
+Cohesion: 0.13
+Nodes (15): McpElicitationStringSchema, anyOf, format, minimum, type, additionalProperties, properties, required (+7 more)
 
 ### Community 126 - "Community 126"
-Cohesion: 0.11
-Nodes (19): description, items, type, items, McpElicitationUntitledEnumItems, items, type, items (+11 more)
+Cohesion: 0.1
+Nodes (22): items, McpElicitationLegacyTitledEnumSchema, McpElicitationUntitledEnumItems, items, type, items, type, type (+14 more)
 
 ### Community 127 - "Community 127"
 Cohesion: 0.1
@@ -2594,7 +2575,7 @@ Nodes (21): description, items, type, items, McpElicitationLegacyTitledEnumSchem
 
 ### Community 128 - "Community 128"
 Cohesion: 0.02
-Nodes (89): Added, Added, Added, Added, Added, Added, Added, Added (+81 more)
+Nodes (94): Added, Added, Added, Added, Added, Added, Added, Added (+86 more)
 
 ### Community 129 - "Community 129"
 Cohesion: 0.29
@@ -2638,11 +2619,11 @@ Nodes (5): code:env (HAPPYTG_MINIAPP_PORT=3007), HappyTG 0.4.2, Highlights, Upgr
 
 ### Community 139 - "Community 139"
 Cohesion: 0.05
-Nodes (42): Added, Added, Added, Added, Added, Added, Added, Added (+34 more)
+Nodes (46): Added, Added, Added, Added, Added, Added, Added, Added (+38 more)
 
 ### Community 140 - "Community 140"
-Cohesion: 0.04
-Nodes (62): Added, Added, Added, Added, Added, Added, Added, Added (+54 more)
+Cohesion: 0.03
+Nodes (133): Added, Added, Added, Added, Added, Added, Added, Added (+125 more)
 
 ### Community 141 - "Community 141"
 Cohesion: 0.4
@@ -2737,12 +2718,12 @@ Cohesion: 0.17
 Nodes (11): approvals, artifact_manifest, current_phase, phase_history, session_id, task_id, timestamps, created_at (+3 more)
 
 ### Community 164 - "Community 164"
-Cohesion: 0.28
-Nodes (6): CommandAction, CommandExecutionApprovalDecision, CommandExecutionRequestApprovalResponse, ExecPolicyAmendment, NetworkPolicyAmendment, NetworkPolicyRuleAction
+Cohesion: 0.15
+Nodes (13): McpElicitationTitledMultiSelectEnumSchema, format, minimum, type, additionalProperties, properties, required, type (+5 more)
 
 ### Community 165 - "Community 165"
-Cohesion: 0.04
-Nodes (80): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+72 more)
+Cohesion: 0.03
+Nodes (87): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+79 more)
 
 ### Community 166 - "Community 166"
 Cohesion: 0.24
@@ -2753,8 +2734,8 @@ Cohesion: 0.17
 Nodes (11): acceptanceCriteria, createdAt, id, mode, phase, rootPath, sessionId, title (+3 more)
 
 ### Community 168 - "Community 168"
-Cohesion: 0.05
-Nodes (50): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+42 more)
+Cohesion: 0.03
+Nodes (78): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+70 more)
 
 ### Community 169 - "Community 169"
 Cohesion: 0.2
@@ -2766,7 +2747,7 @@ Nodes (24): 10 Independent Performance Roles, code:bash (memory context --projec
 
 ### Community 171 - "Community 171"
 Cohesion: 0.03
-Nodes (66): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+58 more)
+Nodes (71): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+63 more)
 
 ### Community 172 - "Community 172"
 Cohesion: 0.04
@@ -2785,20 +2766,20 @@ Cohesion: 0.33
 Nodes (5): changedAreas, goal, status, taskId, verification
 
 ### Community 176 - "Community 176"
-Cohesion: 0.21
-Nodes (12): CommandRunResult, DaemonStateSnapshot, defaultApiBaseUrl(), fetchPairingHostStatus(), InstallPairingDecision, PairingCommandResult, PairingProbeResult, PairingProbeStatus (+4 more)
+Cohesion: 0.17
+Nodes (11): codexNavInactive, formActionProjectsTasks, hiddenUserIdPresent, projectsContainsProjectsTasksLink, projectsHasNoProjectScopedCodexHref, projectsNavActive, projectsStatus, projectsTaskLinkPreservesUserId (+3 more)
 
 ### Community 177 - "Community 177"
-Cohesion: 0.21
-Nodes (8): Config, ConfigLayer, ConfigLayerMetadata, ConfigLayerSource, ConfigReadResponse, ConfigWriteResponse, OverriddenMetadata, WriteStatus
+Cohesion: 0.25
+Nodes (7): Change, Diagnosis, Evidence, finding, status, taskId, Validation
 
 ### Community 178 - "Community 178"
 Cohesion: 0.15
 Nodes (12): branch, changed_files, checks, live_runtime_recovery, fix, issue, local_projects_empty_state, projects_count (+4 more)
 
 ### Community 179 - "Community 179"
-Cohesion: 0.04
-Nodes (55): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+47 more)
+Cohesion: 0.05
+Nodes (53): Changed, Changed, Changed, Changed, Changed, Changed, Changed, Changed (+45 more)
 
 ### Community 180 - "Community 180"
 Cohesion: 0.17
@@ -2825,8 +2806,8 @@ Cohesion: 0.17
 Nodes (11): acceptanceCriteria, createdAt, id, mode, phase, rootPath, sessionId, title (+3 more)
 
 ### Community 186 - "Community 186"
-Cohesion: 0.19
-Nodes (13): type, type, annotations, description, inputSchema, name, outputSchema, title (+5 more)
+Cohesion: 0.2
+Nodes (10): ResourceTemplate, type, annotations, mimeType, uriTemplate, description, properties, required (+2 more)
 
 ### Community 187 - "Community 187"
 Cohesion: 0.4
@@ -2913,8 +2894,8 @@ Cohesion: 0.67
 Nodes (3): Changed, Fixed, v0.3.1
 
 ### Community 208 - "Community 208"
-Cohesion: 0.04
-Nodes (52): type, format, type, McpElicitationBooleanSchema, McpElicitationConstOption, McpElicitationNumberSchema, McpElicitationStringSchema, McpElicitationTitledSingleSelectEnumSchema (+44 more)
+Cohesion: 0.06
+Nodes (37): type, format, type, McpElicitationBooleanSchema, McpElicitationConstOption, McpElicitationNumberSchema, McpElicitationTitledSingleSelectEnumSchema, type (+29 more)
 
 ### Community 209 - "Community 209"
 Cohesion: 0.67
@@ -3022,7 +3003,7 @@ Nodes (48): apps, http, tls, disable_redirects, policies, exclude, format, https
 
 ### Community 242 - "Community 242"
 Cohesion: 0.06
-Nodes (48): format, type, McpElicitationBooleanSchema, McpElicitationUntitledMultiSelectEnumSchema, McpElicitationUntitledSingleSelectEnumSchema, type, type, format (+40 more)
+Nodes (48): format, type, McpElicitationBooleanSchema, McpElicitationTitledMultiSelectEnumSchema, McpElicitationUntitledMultiSelectEnumSchema, McpElicitationUntitledSingleSelectEnumSchema, type, format (+40 more)
 
 ### Community 243 - "Community 243"
 Cohesion: 0.04
@@ -3077,8 +3058,8 @@ Cohesion: 0.06
 Nodes (42): apps, http, tls, disable_redirects, policies, exclude, format, https_port (+34 more)
 
 ### Community 256 - "Community 256"
-Cohesion: 0.07
-Nodes (21): ByteRange, CollabAgentState, CollabAgentStatus, CollabAgentTool, CollabAgentToolCallStatus, CommandExecutionSource, CommandExecutionStatus, DynamicToolCallOutputContentItem (+13 more)
+Cohesion: 0.06
+Nodes (24): ByteRange, CollabAgentState, CollabAgentStatus, CollabAgentTool, CollabAgentToolCallStatus, CommandExecutionSource, CommandExecutionStatus, DynamicToolCallOutputContentItem (+16 more)
 
 ### Community 257 - "Community 257"
 Cohesion: 0.05
@@ -3089,12 +3070,12 @@ Cohesion: 0.05
 Nodes (42): format, type, definitions, ThreadTokenUsage, TokenUsageBreakdown, format, type, $ref (+34 more)
 
 ### Community 259 - "Community 259"
-Cohesion: 0.08
-Nodes (20): Resource, ResourceContent, ResourceTemplate, Tool, JsonValue, AnalyticsConfig, ConfigBatchWriteParams, ConfigEdit (+12 more)
+Cohesion: 0.06
+Nodes (30): Resource, ResourceContent, ResourceTemplate, Tool, JsonValue, AnalyticsConfig, Config, ConfigBatchWriteParams (+22 more)
 
 ### Community 260 - "Community 260"
-Cohesion: 0.08
-Nodes (19): ApplyPatchApprovalParams, ExecCommandApprovalParams, FileChange, GetConversationSummaryParams, ParsedCommand, RequestId, ServerRequest, ThreadId (+11 more)
+Cohesion: 0.06
+Nodes (27): AgentPath, ApplyPatchApprovalParams, ConversationGitInfo, ConversationSummary, ExecCommandApprovalParams, FileChange, GetConversationSummaryParams, GetConversationSummaryResponse (+19 more)
 
 ### Community 261 - "Community 261"
 Cohesion: 0.05
@@ -3129,8 +3110,8 @@ Cohesion: 0.06
 Nodes (40): anyOf, description, properties, required, type, anyOf, description, $ref (+32 more)
 
 ### Community 269 - "Community 269"
-Cohesion: 0.08
-Nodes (21): McpElicitationArrayType, McpElicitationBooleanSchema, McpElicitationBooleanType, McpElicitationConstOption, McpElicitationEnumSchema, McpElicitationLegacyTitledEnumSchema, McpElicitationMultiSelectEnumSchema, McpElicitationNumberSchema (+13 more)
+Cohesion: 0.09
+Nodes (20): McpElicitationArrayType, McpElicitationBooleanSchema, McpElicitationBooleanType, McpElicitationConstOption, McpElicitationEnumSchema, McpElicitationLegacyTitledEnumSchema, McpElicitationMultiSelectEnumSchema, McpElicitationNumberSchema (+12 more)
 
 ### Community 270 - "Community 270"
 Cohesion: 0.05
@@ -3189,8 +3170,8 @@ Cohesion: 0.06
 Nodes (33): anyOf, properties, $ref, required, type, definitions, ClientInfo, InitializeCapabilities (+25 more)
 
 ### Community 284 - "Community 284"
-Cohesion: 0.06
-Nodes (36): anyOf, description, description, items, type, description, items, type (+28 more)
+Cohesion: 0.08
+Nodes (26): items, type, description, items, type, description, items, type (+18 more)
 
 ### Community 285 - "Community 285"
 Cohesion: 0.06
@@ -3198,19 +3179,19 @@ Nodes (34): type, description, properties, required, type, anyOf, anyOf, AppInfo
 
 ### Community 286 - "Community 286"
 Cohesion: 0.06
-Nodes (34): description, oneOf, enum, type, oneOf, enum, type, enum (+26 more)
+Nodes (34): description, oneOf, oneOf, enum, type, enum, type, definitions (+26 more)
 
 ### Community 287 - "Community 287"
-Cohesion: 0.06
-Nodes (31): description, type, description, oneOf, enum, type, enum, type (+23 more)
+Cohesion: 0.05
+Nodes (37): description, type, description, oneOf, enum, type, enum, type (+29 more)
 
 ### Community 288 - "Community 288"
 Cohesion: 0.06
 Nodes (34): description, type, description, oneOf, enum, type, enum, type (+26 more)
 
 ### Community 289 - "Community 289"
-Cohesion: 0.05
-Nodes (37): description, type, enum, type, enum, type, oneOf, enum (+29 more)
+Cohesion: 0.06
+Nodes (34): description, type, enum, type, enum, type, oneOf, enum (+26 more)
 
 ### Community 290 - "Community 290"
 Cohesion: 0.06
@@ -3254,7 +3235,7 @@ Nodes (32): properties, type, description, items, type, description, items, type
 
 ### Community 300 - "Community 300"
 Cohesion: 0.06
-Nodes (32): description, type, oneOf, definitions, AbsolutePathBuf, AskForApproval, FileSystemAccessMode, FileSystemPath (+24 more)
+Nodes (33): description, type, oneOf, definitions, AbsolutePathBuf, AskForApproval, FileSystemAccessMode, FileSystemPath (+25 more)
 
 ### Community 301 - "Community 301"
 Cohesion: 0.06
@@ -3301,12 +3282,12 @@ Cohesion: 0.07
 Nodes (30): properties, type, items, type, AppMetadata, type, type, type (+22 more)
 
 ### Community 312 - "Community 312"
-Cohesion: 0.07
-Nodes (30): properties, required, type, description, type, description, type, $ref (+22 more)
+Cohesion: 0.09
+Nodes (23): $ref, properties, required, type, description, type, ApplyPatchApprovalParams, DynamicToolCallParams (+15 more)
 
 ### Community 313 - "Community 313"
-Cohesion: 0.09
-Nodes (23): ManagedHooksRequirements, type, properties, required, type, items, type, items (+15 more)
+Cohesion: 0.08
+Nodes (30): items, type, ManagedHooksRequirements, $ref, type, properties, required, type (+22 more)
 
 ### Community 314 - "Community 314"
 Cohesion: 0.07
@@ -3345,8 +3326,8 @@ Cohesion: 0.07
 Nodes (29): properties, required, type, properties, required, type, AppReview, CollabAgentState (+21 more)
 
 ### Community 323 - "Community 323"
-Cohesion: 0.06
-Nodes (32): anyOf, type, additionalProperties, type, type, type, description, type (+24 more)
+Cohesion: 0.07
+Nodes (29): anyOf, type, additionalProperties, type, type, type, description, type (+21 more)
 
 ### Community 324 - "Community 324"
 Cohesion: 0.11
@@ -3401,8 +3382,8 @@ Cohesion: 0.08
 Nodes (26): type, type, ExperimentalFeatureEnablementSetParams, FeedbackUploadParams, additionalProperties, description, type, additionalProperties (+18 more)
 
 ### Community 337 - "Community 337"
-Cohesion: 0.09
-Nodes (24): DynamicToolCallParams, FileChangeRequestApprovalParams, properties, required, $schema, title, type, properties (+16 more)
+Cohesion: 0.06
+Nodes (38): anyOf, description, properties, required, $schema, title, type, CommandExecutionRequestApprovalParams (+30 more)
 
 ### Community 338 - "Community 338"
 Cohesion: 0.08
@@ -3413,7 +3394,7 @@ Cohesion: 0.08
 Nodes (26): type, type, anyOf, description, type, anyOf, description, description (+18 more)
 
 ### Community 340 - "Community 340"
-Cohesion: 0.08
+Cohesion: 0.07
 Nodes (26): oneOf, definitions, AskForApproval, FileSystemAccessMode, FileSystemPath, FileSystemSpecialPath, PermissionProfile, PermissionProfileFileSystemPermissions (+18 more)
 
 ### Community 341 - "Community 341"
@@ -3442,11 +3423,11 @@ Nodes (27): properties, required, type, properties, required, type, properties, 
 
 ### Community 347 - "Community 347"
 Cohesion: 0.08
-Nodes (23): anyOf, description, description, type, anyOf, description, type, properties (+15 more)
+Nodes (25): anyOf, description, description, type, description, type, anyOf, description (+17 more)
 
 ### Community 348 - "Community 348"
-Cohesion: 0.08
-Nodes (25): description, type, enum, type, enum, type, oneOf, definitions (+17 more)
+Cohesion: 0.07
+Nodes (28): description, type, enum, type, enum, type, oneOf, definitions (+20 more)
 
 ### Community 349 - "Community 349"
 Cohesion: 0.08
@@ -3473,8 +3454,8 @@ Cohesion: 0.08
 Nodes (23): description, type, definitions, ThreadMetadataGitInfoUpdateParams, anyOf, description, description, type (+15 more)
 
 ### Community 355 - "Community 355"
-Cohesion: 0.09
-Nodes (24): properties, required, $schema, title, type, description, type, description (+16 more)
+Cohesion: 0.08
+Nodes (28): properties, required, $schema, title, type, description, type, description (+20 more)
 
 ### Community 356 - "Community 356"
 Cohesion: 0.08
@@ -3482,7 +3463,7 @@ Nodes (24): type, type, type, type, NetworkRequirements, type, format, minimum (
 
 ### Community 357 - "Community 357"
 Cohesion: 0.08
-Nodes (26): description, enum, type, oneOf, type, oneOf, definitions, ApprovalsReviewer (+18 more)
+Nodes (24): description, enum, type, oneOf, oneOf, definitions, ApprovalsReviewer, AskForApproval (+16 more)
 
 ### Community 358 - "Community 358"
 Cohesion: 0.09
@@ -3541,8 +3522,8 @@ Cohesion: 0.09
 Nodes (23): anyOf, anyOf, description, type, ProfileV2, type, anyOf, anyOf (+15 more)
 
 ### Community 372 - "Community 372"
-Cohesion: 0.1
-Nodes (20): $ref, $ref, $ref, properties, type, eventName, executionMode, handlerType (+12 more)
+Cohesion: 0.09
+Nodes (23): format, type, $ref, $ref, $ref, properties, type, displayOrder (+15 more)
 
 ### Community 373 - "Community 373"
 Cohesion: 0.09
@@ -3553,8 +3534,8 @@ Cohesion: 0.09
 Nodes (23): default, type, anyOf, properties, required, type, CollabAgentState, McpToolCallError (+15 more)
 
 ### Community 375 - "Community 375"
-Cohesion: 0.09
-Nodes (23): anyOf, type, type, type, type, type, anyOf, properties (+15 more)
+Cohesion: 0.07
+Nodes (27): anyOf, type, type, type, type, type, default, description (+19 more)
 
 ### Community 376 - "Community 376"
 Cohesion: 0.09
@@ -3593,8 +3574,8 @@ Cohesion: 0.09
 Nodes (21): checked, message, ok, status, command, exitCode, findings, checked (+13 more)
 
 ### Community 385 - "Community 385"
-Cohesion: 0.14
-Nodes (11): AutoReviewDecisionSource, GuardianApprovalReview, GuardianApprovalReviewAction, GuardianApprovalReviewStatus, GuardianCommandSource, GuardianRiskLevel, GuardianUserAuthorization, ItemGuardianApprovalReviewCompletedNotification (+3 more)
+Cohesion: 0.1
+Nodes (17): AutoReviewDecisionSource, CommandAction, CommandExecutionApprovalDecision, CommandExecutionRequestApprovalResponse, ExecPolicyAmendment, GuardianApprovalReview, GuardianApprovalReviewAction, GuardianApprovalReviewStatus (+9 more)
 
 ### Community 386 - "Community 386"
 Cohesion: 0.13
@@ -3666,7 +3647,7 @@ Nodes (19): McpElicitationUntitledMultiSelectEnumSchema, type, $ref, format, min
 
 ### Community 403 - "Community 403"
 Cohesion: 0.1
-Nodes (21): description, type, definitions, AbsolutePathBuf, FileSystemAccessMode, FileSystemPath, FileSystemSpecialPath, GuardianApprovalReviewAction (+13 more)
+Nodes (20): description, type, definitions, AbsolutePathBuf, FileSystemPath, FileSystemSpecialPath, GuardianApprovalReviewAction, GuardianCommandSource (+12 more)
 
 ### Community 404 - "Community 404"
 Cohesion: 0.1
@@ -3769,8 +3750,8 @@ Cohesion: 0.11
 Nodes (20): JSONRPCNotification, JSONRPCRequest, description, properties, required, $schema, title, type (+12 more)
 
 ### Community 429 - "Community 429"
-Cohesion: 0.1
-Nodes (20): description, type, ThreadListParams, archived, searchTerm, sortDirection, sortKey, useStateDbOnly (+12 more)
+Cohesion: 0.05
+Nodes (39): description, type, description, type, ThreadListParams, ThreadLoadedListParams, ThreadTurnsListParams, description (+31 more)
 
 ### Community 430 - "Community 430"
 Cohesion: 0.11
@@ -3785,8 +3766,8 @@ Cohesion: 0.1
 Nodes (20): FuzzyFileSearchResult, type, description, properties, required, type, items, type (+12 more)
 
 ### Community 434 - "Community 434"
-Cohesion: 0.11
-Nodes (21): items, type, items, type, items, type, items, type (+13 more)
+Cohesion: 0.1
+Nodes (20): type, items, type, items, type, items, type, properties (+12 more)
 
 ### Community 435 - "Community 435"
 Cohesion: 0.1
@@ -3837,24 +3818,24 @@ Cohesion: 0.11
 Nodes (19): properties, type, description, type, ConfigReadParams, ExternalAgentConfigMigrationItem, type, anyOf (+11 more)
 
 ### Community 447 - "Community 447"
-Cohesion: 0.06
-Nodes (32): $ref, McpElicitationSchema, McpElicitationTitledMultiSelectEnumSchema, additionalProperties, type, format, minimum, type (+24 more)
+Cohesion: 0.11
+Nodes (19): $ref, McpElicitationSchema, additionalProperties, type, additionalProperties, description, properties, required (+11 more)
 
 ### Community 448 - "Community 448"
 Cohesion: 0.11
 Nodes (19): JSONRPCError, JSONRPCResponse, $ref, $ref, description, properties, required, $schema (+11 more)
 
 ### Community 449 - "Community 449"
-Cohesion: 0.11
-Nodes (19): description, type, ThreadLoadedListParams, ThreadTurnsListParams, description, format, minimum, type (+11 more)
+Cohesion: 0.29
+Nodes (7): definitions, JSONRPCNotification, RequestId, description, required, type, anyOf
 
 ### Community 450 - "Community 450"
 Cohesion: 0.11
 Nodes (19): type, DynamicToolSpec, ThreadSetNameParams, type, properties, required, type, type (+11 more)
 
 ### Community 451 - "Community 451"
-Cohesion: 0.12
-Nodes (19): properties, type, AdditionalFileSystemPermissions, items, type, format, minimum, type (+11 more)
+Cohesion: 0.18
+Nodes (13): properties, items, type, $ref, entries, read, write, description (+5 more)
 
 ### Community 452 - "Community 452"
 Cohesion: 0.12
@@ -3935,10 +3916,6 @@ Nodes (18): description, items, type, description, items, type, ExternalAgentCon
 ### Community 471 - "Community 471"
 Cohesion: 0.11
 Nodes (18): $ref, FileSystemSandboxEntry, FileUpdateChange, type, properties, required, type, properties (+10 more)
-
-### Community 472 - "Community 472"
-Cohesion: 0.2
-Nodes (4): buildWindowsShellCommand(), CodexAppServerJsonRpcClient, isJavaScriptEntrypoint(), jsonRpcErrorMessage()
 
 ### Community 473 - "Community 473"
 Cohesion: 0.11
@@ -4049,8 +4026,8 @@ Cohesion: 0.12
 Nodes (17): properties, required, type, ConfigWarningNotification, DeprecationNoticeNotification, properties, required, type (+9 more)
 
 ### Community 500 - "Community 500"
-Cohesion: 0.12
-Nodes (17): $ref, McpElicitationSchema, additionalProperties, type, additionalProperties, description, properties, required (+9 more)
+Cohesion: 0.15
+Nodes (13): McpElicitationSchema, additionalProperties, description, properties, required, type, additionalProperties, properties (+5 more)
 
 ### Community 501 - "Community 501"
 Cohesion: 0.12
@@ -4150,11 +4127,11 @@ Nodes (16): items, type, anyOf, WebSearchToolConfig, type, anyOf, allowed_domain
 
 ### Community 525 - "Community 525"
 Cohesion: 0.12
-Nodes (16): description, type, definitions, AbsolutePathBuf, HookEventName, HookHandlerType, HookRunSummary, HookSource (+8 more)
+Nodes (16): definitions, HookEventName, HookExecutionMode, HookHandlerType, HookOutputEntryKind, HookSource, enum, type (+8 more)
 
 ### Community 526 - "Community 526"
 Cohesion: 0.12
-Nodes (16): description, type, definitions, AbsolutePathBuf, HookEventName, HookHandlerType, HookRunSummary, HookSource (+8 more)
+Nodes (16): definitions, HookEventName, HookHandlerType, HookRunSummary, HookScope, HookSource, enum, type (+8 more)
 
 ### Community 527 - "Community 527"
 Cohesion: 0.12
@@ -4245,8 +4222,8 @@ Cohesion: 0.13
 Nodes (15): newTask, resume, stop, visibility, codexDesktop, reasonCode, stableMutatingContractExists, reasonCode (+7 more)
 
 ### Community 549 - "Community 549"
-Cohesion: 0.26
-Nodes (11): collectJsonlFiles(), collectPathStrings(), looksPathLike(), metadataFromSessionRecords(), normalizePathKey(), readJsonl(), readJsonlBounded(), readJsonObject() (+3 more)
+Cohesion: 0.2
+Nodes (14): appServerThreadTitle(), collectJsonlFiles(), collectPathStrings(), extractFileSessionId(), hostProxyErrorMessage(), looksPathLike(), metadataFromSessionRecords(), normalizePathKey() (+6 more)
 
 ### Community 550 - "Community 550"
 Cohesion: 0.13
@@ -4449,8 +4426,8 @@ Cohesion: 0.14
 Nodes (14): type, type, type, anyOf, anyOf, brandColor, defaultPrompt, displayName (+6 more)
 
 ### Community 600 - "Community 600"
-Cohesion: 0.15
-Nodes (14): type, items, SkillsListEntry, items, type, $ref, cwd, errors (+6 more)
+Cohesion: 0.17
+Nodes (13): type, SkillsListEntry, items, type, $ref, cwd, errors, skills (+5 more)
 
 ### Community 601 - "Community 601"
 Cohesion: 0.15
@@ -4665,8 +4642,8 @@ Cohesion: 0.15
 Nodes (13): GuardianApprovalReview, description, properties, required, type, rationale, riskLevel, status (+5 more)
 
 ### Community 654 - "Community 654"
-Cohesion: 0.17
-Nodes (12): items, type, description, items, type, type, capabilities, defaultPrompt (+4 more)
+Cohesion: 0.15
+Nodes (13): items, type, description, items, type, items, type, capabilities (+5 more)
 
 ### Community 655 - "Community 655"
 Cohesion: 0.15
@@ -4993,8 +4970,8 @@ Cohesion: 0.24
 Nodes (6): ApplyPatchApprovalResponse, ExecCommandApprovalResponse, ExecPolicyAmendment, NetworkPolicyAmendment, NetworkPolicyRuleAction, ReviewDecision
 
 ### Community 736 - "Community 736"
-Cohesion: 0.14
-Nodes (12): CollaborationMode, InputModality, ModeKind, ReasoningEffort, Settings, CollaborationModeListResponse, CollaborationModeMask, Model (+4 more)
+Cohesion: 0.24
+Nodes (6): InputModality, Model, ModelAvailabilityNux, ModelListResponse, ModelUpgradeInfo, ReasoningEffortOption
 
 ### Community 737 - "Community 737"
 Cohesion: 0.24
@@ -5381,8 +5358,8 @@ Cohesion: 0.18
 Nodes (10): type, description, type, properties, data, nextCursor, required, $schema (+2 more)
 
 ### Community 833 - "Community 833"
-Cohesion: 0.17
-Nodes (11): default, items, type, type, properties, featuredPluginIds, marketplaces, required (+3 more)
+Cohesion: 0.18
+Nodes (10): default, type, type, properties, featuredPluginIds, marketplaces, required, $schema (+2 more)
 
 ### Community 834 - "Community 834"
 Cohesion: 0.18
@@ -5437,8 +5414,8 @@ Cohesion: 0.18
 Nodes (11): McpElicitationNumberSchema, format, type, additionalProperties, properties, required, type, format (+3 more)
 
 ### Community 847 - "Community 847"
-Cohesion: 0.18
-Nodes (11): description, type, definitions, AbsolutePathBuf, FileSystemAccessMode, FileSystemPath, FileSystemSpecialPath, enum (+3 more)
+Cohesion: 0.15
+Nodes (13): description, type, type, definitions, AbsolutePathBuf, AdditionalFileSystemPermissions, FileSystemAccessMode, FileSystemPath (+5 more)
 
 ### Community 848 - "Community 848"
 Cohesion: 0.18
@@ -5498,11 +5475,11 @@ Nodes (11): items, type, type, default, items, type, categories, pluginDisplayNa
 
 ### Community 862 - "Community 862"
 Cohesion: 0.17
-Nodes (12): definitions, McpAuthStatus, Resource, ResourceTemplate, enum, type, description, required (+4 more)
+Nodes (12): definitions, McpAuthStatus, Resource, Tool, enum, type, description, required (+4 more)
 
 ### Community 863 - "Community 863"
-Cohesion: 0.17
-Nodes (12): items, type, type, icons, _meta, mimeType, size, uri (+4 more)
+Cohesion: 0.14
+Nodes (17): type, items, type, description, icons, inputSchema, _meta, outputSchema (+9 more)
 
 ### Community 864 - "Community 864"
 Cohesion: 0.18
@@ -5713,8 +5690,8 @@ Cohesion: 0.2
 Nodes (10): type, properties, required, type, CreditsSnapshot, type, balance, hasCredits (+2 more)
 
 ### Community 916 - "Community 916"
-Cohesion: 0.22
-Nodes (10): Approval Dialogs, ApprovalRequest, Bot Functionality, Bot-First UX Philosophy, Mini App Interface, Policy, Release 0.4.1, Session State (+2 more)
+Cohesion: 0.2
+Nodes (11): Approval Dialogs, ApprovalRequest, Bot Functionality, Bot-First UX Philosophy, Mini App Interface, Policy, Release 0.4.1, Session State (+3 more)
 
 ### Community 917 - "Community 917"
 Cohesion: 0.2
@@ -5965,8 +5942,8 @@ Cohesion: 0.22
 Nodes (8): description, type, properties, nextCursor, required, $schema, title, type
 
 ### Community 979 - "Community 979"
-Cohesion: 0.25
-Nodes (7): type, properties, data, required, $schema, title, type
+Cohesion: 0.22
+Nodes (8): items, type, properties, data, required, $schema, title, type
 
 ### Community 980 - "Community 980"
 Cohesion: 0.22
@@ -6045,8 +6022,8 @@ Cohesion: 0.22
 Nodes (9): items, type, McpToolCallResult, properties, required, type, content, _meta (+1 more)
 
 ### Community 999 - "Community 999"
-Cohesion: 0.5
-Nodes (4): $ref, tools, additionalProperties, type
+Cohesion: 0.17
+Nodes (12): $ref, $ref, McpServerStatus, properties, required, type, type, authStatus (+4 more)
 
 ### Community 1000 - "Community 1000"
 Cohesion: 0.22
@@ -6697,8 +6674,8 @@ Cohesion: 0.25
 Nodes (8): properties, type, AdditionalPermissionProfile, anyOf, anyOf, description, fileSystem, network
 
 ### Community 1162 - "Community 1162"
-Cohesion: 0.38
-Nodes (4): SkillErrorInfo, SkillMetadata, SkillsListEntry, SkillsListResponse
+Cohesion: 0.33
+Nodes (5): id, phase, status, title, verificationState
 
 ### Community 1163 - "Community 1163"
 Cohesion: 0.25
@@ -6725,8 +6702,8 @@ Cohesion: 0.25
 Nodes (8): properties, type, AdditionalPermissionProfile, anyOf, anyOf, description, fileSystem, network
 
 ### Community 1169 - "Community 1169"
-Cohesion: 0.18
-Nodes (12): JSONRPCNotification, description, properties, required, type, properties, type, method (+4 more)
+Cohesion: 0.29
+Nodes (8): properties, properties, type, method, params, trace, anyOf, description
 
 ### Community 1170 - "Community 1170"
 Cohesion: 0.25
@@ -6789,8 +6766,8 @@ Cohesion: 0.25
 Nodes (8): HookPromptFragment, properties, required, type, type, hookRunId, text, type
 
 ### Community 1185 - "Community 1185"
-Cohesion: 0.15
-Nodes (14): $ref, items, McpServerStatus, $ref, properties, required, type, authStatus (+6 more)
+Cohesion: 0.25
+Nodes (8): items, $ref, resources, resourceTemplates, items, type, items, type
 
 ### Community 1186 - "Community 1186"
 Cohesion: 0.25
@@ -7022,7 +6999,7 @@ Nodes (7): W3cTraceContext, traceparent, tracestate, type, type, properties, typ
 
 ### Community 1243 - "Community 1243"
 Cohesion: 0.29
-Nodes (7): definitions, JSONRPCError, RequestId, description, required, type, anyOf
+Nodes (7): JSONRPCError, $ref, description, properties, required, type, error
 
 ### Community 1244 - "Community 1244"
 Cohesion: 0.29
@@ -7062,7 +7039,7 @@ Nodes (7): readContract, contracts, codexDesktop, files, sanitizedProjection, st
 
 ### Community 1253 - "Community 1253"
 Cohesion: 0.29
-Nodes (7): commands, pnpm --filter @happytg/bot test, pnpm --filter @happytg/miniapp test, raw, status, raw, status
+Nodes (7): commands, pnpm build, pnpm --filter @happytg/bot test, raw, status, raw, status
 
 ### Community 1254 - "Community 1254"
 Cohesion: 0.29
@@ -7078,7 +7055,7 @@ Nodes (7): type, items, type, items, type, preexisting_untracked_dirs, preexisti
 
 ### Community 1257 - "Community 1257"
 Cohesion: 0.29
-Nodes (7): properties, sortDirection, useStateDbOnly, anyOf, description, description, type
+Nodes (7): description, type, properties, archived, useStateDbOnly, description, type
 
 ### Community 1258 - "Community 1258"
 Cohesion: 0.33
@@ -7393,8 +7370,8 @@ Cohesion: 0.47
 Nodes (3): ExperimentalFeature, ExperimentalFeatureListResponse, ExperimentalFeatureStage
 
 ### Community 1336 - "Community 1336"
-Cohesion: 0.47
-Nodes (3): ConfigWarningNotification, TextPosition, TextRange
+Cohesion: 0.4
+Nodes (4): required, $schema, title, type
 
 ### Community 1337 - "Community 1337"
 Cohesion: 0.47
@@ -7521,8 +7498,8 @@ Cohesion: 0.33
 Nodes (5): Acceptance Criteria, Goal, HTG-2026-06-12 Desktop Session Read-only Warning Spec, Non-Goals, Scope
 
 ### Community 1368 - "Community 1368"
-Cohesion: 0.33
-Nodes (6): JSONRPCResponse, description, properties, required, type, result
+Cohesion: 0.25
+Nodes (8): JSONRPCResponse, $ref, description, properties, required, type, id, result
 
 ### Community 1369 - "Community 1369"
 Cohesion: 0.33
@@ -8005,8 +7982,8 @@ Cohesion: 0.4
 Nodes (4): description, $schema, title, type
 
 ### Community 1489 - "Community 1489"
-Cohesion: 0.47
-Nodes (3): FileChangePatchUpdatedNotification, FileUpdateChange, PatchChangeKind
+Cohesion: 0.4
+Nodes (4): Acceptance Criteria, HTG-2026-06-12-miniapp-project-tasks-route, Non-goals, Scope
 
 ### Community 1490 - "Community 1490"
 Cohesion: 0.4
@@ -8062,7 +8039,7 @@ Nodes (5): properties, type, AdditionalNetworkPermissions, type, enabled
 
 ### Community 1503 - "Community 1503"
 Cohesion: 0.4
-Nodes (5): ToolRequestUserInputOption, description, properties, required, type
+Nodes (4): phase, steps, taskId, verificationState
 
 ### Community 1504 - "Community 1504"
 Cohesion: 0.4
@@ -8693,16 +8670,16 @@ Cohesion: 0.25
 Nodes (7): elapsedMs, hasMore200, hasNoSessions, hasUnscopedNotice, matchingSessions, status, visible
 
 ### Community 1668 - "Community 1668"
-Cohesion: 0.47
-Nodes (3): ThreadRealtimeAppendAudioParams, ThreadRealtimeAudioChunk, ThreadRealtimeOutputAudioDeltaNotification
+Cohesion: 0.4
+Nodes (4): blockingFindings, residualRisks, taskId, verdict
 
 ### Community 1669 - "Community 1669"
 Cohesion: 0.29
 Nodes (7): McpElicitationTitledSingleSelectEnumSchema, additionalProperties, properties, required, type, type, oneOf
 
 ### Community 1670 - "Community 1670"
-Cohesion: 0.25
-Nodes (8): items, type, McpElicitationTitledEnumItems, additionalProperties, properties, required, type, anyOf
+Cohesion: 0.4
+Nodes (4): HappyTG 0.4.28, Highlights, Safety Notes, Verification
 
 ### Community 1671 - "Community 1671"
 Cohesion: 0.5
@@ -8920,17 +8897,13 @@ Nodes (3): English, Project Description, Русский
 Cohesion: 0.33
 Nodes (5): id, phase, status, title, verificationState
 
-### Community 1734 - "Community 1734"
-Cohesion: 0.47
-Nodes (3): ThreadTokenUsage, ThreadTokenUsageUpdatedNotification, TokenUsageBreakdown
-
 ### Community 1735 - "Community 1735"
 Cohesion: 0.67
 Nodes (3): pnpm lint, raw, status
 
 ### Community 1736 - "Community 1736"
-Cohesion: 0.47
-Nodes (3): TurnPlanStep, TurnPlanStepStatus, TurnPlanUpdatedNotification
+Cohesion: 0.5
+Nodes (3): $schema, title, type
 
 ### Community 1737 - "Community 1737"
 Cohesion: 0.67
@@ -8973,16 +8946,16 @@ Cohesion: 0.67
 Nodes (3): HookRunStatus, enum, type
 
 ### Community 1747 - "Community 1747"
-Cohesion: 0.47
-Nodes (3): WindowsSandboxSetupCompletedNotification, WindowsSandboxSetupMode, WindowsSandboxSetupStartParams
+Cohesion: 0.5
+Nodes (4): format, minimum, type, globScanMaxDepth
 
 ### Community 1748 - "Community 1748"
 Cohesion: 0.67
 Nodes (3): HookScope, enum, type
 
 ### Community 1749 - "Community 1749"
-Cohesion: 0.67
-Nodes (3): format, type, displayOrder
+Cohesion: 0.5
+Nodes (4): description, enum, type, AutoReviewDecisionSource
 
 ### Community 1750 - "Community 1750"
 Cohesion: 0.67
@@ -9177,8 +9150,8 @@ Cohesion: 0.67
 Nodes (3): searchTerm, description, type
 
 ### Community 1798 - "Community 1798"
-Cohesion: 0.47
-Nodes (3): CommandExecParams, CommandExecResizeParams, CommandExecTerminalSize
+Cohesion: 0.5
+Nodes (4): GuardianApprovalReviewStatus, description, enum, type
 
 ### Community 1799 - "Community 1799"
 Cohesion: 0.5
@@ -9318,7 +9291,7 @@ Nodes (5): id, phase, status, title, verificationState
 
 ### Community 1833 - "Community 1833"
 Cohesion: 0.22
-Nodes (9): command, passed, raw, command, passed, raw, verification, taskValidate (+1 more)
+Nodes (9): command, passed, raw, command, passed, raw, verification, build (+1 more)
 
 ### Community 1834 - "Community 1834"
 Cohesion: 0.67
@@ -9457,8 +9430,8 @@ Cohesion: 0.67
 Nodes (3): NonSteerableTurnKind, enum, type
 
 ### Community 1868 - "Community 1868"
-Cohesion: 0.67
-Nodes (3): TurnStatus, enum, type
+Cohesion: 0.5
+Nodes (4): Backup Procedure, Start Deployment, Docker Compose, Upgrade Procedure
 
 ### Community 1869 - "Community 1869"
 Cohesion: 0.67
@@ -9485,8 +9458,8 @@ Cohesion: 0.67
 Nodes (3): TurnStatus, enum, type
 
 ### Community 1875 - "Community 1875"
-Cohesion: 0.53
-Nodes (4): assertCondition(), main(), normalizeVersion(), readArg()
+Cohesion: 0.5
+Nodes (4): command, passed, raw, taskValidate
 
 ### Community 1876 - "Community 1876"
 Cohesion: 0.67
@@ -9542,7 +9515,11 @@ Nodes (3): MessagePhase, description, oneOf
 
 ### Community 2002 - "Community 2002"
 Cohesion: 0.5
-Nodes (4): McpElicitationLegacyTitledEnumSchema, additionalProperties, required, type
+Nodes (4): GuardianUserAuthorization, description, enum, type
+
+### Community 2003 - "Community 2003"
+Cohesion: 0.5
+Nodes (4): ReasoningEffort, description, enum, type
 
 ### Community 2004 - "Community 2004"
 Cohesion: 0.4
@@ -9551,10 +9528,6 @@ Nodes (5): description, oneOf, $schema, title, ClientRequest
 ### Community 2005 - "Community 2005"
 Cohesion: 0.67
 Nodes (3): description, type, cursor
-
-### Community 2006 - "Community 2006"
-Cohesion: 0.4
-Nodes (5): $ref, $ref, properties, error, id
 
 ### Community 2007 - "Community 2007"
 Cohesion: 0.4
@@ -9577,8 +9550,8 @@ Cohesion: 0.4
 Nodes (4): blockingFindings, residualRisks, taskId, verdict
 
 ### Community 2012 - "Community 2012"
-Cohesion: 0.5
-Nodes (4): Tool, description, required, type
+Cohesion: 0.67
+Nodes (3): pnpm --filter @happytg/miniapp test, raw, status
 
 ### Community 2013 - "Community 2013"
 Cohesion: 0.67
@@ -9590,15 +9563,19 @@ Nodes (4): HappyTG 0.4.26, Highlights, Safety Notes, Verification
 
 ### Community 2015 - "Community 2015"
 Cohesion: 0.67
-Nodes (3): HookExecutionMode, enum, type
+Nodes (3): description, type, AbsolutePathBuf
 
 ### Community 2016 - "Community 2016"
 Cohesion: 0.67
-Nodes (3): HookScope, enum, type
+Nodes (3): HookRunSummary, required, type
 
 ### Community 2017 - "Community 2017"
 Cohesion: 0.67
-Nodes (3): McpToolCallStatus, enum, type
+Nodes (3): description, type, AbsolutePathBuf
+
+### Community 2018 - "Community 2018"
+Cohesion: 0.67
+Nodes (3): FileSystemAccessMode, enum, type
 
 ### Community 2019 - "Community 2019"
 Cohesion: 0.67
@@ -9606,15 +9583,31 @@ Nodes (3): MessagePhase, description, oneOf
 
 ### Community 2020 - "Community 2020"
 Cohesion: 0.67
-Nodes (3): description, type, archived
+Nodes (3): sortDirection, anyOf, description
+
+### Community 2021 - "Community 2021"
+Cohesion: 0.67
+Nodes (3): description, type, model
 
 ### Community 2022 - "Community 2022"
 Cohesion: 0.67
-Nodes (3): NonSteerableTurnKind, enum, type
+Nodes (3): SandboxMode, enum, type
+
+### Community 2023 - "Community 2023"
+Cohesion: 0.67
+Nodes (3): enum, type, CollabAgentToolCallStatus
 
 ### Community 2024 - "Community 2024"
 Cohesion: 0.67
-Nodes (3): TurnStatus, enum, type
+Nodes (3): McpToolCallStatus, enum, type
+
+### Community 2026 - "Community 2026"
+Cohesion: 0.67
+Nodes (3): ServiceTier, enum, type
+
+### Community 2027 - "Community 2027"
+Cohesion: 0.67
+Nodes (3): MessagePhase, description, oneOf
 
 ### Community 2028 - "Community 2028"
 Cohesion: 0.4
@@ -9624,10 +9617,6 @@ Nodes (4): HappyTG 0.4.27, Highlights, Safety Notes, Verification
 Cohesion: 0.5
 Nodes (3): Fixed, Problems, Residual
 
-### Community 2030 - "Community 2030"
-Cohesion: 0.5
-Nodes (3): $schema, title, type
-
 ### Community 2031 - "Community 2031"
 Cohesion: 0.5
 Nodes (4): McpElicitationTitledMultiSelectEnumSchema, additionalProperties, required, type
@@ -9636,25 +9625,9 @@ Nodes (4): McpElicitationTitledMultiSelectEnumSchema, additionalProperties, requ
 Cohesion: 0.5
 Nodes (3): Fixed, Problems, Residual
 
-### Community 2033 - "Community 2033"
-Cohesion: 0.5
-Nodes (4): GuardianUserAuthorization, description, enum, type
-
 ### Community 2034 - "Community 2034"
 Cohesion: 0.5
 Nodes (4): command, passed, raw, testUnit
-
-### Community 2035 - "Community 2035"
-Cohesion: 0.5
-Nodes (4): default, description, type, persistExtendedHistory
-
-### Community 2036 - "Community 2036"
-Cohesion: 0.67
-Nodes (3): pnpm build, raw, status
-
-### Community 2037 - "Community 2037"
-Cohesion: 0.67
-Nodes (3): HookOutputEntryKind, enum, type
 
 ### Community 2038 - "Community 2038"
 Cohesion: 0.67
@@ -9663,14 +9636,6 @@ Nodes (3): format, type, durationMs
 ### Community 2039 - "Community 2039"
 Cohesion: 0.67
 Nodes (3): HookExecutionMode, enum, type
-
-### Community 2040 - "Community 2040"
-Cohesion: 0.67
-Nodes (3): GuardianCommandSource, enum, type
-
-### Community 2041 - "Community 2041"
-Cohesion: 0.67
-Nodes (3): NetworkApprovalProtocol, enum, type
 
 ### Community 2042 - "Community 2042"
 Cohesion: 0.67
@@ -9688,14 +9653,6 @@ Nodes (3): ServiceTier, enum, type
 Cohesion: 0.67
 Nodes (3): sortKey, anyOf, description
 
-### Community 2046 - "Community 2046"
-Cohesion: 0.5
-Nodes (4): command, passed, raw, build
-
-### Community 2047 - "Community 2047"
-Cohesion: 0.5
-Nodes (4): type, additionalProperties, type, featureRequirements
-
 ### Community 2048 - "Community 2048"
 Cohesion: 0.67
 Nodes (3): description, type, mockExperimentalField
@@ -9707,18 +9664,6 @@ Nodes (3): anyOf, description, permissionProfile
 ### Community 2050 - "Community 2050"
 Cohesion: 0.5
 Nodes (4): ReasoningEffort, description, enum, type
-
-### Community 2051 - "Community 2051"
-Cohesion: 0.5
-Nodes (4): ModeKind, description, enum, type
-
-### Community 2052 - "Community 2052"
-Cohesion: 0.67
-Nodes (3): description, type, approvalId
-
-### Community 2053 - "Community 2053"
-Cohesion: 0.67
-Nodes (3): anyOf, description, networkApprovalContext
 
 ### Community 2055 - "Community 2055"
 Cohesion: 0.67
@@ -9744,18 +9689,6 @@ Nodes (3): description, type, excludeTurns
 Cohesion: 0.67
 Nodes (3): anyOf, description, cwd
 
-### Community 2061 - "Community 2061"
-Cohesion: 0.67
-Nodes (3): enum, type, CommandExecutionSource
-
-### Community 2062 - "Community 2062"
-Cohesion: 0.67
-Nodes (3): McpToolCallStatus, enum, type
-
-### Community 2063 - "Community 2063"
-Cohesion: 0.67
-Nodes (3): enum, type, CommandExecutionSource
-
 ## Ambiguous Edges - Review These
 - `Installation Process` → `State Cursor (state.json)`  [AMBIGUOUS]
   docs/quickstart.md · relation: conceptually_related_to
@@ -9763,9 +9696,9 @@ Nodes (3): enum, type, CommandExecutionSource
   docs/releases/0.3.10.md · relation: semantically_similar_to
 
 ## Knowledge Gaps
-- **13912 isolated node(s):** `$schema`, `dependsOn`, `outputs`, `cache`, `persistent` (+13907 more)
+- **13987 isolated node(s):** `$schema`, `dependsOn`, `outputs`, `cache`, `persistent` (+13982 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **119 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **117 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -9774,13 +9707,13 @@ _Questions this graph is uniquely positioned to answer:_
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
 - **What is the exact relationship between `Structured Failures` and `Telegram Input Handling`?**
   _Edge tagged AMBIGUOUS (relation: semantically_similar_to) - confidence is low._
-- **Why does `Changelog` connect `Community 125` to `Community 128`, `Community 67`, `Community 165`, `Community 38`, `Community 168`, `Community 171`, `Community 140`, `Community 139`, `Community 60`, `Community 179`, `Community 86`, `Community 87`, `Community 88`, `Community 121`, `Community 1334`, `Community 124`?**
+- **Why does `Changelog` connect `Community 140` to `Community 128`, `Community 67`, `Community 165`, `Community 168`, `Community 171`, `Community 139`, `Community 60`, `Community 179`, `Community 86`, `Community 87`, `Community 88`, `Community 121`, `Community 1334`, `Community 124`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `v0.3.20` connect `Community 60` to `Community 168`, `Community 125`?**
+- **Why does `v0.4.0` connect `Community 86` to `Community 128`, `Community 140`, `Community 60`, `Community 87`, `Community 124`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `v0.4.3` connect `Community 87` to `Community 124`, `Community 60`, `Community 125`, `Community 86`?**
+- **Why does `v0.4.5` connect `Community 128` to `Community 124`, `Community 140`, `Community 60`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Are the 30 inferred relationships involving `runHappyTGInstall()` (e.g. with `runInstallWithPnpmBehavior()` and `findUpwardFile()`) actually correct?**
   _`runHappyTGInstall()` has 30 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `$schema`, `dependsOn`, `outputs` to the rest of the system?**
-  _13938 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _14013 weakly-connected nodes found - possible documentation gaps or missing edges._
