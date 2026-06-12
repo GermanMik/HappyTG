@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.22
+
+### Fixed
+
+- Mini App session-detail SSR now renders the auth bridge instead of JSON `500 Internal server error` when the API returns `401` for a session detail fetch.
+- Legacy `/?screen=session&id=...` entrypoints use the same auth recovery path.
+
+### Verification
+
+- Release validation covers workspace version metadata, changelog, and release notes.
+- Scoped Mini App/shared tests, typecheck, lint, build, proof-bundle validation, and local/public Mini App live smoke passed.
+
 ## v0.4.21
 
 ### Fixed

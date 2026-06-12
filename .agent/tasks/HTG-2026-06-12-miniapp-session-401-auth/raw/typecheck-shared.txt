@@ -1,0 +1,4 @@
+
+> @happytg/shared@0.4.21 typecheck C:\Develop\Projects\HappyTG\packages\shared
+> tsc -p tsconfig.json --noEmit
+

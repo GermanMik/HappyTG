@@ -1,0 +1,5 @@
+Scope: 2 of 16 workspace projects
+apps/miniapp build$ tsc -p tsconfig.json
+packages/shared build$ tsc -p tsconfig.json
+packages/shared build: Done
+apps/miniapp build: Done

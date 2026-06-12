@@ -7,6 +7,7 @@ import {
   formatMiniAppPortConflictMessage,
   formatMiniAppPortConflictMessageDetailed,
   formatMiniAppPortReuseMessage,
+  MiniAppFetchError,
   resolveBrowserApiBaseUrlForRequest,
   startMiniAppServer
 } from "./index.js";
@@ -1094,6 +1095,75 @@ test("session page renders timeline, summary, and task link", async () => {
     assert.match(html, /SessionCreated/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("session page renders auth bridge when API session detail returns 401", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions/ses_expired?userId=usr_1") {
+        throw new MiniAppFetchError(pathname, 401, "Mini App session auth required");
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/session/ses_expired?userId=usr_1`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+    assert.match(html, /data-auth-status/);
+    assert.match(html, /Повторить подключение/);
+    assert.match(html, /window\.HAPPYTgNeedsAuth = true/);
+    assert.doesNotMatch(html, /Internal server error/);
+    assert.doesNotMatch(html, /Mini App fetch failed/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("legacy screen=session route renders auth bridge when API session detail returns 401", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions/ses_expired?userId=usr_1") {
+        throw new MiniAppFetchError(pathname, 401, "Mini App session auth required");
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/?screen=session&id=ses_expired&userId=usr_1`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+    assert.match(html, /data-auth-status/);
+    assert.match(html, /aria-current="page">Сессии/);
+    assert.doesNotMatch(html, /Internal server error/);
+    assert.doesNotMatch(html, /Mini App fetch failed/);
+  } finally {
+    await closeServer(server);
   }
 });
 

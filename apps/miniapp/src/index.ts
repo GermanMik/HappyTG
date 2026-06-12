@@ -45,7 +45,7 @@ export interface MiniAppDependencies {
   fetchJson<T>(pathname: string, init?: RequestInit): Promise<T>;
 }
 
-class MiniAppFetchError extends Error {
+export class MiniAppFetchError extends Error {
   constructor(
     readonly pathname: string,
     readonly status: number,
@@ -2449,6 +2449,65 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     html(res, 200, renderForRequest(req, title, renderAuthPending(), { needsAuth: true, navKey }));
     return false;
   };
+  const navKeyForUrl = (url: URL): NavKey => {
+    const screen = url.searchParams.get("screen");
+    if (url.pathname.startsWith("/codex") || screen === "codex" || screen === "codex-session") {
+      return "codex";
+    }
+    if (url.pathname.startsWith("/project") || url.pathname === "/projects" || url.pathname === "/new-task") {
+      return "projects";
+    }
+    if (url.pathname.startsWith("/approval") || url.pathname === "/approvals" || screen === "approvals") {
+      return "approvals";
+    }
+    if (url.pathname.startsWith("/host") || url.pathname === "/hosts") {
+      return "hosts";
+    }
+    if (url.pathname.startsWith("/report") || url.pathname.startsWith("/task")) {
+      return "reports";
+    }
+    if (url.pathname.startsWith("/session") || url.pathname.startsWith("/diff") || url.pathname.startsWith("/verify") || screen === "session" || screen === "diff" || screen === "verify" || screen === "sessions") {
+      return "sessions";
+    }
+    return "home";
+  };
+  const titleForAuthRetry = (url: URL): string => {
+    const navKey = navKeyForUrl(url);
+    switch (navKey) {
+      case "codex":
+        return "Codex";
+      case "sessions":
+        return "Сессии";
+      case "projects":
+        return "Проекты";
+      case "approvals":
+        return "Подтверждения";
+      case "hosts":
+        return "Хосты";
+      case "reports":
+        return "Отчеты";
+      case "home":
+      default:
+        return "HappyTG Mini App";
+    }
+  };
+  const renderUnauthorizedFetchAsAuthPending = (context: {
+    error: unknown;
+    req: { method?: string; headers: Record<string, string | string[] | undefined> };
+    res: Parameters<typeof text>[0];
+    url?: URL;
+  }): boolean => {
+    if (!(context.error instanceof MiniAppFetchError) || context.error.status !== 401 || !context.url || context.req.method?.toUpperCase() !== "GET") {
+      return false;
+    }
+
+    const navKey = navKeyForUrl(context.url);
+    html(context.res, 200, renderForRequest(context.req, titleForAuthRetry(context.url), renderAuthPending(), {
+      needsAuth: true,
+      navKey
+    }));
+    return true;
+  };
 
   return createJsonServer(
     [
@@ -2885,7 +2944,10 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions" }));
       })
     ],
-    logger
+    logger,
+    {
+      onError: renderUnauthorizedFetchAsAuthPending
+    }
   );
 }
 

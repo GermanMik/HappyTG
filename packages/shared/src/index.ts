@@ -811,6 +811,16 @@ export interface CorsOptions {
   maxAgeSeconds?: number;
 }
 
+export interface JsonServerOptions {
+  cors?: CorsOptions;
+  onError?: (context: {
+    error: unknown;
+    req: IncomingMessage;
+    res: ServerResponse;
+    url?: URL;
+  }) => Promise<boolean> | boolean;
+}
+
 export function parseCorsOriginList(value: string | undefined): string[] {
   return [...new Set((value ?? "")
     .split(",")
@@ -897,8 +907,9 @@ export async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
   return JSON.parse(raw) as T;
 }
 
-export function createJsonServer(routes: RouteDefinition[], logger: Logger, options?: { cors?: CorsOptions }) {
+export function createJsonServer(routes: RouteDefinition[], logger: Logger, options?: JsonServerOptions) {
   return createServer(async (req, res) => {
+    let url: URL | undefined;
     try {
       if (!req.url || !req.method) {
         json(res, 400, { error: "Bad request" });
@@ -922,22 +933,23 @@ export function createJsonServer(routes: RouteDefinition[], logger: Logger, opti
         return;
       }
 
-      const url = new URL(req.url, "http://localhost");
+      const requestUrl = new URL(req.url, "http://localhost");
+      url = requestUrl;
       const method = req.method.toUpperCase();
       const routeMatch = routes.find((candidate) => {
         if (candidate.method !== method) {
           return false;
         }
 
-        return candidate.pattern.test(url.pathname);
+        return candidate.pattern.test(requestUrl.pathname);
       });
 
       if (!routeMatch) {
-        json(res, 404, { error: "Not found", path: url.pathname });
+        json(res, 404, { error: "Not found", path: requestUrl.pathname });
         return;
       }
 
-      const match = routeMatch.pattern.exec(url.pathname);
+      const match = routeMatch.pattern.exec(requestUrl.pathname);
       const params: Record<string, string> = {};
       if (match) {
         routeMatch.paramNames.forEach((name, index) => {
@@ -945,8 +957,12 @@ export function createJsonServer(routes: RouteDefinition[], logger: Logger, opti
         });
       }
 
-      await routeMatch.handler({ req, res, url, params });
+      await routeMatch.handler({ req, res, url: requestUrl, params });
     } catch (error) {
+      if (await options?.onError?.({ error, req, res, url })) {
+        return;
+      }
+
       const serialized = error instanceof Error ? { message: error.message, stack: error.stack } : { error };
       logger.error("Unhandled HTTP error", serialized);
       json(res, 500, {

@@ -1,0 +1,59 @@
+Scope: 2 of 16 workspace projects
+apps/miniapp test$ tsx --test src/*.test.ts
+packages/shared test$ tsx --test src/*.test.ts
+packages/shared test: ✔ resolveHome and atomic file helpers round-trip data (44.6977ms)
+packages/shared test: ✔ resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides (1.2706ms)
+packages/shared test: ✔ resolveHome honors Windows home overrides with case-insensitive env keys (0.6699ms)
+packages/shared test: ✔ findExecutable searches PATH and appends Windows executable extensions (12.4713ms)
+packages/shared test: ✔ findExecutable honors Windows path and PATHEXT keys regardless of casing (7.3393ms)
+packages/shared test: ✔ findExecutable prefers Windows wrapper companions over bare shim files (5.5989ms)
+packages/shared test: ✔ findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys (8.6598ms)
+packages/shared test: ✔ loadHappyTGEnv fills missing values without overriding existing env (7.2619ms)
+packages/shared test: ✔ normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT (0.4809ms)
+packages/shared test: ✔ resolveMiniAppBaseUrl prefers local Mini App URL over local public API URL only when no public HTTPS URL is available (11.8344ms)
+packages/shared test: ✔ telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values (0.6406ms)
+packages/shared test: ✔ FileStateStore serializes concurrent updates through its queue (41.5558ms)
+packages/shared test: ✔ createJsonServer resolves route params and query data (76.4795ms)
+apps/miniapp test: ✔ mini app ready endpoint returns 503 when api health fails (110.9617ms)
+apps/miniapp test: ✔ mini app favicon route avoids browser 404 noise (22.3271ms)
+packages/shared test: ✔ createJsonServer returns a structured 500 when handler throws (34.176ms)
+packages/shared test: ✔ redactSecrets and createLogger remove sensitive metadata values (2.0186ms)
+packages/shared test: ✔ renderPrometheusMetrics returns stable service gauges (0.3878ms)
+apps/miniapp test: ✔ mini app entrypoint accepts HEAD probes from launch clients (20.6822ms)
+packages/shared test: ℹ tests 16
+packages/shared test: ℹ suites 0
+packages/shared test: ℹ pass 16
+packages/shared test: ℹ fail 0
+packages/shared test: ℹ cancelled 0
+packages/shared test: ℹ skipped 0
+packages/shared test: ℹ todo 0
+packages/shared test: ℹ duration_ms 1323.5081
+apps/miniapp test: ✔ overview page renders hosts, sessions, approvals, and tasks (57.2592ms)
+apps/miniapp test: ✔ mini app links honor the /miniapp reverse-proxy base path (31.5186ms)
+packages/shared test: Done
+apps/miniapp test: ✔ public reverse-proxied mini app uses same-origin browser API when local env points at localhost (21.4475ms)
+apps/miniapp test: ✔ local direct mini app keeps the explicit local API origin without reverse-proxy headers (0.3621ms)
+apps/miniapp test: ✔ auth-pending shell exposes retry-safe auth feedback controls (14.8417ms)
+apps/miniapp test: ✔ mini app forwards browser session cookie as bearer auth (13.7511ms)
+apps/miniapp test: ✔ codex panel renders source-aware Desktop and CLI sessions with disabled unsupported actions (41.349ms)
+apps/miniapp test: ✔ codex panel applies requested session sort order (14.8391ms)
+apps/miniapp test: ✔ mini app renders supported Desktop actions and forwards new Desktop task to API (44.1506ms)
+apps/miniapp test: ✔ task page renders scoped canonical artifacts (18.3269ms)
+apps/miniapp test: ✔ projects page renders workspaces and new task creates a Codex session (25.4162ms)
+apps/miniapp test: ✔ session page renders timeline, summary, and task link (21.3296ms)
+apps/miniapp test: ✔ session page renders auth bridge when API session detail returns 401 (9.1712ms)
+apps/miniapp test: ✔ legacy screen=session route renders auth bridge when API session detail returns 401 (8.9229ms)
+apps/miniapp test: ✔ approval page renders real authenticated action buttons (8.9738ms)
+apps/miniapp test: ✔ startMiniAppServer returns an actionable message when the port is already in use (5534.5295ms)
+apps/miniapp test: ✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (63.2915ms)
+apps/miniapp test: ✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (5.9826ms)
+apps/miniapp test: ✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (9.2633ms)
+apps/miniapp test: ℹ tests 22
+apps/miniapp test: ℹ suites 0
+apps/miniapp test: ℹ pass 22
+apps/miniapp test: ℹ fail 0
+apps/miniapp test: ℹ cancelled 0
+apps/miniapp test: ℹ skipped 0
+apps/miniapp test: ℹ todo 0
+apps/miniapp test: ℹ duration_ms 7232.6408
+apps/miniapp test: Done
