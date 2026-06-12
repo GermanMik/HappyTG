@@ -1,0 +1,56 @@
+[
+  {
+    "label": "api-limit-50",
+    "status": 200,
+    "elapsedMs": 2892,
+    "sessions": 50,
+    "timeout6000": false,
+    "unavailable": false,
+    "visible": null
+  },
+  {
+    "label": "api-limit-100",
+    "status": 200,
+    "elapsedMs": 4913,
+    "sessions": 100,
+    "timeout6000": false,
+    "unavailable": false,
+    "visible": null
+  },
+  {
+    "label": "api-limit-150",
+    "status": 200,
+    "elapsedMs": 6477,
+    "sessions": 150,
+    "timeout6000": false,
+    "unavailable": false,
+    "visible": null
+  },
+  {
+    "label": "api-limit-200",
+    "status": 200,
+    "elapsedMs": 8274,
+    "sessions": 200,
+    "timeout6000": false,
+    "unavailable": false,
+    "visible": null
+  },
+  {
+    "label": "mini-project-default",
+    "status": 200,
+    "elapsedMs": 5019,
+    "sessions": null,
+    "timeout6000": false,
+    "unavailable": false,
+    "visible": "71"
+  },
+  {
+    "label": "mini-project-200",
+    "status": 200,
+    "elapsedMs": 8219,
+    "sessions": null,
+    "timeout6000": false,
+    "unavailable": false,
+    "visible": "159"
+  }
+]

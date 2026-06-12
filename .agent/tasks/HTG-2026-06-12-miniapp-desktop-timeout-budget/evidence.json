@@ -1,0 +1,48 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-desktop-timeout-budget",
+  "status": "passed",
+  "finding": "Project-filtered Codex Desktop session views widened to limit=100 but still used the fragile 6000ms timeout budget.",
+  "change": [
+    "Desktop session fetches with limit >= 100 receive a scoped minimum 10000ms timeout.",
+    "Default unfiltered limit=50 Desktop session fetches keep configured/default timeout behavior.",
+    "A regression test covers the slow project-filtered limit=100 path.",
+    "Release metadata was bumped to 0.4.26."
+  ],
+  "validation": [
+    {
+      "command": "pnpm --filter @happytg/miniapp test",
+      "status": "passed",
+      "raw": "raw/test-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "status": "passed",
+      "raw": "raw/lint-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp build",
+      "status": "passed",
+      "raw": "raw/build-miniapp.txt"
+    },
+    {
+      "command": "pnpm release:check --version 0.4.26",
+      "status": "passed",
+      "raw": "raw/release-check.txt"
+    },
+    {
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml up -d --build miniapp",
+      "status": "passed",
+      "raw": "raw/docker-miniapp-rebuild.txt"
+    },
+    {
+      "command": "live Docker route smoke",
+      "status": "passed",
+      "raw": "raw/live-smoke.json"
+    }
+  ]
+}

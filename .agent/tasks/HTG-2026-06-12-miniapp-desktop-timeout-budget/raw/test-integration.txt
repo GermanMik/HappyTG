@@ -1,0 +1,1 @@
+No separate integration suite was required for this scoped Mini App fetch-timeout change. Live Docker route smoke is recorded in raw/live-smoke.json.

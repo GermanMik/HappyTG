@@ -749,6 +749,83 @@ test("codex project view widens Desktop session window and keeps unscoped past s
   }
 });
 
+test("codex project view gives widened Desktop session fetch an extended timeout budget", async () => {
+  await withEnv({ HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS: "10" }, async () => {
+    const server = createMiniAppServer({
+      async fetchJson(pathname, init) {
+        if (pathname === "/health") {
+          return { ok: true } as never;
+        }
+        if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+          return { sessions: [] } as never;
+        }
+        if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+          return {
+            projects: [
+              {
+                id: "cdp_1",
+                label: "HappyTG",
+                path: "C:/Develop/Projects/HappyTG",
+                source: "codex-desktop",
+                active: true
+              }
+            ]
+          } as never;
+        }
+        if (pathname === "/api/v1/codex-desktop/sessions?limit=100&userId=usr_1") {
+          const signal = init?.signal;
+          await new Promise((resolve, reject) => {
+            const abort = () => {
+              const error = new Error("This operation was aborted");
+              error.name = "AbortError";
+              reject(error);
+            };
+            if (signal?.aborted) {
+              abort();
+              return;
+            }
+            signal?.addEventListener("abort", abort, { once: true });
+            setTimeout(resolve, 50);
+          });
+          return {
+            sessions: [
+              {
+                id: "desktop-slow-project",
+                title: "Slow project Desktop session",
+                updatedAt: "2026-04-28T09:00:00.000Z",
+                status: "recent",
+                source: "codex-desktop",
+                canResume: false,
+                canContinue: false,
+                canStop: false,
+                canCreateTask: false
+              }
+            ]
+          } as never;
+        }
+        throw new Error(`Unexpected path ${pathname}`);
+      }
+    });
+
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Mini App server did not bind to a TCP port");
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-desktop&project=C%3A%2FDevelop%2FProjects%2FHappyTG`);
+      const html = await response.text();
+
+      assert.equal(response.status, 200);
+      assert.match(html, /Slow project Desktop session/);
+      assert.doesNotMatch(html, /Desktop sessions unavailable: request timed out after 10ms/);
+    } finally {
+      await closeServer(server);
+    }
+  });
+});
+
 test("mini app renders supported Desktop actions and forwards new Desktop task to API", async () => {
   const calls: Array<{ pathname: string; init?: RequestInit }> = [];
   const desktopSession = {

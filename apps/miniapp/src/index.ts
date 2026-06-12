@@ -2400,6 +2400,11 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
   const fetchForRequest = <T>(req: { headers: Record<string, string | string[] | undefined> }, url: URL, pathname: string) => dependencies.fetchJson<T>(withUser(pathname, url), authInit(req));
   const defaultCodexFetchTimeoutMs = 6000;
   const codexFetchTimeoutMs = Number(process.env.HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS ?? String(defaultCodexFetchTimeoutMs));
+  const effectiveCodexFetchTimeoutMs = () => Number.isFinite(codexFetchTimeoutMs) && codexFetchTimeoutMs > 0 ? codexFetchTimeoutMs : defaultCodexFetchTimeoutMs;
+  const desktopSessionsFetchTimeoutMs = (limit: number) => {
+    const baseTimeoutMs = effectiveCodexFetchTimeoutMs();
+    return limit >= 100 ? Math.max(baseTimeoutMs, 10_000) : baseTimeoutMs;
+  };
   const describeFetchError = (error: unknown, timeoutMs: number): string | undefined => {
     if (!(error instanceof Error)) {
       return "Unknown mini app fetch error.";
@@ -2418,7 +2423,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     fallback: T,
     options?: { timeoutMs?: number }
   ): Promise<{ ok: boolean; data: T; error?: string }> => {
-    const timeoutMs = options?.timeoutMs ?? (Number.isFinite(codexFetchTimeoutMs) && codexFetchTimeoutMs > 0 ? codexFetchTimeoutMs : defaultCodexFetchTimeoutMs);
+    const timeoutMs = options?.timeoutMs ?? effectiveCodexFetchTimeoutMs();
     const controller = new AbortController();
     const timer = setTimeout(() => {
       controller.abort();
@@ -2476,7 +2481,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       fetchForRequestWithFallback<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions", { sessions: [] }),
       fetchForRequestWithFallback<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects", { projects: [] }),
       fetchForRequestWithFallback<{ sessions: CodexDesktopSession[] }>(req, url, `/api/v1/codex-desktop/sessions?limit=${desktopSessionLimit}`, { sessions: [] }, {
-        timeoutMs: desktopSessionLimit > 100 ? Math.max(defaultCodexFetchTimeoutMs, 10_000) : undefined
+        timeoutMs: desktopSessionsFetchTimeoutMs(desktopSessionLimit)
       })
     ]);
     return {
