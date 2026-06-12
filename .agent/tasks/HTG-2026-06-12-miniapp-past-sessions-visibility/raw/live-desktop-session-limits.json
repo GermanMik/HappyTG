@@ -1,0 +1,6 @@
+[
+  { "limit": 50, "status": 200, "elapsedMs": 2765, "sessions": 50, "emptyProjectPath": 35 },
+  { "limit": 100, "status": 200, "elapsedMs": 4780, "sessions": 100, "emptyProjectPath": 71 },
+  { "limit": 150, "status": 200, "elapsedMs": 6273, "sessions": 150, "emptyProjectPath": 113 },
+  { "limit": 200, "status": 200, "elapsedMs": 8092, "sessions": 200, "emptyProjectPath": 159 }
+]

@@ -1,0 +1,33 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-past-sessions-visibility",
+  "status": "passed",
+  "finding": "Mini App project-filtered Codex Desktop views could hide past sessions by filtering only the first bounded Desktop session window.",
+  "change": [
+    "Project-filtered Codex Desktop views request limit=100.",
+    "Explicit Desktop session limits are clamped to 50..200.",
+    "Explicit limit>100 reads receive a larger timeout budget.",
+    "Project-filtered views include unscoped Desktop sessions with a visible note."
+  ],
+  "validation": [
+    {
+      "command": "pnpm --filter @happytg/miniapp test",
+      "status": "passed",
+      "raw": "raw/test-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "status": "passed",
+      "raw": "raw/lint-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp build",
+      "status": "passed",
+      "raw": "raw/build-miniapp.txt"
+    }
+  ]
+}

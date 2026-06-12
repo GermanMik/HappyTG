@@ -1,0 +1,9 @@
+> @happytg/miniapp@0.4.25 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+tests 24
+pass 24
+fail 0
+
+Relevant regression:
+- codex project view widens Desktop session window and keeps unscoped past sessions visible
