@@ -1,0 +1,8 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-auth-reload-loop",
+  "verdict": "pass",
+  "blockingFindings": [],
+  "residualRisks": [
+    "Fresh auth still depends on Telegram initData being available in the WebView."
+  ]
+}

@@ -1,0 +1,3 @@
+NAME                IMAGE             SERVICE   STATUS                    PORTS
+happytg-api-1       happytg-api       api       Up (healthy)              0.0.0.0:4001->4000/tcp
+happytg-miniapp-1   happytg-miniapp   miniapp   Up (healthy)              0.0.0.0:3008->3001/tcp

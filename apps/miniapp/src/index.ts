@@ -479,7 +479,7 @@ type NavKey = "home" | "codex" | "sessions" | "projects" | "approvals" | "hosts"
 export function renderPage(
   title: string,
   body: string,
-  options?: { basePath?: string; needsAuth?: boolean; browserApiBaseUrl?: string; navKey?: NavKey }
+  options?: { basePath?: string; needsAuth?: boolean; authResetSession?: boolean; browserApiBaseUrl?: string; navKey?: NavKey }
 ): string {
   const basePath = normalizeBasePath(options?.basePath);
   const page = `<!doctype html>
@@ -983,6 +983,7 @@ export function renderPage(
       window.HAPPYTgApiBase = ${JSON.stringify(options?.browserApiBaseUrl ?? configuredBrowserApiBaseUrl)};
       window.HAPPYTgMiniAppBasePath = ${JSON.stringify(basePath)};
       window.HAPPYTgNeedsAuth = ${JSON.stringify(Boolean(options?.needsAuth))};
+      window.HAPPYTgResetSession = ${JSON.stringify(Boolean(options?.authResetSession))};
       window.HAPPYTgSessionCookie = ${JSON.stringify(miniAppSessionCookieName)};
       (function () {
         var key = "happytg:miniapp:draft:v1";
@@ -1071,6 +1072,12 @@ export function renderPage(
           var secure = location.protocol === "https:" ? "; secure" : "";
           document.cookie = window.HAPPYTgSessionCookie + "=" + encodeURIComponent(session.token) + "; path=" + cookiePath + "; max-age=" + maxAge + "; samesite=lax" + secure;
         }
+        function clearSession() {
+          localStorage.removeItem(sessionKey);
+          var cookiePath = window.HAPPYTgMiniAppBasePath || "/";
+          var secure = location.protocol === "https:" ? "; secure" : "";
+          document.cookie = window.HAPPYTgSessionCookie + "=; path=" + cookiePath + "; max-age=0; samesite=lax" + secure;
+        }
         function token() {
           return readSession()?.token;
         }
@@ -1101,6 +1108,9 @@ export function renderPage(
           location.reload();
         });
         var webApp = window.Telegram && window.Telegram.WebApp;
+        if (window.HAPPYTgResetSession) {
+          clearSession();
+        }
         var savedSession = readSession();
         var authRequestStarted = false;
         var initDataWaitStartedAt = 0;
@@ -2311,6 +2321,11 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     return userId ? `${pathname}${pathname.includes("?") ? "&" : "?"}userId=${encodeURIComponent(userId)}` : pathname;
   };
   const basePathFor = (req: { headers: Record<string, string | string[] | undefined> }) => normalizeBasePath(req.headers["x-forwarded-prefix"] ?? process.env.HAPPYTG_MINIAPP_BASE_PATH);
+  const expiredSessionCookieHeaders = (req: { headers: Record<string, string | string[] | undefined> }) => {
+    const cookiePath = basePathFor(req) || "/";
+    const expired = `${miniAppSessionCookieName}=; path=${cookiePath}; max-age=0; samesite=lax`;
+    return [expired, `${expired}; secure`];
+  };
   const hasSessionContext = (req: { headers: Record<string, string | string[] | undefined> }, url: URL) => Boolean(miniAppSessionToken(req.headers) || url.searchParams.get("userId"));
   const authInit = (req: { headers: Record<string, string | string[] | undefined> }): RequestInit | undefined => {
     const sessionToken = miniAppSessionToken(req.headers);
@@ -2433,10 +2448,11 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     req: { headers: Record<string, string | string[] | undefined> },
     title: string,
     body: string,
-    options?: { needsAuth?: boolean; navKey?: NavKey }
+    options?: { needsAuth?: boolean; authResetSession?: boolean; navKey?: NavKey }
   ) => renderPage(title, body, {
     basePath: basePathFor(req),
     needsAuth: options?.needsAuth,
+    authResetSession: options?.authResetSession,
     navKey: options?.navKey,
     browserApiBaseUrl: resolveBrowserApiBaseUrlForRequest(req.headers)
   });
@@ -2507,8 +2523,10 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     }
 
     const navKey = navKeyForUrl(context.url);
+    context.res.setHeader("set-cookie", expiredSessionCookieHeaders(context.req));
     html(context.res, 200, renderForRequest(context.req, titleForAuthRetry(context.url), renderAuthPending(), {
       needsAuth: true,
+      authResetSession: true,
       navKey
     }));
     return true;

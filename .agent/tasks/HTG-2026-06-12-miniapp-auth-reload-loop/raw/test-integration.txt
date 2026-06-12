@@ -1,0 +1,3 @@
+Not applicable for this scoped Mini App auth recovery hotfix.
+
+The relevant integration-facing behavior was covered by the live public stale-cookie pre-fix probe and the Mini App HTTP regression tests.

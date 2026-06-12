@@ -1,0 +1,38 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-auth-reload-loop",
+  "status": "passed",
+  "finding": "Stale Mini App session state could cause an auth bridge reload loop after API session detail returned 401.",
+  "change": [
+    "Added authResetSession rendering support.",
+    "Cleared localStorage and cookie before saved-session reload logic.",
+    "Expired the Mini App session cookie on 401 auth bridge responses.",
+    "Added regression assertions for reset flag, script ordering, and Set-Cookie expiry."
+  ],
+  "validation": [
+    {
+      "command": "pnpm --filter @happytg/miniapp test",
+      "status": "passed",
+      "raw": "raw/test-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "status": "passed",
+      "raw": "raw/typecheck-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "status": "passed",
+      "raw": "raw/lint-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp build",
+      "status": "passed",
+      "raw": "raw/build-miniapp.txt"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "raw": "raw/diff-check.txt"
+    }
+  ]
+}

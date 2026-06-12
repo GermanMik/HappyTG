@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.4.24
+
+### Fixed
+
+- Mini App session detail auth recovery no longer loops on stale local Mini App session state after the API returns `401`.
+- The `401` auth bridge now clears persisted Mini App session state and expires `happytg_miniapp_session` before re-authentication.
+
+### Verification
+
+- Scoped Mini App test, typecheck, lint, build, Graphify query evidence, and stale-cookie public probe passed.
+
 ## v0.4.23
 
 ### Fixed
