@@ -1,0 +1,8 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-project-tasks-route",
+  "verdict": "pass",
+  "blockingFindings": [],
+  "residualRisks": [
+    "Future Codex-panel links must keep routePath context when the panel is rendered under /projects/tasks."
+  ]
+}

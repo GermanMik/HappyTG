@@ -1,0 +1,13 @@
+{
+  "projectsStatus": 200,
+  "taskStatus": 200,
+  "projectsContainsProjectsTasksLink": true,
+  "projectsTaskLinkPreservesUserId": true,
+  "projectsHasNoProjectScopedCodexHref": true,
+  "projectsNavActive": true,
+  "codexNavInactive": true,
+  "formActionProjectsTasks": true,
+  "hiddenUserIdPresent": true,
+  "resetLinkProjectsWithUserId": true,
+  "selectedHrefStartsWithProjectsTasks": true
+}

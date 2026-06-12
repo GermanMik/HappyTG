@@ -1,0 +1,14 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-project-tasks-route",
+  "phase": "complete",
+  "verificationState": "passed",
+  "steps": [
+    { "name": "init", "status": "complete" },
+    { "name": "freeze/spec", "status": "complete" },
+    { "name": "build", "status": "complete" },
+    { "name": "evidence", "status": "complete" },
+    { "name": "fresh verify", "status": "complete" },
+    { "name": "minimal fix", "status": "complete" },
+    { "name": "complete", "status": "complete" }
+  ]
+}

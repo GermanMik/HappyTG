@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.4.28
+
+### Fixed
+
+- Mini App project cards now open `Прошедшие задачи` through `/projects/tasks` so the bottom navigation stays on `Проекты` instead of switching to `Codex`.
+- The project-scoped past-task route reuses the Codex history panel while preserving project context for search, source switches, and Desktop load-more links.
+- Direct `?userId=` Mini App navigation now stays authenticated across project past-task links and the history-panel GET form.
+- Existing `/codex` history behavior stays unchanged for users who enter from the Codex tab.
+
+### Verification
+
+- Scoped Mini App test, typecheck, lint, build, release validation, task validation, Docker rebuild, and live Projects-route smoke passed.
+
 ## v0.4.27
 
 ### Fixed
