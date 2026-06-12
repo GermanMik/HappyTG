@@ -1,0 +1,39 @@
+Traversal: BFS depth=2 | Start: ['sessions', 'sessions', 'sessions'] | 20 nodes found
+
+NODE index.ts [src=apps/miniapp/src/index.ts loc=L1 community=6]
+NODE createMiniAppServer() [src=apps/miniapp/src/index.ts loc=L2378 community=24]
+NODE miniapp-preview-api.mjs [src=.agent/tasks/HTG-2026-05-03-usability-release-0.4.12/raw/miniapp-preview-api.mjs loc=L1 community=1235]
+NODE miniapp-visual-server.ts [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L1 community=6]
+NODE counts [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/live-store-codex-sessions.json loc=L2 community=962]
+NODE live-store-codex-sessions.json [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/live-store-codex-sessions.json loc=L1 community=962]
+NODE users [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/live-store-codex-sessions.json loc=L6 community=962]
+NODE dashboard [src=.agent/tasks/HTG-2026-05-03-usability-release-0.4.12/raw/miniapp-preview-api.mjs loc=L5 community=1235]
+NODE sessions [src=.agent/tasks/HTG-2026-05-03-usability-release-0.4.12/raw/miniapp-preview-api.mjs loc=L79 community=1235]
+NODE port [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L86 community=6]
+NODE workspaces [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/live-store-codex-sessions.json loc=L4 community=962]
+NODE port [src=.agent/tasks/HTG-2026-05-03-usability-release-0.4.12/raw/miniapp-preview-api.mjs loc=L3 community=1235]
+NODE url [src=.agent/tasks/HTG-2026-05-03-usability-release-0.4.12/raw/miniapp-preview-api.mjs loc=L106 community=1235]
+NODE sessions [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L3 community=6]
+NODE sessions [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/live-store-codex-sessions.json loc=L5 community=962]
+NODE hosts [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/live-store-codex-sessions.json loc=L3 community=962]
+NODE approvals [src=.agent/tasks/HTG-2026-05-03-usability-release-0.4.12/raw/miniapp-preview-api.mjs loc=L80 community=1235]
+NODE server [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L34 community=6]
+NODE projects [src=.agent/tasks/HTG-2026-04-22-release-042-miniapp-port-projects/raw/miniapp-visual-server.ts loc=L19 community=6]
+NODE sendJson() [src=.agent/tasks/HTG-2026-05-03-usability-release-0.4.12/raw/miniapp-preview-api.mjs loc=L97 community=1235]
+EDGE sessions --contains [EXTRACTED]--> miniapp-preview-api.mjs
+EDGE sessions --contains [EXTRACTED]--> counts
+EDGE sessions --contains [EXTRACTED]--> miniapp-visual-server.ts
+EDGE miniapp-preview-api.mjs --contains [EXTRACTED]--> port
+EDGE miniapp-preview-api.mjs --contains [EXTRACTED]--> dashboard
+EDGE miniapp-preview-api.mjs --contains [EXTRACTED]--> approvals
+EDGE miniapp-preview-api.mjs --contains [EXTRACTED]--> sendJson()
+EDGE miniapp-preview-api.mjs --contains [EXTRACTED]--> url
+EDGE counts --contains [EXTRACTED]--> live-store-codex-sessions.json
+EDGE counts --contains [EXTRACTED]--> hosts
+EDGE counts --contains [EXTRACTED]--> workspaces
+EDGE counts --contains [EXTRACTED]--> users
+EDGE miniapp-visual-server.ts --imports_from [EXTRACTED context=import]--> index.ts
+EDGE miniapp-visual-server.ts --imports [EXTRACTED context=import]--> createMiniAppServer()
+EDGE miniapp-visual-server.ts --contains [EXTRACTED]--> projects
+EDGE miniapp-visual-server.ts --contains [EXTRACTED]--> server
+EDGE miniapp-visual-server.ts --contains [EXTRACTED]--> port

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.4.27
+
+### Fixed
+
+- Mini App project-filtered Codex Desktop views now show only sessions that belong to the selected project.
+- Unscoped Desktop sessions are no longer included in project-filtered results, so the `Codex Desktop did not attach a project path...` notice is removed from that path.
+- Project-filtered Codex views display at most `5` session cards and do not expose the `Показать до 200 Desktop sessions` expansion action.
+
+### Verification
+
+- Scoped Mini App test, typecheck, lint, build, release validation, task validation, Docker rebuild, and live project-route smoke passed.
+
 ## v0.4.26
 
 ### Fixed

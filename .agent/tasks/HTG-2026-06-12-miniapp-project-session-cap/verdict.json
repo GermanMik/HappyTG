@@ -1,0 +1,8 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-project-session-cap",
+  "verdict": "pass",
+  "blockingFindings": [],
+  "residualRisks": [
+    "Past Codex Desktop sessions with no project identity cannot be safely shown inside a selected-project view."
+  ]
+}
