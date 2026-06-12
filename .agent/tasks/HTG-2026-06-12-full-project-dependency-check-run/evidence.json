@@ -1,0 +1,42 @@
+{
+  "taskId": "HTG-2026-06-12-full-project-dependency-check-run",
+  "criteria": [
+    {
+      "criterion": "Dependency inventory and baseline checks captured.",
+      "artifacts": [
+        "raw/dependency-inventory.txt",
+        "raw/package-manager.txt",
+        "raw/audit.txt",
+        "raw/outdated.txt"
+      ]
+    },
+    {
+      "criterion": "Full lint/typecheck/test/build/doctor/verify/task validation executed.",
+      "artifacts": [
+        "raw/lint.txt",
+        "raw/typecheck.txt",
+        "raw/test-unit.txt",
+        "raw/test-integration.txt",
+        "raw/build.txt",
+        "raw/doctor.txt",
+        "raw/verify.txt",
+        "raw/task-validate.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "raw/dependency-inventory.txt",
+    "raw/package-manager.txt",
+    "raw/audit.txt",
+    "raw/outdated.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/build.txt",
+    "raw/doctor.txt",
+    "raw/verify.txt",
+    "raw/task-validate.txt"
+  ],
+  "generatedAt": "2026-06-12T18:37:39.858Z"
+}
