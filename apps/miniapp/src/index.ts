@@ -2462,6 +2462,12 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
       route("GET", "/favicon.ico", async ({ res }) => {
         text(res, 204, "");
       }),
+      route("HEAD", "/", async ({ res }) => {
+        res.statusCode = 200;
+        res.setHeader("content-type", "text/html; charset=utf-8");
+        res.setHeader("x-happytg-service", "miniapp");
+        res.end();
+      }),
       route("GET", "/ready", async ({ res }) => {
         try {
           await dependencies.fetchJson<{ ok: boolean }>("/health");

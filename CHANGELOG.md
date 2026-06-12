@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.4.20
+
+### Fixed
+
+- Mini App entrypoint now returns a successful `HEAD /` response with HappyTG Mini App identity headers so Telegram/WebView launch probes do not see a 404 before opening the app.
+
+### Verification
+
+- Added a Mini App HTTP regression test for `HEAD /` launch probes.
+- Release validation covers workspace version metadata, changelog, and release notes.
+
 ## v0.4.19
 
 ### Added
