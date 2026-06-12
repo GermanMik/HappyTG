@@ -1,0 +1,5 @@
+Scope: 2 of 16 workspace projects
+apps/miniapp lint$ tsc -p tsconfig.json --noEmit
+packages/shared lint$ tsc -p tsconfig.json --noEmit
+packages/shared lint: Done
+apps/miniapp lint: Done

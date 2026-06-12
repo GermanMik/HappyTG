@@ -1,0 +1,22 @@
+{
+  "task_id": "HTG-2026-06-12-miniapp-session-401-auth",
+  "verdict": "passed",
+  "blocking_findings": [],
+  "checks": [
+    {
+      "name": "session-detail-401",
+      "ok": true,
+      "detail": "Mini App GET routes render the auth bridge when API session detail returns 401."
+    },
+    {
+      "name": "validation",
+      "ok": true,
+      "detail": "Scoped Mini App/shared test, typecheck, lint, build, diff check, task validation, and release check for 0.4.22 passed."
+    },
+    {
+      "name": "live-smoke",
+      "ok": true,
+      "detail": "Local and public live session URL returned 200 HTML auth bridge without internal error text."
+    }
+  ]
+}

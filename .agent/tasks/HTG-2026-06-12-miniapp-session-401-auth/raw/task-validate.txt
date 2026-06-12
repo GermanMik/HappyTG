@@ -1,0 +1,9 @@
+
+> happytg@0.4.22 happytg C:\Develop\Projects\HappyTG
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-06-12-miniapp-session-401-auth"
+
+Task: HTG-2026-06-12-miniapp-session-401-auth
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-06-12-miniapp-session-401-auth
+Validation: ok
+Phase: complete
+Verification: passed

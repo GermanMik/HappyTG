@@ -1,0 +1,34 @@
+
+> @happytg/miniapp@0.4.21 test C:\Develop\Projects\HappyTG\apps\miniapp
+> tsx --test src/*.test.ts
+
+✔ mini app ready endpoint returns 503 when api health fails (110.814ms)
+✔ mini app favicon route avoids browser 404 noise (45.4663ms)
+✔ mini app entrypoint accepts HEAD probes from launch clients (35.4266ms)
+✔ overview page renders hosts, sessions, approvals, and tasks (103.3969ms)
+✔ mini app links honor the /miniapp reverse-proxy base path (19.8716ms)
+✔ public reverse-proxied mini app uses same-origin browser API when local env points at localhost (39.7241ms)
+✔ local direct mini app keeps the explicit local API origin without reverse-proxy headers (0.3911ms)
+✔ auth-pending shell exposes retry-safe auth feedback controls (17.2119ms)
+✔ mini app forwards browser session cookie as bearer auth (13.6773ms)
+✔ codex panel renders source-aware Desktop and CLI sessions with disabled unsupported actions (32.212ms)
+✔ codex panel applies requested session sort order (12.5817ms)
+✔ mini app renders supported Desktop actions and forwards new Desktop task to API (35.7005ms)
+✔ task page renders scoped canonical artifacts (8.8984ms)
+✔ projects page renders workspaces and new task creates a Codex session (30.6074ms)
+✔ session page renders timeline, summary, and task link (34.3484ms)
+✔ session page renders auth bridge when API session detail returns 401 (30.1244ms)
+✔ legacy screen=session route renders auth bridge when API session detail returns 401 (9.6378ms)
+✔ approval page renders real authenticated action buttons (8.7191ms)
+✔ startMiniAppServer returns an actionable message when the port is already in use (5550.5556ms)
+✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (46.9752ms)
+✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (6.7744ms)
+✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (8.102ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7194.7078

@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-06-12-miniapp-session-401-auth",
+  "sessionId": "ses_HTG_2026_06_12_miniapp_session_401_auth",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Mini App session 401 auth bridge",
+  "acceptanceCriteria": [
+    "Session detail 401 renders auth bridge instead of JSON 500.",
+    "Legacy screen=session route has the same behavior.",
+    "Scoped Mini App and shared validation passes."
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-06-12T00:00:00.000Z",
+  "updatedAt": "2026-06-12T00:35:00.000Z"
+}

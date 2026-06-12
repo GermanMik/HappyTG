@@ -1,0 +1,61 @@
+{
+  "task_id": "HTG-2026-06-12-miniapp-session-401-auth",
+  "session_id": "ses_HTG_2026_06_12_miniapp_session_401_auth",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "freeze",
+      "entered_at": "2026-06-12T00:00:00.000Z",
+      "event": "SpecFrozen"
+    },
+    {
+      "phase": "build",
+      "entered_at": "2026-06-12T00:05:00.000Z",
+      "event": "UnauthorizedMiniAppFetchHandled"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-06-12T00:15:00.000Z",
+      "event": "ScopedValidationStarted"
+    },
+    {
+      "phase": "verify",
+      "entered_at": "2026-06-12T00:30:00.000Z",
+      "event": "ScopedValidationPassed"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-06-12T00:35:00.000Z",
+      "event": "LiveSmokePassed"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/spec.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/evidence.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/evidence.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/verdict.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/problems.md",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/test-miniapp.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/typecheck-miniapp.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/lint-miniapp.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/build-miniapp.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/test-shared.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/typecheck-shared.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/lint-shared.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/build-shared.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/diff-check.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/docker-ps.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/live-local-session-401-smoke.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/live-public-session-401-smoke.json",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/task-validate.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/release-check-0.4.22.txt",
+    "C:/Develop/Projects/HappyTG/.agent/tasks/HTG-2026-06-12-miniapp-session-401-auth/raw/graphify-query-session-401-auth.txt"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-06-12T00:00:00.000Z",
+    "updated_at": "2026-06-12T00:35:00.000Z"
+  }
+}

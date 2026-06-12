@@ -1,0 +1,97 @@
+{
+  "task_id": "HTG-2026-06-12-miniapp-session-401-auth",
+  "branch": "codex/miniapp-session-401-fallback",
+  "scope": "Mini App SSR 401 auth bridge for session detail",
+  "changed_files": [
+    "apps/miniapp/src/index.ts",
+    "apps/miniapp/src/index.test.ts",
+    "packages/shared/src/index.ts"
+  ],
+  "runtime_semantics_changed": false,
+  "checks": [
+    {
+      "name": "miniapp-test",
+      "command": "pnpm --filter @happytg/miniapp test",
+      "raw_output": "raw/test-miniapp.txt",
+      "status": "pass"
+    },
+    {
+      "name": "miniapp-typecheck",
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "raw_output": "raw/typecheck-miniapp.txt",
+      "status": "pass"
+    },
+    {
+      "name": "miniapp-lint",
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "raw_output": "raw/lint-miniapp.txt",
+      "status": "pass"
+    },
+    {
+      "name": "miniapp-build",
+      "command": "pnpm --filter @happytg/miniapp build",
+      "raw_output": "raw/build-miniapp.txt",
+      "status": "pass"
+    },
+    {
+      "name": "shared-test",
+      "command": "pnpm --filter @happytg/shared test",
+      "raw_output": "raw/test-shared.txt",
+      "status": "pass"
+    },
+    {
+      "name": "shared-typecheck",
+      "command": "pnpm --filter @happytg/shared typecheck",
+      "raw_output": "raw/typecheck-shared.txt",
+      "status": "pass"
+    },
+    {
+      "name": "shared-lint",
+      "command": "pnpm --filter @happytg/shared lint",
+      "raw_output": "raw/lint-shared.txt",
+      "status": "pass"
+    },
+    {
+      "name": "shared-build",
+      "command": "pnpm --filter @happytg/shared build",
+      "raw_output": "raw/build-shared.txt",
+      "status": "pass"
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "raw_output": "raw/diff-check.txt",
+      "status": "pass"
+    },
+    {
+      "name": "live-local-session-401-smoke",
+      "command": "GET http://127.0.0.1:3008/session/ses_3b15800fe9b8464b9968da30",
+      "raw_output": "raw/live-local-session-401-smoke.json",
+      "status": "pass_auth_bridge"
+    },
+    {
+      "name": "live-public-session-401-smoke",
+      "command": "GET https://happytg.gerta.crazedns.ru/miniapp/session/ses_3b15800fe9b8464b9968da30",
+      "raw_output": "raw/live-public-session-401-smoke.json",
+      "status": "pass_auth_bridge"
+    },
+    {
+      "name": "task-validate",
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-06-12-miniapp-session-401-auth",
+      "raw_output": "raw/task-validate.txt",
+      "status": "pass"
+    },
+    {
+      "name": "release-check-0.4.22",
+      "command": "pnpm release:check --version 0.4.22",
+      "raw_output": "raw/release-check-0.4.22.txt",
+      "status": "pass"
+    },
+    {
+      "name": "graphify-query-session-401-auth",
+      "command": "graphify query \"Mini App session detail 401 auth bridge createJsonServer onError\" --budget 1200",
+      "raw_output": "raw/graphify-query-session-401-auth.txt",
+      "status": "pass"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+
+> @happytg/shared@0.4.21 test C:\Develop\Projects\HappyTG\packages\shared
+> tsx --test src/*.test.ts
+
+✔ resolveHome and atomic file helpers round-trip data (42.536ms)
+✔ resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides (1.0392ms)
+✔ resolveHome honors Windows home overrides with case-insensitive env keys (0.6084ms)
+✔ findExecutable searches PATH and appends Windows executable extensions (11.568ms)
+✔ findExecutable honors Windows path and PATHEXT keys regardless of casing (6.198ms)
+✔ findExecutable prefers Windows wrapper companions over bare shim files (5.3087ms)
+✔ findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys (8.3008ms)
+✔ loadHappyTGEnv fills missing values without overriding existing env (5.6636ms)
+✔ normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT (0.9617ms)
+✔ resolveMiniAppBaseUrl prefers local Mini App URL over local public API URL only when no public HTTPS URL is available (11.3382ms)
+✔ telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values (0.4137ms)
+✔ FileStateStore serializes concurrent updates through its queue (67.653ms)
+✔ createJsonServer resolves route params and query data (98.2639ms)
+✔ createJsonServer returns a structured 500 when handler throws (58.4137ms)
+✔ redactSecrets and createLogger remove sensitive metadata values (1.3487ms)
+✔ renderPrometheusMetrics returns stable service gauges (0.3723ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1306.9632

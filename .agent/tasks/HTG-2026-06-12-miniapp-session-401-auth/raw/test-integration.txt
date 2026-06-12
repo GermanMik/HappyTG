@@ -1,0 +1,1 @@
+No separate integration test command was required for this scoped Mini App/shared SSR auth fallback fix; live local/public Mini App smoke is recorded in raw/live-*.json.

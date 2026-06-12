@@ -1,0 +1,21 @@
+ CHANGELOG.md                           | 12 ++++++
+ apps/api/package.json                  |  2 +-
+ apps/bot/package.json                  |  2 +-
+ apps/host-daemon/package.json          |  2 +-
+ apps/miniapp/package.json              |  2 +-
+ apps/miniapp/src/index.test.ts         | 70 ++++++++++++++++++++++++++++++++++
+ apps/miniapp/src/index.ts              | 66 +++++++++++++++++++++++++++++++-
+ apps/worker/package.json               |  2 +-
+ package.json                           |  2 +-
+ packages/approval-engine/package.json  |  2 +-
+ packages/bootstrap/package.json        |  2 +-
+ packages/hooks/package.json            |  2 +-
+ packages/policy-engine/package.json    |  2 +-
+ packages/protocol/package.json         |  2 +-
+ packages/repo-proof/package.json       |  2 +-
+ packages/runtime-adapters/package.json |  2 +-
+ packages/session-engine/package.json   |  2 +-
+ packages/shared/package.json           |  2 +-
+ packages/shared/src/index.ts           | 28 +++++++++++---
+ packages/telegram-kit/package.json     |  2 +-
+ 20 files changed, 184 insertions(+), 24 deletions(-)
