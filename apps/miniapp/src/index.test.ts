@@ -113,6 +113,31 @@ test("mini app entrypoint accepts HEAD probes from launch clients", async () => 
   }
 });
 
+test("mini app page routes accept HEAD probes from launch clients", async () => {
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/projects`, {
+      method: "HEAD"
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("x-happytg-service"), "miniapp");
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("overview page renders hosts, sessions, approvals, and tasks", async () => {
   const server = createMiniAppServer({
     async fetchJson(pathname) {
