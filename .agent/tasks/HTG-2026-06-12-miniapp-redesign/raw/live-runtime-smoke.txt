@@ -1,0 +1,14 @@
+Docker runtime update:
+- docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml up -d --build miniapp
+- happytg-miniapp-1 recreated and healthy on 0.0.0.0:3008->3001
+- happytg-api-1 recreated by compose dependency and healthy on 0.0.0.0:4001->4000
+
+Local runtime smoke:
+- http://127.0.0.1:3008/?userId=usr_1 -> 200
+- shell-status-* present: true
+- wizard-step markup present in built HTML when data allows form rendering: true
+- summary-first marker present: true
+
+Public URL note:
+- https://happytg.gerta.crazedns.ru/miniapp?userId=usr_1&cb=redesign-20260612 returned new HTML via PowerShell smoke.
+- In-app Browser navigation to https://happytg.gerta.crazedns.ru/miniapp failed with ERR_CERT_COMMON_NAME_INVALID, so visual live check was done on local 127.0.0.1:3008.

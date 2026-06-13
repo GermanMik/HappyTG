@@ -1,3 +1,8 @@
+## Timestamp: 2026-06-12T21:35:27+03:00
+pnpm --version:
+10.0.0
+
+package.json:
 {
   "name": "happytg",
   "version": "0.4.28",
@@ -33,3 +38,38 @@
     "typescript": "^5.7.0"
   }
 }
+
+
+pnpm-workspace.yaml:
+packages:
+  - "apps/*"
+  - "packages/*"
+
+
+turbo.json:
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "outputs": []
+    }
+  }
+}
+
+## pnpm list -r --depth 1
+Legend: production dependency, optional only, dev only  happytg@0.4.28 C:\Develop\Projects\HappyTG (PRIVATE)  devDependencies: @types/node 22.19.17 └── undici-types 6.21.0 tsx 4.21.0 ├── esbuild 0.27.7 ├── fsevents 2.3.3 └── get-tsconfig 4.13.7 turbo 2.9.18 ├── @turbo/darwin-64 2.9.18 ├── @turbo/darwin-arm64 2.9.18 ├── @turbo/linux-64 2.9.18 ├── @turbo/linux-arm64 2.9.18 ├── @turbo/windows-64 2.9.18 └── @turbo/windows-arm64 2.9.18 typescript 5.9.3

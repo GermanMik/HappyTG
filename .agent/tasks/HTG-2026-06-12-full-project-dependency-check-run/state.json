@@ -1,0 +1,66 @@
+{
+  "taskId": "HTG-2026-06-12-full-project-dependency-check-run",
+  "session_id": "interactive-session",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "init",
+      "entered_at": "2026-06-12T00:00:00Z",
+      "event": "TaskBundleInitialized"
+    },
+    {
+      "phase": "freeze",
+      "entered_at": "2026-06-12T00:00:00Z",
+      "event": "TaskSpecFrozen"
+    },
+    {
+      "phase": "build",
+      "entered_at": "2026-06-12T18:37:39.858Z",
+      "event": "Dependency checks and lint/typecheck/test/build executed"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-06-12T18:37:39.858Z",
+      "event": "Evidence files updated"
+    },
+    {
+      "phase": "fresh verify",
+      "entered_at": "2026-06-12T18:37:39.858Z",
+      "event": "doctor/verify/task validate executed"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-06-12T18:37:39.858Z",
+      "event": "VerificationPassed"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\spec.md",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\evidence.md",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\evidence.json",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\verdict.json",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\problems.md",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\state.json",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\task.json",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\dependency-inventory.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\package-manager.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\audit.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\outdated.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\build.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\test-unit.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\test-integration.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\lint.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\typecheck.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\doctor.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\verify.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-06-12-full-project-dependency-check-run\\raw\\task-validate.txt"
+  ],
+  "unresolved_issues": [],
+  "last_event_cursor": "dependency-check-run-complete",
+  "timestamps": {
+    "created_at": "2026-06-12T00:00:00Z",
+    "updated_at": "2026-06-12T18:37:39.858Z"
+  }
+}

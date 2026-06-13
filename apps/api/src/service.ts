@@ -435,6 +435,15 @@ const CODEX_DESKTOP_SESSION_NOT_FOUND_REASON_CODE = "CODEX_DESKTOP_SESSION_NOT_F
 const CODEX_DESKTOP_USER_NOT_FOUND_REASON_CODE = "CODEX_DESKTOP_USER_NOT_FOUND";
 const CODEX_DESKTOP_CONTROL_FAILED_REASON_CODE = "CODEX_DESKTOP_CONTROL_FAILED";
 const CODEX_DESKTOP_PROMPT_REQUIRED_REASON_CODE = "CODEX_DESKTOP_PROMPT_REQUIRED";
+const DEFAULT_DEV_CODEX_DESKTOP_USER_ID = "usr_1";
+
+function isDevCodexDesktopReadOnlyUser(userId: string): boolean {
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
+
+  return userId === (process.env.HAPPYTG_DEV_CODEX_DESKTOP_USER_ID?.trim() || DEFAULT_DEV_CODEX_DESKTOP_USER_ID);
+}
 
 export class CodexDesktopControlError extends Error {
   constructor(
@@ -713,13 +722,18 @@ export class HappyTGControlPlaneService {
     return user;
   }
 
-  private async assertCodexDesktopUser(userId: string): Promise<void> {
+  private async assertCodexDesktopReadUser(userId: string): Promise<void> {
     const store = await this.store.read();
-    this.assertKnownUser(store, userId);
+    const user = store.users.find((item) => item.id === userId && item.status === "active");
+    if (user || isDevCodexDesktopReadOnlyUser(userId)) {
+      return;
+    }
+
+    throw new CodexDesktopControlError(404, "User not found for Codex Desktop projection", "User not found for Codex Desktop projection", CODEX_DESKTOP_USER_NOT_FOUND_REASON_CODE);
   }
 
   async listCodexDesktopProjects(userId: string): Promise<{ projects: CodexDesktopProject[] }> {
-    await this.assertCodexDesktopUser(userId);
+    await this.assertCodexDesktopReadUser(userId);
     try {
       return {
         projects: await this.codexDesktop.listProjects()
@@ -732,14 +746,14 @@ export class HappyTGControlPlaneService {
   }
 
   async getCodexDesktopControlStatus(userId: string): Promise<{ control: CodexDesktopControlStatus }> {
-    await this.assertCodexDesktopUser(userId);
+    await this.assertCodexDesktopReadUser(userId);
     return {
       control: await this.codexDesktop.controlStatus({ validateAvailability: false })
     };
   }
 
   async listCodexDesktopSessions(userId: string, options: { limit?: number } = {}): Promise<{ sessions: CodexDesktopSession[] }> {
-    await this.assertCodexDesktopUser(userId);
+    await this.assertCodexDesktopReadUser(userId);
     try {
       return {
         sessions: await this.codexDesktop.listSessions(options)
@@ -752,7 +766,7 @@ export class HappyTGControlPlaneService {
   }
 
   async getCodexDesktopSessionDetail(userId: string, sessionId: string): Promise<CodexDesktopSessionDetail> {
-    await this.assertCodexDesktopUser(userId);
+    await this.assertCodexDesktopReadUser(userId);
     const detail = await this.codexDesktop.getSessionDetail(sessionId);
     if (!detail) {
       throw new CodexDesktopControlError(404, "Codex Desktop session not found", "Codex Desktop session not found", CODEX_DESKTOP_SESSION_NOT_FOUND_REASON_CODE);

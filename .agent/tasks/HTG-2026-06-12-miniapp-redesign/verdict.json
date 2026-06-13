@@ -1,0 +1,6 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-redesign",
+  "phase": "complete",
+  "verdict": "PASS",
+  "summary": "Mini App redesign implemented in the existing server-rendered stack. AppShell status is data-backed where route projections are available. Focused typecheck/test, full lint, route smoke, shell-status smoke and Edge mobile screenshots passed."
+}

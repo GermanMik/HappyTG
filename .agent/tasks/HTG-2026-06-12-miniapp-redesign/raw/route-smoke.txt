@@ -1,0 +1,16 @@
+/ -> 200
+/codex -> 200
+/sessions -> 200
+/projects -> 200
+/project/ws_1 -> 200
+/new-task -> 200
+/approvals -> 200
+/approval/apr_1 -> 200
+/codex/desktop-session?id=desktop_1 -> 200
+/session/ses_1 -> 200
+/diff/ses_1 -> 200
+/verify/ses_1 -> 200
+/hosts -> 200
+/host/host_1 -> 200
+/reports -> 200
+/task/HTG-smoke -> 200

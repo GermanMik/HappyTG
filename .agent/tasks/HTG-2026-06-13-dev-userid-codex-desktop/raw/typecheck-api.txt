@@ -1,0 +1,4 @@
+
+> @happytg/api@0.4.28 typecheck C:\Develop\Projects\HappyTG\apps\api
+> tsc -p tsconfig.json --noEmit
+

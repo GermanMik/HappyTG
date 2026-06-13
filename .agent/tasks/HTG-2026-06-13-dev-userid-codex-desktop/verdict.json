@@ -1,0 +1,30 @@
+{
+  "status": "pass",
+  "checks": [
+    {
+      "name": "pnpm --filter @happytg/api test",
+      "status": "pass",
+      "raw": "raw/test-api.txt"
+    },
+    {
+      "name": "pnpm --filter @happytg/api typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck-api.txt"
+    },
+    {
+      "name": "pnpm --filter @happytg/api lint",
+      "status": "pass",
+      "raw": "raw/lint-api.txt"
+    },
+    {
+      "name": "git diff --check",
+      "status": "pass",
+      "raw": "raw/diff-check.txt"
+    },
+    {
+      "name": "live usr_1 smoke",
+      "status": "pass",
+      "raw": "raw/live-smoke.txt"
+    }
+  ]
+}
