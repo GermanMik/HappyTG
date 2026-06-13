@@ -1,0 +1,78 @@
+{
+  "taskId": "HTG-2026-06-12-miniapp-redesign",
+  "status": "complete",
+  "commands": [
+    {
+      "command": "pnpm --filter @happytg/miniapp run typecheck",
+      "result": "PASS",
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp run test",
+      "result": "PASS",
+      "raw": "raw/test-miniapp.txt",
+      "testsPassed": 25
+    },
+    {
+      "command": "pnpm lint",
+      "result": "PASS",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "command": "route smoke with mocked Mini App API",
+      "result": "PASS",
+      "raw": "raw/route-smoke.txt"
+    },
+    {
+      "command": "shell status smoke with mocked Mini App API",
+      "result": "PASS",
+      "raw": "raw/shell-status-smoke.txt",
+      "notes": "Overview AppShell shows RTX-PC, 2 active sessions and 1 approval. New task AppShell shows project and active counters."
+    },
+    {
+      "command": "Edge mobile screenshot capture at 390x844",
+      "result": "PASS",
+      "raw": "raw/edge-screenshot.txt",
+      "artifacts": [
+        "raw/overview-mobile.png",
+        "raw/new-task-mobile.png"
+      ]
+    },
+    {
+      "command": "docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml up -d --build miniapp",
+      "result": "PASS",
+      "raw": "raw/docker-miniapp-rebuild.txt",
+      "notes": "happytg-miniapp-1 recreated and healthy on host port 3008."
+    },
+    {
+      "command": "live runtime smoke",
+      "result": "PASS",
+      "raw": "raw/live-runtime-smoke.txt",
+      "notes": "Local 127.0.0.1:3008 serves redesigned HTML. Public URL returned redesigned HTML via PowerShell but in-app Browser reported ERR_CERT_COMMON_NAME_INVALID."
+    }
+  ],
+  "routes": [
+    "/",
+    "/codex",
+    "/sessions",
+    "/projects",
+    "/project/ws_1",
+    "/new-task",
+    "/approvals",
+    "/approval/apr_1",
+    "/codex/desktop-session?id=desktop_1",
+    "/session/ses_1",
+    "/diff/ses_1",
+    "/verify/ses_1",
+    "/hosts",
+    "/host/host_1",
+    "/reports",
+    "/task/HTG-smoke"
+  ],
+  "notes": [
+    "Scope frozen before production edits.",
+    "Temporary visual server was stopped after screenshot and smoke verification.",
+    "AppShell status strip receives data-backed shellStatus from route projections.",
+    "Running Docker Mini App image was rebuilt after the source change."
+  ]
+}

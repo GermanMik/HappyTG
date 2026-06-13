@@ -1,0 +1,5 @@
+overview shell PC RTX-PC: True
+overview shell Codex active counter: True
+overview shell approvals counter: True
+new-task shell project counter: True
+new-task shell active counter: True

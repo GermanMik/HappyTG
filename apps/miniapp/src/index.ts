@@ -201,20 +201,27 @@ function escapeHtml(value: string): string {
 
 function toneForState(value: string): BadgeTone {
   const state = value.toLowerCase();
-  if (["active", "approved", "completed", "complete", "passed", "ok", "paired"].some((token) => state.includes(token))) {
+  if (["active", "approved", "clean", "completed", "complete", "done", "online", "pass", "passed", "ready", "ok", "paired", "success"].some((token) => state.includes(token))) {
     return "success";
   }
-  if (["warn", "pending", "running", "verifying", "created", "queued"].some((token) => state.includes(token))) {
+  if (["codex", "desktop", "info", "running", "verifying"].some((token) => state.includes(token))) {
+    return "info";
+  }
+  if (["approval", "dirty", "medium", "pending", "queued", "created", "waiting", "warn"].some((token) => state.includes(token))) {
     return "warn";
   }
-  if (["fail", "failed", "error", "rejected", "cancelled", "revoked", "missing"].some((token) => state.includes(token))) {
+  if (["blocked", "cancelled", "danger", "error", "fail", "failed", "high", "missing", "offline", "rejected", "revoked", "unsupported"].some((token) => state.includes(token))) {
     return "danger";
   }
   return "neutral";
 }
 
+function renderStatusChip(label: string, tone = toneForState(label)): string {
+  return `<span class="status-chip badge badge-${tone} status-${tone}">${escapeHtml(label)}</span>`;
+}
+
 function renderBadge(label: string, tone = toneForState(label)): string {
-  return `<span class="badge badge-${tone}">${escapeHtml(label)}</span>`;
+  return renderStatusChip(label, tone);
 }
 
 function compactDate(value: string | undefined): string {
@@ -250,10 +257,35 @@ function renderDetails(label: string, rows: Array<{ label: string; value?: strin
     return "";
   }
 
-  return `<details class="meta-details">
+  return `<details class="meta-details collapsible">
     <summary>${escapeHtml(label)}</summary>
     <dl>${visibleRows.map((row) => `<div><dt>${escapeHtml(row.label)}</dt><dd>${escapeHtml(String(row.value))}</dd></div>`).join("")}</dl>
   </details>`;
+}
+
+function renderCollapsible(label: string, body: string, options: { open?: boolean; className?: string } = {}): string {
+  if (!body.trim()) {
+    return "";
+  }
+
+  return `<details class="meta-details collapsible${options.className ? ` ${escapeHtml(options.className)}` : ""}"${options.open ? " open" : ""}>
+    <summary>${escapeHtml(label)}</summary>
+    ${body}
+  </details>`;
+}
+
+function renderMetric(label: string, value: string | number, tone: BadgeTone = "neutral"): string {
+  return `<div class="kv-item metric metric-${tone}">
+    <div class="eyebrow">${escapeHtml(label)}</div>
+    <strong>${escapeHtml(String(value))}</strong>
+  </div>`;
+}
+
+function renderSectionTitle(title: string, action?: string): string {
+  return `<div class="panel-header">
+    <h2>${escapeHtml(title)}</h2>
+    ${action ?? ""}
+  </div>`;
 }
 
 function sessionResultLabel(session: Pick<MiniAppSessionCard, "state" | "verificationState" | "attention">): string {
@@ -476,10 +508,198 @@ async function detectPortOccupant(listenPort: number, fetchImpl: typeof fetch = 
 
 type NavKey = "home" | "codex" | "sessions" | "projects" | "approvals" | "hosts" | "reports";
 
+type AppShellStatusItem = {
+  value: string;
+  href: string;
+  tone?: BadgeTone;
+};
+
+type AppShellStatus = {
+  pc?: AppShellStatusItem;
+  codex?: AppShellStatusItem;
+  approvals?: AppShellStatusItem;
+};
+
+type RenderPageOptions = {
+  basePath?: string;
+  needsAuth?: boolean;
+  authResetSession?: boolean;
+  browserApiBaseUrl?: string;
+  navKey?: NavKey;
+  shellStatus?: AppShellStatus;
+};
+
+function compactCount(count: number, label: string): string {
+  return `${count} ${label}`;
+}
+
+function renderAppShellStatus(status: AppShellStatus = {}): string {
+  const items: Array<{ key: keyof AppShellStatus; label: string; fallback: AppShellStatusItem }> = [
+    { key: "pc", label: "PC", fallback: { value: "Хосты", href: "/hosts", tone: "neutral" } },
+    { key: "codex", label: "Codex", fallback: { value: "Сессии", href: "/codex", tone: "neutral" } },
+    { key: "approvals", label: "Approvals", fallback: { value: "Решения", href: "/approvals", tone: "neutral" } }
+  ];
+
+  return `<nav class="app-status-strip" aria-label="Быстрый статус">
+    ${items.map((item) => {
+      const resolved = status[item.key] ?? item.fallback;
+      const tone = resolved.tone ?? toneForState(resolved.value);
+      return `<a href="${escapeHtml(resolved.href)}" class="shell-status-${tone}"><small>${escapeHtml(item.label)}</small><strong>${escapeHtml(resolved.value)}</strong></a>`;
+    }).join("")}
+  </nav>`;
+}
+
+function shellStatusFromDashboard(dashboard: MiniAppDashboardProjection, hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const hasAttention = dashboard.stats.pendingApprovals > 0 || dashboard.stats.blockedSessions > 0 || dashboard.stats.verifyProblems > 0;
+  return {
+    pc: {
+      value: dashboard.lastContext?.hostLabel ?? "Хост ?",
+      href: hrefs.hosts ?? "/hosts",
+      tone: dashboard.lastContext?.hostLabel ? "success" : "neutral"
+    },
+    codex: {
+      value: compactCount(dashboard.stats.activeSessions, "активн."),
+      href: hrefs.codex ?? "/codex",
+      tone: dashboard.stats.blockedSessions > 0 || dashboard.stats.verifyProblems > 0 ? "danger" : dashboard.stats.activeSessions > 0 ? "info" : "success"
+    },
+    approvals: {
+      value: compactCount(dashboard.stats.pendingApprovals, "реш."),
+      href: hrefs.approvals ?? "/approvals",
+      tone: hasAttention ? "warn" : "success"
+    }
+  };
+}
+
+function shellStatusFromCodex(input: { cliSessions: MiniAppSessionCard[]; desktopSessions: CodexDesktopSession[]; desktopProjects: CodexDesktopProject[] }, hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const running = input.cliSessions.filter((session) => session.state === "running").length + input.desktopSessions.filter((session) => session.status === "active").length;
+  const unsupported = input.desktopSessions.some((session) => Boolean(session.unsupportedReason));
+  return {
+    pc: {
+      value: compactCount(input.desktopProjects.length, "проект."),
+      href: hrefs.hosts ?? "/projects",
+      tone: input.desktopProjects.length > 0 ? "success" : "neutral"
+    },
+    codex: {
+      value: compactCount(input.cliSessions.length + input.desktopSessions.length, "сесс."),
+      href: hrefs.codex ?? "/codex",
+      tone: unsupported ? "danger" : running > 0 ? "info" : "success"
+    },
+    approvals: {
+      value: "Решения",
+      href: hrefs.approvals ?? "/approvals",
+      tone: "neutral"
+    }
+  };
+}
+
+function shellStatusFromProjects(projects: MiniAppProjectCard[], desktopProjects: CodexDesktopProject[], hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const activeProjects = projects.filter((project) => project.activeSessions > 0).length + desktopProjects.filter((project) => project.active).length;
+  return {
+    pc: {
+      value: compactCount(projects.length + desktopProjects.length, "проект."),
+      href: hrefs.hosts ?? "/projects",
+      tone: projects.length + desktopProjects.length > 0 ? "success" : "neutral"
+    },
+    codex: {
+      value: compactCount(activeProjects, "активн."),
+      href: hrefs.codex ?? "/sessions",
+      tone: activeProjects > 0 ? "info" : "success"
+    },
+    approvals: {
+      value: "Решения",
+      href: hrefs.approvals ?? "/approvals",
+      tone: "neutral"
+    }
+  };
+}
+
+function shellStatusFromApprovals(approvals: MiniAppApprovalCard[], hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const waiting = approvals.filter((approval) => approval.state === "waiting_human").length;
+  return {
+    pc: {
+      value: "Хосты",
+      href: hrefs.hosts ?? "/hosts",
+      tone: "neutral"
+    },
+    codex: {
+      value: compactCount(new Set(approvals.map((approval) => approval.sessionId)).size, "сесс."),
+      href: hrefs.codex ?? "/sessions",
+      tone: approvals.length > 0 ? "warn" : "success"
+    },
+    approvals: {
+      value: compactCount(waiting, "ждут"),
+      href: hrefs.approvals ?? "/approvals",
+      tone: waiting > 0 ? "warn" : "success"
+    }
+  };
+}
+
+function shellStatusFromHosts(hosts: MiniAppHostCard[], hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const online = hosts.filter((host) => host.status === "active").length;
+  const activeSessions = hosts.reduce((sum, host) => sum + host.activeSessions, 0);
+  return {
+    pc: {
+      value: `${online}/${hosts.length} online`,
+      href: hrefs.hosts ?? "/hosts",
+      tone: online > 0 ? "success" : "danger"
+    },
+    codex: {
+      value: compactCount(activeSessions, "активн."),
+      href: hrefs.codex ?? "/sessions",
+      tone: activeSessions > 0 ? "info" : "success"
+    },
+    approvals: {
+      value: "Решения",
+      href: hrefs.approvals ?? "/approvals",
+      tone: "neutral"
+    }
+  };
+}
+
+function shellStatusFromSession(session: Pick<MiniAppSessionCard, "state" | "hostLabel" | "repoName" | "runtime">, approval?: MiniAppApprovalCard): AppShellStatus {
+  return {
+    pc: {
+      value: session.hostLabel ?? session.repoName ?? "Хост ?",
+      href: "/hosts",
+      tone: session.hostLabel ? "success" : "neutral"
+    },
+    codex: {
+      value: session.state,
+      href: "/sessions",
+      tone: toneForState(session.state)
+    },
+    approvals: {
+      value: approval?.state === "waiting_human" ? "1 ждёт" : "0 ждут",
+      href: approval?.href ?? "/approvals",
+      tone: approval?.state === "waiting_human" ? "warn" : "success"
+    }
+  };
+}
+
+function shellStatusFromDesktopSession(session: Pick<CodexDesktopSession, "status" | "projectPath" | "canCreateTask">): AppShellStatus {
+  return {
+    pc: {
+      value: compactPath(session.projectPath),
+      href: "/projects",
+      tone: session.projectPath ? "success" : "neutral"
+    },
+    codex: {
+      value: session.status,
+      href: "/codex",
+      tone: toneForState(session.status)
+    },
+    approvals: {
+      value: session.canCreateTask ? "Ready" : "Решения",
+      href: "/approvals",
+      tone: session.canCreateTask ? "success" : "neutral"
+    }
+  };
+}
+
 export function renderPage(
   title: string,
   body: string,
-  options?: { basePath?: string; needsAuth?: boolean; authResetSession?: boolean; browserApiBaseUrl?: string; navKey?: NavKey }
+  options?: RenderPageOptions
 ): string {
   const basePath = normalizeBasePath(options?.basePath);
   const page = `<!doctype html>
@@ -718,6 +938,10 @@ export function renderPage(
       }
       .intent-grid input {
         position: absolute;
+        width: 1px;
+        min-height: 1px;
+        padding: 0;
+        border: 0;
         opacity: 0;
         pointer-events: none;
       }
@@ -959,14 +1183,431 @@ export function renderPage(
           grid-template-columns: repeat(6, 1fr);
         }
       }
+      :root {
+        color-scheme: light dark;
+        --bg: var(--tg-theme-secondary-bg-color, #eef3f8);
+        --bg-accent: none;
+        --surface: var(--tg-theme-bg-color, #ffffff);
+        --surface-soft: color-mix(in srgb, var(--tg-theme-section-bg-color, #f6f8fb) 88%, var(--tg-theme-button-color, #0a84ff));
+        --surface-strong: var(--tg-theme-bg-color, #ffffff);
+        --ink: var(--tg-theme-text-color, #111827);
+        --muted: var(--tg-theme-hint-color, #64748b);
+        --accent: var(--tg-theme-button-color, #0a84ff);
+        --accent-strong: var(--tg-theme-link-color, #006ee6);
+        --button-text: var(--tg-theme-button-text-color, #ffffff);
+        --warn: #b26a00;
+        --danger: #dc2626;
+        --success: #12805c;
+        --info: #0a84ff;
+        --border: rgba(15, 23, 42, 0.1);
+        --shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+        --radius-card: 18px;
+        --radius-control: 12px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: var(--tg-theme-secondary-bg-color, #0e1621);
+          --surface: var(--tg-theme-bg-color, #17212b);
+          --surface-soft: #1f2c38;
+          --surface-strong: #1b2632;
+          --ink: var(--tg-theme-text-color, #f5f7fb);
+          --muted: var(--tg-theme-hint-color, #9aa8b5);
+          --border: rgba(226, 232, 240, 0.12);
+          --shadow: none;
+        }
+      }
+      body {
+        min-width: 320px;
+        padding: calc(10px + env(safe-area-inset-top)) 12px calc(86px + env(safe-area-inset-bottom));
+        background: var(--bg);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+      main {
+        width: min(100%, 440px);
+      }
+      .panel {
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+        margin: 0 0 12px;
+        backdrop-filter: none;
+      }
+      .panel.hero,
+      .notice,
+      .empty,
+      .kv-item,
+      .auth-step,
+      .progress-step,
+      .status-list li,
+      .wizard-step,
+      .form-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow);
+      }
+      .panel.hero {
+        padding: 16px;
+      }
+      .panel-header {
+        margin: 0 0 8px;
+      }
+      .panel-header h2,
+      h2 {
+        font-size: 16px;
+        line-height: 1.25;
+        margin: 0;
+      }
+      h1 {
+        font-size: 22px;
+        line-height: 1.12;
+        margin: 0 0 8px;
+      }
+      h2 + .muted,
+      h1 + .muted {
+        margin-top: 4px;
+      }
+      .topbar {
+        position: sticky;
+        top: env(safe-area-inset-top);
+        z-index: 15;
+        margin: -2px 0 8px;
+        padding: 8px 2px 6px;
+        background: color-mix(in srgb, var(--bg) 84%, transparent);
+        backdrop-filter: blur(16px);
+      }
+      .topbar-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+      }
+      .topbar a {
+        color: var(--ink);
+      }
+      .app-status-strip,
+      .dashboard-status-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 8px 0 12px;
+      }
+      .app-status-strip a,
+      .dashboard-status-strip span {
+        min-height: 38px;
+        display: grid;
+        position: relative;
+        align-content: center;
+        gap: 1px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        color: var(--ink);
+        text-decoration: none;
+        overflow: hidden;
+      }
+      .app-status-strip a::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--muted);
+      }
+      .app-status-strip .shell-status-info::before {
+        background: var(--info);
+      }
+      .app-status-strip .shell-status-success::before {
+        background: var(--success);
+      }
+      .app-status-strip .shell-status-warn::before {
+        background: var(--warn);
+      }
+      .app-status-strip .shell-status-danger::before {
+        background: var(--danger);
+      }
+      .app-status-strip small,
+      .dashboard-status-strip small {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .app-status-strip strong,
+      .dashboard-status-strip strong {
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .grid,
+      .kv-grid {
+        grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+        gap: 8px;
+      }
+      .status-list {
+        display: grid;
+        gap: 10px;
+      }
+      .status-list li {
+        padding: 12px;
+        border-top: 1px solid var(--border);
+      }
+      .status-list li:first-child {
+        padding-top: 12px;
+      }
+      .status-meta,
+      .actions {
+        gap: 8px;
+      }
+      .status-chip,
+      .badge {
+        min-height: 24px;
+        border: 0;
+        border-radius: 999px;
+        padding: 4px 9px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+      .badge-neutral,
+      .status-neutral {
+        color: var(--muted);
+        background: color-mix(in srgb, var(--muted) 12%, transparent);
+      }
+      .badge-info,
+      .status-info {
+        color: var(--info);
+        background: color-mix(in srgb, var(--info) 12%, transparent);
+      }
+      .badge-success,
+      .status-success {
+        color: var(--success);
+        background: color-mix(in srgb, var(--success) 12%, transparent);
+      }
+      .badge-warn,
+      .status-warn {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 14%, transparent);
+      }
+      .badge-danger,
+      .status-danger {
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 12%, transparent);
+      }
+      .button {
+        min-height: 44px;
+        border-radius: var(--radius-control);
+        padding: 9px 12px;
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: none;
+      }
+      .button-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--button-text);
+      }
+      .button-danger {
+        border-color: color-mix(in srgb, var(--danger) 56%, transparent);
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+      }
+      .button-compact {
+        min-height: 36px;
+        padding: 7px 10px;
+      }
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        padding: 4px;
+        border-radius: 16px;
+        background: var(--surface-soft);
+      }
+      .segmented .button {
+        min-height: 36px;
+        border: 0;
+        background: transparent;
+      }
+      .segmented .button-primary {
+        background: var(--accent);
+        color: var(--button-text);
+      }
+      .meta-line,
+      .result-line,
+      .muted {
+        color: var(--muted);
+      }
+      .meta-line {
+        font-size: 12px;
+      }
+      .result-line {
+        font-size: 13px;
+      }
+      .meta-details {
+        margin-top: 10px;
+      }
+      .meta-details summary {
+        width: 100%;
+        min-height: 42px;
+        padding: 0;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 700;
+        list-style-position: inside;
+      }
+      .meta-details dl,
+      .meta-details .details-body {
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+      }
+      details.panel.meta-details {
+        padding: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow);
+      }
+      .empty,
+      .notice,
+      .kv-item {
+        padding: 12px;
+      }
+      .notice {
+        margin-bottom: 12px;
+      }
+      .metric strong,
+      .kv-item strong {
+        font-size: 18px;
+      }
+      .eyebrow {
+        margin: 0 0 4px;
+        font-size: 11px;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+      textarea,
+      input,
+      select {
+        min-height: 44px;
+        border-radius: var(--radius-control);
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .inline-form {
+        gap: 12px;
+      }
+      .wizard-step,
+      .form-card {
+        padding: 12px;
+      }
+      .wizard-step {
+        display: grid;
+        gap: 10px;
+      }
+      .wizard-step-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .step-index {
+        min-width: 26px;
+        height: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: var(--accent);
+        color: var(--button-text);
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .intent-grid {
+        grid-template-columns: 1fr;
+      }
+      .intent-grid label span {
+        min-height: 44px;
+        border-radius: var(--radius-control);
+        background: var(--surface-soft);
+      }
+      .intent-grid input:checked + span {
+        background: color-mix(in srgb, var(--accent) 13%, var(--surface));
+      }
+      .timeline {
+        display: grid;
+        gap: 10px;
+      }
+      .timeline li {
+        border-left: 2px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+        padding: 0 0 2px 12px;
+      }
+      .bottom-nav {
+        grid-template-columns: repeat(4, 1fr);
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+        background: color-mix(in srgb, var(--surface) 92%, transparent);
+      }
+      .bottom-nav a {
+        min-height: 50px;
+        border-top: 0;
+        border-radius: 14px;
+        font-size: 11px;
+      }
+      .bottom-nav a[aria-current="page"] {
+        color: var(--accent);
+        border-top-color: transparent;
+        background: color-mix(in srgb, var(--accent) 10%, transparent);
+      }
+      @media (min-width: 760px) {
+        body {
+          padding: 22px 22px 96px;
+        }
+        main {
+          width: min(100%, 900px);
+        }
+        .panel.hero,
+        .notice,
+        .empty,
+        .status-list li,
+        .wizard-step,
+        .form-card {
+          padding: 16px;
+        }
+        .bottom-nav {
+          left: 50%;
+          right: auto;
+          width: min(100%, 480px);
+          transform: translateX(-50%);
+          border: 1px solid var(--border);
+          border-bottom: 0;
+          border-radius: 18px 18px 0 0;
+        }
+        .intent-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
     </style>
   </head>
   <body>
     <main>
       <div class="topbar">
-        <a href="/"><strong>HappyTG</strong></a>
-        <span class="badge badge-info">Mini App</span>
+        <div class="topbar-title">
+          <a href="/"><strong>HappyTG</strong></a>
+          <span class="badge badge-info">Mini App</span>
+        </div>
       </div>
+      ${renderAppShellStatus(options?.shellStatus)}
       <section id="draft-recovery" class="panel draft-recovery">
         <h2>Есть незавершенный ввод</h2>
         <p class="muted">Можно продолжить с места остановки или начать заново. Это только локальный draft, backend state не меняется.</p>
@@ -1464,14 +2105,16 @@ function disabledButton(label: string, reason?: string): string {
 function renderBottomNav(active?: NavKey): string {
   const items: Array<{ key: NavKey; href: string; label: string }> = [
     { key: "home", href: "/", label: "Главная" },
-    { key: "codex", href: "/codex", label: "Codex" },
     { key: "sessions", href: "/sessions", label: "Сессии" },
     { key: "projects", href: "/projects", label: "Проекты" },
-    { key: "approvals", href: "/approvals", label: "Решения" },
-    { key: "hosts", href: "/hosts", label: "Хосты" },
-    { key: "reports", href: "/reports", label: "Отчеты" }
+    { key: "hosts", href: "/hosts", label: "Статус" }
   ];
-  return `<nav class="bottom-nav" aria-label="Основная навигация">${items.map((item) => `<a href="${item.href}"${item.key === active ? ' aria-current="page"' : ""}>${item.label}</a>`).join("")}</nav>`;
+  const activeKey = active === "codex" || active === "approvals"
+    ? "sessions"
+    : active === "reports"
+      ? "projects"
+      : active;
+  return `<nav class="bottom-nav" aria-label="Основная навигация">${items.map((item) => `<a href="${item.href}"${item.key === activeKey ? ' aria-current="page"' : ""}>${item.label}</a>`).join("")}</nav>`;
 }
 
 function renderEmptyState(title: string, detail: string, actionLabel: string, href: string): string {
@@ -1543,9 +2186,16 @@ function attentionLabel(attention: string | undefined): string | undefined {
 
 function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
   const topAttention = dashboard.attention[0];
+  const codexState = dashboard.stats.blockedSessions > 0 || dashboard.stats.verifyProblems > 0
+    ? "Error"
+    : dashboard.stats.activeSessions > 0
+      ? "Running"
+      : "Ready";
+  const approvalState = dashboard.stats.pendingApprovals > 0 ? `${dashboard.stats.pendingApprovals} waiting` : "Clean";
+  const pcState = dashboard.lastContext?.hostLabel ? dashboard.lastContext.hostLabel : "Проверить";
   const topAttentionBlock = topAttention
     ? `<div class="notice notice-${topAttention.severity === "danger" ? "danger" : topAttention.severity === "warn" ? "warn" : "info"}">
-        <p class="eyebrow">Следующее действие</p>
+        <p class="eyebrow">Требует внимания</p>
         <strong>${escapeHtml(topAttention.title)}</strong>
         <div class="muted">${escapeHtml(topAttention.detail)}</div>
         <div class="actions">${linkButton(nextActionLabel(topAttention.nextAction), topAttention.href, true)}</div>
@@ -1565,7 +2215,13 @@ function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
   return `
     <section class="panel hero">
       <p class="eyebrow">Сейчас</p>
-      <h1>Работа по проектам</h1>
+      <h1>HappyTG</h1>
+      <p class="muted">Работа по проектам · summary-first · next action</p>
+      <div class="dashboard-status-strip">
+        <span><small>PC</small><strong>${escapeHtml(pcState)}</strong></span>
+        <span><small>Codex</small><strong>${escapeHtml(codexState)}</strong></span>
+        <span><small>Approvals</small><strong>${escapeHtml(approvalState)}</strong></span>
+      </div>
       ${topAttentionBlock}
       <div class="actions">
         ${linkButton("Новая задача", "/new-task", true)}
@@ -1575,19 +2231,27 @@ function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
       </div>
     </section>
     <section class="panel">
-      <div class="panel-header">
-        <h2>Результаты сессий</h2>
-        ${linkButton("Все", "/sessions")}
-      </div>
+      ${renderSectionTitle("Результаты сессий", linkButton("Все", "/sessions"))}
       ${renderSessionCards(dashboard.recentSessions)}
+    </section>
+    <section class="panel">
+      ${renderSectionTitle("Проекты", linkButton("Открыть", "/projects"))}
+      <div class="status-list">
+        <div class="kv-item">
+          <div class="eyebrow">Последний контекст</div>
+          <strong>${escapeHtml(dashboard.lastContext?.repoName ?? "Проект не выбран")}</strong>
+          <div class="meta-line">${escapeHtml(dashboard.lastContext?.hostLabel ?? "Откройте Projects для выбора source")}</div>
+          <div class="actions">${linkButton("Новая задача", "/new-task", true)}${linkButton("Проекты", "/projects")}</div>
+        </div>
+      </div>
     </section>
     <details class="panel meta-details">
       <summary>Очередь и отчеты</summary>
       <section class="grid">
-        <div class="kv-item"><div class="eyebrow">Активные</div><strong>${dashboard.stats.activeSessions}</strong></div>
-        <div class="kv-item"><div class="eyebrow">Подтв.</div><strong>${dashboard.stats.pendingApprovals}</strong></div>
-        <div class="kv-item"><div class="eyebrow">Блокеры</div><strong>${dashboard.stats.blockedSessions}</strong></div>
-        <div class="kv-item"><div class="eyebrow">Verify</div><strong>${dashboard.stats.verifyProblems}</strong></div>
+        ${renderMetric("Активные", dashboard.stats.activeSessions, dashboard.stats.activeSessions > 0 ? "info" : "neutral")}
+        ${renderMetric("Approvals", dashboard.stats.pendingApprovals, dashboard.stats.pendingApprovals > 0 ? "warn" : "success")}
+        ${renderMetric("Блокеры", dashboard.stats.blockedSessions, dashboard.stats.blockedSessions > 0 ? "danger" : "success")}
+        ${renderMetric("Verify", dashboard.stats.verifyProblems, dashboard.stats.verifyProblems > 0 ? "danger" : "success")}
       </section>
       <h2>Требует внимания</h2>
       ${attention}
@@ -1696,14 +2360,15 @@ function renderSessionCards(sessions: MiniAppSessionCard[]): string {
     return renderEmptyState("Нет активных сессий", "Когда host будет подключен, новая задача появится здесь.", "Проверить hosts", "/hosts");
   }
 
-  return `<ul class="status-list">${sessions.map((session) => `<li>
+  return `<ul class="status-list">${sessions.map((session) => `<li class="session-card">
     <div>
       <div class="session-title-row">
         ${renderBadge(sessionResultLabel(session), sessionResultTone(session))}
         <strong><a href="${escapeHtml(session.href)}">${escapeHtml(session.title)}</a></strong>
       </div>
-      <div class="meta-line">${escapeHtml(runtimeLabel(session.runtime))} · ${escapeHtml(session.repoName ?? compactPath(session.projectPath))} · ${escapeHtml(compactDate(session.lastUpdatedAt))}</div>
-      ${session.attention ? `<div class="result-line">${escapeHtml(attentionLabel(session.attention) ?? session.attention)}</div>` : ""}
+      <div class="meta-line">${escapeHtml(session.repoName ?? compactPath(session.projectPath))} · ${escapeHtml(compactDate(session.lastUpdatedAt))}</div>
+      <div class="status-meta">${renderBadge(runtimeLabel(session.runtime), "info")}${renderBadge(session.desktopStatus ?? session.state)}${session.verificationState ? renderBadge(session.verificationState) : ""}</div>
+      ${session.attention ? `<div class="result-line"><strong>Следующее действие:</strong> ${escapeHtml(attentionLabel(session.attention) ?? session.attention)}</div>` : ""}
       ${renderDetails("Технические детали", [
         { label: "session", value: session.id },
         { label: "state", value: session.desktopStatus ?? session.state },
@@ -1772,7 +2437,7 @@ function renderSourceSwitcher(activeSource: string, options: { path?: string; pr
     { value: "codex-desktop", label: "Codex Desktop" },
     { value: "codex-cli", label: "Codex CLI" }
   ];
-  return `<div class="actions">${items.map((item) => linkButton(item.label, codexPanelHref({
+  return `<div class="segmented">${items.map((item) => linkButton(item.label, codexPanelHref({
     path: options.path,
     source: item.value,
     project: options.project,
@@ -1821,8 +2486,8 @@ function renderDesktopContinueForm(session: CodexDesktopSession): string {
   const canContinue = Boolean(session.canContinue ?? session.canResume);
   const reason = desktopUnsupportedReason(session);
   return `<section class="panel">
-    <h2>Продолжить сессию</h2>
-    <form data-desktop-continue-form class="grid">
+    ${renderSectionTitle("Продолжить сессию")}
+    <form data-desktop-continue-form class="grid form-card">
       <input type="hidden" name="sessionId" value="${escapeHtml(session.id)}">
       <label><span class="eyebrow">Prompt</span><textarea name="prompt" placeholder="Новый запрос для этой Desktop-сессии"${canContinue ? "" : " disabled"}></textarea></label>
       <div class="actions">
@@ -1947,28 +2612,29 @@ function renderCodexPanel(input: {
   return `
     <section class="panel hero">
       <p class="eyebrow">Сессии</p>
-      <h1>Codex Desktop / CLI</h1>
+      <h1>Codex / Сессии</h1>
+      <p class="muted">Codex Desktop / CLI operational queue: сначала next action, детали ниже.</p>
       <div class="actions">
         ${linkButton("Новая задача", "/new-task", true)}
         ${linkButton("Задать вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}
       </div>
     </section>
       <section class="panel">
-        <form method="GET" action="${escapeHtml(routePath)}" class="inline-form">
+        <form method="GET" action="${escapeHtml(routePath)}" class="inline-form form-card">
           <input type="hidden" name="source" value="${escapeHtml(source)}">
           ${input.project ? `<input type="hidden" name="project" value="${escapeHtml(input.project)}">` : ""}
           ${desktopSessionLimit !== 50 ? `<input type="hidden" name="limit" value="${escapeHtml(String(desktopSessionLimit))}">` : ""}
           ${input.userId ? `<input type="hidden" name="userId" value="${escapeHtml(input.userId)}">` : ""}
-          <label><span class="eyebrow">Поиск</span><input name="q" value="${escapeHtml(query)}" placeholder="session, project, path"></label>
+          <label><span class="eyebrow">Поиск</span><input name="q" value="${escapeHtml(query)}" placeholder="Сессия, проект или путь"></label>
           <div class="actions"><button class="button button-primary" type="submit">Найти</button>${linkButton("Сбросить", resetHref)}</div>
           ${renderSourceSwitcher(source, { path: routePath, project: input.project, state: input.state, q: query, sort, limit: desktopSessionLimit !== 50 ? desktopSessionLimit : undefined, userId: input.userId })}
           <details class="meta-details">
             <summary>Фильтры</summary>
             <div class="form-row">
-              <label><span class="eyebrow">State</span><select name="state">
+              <label><span class="eyebrow">Статус</span><select name="state">
                 ${["all", "active", "recent", "archived", "unknown", "running", "paused", "completed", "blocked", "unsupported"].map((state) => `<option value="${state}"${input.state === state ? " selected" : ""}>${state}</option>`).join("")}
               </select></label>
-              <label><span class="eyebrow">Sort</span><select name="sort">
+              <label><span class="eyebrow">Сортировка</span><select name="sort">
                 ${[
                   ["updated-desc", "Updated newest"],
                   ["updated-asc", "Updated oldest"],
@@ -1982,22 +2648,19 @@ function renderCodexPanel(input: {
     </section>
     ${loadWarnings.length > 0 ? `<section class="notice notice-warn">${loadWarnings.map((warning) => `<div>${escapeHtml(warning)}</div>`).join("")}</section>` : ""}
     <section class="panel">
-      <div class="panel-header">
-        <h2>Результаты</h2>
-        ${renderBadge(`${visibleCards.length} visible`, "info")}
-      </div>
+      ${renderSectionTitle("Операционная очередь", renderBadge(`${visibleCards.length} visible`, "info"))}
       ${renderSessionCards(visibleCards)}
       ${canLoadMoreDesktop ? `<div class="actions">${linkButton(`Показать до ${Math.min(200, Math.max(desktopSessionLimit * 2, 100))} Desktop sessions`, moreDesktopHref)}</div>` : ""}
     </section>
     <details class="panel meta-details">
       <summary>Проекты и счетчики</summary>
       <section class="grid">
-        <div class="kv-item"><div class="eyebrow">Desktop projects</div><strong>${input.desktopProjects.length}</strong></div>
-        <div class="kv-item"><div class="eyebrow">Desktop sessions</div><strong>${input.desktopSessions.length}</strong></div>
-        <div class="kv-item"><div class="eyebrow">CLI sessions</div><strong>${input.cliSessions.length}</strong></div>
+        ${renderMetric("Desktop projects", input.desktopProjects.length, input.desktopProjects.length > 0 ? "info" : "neutral")}
+        ${renderMetric("Desktop sessions", input.desktopSessions.length, input.desktopSessions.length > 0 ? "info" : "neutral")}
+        ${renderMetric("CLI sessions", input.cliSessions.length, input.cliSessions.length > 0 ? "success" : "neutral")}
       </section>
       <h2>Codex Desktop projects</h2>
-      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="meta-line">${escapeHtml(compactPath(project.path))}</div>${renderDetails("Project details", [{ label: "path", value: project.path }])}</div><div class="status-meta">${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { path: routePath, userId: input.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div></li>`).join("")}</ul>`}
+      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="meta-line">${escapeHtml(compactPath(project.path))}</div>${renderDetails("Скрытые детали", [{ label: "path", value: project.path }])}</div><div class="status-meta">${renderBadge(project.active ? "Running" : "Ready", project.active ? "info" : "success")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { path: routePath, userId: input.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div></li>`).join("")}</ul>`}
     </details>
   `;
 }
@@ -2009,7 +2672,7 @@ function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail, options: 
   const sessionCard = desktopSessionCard(session);
   return `
     <section class="panel hero">
-      <p class="eyebrow">Codex Desktop</p>
+      <p class="eyebrow">Сейчас · Codex Desktop</p>
       <h1>${escapeHtml(session.title)}</h1>
       <div class="session-title-row">${renderBadge(sessionResultLabel(sessionCard), sessionResultTone(sessionCard))}<span class="muted">${escapeHtml(compactPath(session.projectPath))} · ${escapeHtml(compactDate(session.updatedAt))}</span></div>
       <p class="result-line">${escapeHtml(latest?.summary ?? "Результат появится после первого ответа Codex Desktop.")}</p>
@@ -2025,7 +2688,8 @@ function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail, options: 
     </section>
     ${renderDesktopContinueForm(session)}
     <section class="panel">
-      <h2>Результат и ход работы</h2>
+      ${renderSectionTitle("История")}
+      <p class="muted">Результат и ход работы. Технические event details открываются внутри записей.</p>
       ${renderDesktopHistory(detail, { historyOrder, userId: options.userId })}
     </section>
   `;
@@ -2036,11 +2700,12 @@ function renderProjectCards(projects: MiniAppProjectCard[], options: { userId?: 
     return renderEmptyState("CLI проекты не найдены", "Подключите host daemon и дождитесь hello со списком workspaces.", "Проверить хосты", "/hosts");
   }
 
-  return `<ul class="status-list">${projects.map((project) => `<li>
+  return `<ul class="status-list">${projects.map((project) => `<li class="project-card">
     <div>
       <strong><a href="${escapeHtml(project.href)}">${escapeHtml(project.repoName)}</a></strong>
-      <div class="meta-line">${escapeHtml(project.hostLabel ?? "host n/a")} · active ${project.activeSessions}</div>
-      ${renderDetails("Project details", [
+      <div class="meta-line">${escapeHtml(project.defaultBranch ?? "branch n/a")} · ${project.activeSessions} active sessions</div>
+      <div class="status-meta">${renderBadge("Codex CLI", "info")}${project.hostStatus ? renderBadge(project.hostStatus) : ""}${project.activeSessions > 0 ? renderBadge("Running", "info") : renderBadge("Ready", "success")}</div>
+      ${renderDetails("Скрытые детали", [
         { label: "path", value: project.path },
         { label: "branch", value: project.defaultBranch },
         { label: "host", value: project.hostLabel }
@@ -2055,13 +2720,14 @@ function renderDesktopProjectCards(projects: CodexDesktopProject[], options: { u
     return renderEmptyState("Desktop projects не найдены", "Codex Desktop adapter did not return local projects.", "Codex Desktop", "/codex?source=codex-desktop");
   }
 
-  return `<ul class="status-list">${projects.map((project) => `<li>
+  return `<ul class="status-list">${projects.map((project) => `<li class="project-card">
     <div>
       <strong>${escapeHtml(project.label)}</strong>
       <div class="meta-line">${escapeHtml(compactPath(project.path))}</div>
-      ${renderDetails("Project details", [{ label: "path", value: project.path }])}
+      <div class="status-meta">${renderBadge("Codex Desktop", "info")}${renderBadge(project.active ? "Running" : "Ready", project.active ? "info" : "success")}</div>
+      ${renderDetails("Скрытые детали", [{ label: "path", value: project.path }])}
     </div>
-    <div class="status-meta">${renderBadge("Codex Desktop", "info")}${renderBadge(project.active ? "active" : "saved")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { userId: options.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div>
+    <div class="status-meta">${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { userId: options.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -2082,20 +2748,25 @@ function renderProjectsView(
     ? `<section class="panel">${renderEmptyState("Проекты не найдены", "Подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список projects.", "Проверить хосты", "/hosts")}</section>`
     : "";
 
-  return `<section class="panel hero"><h1>Проекты</h1><div class="actions">${linkButton("Новая задача", "/new-task", true)}${linkButton("Вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}</div></section>
+  return `<section class="panel hero">
+      <p class="eyebrow">Проекты</p>
+      <h1>Проекты</h1>
+      <p class="muted">Codex CLI и Codex Desktop workspaces без raw paths в основном слое.</p>
+      <div class="actions">${linkButton("Новая задача", "/new-task", true)}${linkButton("Вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}</div>
+    </section>
     ${desktopProjectsUnavailable ? `<section class="notice notice-warn">${escapeHtml(`Desktop projects unavailable${options?.desktopProjectsLoad?.error ? `: ${options.desktopProjectsLoad.error}` : ""}.`)}</section>` : ""}
     <section class="grid">
-      <div class="kv-item"><div class="eyebrow">CLI projects</div><strong>${projects.length}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Desktop projects</div><strong>${desktopProjects.length}</strong></div>
-      <div class="kv-item"><div class="eyebrow">Active Desktop</div><strong>${desktopProjects.filter((project) => project.active).length}</strong></div>
+      ${renderMetric("CLI projects", projects.length, projects.length > 0 ? "success" : "neutral")}
+      ${renderMetric("Desktop projects", desktopProjects.length, desktopProjects.length > 0 ? "info" : "neutral")}
+      ${renderMetric("Active Desktop", desktopProjects.filter((project) => project.active).length, desktopProjects.some((project) => project.active) ? "info" : "success")}
     </section>
     ${empty}
     <section class="panel">
-      <h2>Codex CLI projects</h2>
+      ${renderSectionTitle("Codex CLI projects")}
       ${renderProjectCards(projects, { userId: options.userId })}
     </section>
     <section class="panel">
-      <h2>Codex Desktop projects</h2>
+      ${renderSectionTitle("Codex Desktop projects")}
       ${renderDesktopProjectCards(desktopProjects, { userId: options.userId })}
     </section>`;
 }
@@ -2130,32 +2801,22 @@ function renderNewTaskForm(
   const hasAnyProjects = projects.length > 0 || desktopProjects.length > 0;
 
   return `<section class="panel hero">
+    <p class="eyebrow">Новая задача</p>
     <h1>${escapeHtml(intentLabel(selectedIntent))}</h1>
+    <p class="muted">Wizard для запуска Codex без технической формы на первом экране.</p>
     <div class="actions">${linkButton("Сессии", "/sessions")}${linkButton("Проекты", "/projects")}</div>
   </section>
   <section class="panel">
     ${!hasAnyProjects ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form class="inline-form">
-      <div class="intent-grid" role="radiogroup" aria-label="Intent">
-        ${(["implement", "question", "review"] as const).map((intent) => `<label><input type="radio" name="intent" value="${intent}"${selectedIntent === intent ? " checked" : ""}><span>${escapeHtml(intentLabel(intent))}</span></label>`).join("")}
-      </div>
       <input type="hidden" name="hostId" value="${escapeHtml(selectedProject?.hostId ?? selected?.hostId ?? "")}">
       <input type="hidden" name="contextSessionId" value="${escapeHtml(selected?.contextSessionId ?? "")}">
       <div class="notice notice-info" data-task-feedback hidden>Создаем сессию.</div>
-      ${desktopCanCreate ? "" : `<div class="notice notice-warn">New Desktop Task disabled: ${escapeHtml(desktopReason)}</div>`}
-      <label class="eyebrow" for="task-draft">Инструкция</label>
-      <textarea id="task-draft" name="prompt" data-draft placeholder="${selectedIntent === "question" ? "Что нужно уточнить по реализации?" : selectedIntent === "review" ? "Что проверить в результате сессии?" : "Что нужно реализовать или исправить?"}"></textarea>
-      <details class="meta-details">
-        <summary>Настройки</summary>
-        <div class="form-row">
-          <label><span class="eyebrow">Source</span><select id="runtime" name="runtime">
-            <option value="codex-cli"${selectedSource === "codex-cli" ? " selected" : ""}${projects.length > 0 ? "" : " disabled"}>Codex CLI${projects.length > 0 ? "" : " (no host project)"}</option>
-            <option value="codex-desktop"${selectedSource === "codex-desktop" ? " selected" : ""}${desktopCanCreate ? "" : " disabled"}>Codex Desktop${desktopCanCreate ? "" : " (unsupported)"}</option>
-          </select></label>
-          <label><span class="eyebrow">Mode</span><select id="mode" name="mode">
-            <option value="proof"${selectedMode === "proof" ? " selected" : ""}>proof</option>
-            <option value="quick"${selectedMode === "quick" ? " selected" : ""}>quick</option>
-          </select></label>
-        </div>
+      <section class="wizard-step">
+        <div class="wizard-step-title"><h2><span class="step-index">1</span> Проект</h2>${renderBadge(selectedSource === "codex-desktop" ? "Codex Desktop" : "Codex CLI", "info")}</div>
+        <label><span class="eyebrow">Source</span><select id="runtime" name="runtime">
+          <option value="codex-cli"${selectedSource === "codex-cli" ? " selected" : ""}${projects.length > 0 ? "" : " disabled"}>Codex CLI${projects.length > 0 ? "" : " (no host project)"}</option>
+          <option value="codex-desktop"${selectedSource === "codex-desktop" ? " selected" : ""}${desktopCanCreate ? "" : " disabled"}>Codex Desktop${desktopCanCreate ? "" : " (unsupported)"}</option>
+        </select></label>
         <div data-source-fields="codex-cli"${selectedSource === "codex-cli" ? "" : " hidden"}>
           <label class="eyebrow" for="workspaceId">CLI проект</label>
           <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''">${options}</select>
@@ -2164,10 +2825,35 @@ function renderNewTaskForm(
           <label class="eyebrow" for="projectId">Desktop проект</label>
           <select id="projectId" name="projectId">${desktopOptions}</select>
         </div>
-        <label class="eyebrow" for="title">Название</label>
-        <input id="title" name="title" value="${escapeHtml(title)}">
+      </section>
+      <section class="wizard-step">
+        <div class="wizard-step-title"><h2><span class="step-index">2</span> Что сделать</h2></div>
+        <div class="intent-grid" role="radiogroup" aria-label="Intent">
+          ${(["implement", "question", "review"] as const).map((intent) => `<label><input type="radio" name="intent" value="${intent}"${selectedIntent === intent ? " checked" : ""}><span>${escapeHtml(intentLabel(intent))}</span></label>`).join("")}
+        </div>
+      </section>
+      <section class="wizard-step">
+        <div class="wizard-step-title"><h2><span class="step-index">3</span> Инструкция</h2></div>
+        <textarea id="task-draft" name="prompt" data-draft placeholder="${selectedIntent === "question" ? "Что нужно уточнить по реализации?" : selectedIntent === "review" ? "Что проверить в результате сессии?" : "Что нужно реализовать или исправить?"}"></textarea>
+      </section>
+      <section class="wizard-step">
+        <div class="wizard-step-title"><h2><span class="step-index">4</span> Параметры</h2></div>
+        <div class="form-row">
+          <label><span class="eyebrow">Mode</span><select id="mode" name="mode">
+            <option value="proof"${selectedMode === "proof" ? " selected" : ""}>proof</option>
+            <option value="quick"${selectedMode === "quick" ? " selected" : ""}>quick</option>
+          </select></label>
+          <label><span class="eyebrow">Название</span><input id="title" name="title" value="${escapeHtml(title)}"></label>
+        </div>
         <label class="eyebrow" for="acceptanceCriteria">Критерии приемки</label>
         <textarea id="acceptanceCriteria" name="acceptanceCriteria" placeholder="Каждый критерий с новой строки"></textarea>
+      </section>
+      <details class="meta-details form-card">
+        <summary>Advanced settings</summary>
+        <div class="details-body">
+          ${desktopCanCreate ? "<p class=\"muted\">Desktop task creation доступен для выбранного adapter.</p>" : `<div class="notice notice-warn">New Desktop Task disabled: ${escapeHtml(desktopReason)}</div>`}
+          <p class="muted">Context session, source defaults and unsupported adapter details скрыты здесь.</p>
+        </div>
       </details>
       <div class="actions"><button class="button button-primary" type="submit">${selectedIntent === "question" ? "Отправить вопрос" : "Создать Codex-сессию"}</button>${linkButton("Отмена", "/projects")}</div>
     </form>`}
@@ -2179,12 +2865,19 @@ function renderApprovalCards(approvals: MiniAppApprovalCard[]): string {
     return renderEmptyState("Нет pending approvals", "Если агенту понадобится рискованное действие, запрос появится отдельной карточкой.", "Открыть сессии", "/sessions");
   }
 
-  return `<ul class="status-list">${approvals.map((approval) => `<li>
+  return `<ul class="status-list">${approvals.map((approval) => `<li class="approval-card">
     <div>
       <strong><a href="${escapeHtml(approval.href)}">${escapeHtml(approval.title)}</a></strong>
-      <div class="muted">${escapeHtml(approval.reason)} · expires ${escapeHtml(approval.expiresAt)}</div>
+      <div class="meta-line">${escapeHtml(approval.reason)} · expires ${escapeHtml(compactDate(approval.expiresAt))}</div>
+      <div class="status-meta">${renderBadge("Approval", "warn")}${renderBadge(approval.risk)}${renderBadge(approval.state)}</div>
+      ${renderDetails("Скрытые детали", [
+        { label: "approval", value: approval.id },
+        { label: "session", value: approval.sessionId },
+        { label: "scope", value: approval.scope },
+        { label: "expiresAt", value: approval.expiresAt }
+      ])}
     </div>
-    <div class="status-meta">${renderBadge(approval.risk)}${renderBadge(approval.state)}${linkButton("Открыть", approval.href, approval.state === "waiting_human")}</div>
+    <div class="status-meta">${linkButton("Открыть", approval.href, approval.state === "waiting_human")}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -2193,13 +2886,15 @@ function renderHostCards(hosts: MiniAppHostCard[]): string {
     return renderEmptyState("Host еще не подключен", "Подключите host daemon через pairing, чтобы HappyTG мог работать рядом с repo.", "Открыть хосты", "/hosts");
   }
 
-  return `<ul class="status-list">${hosts.map((host) => `<li>
+  return `<ul class="status-list">${hosts.map((host) => `<li class="host-card">
     <div>
       <strong><a href="${escapeHtml(host.href)}">${escapeHtml(host.label)}</a></strong>
-      <div class="muted">${escapeHtml(host.repoNames.join(", ") || "repos not reported")} · active ${host.activeSessions}</div>
-      ${host.lastError ? `<div class="muted">${escapeHtml(host.lastError)}</div>` : ""}
+      <div class="meta-line">${host.activeSessions} active sessions · ${host.repoNames.length} repos</div>
+      <div class="status-meta">${renderBadge(host.status)}${host.lastError ? renderBadge("Error", "danger") : renderBadge("Clean", "success")}</div>
+      ${host.lastError ? renderDetails("Last error", [{ label: "error", value: host.lastError }]) : ""}
+      ${renderDetails("Reported repos", host.repoNames.map((repo, index) => ({ label: `repo ${index + 1}`, value: repo })))}
     </div>
-    <div class="status-meta">${renderBadge(host.status)}${linkButton("Открыть", host.href)}</div>
+    <div class="status-meta">${linkButton("Открыть", host.href)}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -2208,30 +2903,32 @@ function renderReportCards(reports: MiniAppReportCard[]): string {
     return renderEmptyState("Отчетов пока нет", "Proof-loop отчеты появятся после первой задачи с evidence и verify.", "Открыть сессии", "/sessions");
   }
 
-  return `<ul class="status-list">${reports.map((report) => `<li>
-    <div><strong><a href="${escapeHtml(report.href)}">${escapeHtml(report.title)}</a></strong><div class="muted">${escapeHtml(report.generatedAt)}</div></div>
+  return `<ul class="status-list">${reports.map((report) => `<li class="report-card">
+    <div><strong><a href="${escapeHtml(report.href)}">${escapeHtml(report.title)}</a></strong><div class="muted">${escapeHtml(compactDate(report.generatedAt))}</div></div>
     <div class="status-meta">${renderBadge(report.status)}${linkButton("Отчет", report.href)}</div>
   </li>`).join("")}</ul>`;
 }
 
 function renderDiffView(diff: MiniAppDiffProjection): string {
   const filters = ["все", "код", "конфиг", "тесты", "docs"].map((label) => `<span class="badge badge-info">${label}</span>`).join("");
+  const highRiskBody = diff.summary.highRiskFiles.length > 0
+    ? `<ul class="status-list">${diff.summary.highRiskFiles.map((file) => `<li><strong>${escapeHtml(file)}</strong>${renderBadge("High risk", "danger")}</li>`).join("")}</ul>`
+    : `<p class="muted">High risk files не отмечены.</p>`;
   return `
     <section class="panel hero">
-      <p class="eyebrow">Diff summary</p>
+      <p class="eyebrow">Diff / Проверка</p>
       <h1>Изменения по сессии</h1>
-      <p class="muted">Сначала summary и риск-файлы, raw details открываются ниже.</p>
+      <p class="muted">Decision-first summary: количество файлов, риск и следующий переход.</p>
       <div class="grid">
-        <div class="kv-item"><div class="eyebrow">Files</div><strong>${diff.summary.changedFiles}</strong></div>
-        <div class="kv-item"><div class="eyebrow">High risk</div><strong>${diff.summary.highRiskFiles.length}</strong></div>
+        ${renderMetric("Files", diff.summary.changedFiles, diff.summary.changedFiles > 0 ? "info" : "neutral")}
+        ${renderMetric("High risk", diff.summary.highRiskFiles.length, diff.summary.highRiskFiles.length > 0 ? "danger" : "success")}
+        ${renderMetric("Raw diff", diff.rawAvailable ? "available" : "hidden", diff.rawAvailable ? "warn" : "neutral")}
       </div>
     </section>
+    ${renderCollapsible("Фильтры", `<div class="actions">${filters}</div>`, { className: "form-card" })}
+    ${renderCollapsible("High risk files", highRiskBody, { open: diff.summary.highRiskFiles.length > 0, className: "form-card" })}
     <section class="panel">
-      <h2>Фильтры</h2>
-      <div class="actions">${filters}</div>
-    </section>
-    <section class="panel">
-      <h2>Файлы</h2>
+      ${renderSectionTitle("Файлы")}
       ${diff.files.length === 0 ? renderEmptyState("Diff пока недоступен", "Host еще не отправил diff artifacts для этой сессии.", "Открыть session", `/session/${encodeURIComponent(diff.sessionId)}`) : `<ul class="status-list">${diff.files.map((file) => `<li><div><strong>${escapeHtml(file.path)}</strong><div class="muted">${escapeHtml(file.summary)}</div></div><div class="status-meta">${renderBadge(file.category)}${renderBadge(file.status)}</div></li>`).join("")}</ul>`}
     </section>
   `;
@@ -2244,20 +2941,18 @@ function renderVerifyView(verify: MiniAppVerifyProjection): string {
       <p class="eyebrow">Fresh verify</p>
       <h1>${escapeHtml(headline)}</h1>
       <p class="muted">Decision-first summary: что проверено, что упало и что делать дальше.</p>
+      <div class="grid">
+        ${renderMetric("Checked", verify.checkedCriteria.length, verify.checkedCriteria.length > 0 ? "info" : "neutral")}
+        ${renderMetric("Failed", verify.failedCriteria.length, verify.failedCriteria.length > 0 ? "danger" : "success")}
+        ${renderMetric("State", headline, toneForState(headline))}
+      </div>
       <div class="actions">
         ${verify.nextAction === "run_fix" ? linkButton("Запустить fix", `/session/${encodeURIComponent(verify.sessionId)}`, true) : ""}
         ${linkButton("Открыть evidence", verify.evidenceHref ?? `/session/${encodeURIComponent(verify.sessionId)}`)}
         ${linkButton("Diff", `/diff/${encodeURIComponent(verify.sessionId)}`)}
       </div>
     </section>
-    <section class="panel">
-      <h2>Acceptance criteria</h2>
-      <div class="grid">
-        <div class="kv-item"><div class="eyebrow">Checked</div><strong>${verify.checkedCriteria.length}</strong></div>
-        <div class="kv-item"><div class="eyebrow">Failed</div><strong>${verify.failedCriteria.length}</strong></div>
-      </div>
-      <pre>${escapeHtml([...verify.checkedCriteria.map((item) => `OK ${item}`), ...verify.failedCriteria.map((item) => `FAIL ${item}`)].join("\n") || "Verifier details are not available yet.")}</pre>
-    </section>
+    ${renderCollapsible("Acceptance criteria", `<pre>${escapeHtml([...verify.checkedCriteria.map((item) => `OK ${item}`), ...verify.failedCriteria.map((item) => `FAIL ${item}`)].join("\n") || "Verifier details are not available yet.")}</pre>`, { className: "form-card", open: verify.failedCriteria.length > 0 })}
   `;
 }
 
@@ -2281,17 +2976,11 @@ function renderSessionDetail(detail: {
   });
   return `
     <section class="panel hero">
-      <p class="eyebrow">Session</p>
+      <p class="eyebrow">Сейчас</p>
       <h1>${escapeHtml(detail.session.title)}</h1>
       <div class="session-title-row">${renderBadge(sessionResultLabel(detail.session), sessionResultTone(detail.session))}<span class="muted">${escapeHtml(runtimeLabel(detail.session.runtime))} · ${escapeHtml(detail.session.repoName ?? "repo n/a")} · ${escapeHtml(compactDate(detail.session.lastUpdatedAt))}</span></div>
-      <div class="actions">
-        ${detail.approval && detail.approval.state === "waiting_human" ? linkButton("Открыть approval", detail.approval.href, true) : ""}
-        ${linkButton("Задать вопрос", questionHref, !detail.approval || detail.approval.state !== "waiting_human")}
-        ${linkButton("Новая задача", taskHref)}
-        ${detail.task ? linkButton("Proof timeline", `/task/${encodeURIComponent(detail.task.id)}`) : ""}
-        ${linkButton("Diff", `/diff/${encodeURIComponent(detail.session.id)}`)}
-        ${linkButton("Verify", `/verify/${encodeURIComponent(detail.session.id)}`)}
-      </div>
+      <p class="result-line">${escapeHtml(detail.session.currentSummary ?? "Сводки пока нет.")}</p>
+      ${detail.session.lastError ? `<div class="notice notice-danger">${escapeHtml(detail.session.lastError)}</div>` : ""}
       ${renderDetails("Технические детали", [
         { label: "session", value: detail.session.id },
         { label: "state", value: detail.session.state },
@@ -2302,13 +2991,19 @@ function renderSessionDetail(detail: {
       ])}
     </section>
     <section class="panel">
-      <h2>Результат</h2>
-      <p>${escapeHtml(detail.session.currentSummary ?? "Сводки пока нет.")}</p>
-      ${detail.session.lastError ? `<p class="muted">${escapeHtml(detail.session.lastError)}</p>` : ""}
+      ${renderSectionTitle("Что нужно сделать дальше")}
+      <div class="actions">
+        ${detail.approval && detail.approval.state === "waiting_human" ? linkButton("Открыть approval", detail.approval.href, true) : ""}
+        ${linkButton("Задать вопрос", questionHref, !detail.approval || detail.approval.state !== "waiting_human")}
+        ${linkButton("Новая задача", taskHref)}
+        ${detail.task ? linkButton("Proof timeline", `/task/${encodeURIComponent(detail.task.id)}`) : ""}
+        ${linkButton("Diff", `/diff/${encodeURIComponent(detail.session.id)}`)}
+        ${linkButton("Verify", `/verify/${encodeURIComponent(detail.session.id)}`)}
+      </div>
     </section>
     ${detail.task ? renderProofProgress(detail.task, { sessionState: detail.session.state }) : ""}
     <details class="panel meta-details">
-      <summary>Timeline</summary>
+      <summary>История</summary>
       <ol class="timeline">${detail.events.map((event) => `<li><strong>${event.sequence}. ${escapeHtml(event.type)}</strong><div class="muted">${escapeHtml(event.occurredAt)}</div><pre>${escapeHtml(JSON.stringify(event.payload, null, 2))}</pre></li>`).join("") || "<li>No events recorded.</li>"}</ol>
     </details>
   `;
@@ -2542,12 +3237,13 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
     req: { headers: Record<string, string | string[] | undefined> },
     title: string,
     body: string,
-    options?: { needsAuth?: boolean; authResetSession?: boolean; navKey?: NavKey }
+    options?: { needsAuth?: boolean; authResetSession?: boolean; navKey?: NavKey; shellStatus?: AppShellStatus }
   ) => renderPage(title, body, {
     basePath: basePathFor(req),
     needsAuth: options?.needsAuth,
     authResetSession: options?.authResetSession,
     navKey: options?.navKey,
+    shellStatus: options?.shellStatus,
     browserApiBaseUrl: resolveBrowserApiBaseUrlForRequest(req.headers)
   });
   const requireSessionContext = (
@@ -2669,7 +3365,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             q: url.searchParams.get("q") ?? undefined,
             sort: url.searchParams.get("sort") ?? undefined,
             userId: url.searchParams.get("userId") ?? undefined
-          }), { navKey: "codex" }));
+          }), { navKey: "codex", shellStatus: shellStatusFromCodex(codex, { hosts: withUser("/projects", url), codex: withUser("/codex", url), approvals: withUser("/approvals", url) }) }));
           return;
         }
         if (screen === "codex-session" && url.searchParams.get("id")) {
@@ -2688,17 +3384,17 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           }, {
             historyOrder: url.searchParams.get("historyOrder") ?? undefined,
             userId: url.searchParams.get("userId") ?? undefined
-          }), { navKey: "codex" }));
+          }), { navKey: "codex", shellStatus: shellStatusFromDesktopSession(detail.data.session) }));
           return;
         }
         if (screen === "sessions") {
           const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
-          html(res, 200, renderForRequest(req, "Сессии", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`, { navKey: "sessions" }));
+          html(res, 200, renderForRequest(req, "Сессии", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`, { navKey: "sessions", shellStatus: shellStatusFromCodex({ cliSessions: sessions.sessions, desktopSessions: [], desktopProjects: [] }, { codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
           return;
         }
         if (screen === "approvals") {
           const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
-          html(res, 200, renderForRequest(req, "Подтверждения", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`, { navKey: "approvals" }));
+          html(res, 200, renderForRequest(req, "Подтверждения", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`, { navKey: "approvals", shellStatus: shellStatusFromApprovals(approvals.approvals, { approvals: withUser("/approvals", url), codex: withUser("/sessions", url) }) }));
           return;
         }
         if (screen === "session" && url.searchParams.get("id")) {
@@ -2710,22 +3406,22 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             events: SessionEvent[];
             actions: string[];
           }>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(id)}`);
-          html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions" }));
+          html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
           return;
         }
         if (screen === "diff" && url.searchParams.get("sessionId")) {
           const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/diff`);
-          html(res, 200, renderForRequest(req, "Дифф", renderDiffView(diff), { navKey: "sessions" }));
+          html(res, 200, renderForRequest(req, "Дифф", renderDiffView(diff), { navKey: "sessions", shellStatus: { pc: { value: compactCount(diff.summary.changedFiles, "файл."), href: withUser("/projects", url), tone: diff.summary.changedFiles > 0 ? "info" : "neutral" }, codex: { value: diff.summary.highRiskFiles.length > 0 ? "Risk" : "Diff", href: withUser(`/session/${encodeURIComponent(diff.sessionId)}`, url), tone: diff.summary.highRiskFiles.length > 0 ? "danger" : "info" }, approvals: { value: "Решения", href: withUser("/approvals", url), tone: "neutral" } } }));
           return;
         }
         if (screen === "verify" && url.searchParams.get("sessionId")) {
           const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/verify`);
-          html(res, 200, renderForRequest(req, "Проверка", renderVerifyView(verify), { navKey: "sessions" }));
+          html(res, 200, renderForRequest(req, "Проверка", renderVerifyView(verify), { navKey: "sessions", shellStatus: { pc: { value: compactCount(verify.checkedCriteria.length, "пров."), href: verify.reportHref ?? withUser("/reports", url), tone: verify.checkedCriteria.length > 0 ? "info" : "neutral" }, codex: { value: verify.state, href: withUser(`/session/${encodeURIComponent(verify.sessionId)}`, url), tone: toneForState(verify.state) }, approvals: { value: compactCount(verify.failedCriteria.length, "fail"), href: withUser("/approvals", url), tone: verify.failedCriteria.length > 0 ? "danger" : "success" } } }));
           return;
         }
 
         const dashboard = await fetchForRequest<MiniAppDashboardProjection>(req, url, "/api/v1/miniapp/dashboard");
-        html(res, 200, renderForRequest(req, "HappyTG Mini App", renderDashboardView(dashboard), { navKey: "home" }));
+        html(res, 200, renderForRequest(req, "HappyTG Mini App", renderDashboardView(dashboard), { navKey: "home", shellStatus: shellStatusFromDashboard(dashboard, { hosts: withUser("/hosts", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
       }),
       route("GET", "/sessions", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Сессии", "sessions")) {
@@ -2740,7 +3436,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           q: url.searchParams.get("q") ?? undefined,
           sort: url.searchParams.get("sort") ?? undefined,
           userId: url.searchParams.get("userId") ?? undefined
-        }), { navKey: "sessions" }));
+        }), { navKey: "sessions", shellStatus: shellStatusFromCodex(codex, { hosts: withUser("/projects", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
       }),
       route("GET", "/codex", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Codex", "codex")) {
@@ -2757,7 +3453,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           sort: url.searchParams.get("sort") ?? undefined,
           resetHref: withUser("/codex", url),
           userId: url.searchParams.get("userId") ?? undefined
-        }), { navKey: "codex" }));
+        }), { navKey: "codex", shellStatus: shellStatusFromCodex(codex, { hosts: withUser("/projects", url), codex: withUser("/codex", url), approvals: withUser("/approvals", url) }) }));
       }),
       route("GET", "/codex/desktop-session", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
@@ -2784,7 +3480,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }, {
           historyOrder: url.searchParams.get("historyOrder") ?? undefined,
           userId: url.searchParams.get("userId") ?? undefined
-        }), { navKey: "codex" }));
+        }), { navKey: "codex", shellStatus: shellStatusFromDesktopSession(detail.data.session) }));
       }),
       route("GET", "/approvals", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Подтверждения", "approvals")) {
@@ -2792,7 +3488,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
-        html(res, 200, renderForRequest(req, "Подтверждения", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`, { navKey: "approvals" }));
+        html(res, 200, renderForRequest(req, "Подтверждения", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`, { navKey: "approvals", shellStatus: shellStatusFromApprovals(approvals.approvals, { approvals: withUser("/approvals", url), codex: withUser("/sessions", url) }) }));
       }),
       route("GET", "/approval/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Подтверждение", "approvals")) {
@@ -2809,13 +3505,27 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           <p class="muted">${escapeHtml(detail.approval.reason)}</p>
           <div class="notice notice-info" data-action-feedback hidden>Ждем действие.</div>
           <div class="grid">
-            <div class="kv-item"><div class="eyebrow">Риск</div><strong>${escapeHtml(detail.approval.risk)}</strong></div>
-            <div class="kv-item"><div class="eyebrow">Scope</div><strong>${escapeHtml(detail.approval.scope ?? "once")}</strong></div>
-            <div class="kv-item"><div class="eyebrow">Истекает</div><strong>${escapeHtml(detail.approval.expiresAt)}</strong></div>
+            ${renderMetric("Риск", detail.approval.risk, toneForState(detail.approval.risk))}
+            ${renderMetric("Scope", detail.approval.scope ?? "once", "info")}
+            ${renderMetric("Истекает", compactDate(detail.approval.expiresAt), "warn")}
           </div>
           <div class="actions">${approvalActions}${detail.session ? linkButton("Открыть сессию", detail.session.href) : ""}</div>
+        </section>
+        <section class="panel">
+          ${renderSectionTitle("Что будет разрешено")}
+          <div class="notice notice-warn">
+            <strong>${escapeHtml(detail.approval.reason)}</strong>
+            <div class="meta-line">${escapeHtml(detail.session?.title ?? detail.approval.sessionId)}</div>
+          </div>
+          ${renderDetails("Raw command / policy details", [
+            { label: "approval", value: detail.approval.id },
+            { label: "session", value: detail.approval.sessionId },
+            { label: "state", value: detail.approval.state },
+            { label: "nonce", value: detail.approval.nonce },
+            { label: "expiresAt", value: detail.approval.expiresAt }
+          ])}
         </section>`;
-        html(res, 200, renderForRequest(req, `Подтверждение ${detail.approval.id}`, body, { navKey: "approvals" }));
+        html(res, 200, renderForRequest(req, `Подтверждение ${detail.approval.id}`, body, { navKey: "approvals", shellStatus: shellStatusFromApprovals([detail.approval], { approvals: withUser("/approvals", url), codex: detail.session?.href ?? withUser("/sessions", url) }) }));
       }),
       route("GET", "/hosts", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Хосты", "hosts")) {
@@ -2823,7 +3533,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const hosts = await fetchForRequest<{ hosts: MiniAppHostCard[] }>(req, url, "/api/v1/miniapp/hosts");
-        html(res, 200, renderForRequest(req, "Хосты", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`, { navKey: "hosts" }));
+        html(res, 200, renderForRequest(req, "Хосты", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`, { navKey: "hosts", shellStatus: shellStatusFromHosts(hosts.hosts, { hosts: withUser("/hosts", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
       }),
       route("GET", "/projects", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Проекты", "projects")) {
@@ -2840,7 +3550,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             error: desktopProjects.error
           },
           userId: url.searchParams.get("userId") ?? undefined
-        }), { navKey: "projects" }));
+        }), { navKey: "projects", shellStatus: shellStatusFromProjects(projects.projects, desktopProjects.data.projects, { hosts: withUser("/projects", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
       }),
       route("GET", "/projects/tasks", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Прошедшие задачи", "projects")) {
@@ -2862,7 +3572,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           routePath: "/projects/tasks",
           resetHref: withUser("/projects", url),
           userId: url.searchParams.get("userId") ?? undefined
-        }), { navKey: "projects" }));
+        }), { navKey: "projects", shellStatus: shellStatusFromCodex(data, { hosts: withUser("/projects", url), codex: withUser("/projects/tasks", url), approvals: withUser("/approvals", url) }) }));
       }),
       route("GET", "/project/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Проект", "projects")) {
@@ -2883,7 +3593,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             <div class="kv-item"><div class="eyebrow">Host</div><strong>${escapeHtml(project.hostLabel ?? "host n/a")}</strong></div>
             <div class="kv-item"><div class="eyebrow">Active sessions</div><strong>${project.activeSessions}</strong></div>
           </section>`;
-        html(res, 200, renderForRequest(req, `Проект ${project.repoName}`, body, { navKey: "projects" }));
+        html(res, 200, renderForRequest(req, `Проект ${project.repoName}`, body, { navKey: "projects", shellStatus: shellStatusFromProjects([project], [], { hosts: withUser("/projects", url), codex: projectTasksHref("codex-cli", project.path, { userId }), approvals: withUser("/approvals", url) }) }));
       }),
       route("GET", "/host/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Хост", "hosts")) {
@@ -2891,10 +3601,10 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const detail = await fetchForRequest<{ host: MiniAppHostCard; workspaces: Workspace[]; sessions: MiniAppSessionCard[] }>(req, url, `/api/v1/miniapp/hosts/${params.id}`);
-        const body = `<section class="panel hero"><h1>${escapeHtml(detail.host.label)}</h1><p class="muted">${escapeHtml(detail.host.repoNames.join(", ") || "repos not reported")}</p><div class="actions">${linkButton("Использовать для новой задачи", "/new-task", true)}${linkButton("Проверить состояние", "/hosts")}</div></section>
-          <section class="panel"><h2>Repos</h2><ul class="status-list">${detail.workspaces.map((workspace) => `<li><div><strong>${escapeHtml(workspace.repoName)}</strong><div class="muted">${escapeHtml(workspace.path)}</div></div><div class="status-meta">${renderBadge(workspace.status)}</div></li>`).join("")}</ul></section>
-          <section class="panel"><h2>Sessions</h2>${renderSessionCards(detail.sessions)}</section>`;
-        html(res, 200, renderForRequest(req, `Хост ${detail.host.label}`, body, { navKey: "hosts" }));
+        const body = `<section class="panel hero"><p class="eyebrow">Хост / Диагностика</p><h1>${escapeHtml(detail.host.label)}</h1><p class="muted">${detail.host.activeSessions} active sessions · ${detail.host.repoNames.length} reported repos</p><div class="actions">${linkButton("Использовать для новой задачи", "/new-task", true)}${linkButton("Проверить состояние", "/hosts")}</div>${detail.host.lastError ? `<div class="notice notice-danger">${escapeHtml(detail.host.lastError)}</div>` : ""}</section>
+          <section class="panel">${renderSectionTitle("Repos")}<ul class="status-list">${detail.workspaces.map((workspace) => `<li><div><strong>${escapeHtml(workspace.repoName)}</strong><div class="status-meta">${renderBadge(workspace.status)}</div>${renderDetails("Скрытые детали", [{ label: "path", value: workspace.path }])}</div></li>`).join("")}</ul></section>
+          <section class="panel">${renderSectionTitle("Sessions")}${renderSessionCards(detail.sessions)}</section>`;
+        html(res, 200, renderForRequest(req, `Хост ${detail.host.label}`, body, { navKey: "hosts", shellStatus: shellStatusFromHosts([detail.host], { hosts: withUser("/hosts", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
       }),
       route("GET", "/reports", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Отчеты", "reports")) {
@@ -2902,7 +3612,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const reports = await fetchForRequest<{ reports: MiniAppReportCard[] }>(req, url, "/api/v1/miniapp/reports");
-        html(res, 200, renderForRequest(req, "Отчеты", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`, { navKey: "reports" }));
+        html(res, 200, renderForRequest(req, "Отчеты", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`, { navKey: "reports", shellStatus: { pc: { value: compactCount(reports.reports.length, "отчет."), href: withUser("/reports", url), tone: reports.reports.length > 0 ? "info" : "neutral" }, codex: { value: "Сессии", href: withUser("/sessions", url), tone: "neutral" }, approvals: { value: "Решения", href: withUser("/approvals", url), tone: "neutral" } } }));
       }),
       route("GET", "/diff/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Дифф", "sessions")) {
@@ -2910,7 +3620,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/diff`);
-        html(res, 200, renderForRequest(req, "Дифф", renderDiffView(diff), { navKey: "sessions" }));
+        html(res, 200, renderForRequest(req, "Дифф", renderDiffView(diff), { navKey: "sessions", shellStatus: { pc: { value: compactCount(diff.summary.changedFiles, "файл."), href: withUser("/projects", url), tone: diff.summary.changedFiles > 0 ? "info" : "neutral" }, codex: { value: diff.summary.highRiskFiles.length > 0 ? "Risk" : "Diff", href: withUser(`/session/${encodeURIComponent(diff.sessionId)}`, url), tone: diff.summary.highRiskFiles.length > 0 ? "danger" : "info" }, approvals: { value: "Решения", href: withUser("/approvals", url), tone: "neutral" } } }));
       }),
       route("GET", "/verify/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Проверка", "sessions")) {
@@ -2918,7 +3628,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/verify`);
-        html(res, 200, renderForRequest(req, "Проверка", renderVerifyView(verify), { navKey: "sessions" }));
+        html(res, 200, renderForRequest(req, "Проверка", renderVerifyView(verify), { navKey: "sessions", shellStatus: { pc: { value: compactCount(verify.checkedCriteria.length, "пров."), href: verify.reportHref ?? withUser("/reports", url), tone: verify.checkedCriteria.length > 0 ? "info" : "neutral" }, codex: { value: verify.state, href: withUser(`/session/${encodeURIComponent(verify.sessionId)}`, url), tone: toneForState(verify.state) }, approvals: { value: compactCount(verify.failedCriteria.length, "fail"), href: withUser("/approvals", url), tone: verify.failedCriteria.length > 0 ? "danger" : "success" } } }));
       }),
       route("GET", "/new-task", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Новая задача", "projects")) {
@@ -2947,7 +3657,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           intent: url.searchParams.get("intent") ?? undefined,
           title: url.searchParams.get("title") ?? undefined,
           contextSessionId: url.searchParams.get("contextSessionId") ?? undefined
-        }, { projects: desktopProjects.data.projects, control: desktopControl.data.control }), { navKey: "projects" }));
+        }, { projects: desktopProjects.data.projects, control: desktopControl.data.control }), { navKey: "projects", shellStatus: shellStatusFromProjects(projects.projects, desktopProjects.data.projects, { hosts: withUser("/projects", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
       }),
       route("POST", "/codex/desktop-action", async ({ req, res, url }) => {
         if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
@@ -3054,16 +3764,17 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           .flatMap((section) => section.files.map((file) => `${section.label}: ${file}`))
           .join("\n");
         const body = `
-          <section class="panel">
+          <section class="panel hero">
+            <p class="eyebrow">Отчет / Артефакт</p>
             <div class="panel-header">
               <h1>Task ${escapeHtml(bundle.task.id)}</h1>
               ${renderBadge(bundle.task.verificationState)}
             </div>
             <div class="kv-grid">
-              <div class="kv-item"><div class="eyebrow">Phase</div><strong>${escapeHtml(bundle.task.phase)}</strong></div>
-              <div class="kv-item"><div class="eyebrow">Validation</div><strong>${escapeHtml(bundle.validation.ok ? "ok" : `missing ${bundle.validation.missing.join(", ")}`)}</strong></div>
-              <div class="kv-item"><div class="eyebrow">Bundle path</div><code>${escapeHtml(bundle.task.rootPath)}</code></div>
+              ${renderMetric("Phase", bundle.task.phase, "info")}
+              ${renderMetric("Validation", bundle.validation.ok ? "ok" : `missing ${bundle.validation.missing.join(", ")}`, bundle.validation.ok ? "success" : "danger")}
             </div>
+            ${renderDetails("Скрытые детали", [{ label: "Bundle path", value: bundle.task.rootPath }])}
           </section>
           ${renderProofProgress(bundle.task)}
           <section class="panel">
@@ -3072,7 +3783,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           </section>
         `;
 
-        html(res, 200, renderForRequest(req, `Задача ${bundle.task.id}`, body, { navKey: "reports" }));
+        html(res, 200, renderForRequest(req, `Задача ${bundle.task.id}`, body, { navKey: "reports", shellStatus: { pc: { value: bundle.validation.ok ? "Proof OK" : "Missing", href: withUser("/reports", url), tone: bundle.validation.ok ? "success" : "danger" }, codex: { value: bundle.task.phase, href: withUser("/sessions", url), tone: "info" }, approvals: { value: bundle.task.verificationState, href: withUser("/reports", url), tone: toneForState(bundle.task.verificationState) } } }));
       }),
       route("GET", "/session/:id", async ({ req, res, params, url }) => {
         if (!requireSessionContext(req, res, url, "Сессия", "sessions")) {
@@ -3086,7 +3797,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           events: SessionEvent[];
           actions: string[];
         }>(req, url, `/api/v1/miniapp/sessions/${params.id}`);
-        html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions" }));
+        html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
       })
     ],
     logger,
