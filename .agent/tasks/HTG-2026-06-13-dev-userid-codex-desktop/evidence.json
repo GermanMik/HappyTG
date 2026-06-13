@@ -1,0 +1,41 @@
+{
+  "taskId": "HTG-2026-06-13-dev-userid-codex-desktop",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "api-test",
+      "command": "pnpm --filter @happytg/api test",
+      "status": "pass",
+      "raw": "raw/test-api.txt"
+    },
+    {
+      "name": "api-typecheck",
+      "command": "pnpm --filter @happytg/api typecheck",
+      "status": "pass",
+      "raw": "raw/typecheck-api.txt"
+    },
+    {
+      "name": "api-lint",
+      "command": "pnpm --filter @happytg/api lint",
+      "status": "pass",
+      "raw": "raw/lint-api.txt"
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "status": "pass",
+      "raw": "raw/diff-check.txt"
+    },
+    {
+      "name": "live-usr-1-smoke",
+      "command": "Invoke-WebRequest local API and Mini App routes",
+      "status": "pass",
+      "raw": "raw/live-smoke.txt",
+      "observations": {
+        "desktopProjects": 12,
+        "desktopSessions": 100,
+        "pageWarning": false
+      }
+    }
+  ]
+}

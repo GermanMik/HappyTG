@@ -48,6 +48,30 @@ async function createKnownUser(service: HappyTGControlPlaneService, suffix: stri
   return claim.user.id;
 }
 
+async function withEnv<T>(overrides: Record<string, string | undefined>, run: () => Promise<T>): Promise<T> {
+  const previous = new Map<string, string | undefined>();
+  for (const [key, value] of Object.entries(overrides)) {
+    previous.set(key, process.env[key]);
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  try {
+    return await run();
+  } finally {
+    for (const [key, value] of previous.entries()) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
 async function createCodexDesktopHome(root: string): Promise<string> {
   const codexHome = path.join(root, ".codex-fixture");
   const sessionDir = path.join(codexHome, "sessions", "2026", "04", "28");
@@ -431,6 +455,19 @@ test("Codex Desktop projections are user-scoped and sanitized", async () => {
     assert.equal(detail.history[0]?.source, "codex-desktop");
     assert.match(detail.history[1]?.summary ?? "", /Safe Desktop summary/);
     assert.doesNotMatch(JSON.stringify({ projects, sessions, detail }), /RAW_SECRET_PROMPT/);
+    await withEnv({ NODE_ENV: "test", HAPPYTG_DEV_CODEX_DESKTOP_USER_ID: "usr_1" }, async () => {
+      const devProjects = await service.listCodexDesktopProjects("usr_1");
+      const devSessions = await service.listCodexDesktopSessions("usr_1");
+      const devDetail = await service.getCodexDesktopSessionDetail("usr_1", "desktop-session-1");
+
+      assert.equal(devProjects.projects[0]?.source, "codex-desktop");
+      assert.equal(devSessions.sessions[0]?.source, "codex-desktop");
+      assert.equal(devDetail.session.source, "codex-desktop");
+      await assert.rejects(() => service.resumeCodexDesktopSession("usr_1", "desktop-session-1"), /User not found/);
+    });
+    await withEnv({ NODE_ENV: "production", HAPPYTG_DEV_CODEX_DESKTOP_USER_ID: "usr_1" }, async () => {
+      await assert.rejects(() => service.listCodexDesktopProjects("usr_1"), /User not found/);
+    });
     await assert.rejects(() => service.listCodexDesktopSessions("unknown-user"), /User not found/);
     await assert.rejects(() => service.getCodexDesktopSessionDetail(userId, "missing-session"), /Codex Desktop session not found/);
 
