@@ -783,6 +783,94 @@ test("codex project view shows only selected project sessions and caps results a
   }
 });
 
+test("codex project view matches equivalent Windows project paths", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "HappyTG",
+              path: "C:\\Develop\\Projects\\HappyTG",
+              source: "codex-desktop",
+              active: true
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=100&userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "desktop-happytg-path-variant",
+              title: "HappyTG Desktop path variant",
+              projectPath: "C:/Develop/Projects/HappyTG/",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            },
+            {
+              id: "desktop-other-project",
+              title: "Other Desktop path variant",
+              projectPath: "C:/Develop/Projects/Other",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            },
+            {
+              id: "desktop-unscoped",
+              title: "Unscoped Desktop path variant",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-desktop&project=c%3A%5Cdevelop%5Cprojects%5Chappytg`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /HappyTG Desktop path variant/);
+    assert.doesNotMatch(html, /Other Desktop path variant/);
+    assert.doesNotMatch(html, /Unscoped Desktop path variant/);
+    assert.match(html, /1 visible/);
+    assert.doesNotMatch(html, /Нет активных сессий/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("codex project view gives widened Desktop session fetch an extended timeout budget", async () => {
   await withEnv({ HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS: "10" }, async () => {
     const server = createMiniAppServer({

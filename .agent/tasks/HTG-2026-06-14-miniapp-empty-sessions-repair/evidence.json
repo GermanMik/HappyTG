@@ -1,0 +1,58 @@
+{
+  "taskId": "HTG-2026-06-14-miniapp-empty-sessions-repair",
+  "criteria": [
+    {
+      "criterion": "A selected Codex Desktop project with matching Desktop session history renders matching session cards instead of 0 visible.",
+      "status": "passed",
+      "evidence": "raw/test-unit.txt"
+    },
+    {
+      "criterion": "Matching tolerates equivalent Windows path spellings where safe, including slash direction and case differences.",
+      "status": "passed",
+      "evidence": "apps/miniapp/src/index.test.ts regression: codex project view matches equivalent Windows project paths"
+    },
+    {
+      "criterion": "Selected-project views still exclude unrelated or unscoped Desktop sessions.",
+      "status": "passed",
+      "evidence": "raw/test-unit.txt"
+    },
+    {
+      "criterion": "Selected-project views still render at most 5 session cards.",
+      "status": "passed",
+      "evidence": "raw/test-unit.txt"
+    },
+    {
+      "criterion": "The empty state remains available when there are truly no matching sessions.",
+      "status": "passed",
+      "evidence": "Existing Mini App renderSessionCards path unchanged"
+    },
+    {
+      "criterion": "Regression tests cover the path normalization mismatch and the strict unrelated-session exclusion.",
+      "status": "passed",
+      "evidence": "apps/miniapp/src/index.test.ts"
+    },
+    {
+      "criterion": "Raw validation output is saved under raw/.",
+      "status": "passed",
+      "evidence": "raw/test-unit.txt, raw/typecheck.txt, raw/lint.txt, raw/build.txt, raw/diff-check.txt"
+    }
+  ],
+  "artifacts": [
+    "spec.md",
+    "evidence.md",
+    "evidence.json",
+    "verdict.json",
+    "problems.md",
+    "raw/test-unit.txt",
+    "raw/test-unit-debug.txt",
+    "raw/typecheck.txt",
+    "raw/lint.txt",
+    "raw/build.txt",
+    "raw/repo-typecheck.txt",
+    "raw/repo-test.txt",
+    "raw/repo-lint.txt",
+    "raw/repo-build.txt",
+    "raw/diff-check.txt"
+  ],
+  "generatedAt": "2026-06-14T05:43:10.624Z"
+}

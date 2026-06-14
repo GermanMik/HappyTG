@@ -1,0 +1,48 @@
+{
+  "task_id": "HTG-2026-06-14-miniapp-empty-sessions-repair",
+  "session_id": "local-2026-06-14-miniapp-empty-sessions-repair",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "freeze",
+      "entered_at": "2026-06-14T05:43:10.624Z",
+      "event": "TaskSpecFrozen"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-06-14T05:43:10.624Z",
+      "event": "EvidenceUpdated"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-06-14T05:43:10.624Z",
+      "event": "VerificationPassed"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "spec.md",
+    "state.json",
+    "evidence.md",
+    "evidence.json",
+    "verdict.json",
+    "problems.md",
+    "raw/build.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/lint.txt",
+    "raw/typecheck.txt",
+    "raw/repo-typecheck.txt",
+    "raw/repo-test.txt",
+    "raw/repo-lint.txt",
+    "raw/repo-build.txt",
+    "raw/diff-check.txt",
+    "raw/task-validate.txt"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-06-14T05:43:10.624Z",
+    "updated_at": "2026-06-14T05:43:10.624Z"
+  }
+}
