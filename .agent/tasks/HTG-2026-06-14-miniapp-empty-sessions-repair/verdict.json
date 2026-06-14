@@ -1,0 +1,61 @@
+{
+  "taskId": "HTG-2026-06-14-miniapp-empty-sessions-repair",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "local-2026-06-14T05:43:10.624Z"
+  },
+  "checks": [
+    {
+      "name": "miniapp-test",
+      "status": "passed",
+      "artifact": "raw/test-unit.txt"
+    },
+    {
+      "name": "miniapp-typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck.txt"
+    },
+    {
+      "name": "miniapp-lint",
+      "status": "passed",
+      "artifact": "raw/lint.txt"
+    },
+    {
+      "name": "miniapp-build",
+      "status": "passed",
+      "artifact": "raw/build.txt"
+    },
+    {
+      "name": "repo-typecheck",
+      "status": "passed",
+      "artifact": "raw/repo-typecheck.txt"
+    },
+    {
+      "name": "repo-test",
+      "status": "passed",
+      "artifact": "raw/repo-test.txt"
+    },
+    {
+      "name": "repo-lint",
+      "status": "passed",
+      "artifact": "raw/repo-lint.txt"
+    },
+    {
+      "name": "repo-build",
+      "status": "passed",
+      "artifact": "raw/repo-build.txt"
+    },
+    {
+      "name": "diff-check",
+      "status": "passed",
+      "artifact": "raw/diff-check.txt"
+    },
+    {
+      "name": "task-validate",
+      "status": "passed",
+      "artifact": "raw/task-validate.txt"
+    }
+  ],
+  "generatedAt": "2026-06-14T05:43:10.624Z"
+}

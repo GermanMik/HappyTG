@@ -1,0 +1,1 @@
+Not run. The changed behavior is covered by Mini App route-level server tests without external services; no API, Docker, or dependency changes were made.

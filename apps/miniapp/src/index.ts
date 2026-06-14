@@ -2465,11 +2465,31 @@ function matchesCodexSearch(card: MiniAppSessionCard, query: string): boolean {
   return haystack.includes(query.toLowerCase());
 }
 
+function normalizeCodexProjectPath(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const normalized = trimmed.replace(/\\/gu, "/").replace(/\/+$/u, "");
+  if (/^(?:[a-z]:\/|\/\/)/iu.test(normalized)) {
+    return normalized.toLowerCase();
+  }
+
+  return normalized;
+}
+
 function matchesCodexProject(card: MiniAppSessionCard, project: string | undefined): boolean {
   if (!project || project === "all") {
     return true;
   }
-  return card.repoName === project || card.projectPath === project;
+  if (card.repoName === project) {
+    return true;
+  }
+
+  const cardProjectPath = normalizeCodexProjectPath(card.projectPath);
+  const selectedProjectPath = normalizeCodexProjectPath(project);
+  return Boolean(cardProjectPath && selectedProjectPath && cardProjectPath === selectedProjectPath);
 }
 
 function renderDesktopActions(session: CodexDesktopSession): string {
