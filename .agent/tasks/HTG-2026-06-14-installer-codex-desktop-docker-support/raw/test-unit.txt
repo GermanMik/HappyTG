@@ -1,0 +1,5 @@
+Unit and installer runtime tests were run with:
+
+pnpm --filter @happytg/bootstrap test
+
+See raw/bootstrap-test.txt.

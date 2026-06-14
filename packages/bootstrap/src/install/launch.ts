@@ -437,10 +437,10 @@ export function launchAutomationItems(launch: InstallLaunchResult): AutomationIt
         message: "Docker Compose stack: started.",
         solutions: [
           `Started with: \`${launch.command ?? DOCKER_UP_COMMAND}\`.`,
-          `Inspect: \`${DOCKER_PS_COMMAND}\`.`,
-          `Logs: \`${DOCKER_COMPOSE_PREFIX} logs -f\`.`,
+          `Inspect: \`${composeCommand(launch.dockerServicePlan, ["ps"])}\`.`,
+          `Logs: \`${composeCommand(launch.dockerServicePlan, ["logs", "-f"])}\`.`,
           `Restart/start: \`${launch.command ?? DOCKER_UP_COMMAND}\`.`,
-          `Stop: \`${DOCKER_COMPOSE_PREFIX} down\`.`
+          `Stop: \`${composeCommand(launch.dockerServicePlan, ["down"])}\`.`
         ]
       }
     ];
@@ -463,6 +463,26 @@ export function launchAutomationItems(launch: InstallLaunchResult): AutomationIt
             ...(caddy.snippetPath ? [`Snippet: ${caddy.snippetPath}.`] : []),
             ...(caddy.backupPath ? [`Backup: ${caddy.backupPath}.`] : []),
             ...caddy.commands.map((command) => `Ran: ${command}`)
+          ]
+        });
+      }
+      if (launch.dockerServicePlan.desktop) {
+        const desktop = launch.dockerServicePlan.desktop;
+        items.push({
+          id: "codex-desktop-docker",
+          kind: desktop.overrideFiles.length > 0 ? "auto" : "manual",
+          message: `Codex Desktop Docker: ${desktop.detail}`,
+          solutions: [
+            ...(desktop.overrideFiles.length > 0
+              ? desktop.overrideFiles.map((file) => `Compose override: ${file}.`)
+              : ["Set `HAPPYTG_HOST_CODEX_HOME` to the host `.codex` directory to expose Desktop projects/sessions to the Docker API."]),
+            ...(desktop.projection === "enabled" && desktop.codexHome
+              ? [`Host Codex home: ${desktop.codexHome}.`]
+              : []),
+            ...(desktop.control === "host-proxy"
+              ? ["Keep `pnpm daemon:desktop-proxy` running on the host for continue/resume/new-task controls."]
+              : ["For continue/resume/new-task controls, configure `HAPPYTG_CODEX_DESKTOP_CONTROL=host-proxy` or `HAPPYTG_CODEX_DESKTOP_PROXY_URL` and run `pnpm daemon:desktop-proxy` on the host."]),
+            ...desktop.warnings
           ]
         });
       }
@@ -660,6 +680,9 @@ export async function runDockerLaunch(input: {
   ];
   const status = launchStatusFromHealth(health);
   const failedHealth = health.filter((item) => item.status === "fail");
+  const psCommand = composeCommand(input.dockerServicePlan, ["ps"]);
+  const logsCommand = composeCommand(input.dockerServicePlan, ["logs", "-f"]);
+  const downCommand = composeCommand(input.dockerServicePlan, ["down"]);
   return {
     mode: "docker",
     status,
@@ -672,15 +695,15 @@ export async function runDockerLaunch(input: {
     warnings: failedHealth.map((item) => `${item.label}: ${item.detail}`),
     nextSteps: failedHealth.length > 0
       ? [
-        `Inspect the stack with \`${DOCKER_PS_COMMAND}\`.`,
-        "Review service logs with `docker compose --env-file .env -f infra/docker-compose.example.yml logs <service>`.",
+        `Inspect the stack with \`${psCommand}\`.`,
+        `Review service logs with \`${composeCommand(input.dockerServicePlan, ["logs", "<service>"])}\`.`,
         "Rerun `pnpm happytg doctor --json` after the readiness checks pass."
       ]
       : [
-        `Inspect the running stack with \`${DOCKER_PS_COMMAND}\`.`,
-        `Follow logs with \`${DOCKER_COMPOSE_PREFIX} logs -f\`.`,
+        `Inspect the running stack with \`${psCommand}\`.`,
+        `Follow logs with \`${logsCommand}\`.`,
         `Restart/start with \`${upCommand}\`.`,
-        `Stop with \`${DOCKER_COMPOSE_PREFIX} down\`.`
+        `Stop with \`${downCommand}\`.`
       ]
   };
 }

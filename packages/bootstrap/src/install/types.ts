@@ -231,6 +231,15 @@ export interface SystemCaddyPlan {
   warnings: string[];
 }
 
+export interface CodexDesktopDockerPlan {
+  projection: "enabled" | "unavailable";
+  control: "host-proxy" | "not-configured";
+  codexHome?: string;
+  overrideFiles: string[];
+  detail: string;
+  warnings: string[];
+}
+
 export interface DockerServiceStrategyPlan {
   strategy: DockerServiceStrategy;
   reusedServices: DockerServiceId[];
@@ -238,6 +247,7 @@ export interface DockerServiceStrategyPlan {
   env: Record<string, string>;
   overrideFiles: string[];
   detail: string;
+  desktop?: CodexDesktopDockerPlan;
   caddy?: SystemCaddyPlan;
 }
 

@@ -1,0 +1,61 @@
+{
+  "task_id": "HTG-2026-06-14-installer-codex-desktop-docker-support",
+  "session_id": "local-2026-06-14-installer-codex-desktop-docker-support",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "init",
+      "entered_at": "2026-06-14T15:01:40.705Z",
+      "event": "TaskInitialized"
+    },
+    {
+      "phase": "freeze/spec",
+      "entered_at": "2026-06-14T15:01:40.705Z",
+      "event": "TaskSpecFrozen"
+    },
+    {
+      "phase": "build",
+      "entered_at": "2026-06-14T15:01:40.705Z",
+      "event": "ImplementationCompleted"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-06-14T15:01:40.705Z",
+      "event": "EvidenceUpdated"
+    },
+    {
+      "phase": "fresh verify",
+      "entered_at": "2026-06-14T15:01:40.705Z",
+      "event": "VerificationPassed"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-06-14T15:01:40.705Z",
+      "event": "TaskValidationPassed"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "spec.md",
+    "state.json",
+    "evidence.md",
+    "evidence.json",
+    "verdict.json",
+    "problems.md",
+    "raw/bootstrap-test.txt",
+    "raw/bootstrap-typecheck.txt",
+    "raw/docker-compose-config.txt",
+    "raw/diff-check.txt",
+    "raw/task-validate.txt",
+    "raw/build.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/lint.txt"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-06-14T15:01:40.705Z",
+    "updated_at": "2026-06-14T15:01:40.705Z"
+  }
+}
