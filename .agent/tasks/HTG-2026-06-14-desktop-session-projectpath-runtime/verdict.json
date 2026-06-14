@@ -1,0 +1,46 @@
+{
+  "taskId": "HTG-2026-06-14-desktop-session-projectpath-runtime",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "local-2026-06-14T09:06:00.000Z"
+  },
+  "checks": [
+    {
+      "name": "runtime-adapters-test",
+      "status": "passed",
+      "artifact": "raw/runtime-adapters-test.txt"
+    },
+    {
+      "name": "runtime-adapters-typecheck",
+      "status": "passed",
+      "artifact": "raw/runtime-adapters-typecheck.txt"
+    },
+    {
+      "name": "api-typecheck",
+      "status": "passed",
+      "artifact": "raw/api-typecheck.txt"
+    },
+    {
+      "name": "miniapp-test",
+      "status": "passed",
+      "artifact": "raw/miniapp-test.txt"
+    },
+    {
+      "name": "docker-rebuild",
+      "status": "passed",
+      "artifact": "raw/docker-rebuild.txt"
+    },
+    {
+      "name": "task-validate",
+      "status": "passed",
+      "artifact": "raw/task-validate.txt"
+    },
+    {
+      "name": "live-smoke",
+      "status": "passed",
+      "artifact": "raw/live-smoke.txt"
+    }
+  ],
+  "generatedAt": "2026-06-14T09:06:00.000Z"
+}

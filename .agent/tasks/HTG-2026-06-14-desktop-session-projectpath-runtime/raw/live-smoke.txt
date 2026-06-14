@@ -1,0 +1,85 @@
+API sessions:
+{
+  "sessions": [
+    {
+      "id": "019ec505-a3dd-7050-8b00-240e9154b874",
+      "title": "Codex Desktop 019ec505",
+      "projectPath": "C:\\Develop\\Projects\\HappyTG",
+      "updatedAt": "2026-06-14T08:02:34.377Z",
+      "status": "recent",
+      "source": "codex-desktop",
+      "projectId": "cdp_0e79b96f869a5659",
+      "canResume": false,
+      "canContinue": false,
+      "canStop": false,
+      "canCreateTask": false,
+      "unsupportedReason": "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.",
+      "unsupportedReasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+    },
+    {
+      "id": "019ec4a2-a790-70f2-b72a-bc0b40b117b7",
+      "title": "Починить очередь сессий",
+      "projectPath": "C:\\Develop\\Projects\\HappyTG",
+      "updatedAt": "2026-06-14T05:38:41.028Z",
+      "status": "recent",
+      "source": "codex-desktop",
+      "projectId": "cdp_0e79b96f869a5659",
+      "canResume": false,
+      "canContinue": false,
+      "canStop": false,
+      "canCreateTask": false,
+      "unsupportedReason": "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.",
+      "unsupportedReasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+    },
+    {
+      "id": "019ec36e-99af-75e2-b9b7-7b54bcf267d6",
+      "title": "Nightly Git resource check",
+      "projectPath": "C:\\Users\\tikta\\Documents\\Codex\\2026-05-26\\git-codex",
+      "updatedAt": "2026-06-14T00:02:26.421Z",
+      "status": "recent",
+      "source": "codex-desktop",
+      "canResume": false,
+      "canContinue": false,
+      "canStop": false,
+      "canCreateTask": false,
+      "unsupportedReason": "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.",
+      "unsupportedReasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+    },
+    {
+      "id": "019ec2d6-21ba-74c2-8f49-dd7b03759e8d",
+      "title": "Codex Desktop 019ec2d6",
+      "projectPath": "C:\\Users\\tikta\\AppData\\Local\\Temp",
+      "updatedAt": "2026-06-13T21:14:53.445Z",
+      "status": "recent",
+      "source": "codex-desktop",
+      "canResume": false,
+      "canContinue": false,
+      "canStop": false,
+      "canCreateTask": false,
+      "unsupportedReason": "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.",
+      "unsupportedReasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+    },
+    {
+      "id": "019ec2c2-d1f4-7b71-998f-6c2f7559c3cc",
+      "title": "Codex Desktop 019ec2c2",
+      "projectPath": "C:\\Users\\tikta\\AppData\\Local\\Temp",
+      "updatedAt": "2026-06-13T20:53:46.866Z",
+      "status": "recent",
+      "source": "codex-desktop",
+      "canResume": false,
+      "canContinue": false,
+      "canStop": false,
+      "canCreateTask": false,
+      "unsupportedReason": "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.",
+      "unsupportedReasonCode": "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+    }
+  ]
+}
+
+Local selected project:
+5 visible
+Починить очередь сессий
+Public selected project:
+5 visible
+Починить очередь сессий
+EXIT_CODE=0

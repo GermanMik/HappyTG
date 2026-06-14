@@ -1,0 +1,58 @@
+{
+  "taskId": "HTG-2026-06-14-desktop-session-projectpath-runtime",
+  "criteria": [
+    {
+      "criterion": "Docker API runs with the Codex Desktop read-only /codex-home mount.",
+      "status": "passed",
+      "evidence": "raw/docker-ps.txt and live docker inspect during diagnosis"
+    },
+    {
+      "criterion": "/api/v1/codex-desktop/projects?userId=usr_1 returns local Desktop projects.",
+      "status": "passed",
+      "evidence": "live diagnosis before code fix"
+    },
+    {
+      "criterion": "Recent Desktop sessions include projectPath when session JSONL contains cwd.",
+      "status": "passed",
+      "evidence": "raw/live-smoke.txt"
+    },
+    {
+      "criterion": "Selected HappyTG project route renders sessions instead of 0 visible.",
+      "status": "passed",
+      "evidence": "raw/live-smoke.txt"
+    },
+    {
+      "criterion": "Selected-project cap remains 5 visible.",
+      "status": "passed",
+      "evidence": "raw/live-smoke.txt"
+    },
+    {
+      "criterion": "Regression coverage for newest dated session JSONL discovery.",
+      "status": "passed",
+      "evidence": "packages/runtime-adapters/src/index.test.ts"
+    },
+    {
+      "criterion": "Live Docker API/Mini App rebuilt and verified locally and publicly.",
+      "status": "passed",
+      "evidence": "raw/docker-rebuild.txt, raw/docker-ps.txt, raw/live-smoke.txt"
+    }
+  ],
+  "artifacts": [
+    "spec.md",
+    "state.json",
+    "evidence.md",
+    "evidence.json",
+    "verdict.json",
+    "problems.md",
+    "raw/runtime-adapters-test.txt",
+    "raw/runtime-adapters-typecheck.txt",
+    "raw/api-typecheck.txt",
+    "raw/miniapp-test.txt",
+    "raw/diff-check.txt",
+    "raw/task-validate.txt",
+    "raw/docker-rebuild.txt",
+    "raw/docker-ps.txt",
+    "raw/live-smoke.txt"
+  ],
+  "generatedAt": "2026-06-14T09:06:00.000Z"
+}
