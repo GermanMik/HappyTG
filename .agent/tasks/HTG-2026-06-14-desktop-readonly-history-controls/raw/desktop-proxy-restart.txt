@@ -1,0 +1,7 @@
+Stopping existing desktop-proxy pid 27556
+Started desktop-proxy pid 26032
+Ready after 1 probes
+
+ProcessId   : 26032
+CommandLine : C:\WINDOWS\system32\cmd.exe /c ""C:\Users\tikta\AppData\Roaming\npm\pnpm.cmd" --filter @happytg/host-daemon run desktop-proxy"
+

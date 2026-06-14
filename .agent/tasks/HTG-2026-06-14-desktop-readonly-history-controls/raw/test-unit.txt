@@ -1,0 +1,40 @@
+
+> @happytg/runtime-adapters@0.4.28 test C:\Develop\Projects\HappyTG\packages\runtime-adapters
+> tsx --test src/*.test.ts
+
+✔ checkCodexReadiness reports available Codex and captures smoke warnings (442.8582ms)
+✔ tool execution model classifies actions and serializes mutations (1.5902ms)
+✔ Codex Desktop adapter parses projects from global state without private payloads (5.6898ms)
+✔ Codex Desktop host-proxy control contract delegates projects, sessions, and tasks over HTTP (75.9084ms)
+✔ Codex Desktop adapter parses session_index and session files as sanitized sessions (30.5502ms)
+✔ Codex Desktop adapter limits session projections for list screens (22.1469ms)
+✔ Codex Desktop adapter reads newest dated session files before old files (13.555ms)
+✔ Codex Desktop adapter keeps unlisted JSONL sessions read-only (16.1581ms)
+✔ Codex Desktop adapter controls sessions through Codex app-server JSON-RPC (239.9657ms)
+✔ Codex Desktop default adapter keeps unknown experimental control modes unsupported (6.2885ms)
+✔ Codex Desktop default adapter enables app-server control when explicitly configured (104.4242ms)
+✔ Codex Desktop adapter tolerates missing and corrupt state (13.3324ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from Path (255.2296ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext (260.1467ms)
+✔ checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated (304.329ms)
+✔ checkCodexReadiness closes stdin so smoke runs do not hang waiting for EOF (209.7433ms)
+✔ checkCodexReadiness preserves spaced prompts when it runs through a Windows cmd wrapper (647.3309ms)
+✔ checkCodexReadiness runs smoke from a neutral cwd when provided (477.5461ms)
+✔ checkCodexReadiness treats a Windows shell command-not-found result as missing (5.9392ms)
+✔ checkCodexReadiness marks only true ENOENT failures as missing (230.1458ms)
+✔ classifyCodexSmokeStderr ignores known benign Codex internal warnings only (1.8713ms)
+✔ summarizeCodexSmokeStderr extracts concise actionable root causes (1.2514ms)
+✔ codexCliMissingMessage explains PATH diagnosis and reinstall fallback (0.144ms)
+✔ runCodexExec reads summary from the Codex output file (236.3192ms)
+✔ runCodexExec marks timeout and returns a timeout summary (33.2992ms)
+✔ runCodexExec settles timeout even when the child ignores normal termination (31.4969ms)
+✔ runCodexExec caps stdout and stderr while reporting truncation metadata (202.7448ms)
+✔ runCodexExec returns actionable guidance when Codex CLI is missing (7.2149ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4511.5168

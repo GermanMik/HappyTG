@@ -20,6 +20,10 @@ HappyTG intentionally separates functional scope from delivery order. The comple
 14. Self-hosted packaging and upgrade flow.
 15. QA, release, and smoke suites.
 
+## TODO
+
+- Add near-realtime Mini App session status refresh: start with bounded polling for Codex Desktop session detail/list views, update visible session info without full page reload, and consider SSE only if polling latency/load becomes unacceptable.
+
 ## Done Criteria
 
 An epic is done only when:

@@ -149,6 +149,7 @@ Rules:
 - Mutating host operations must remain serialized, policy-checked and approval-guarded.
 - For non-trivial work, follow the existing proof-loop and `.agent/tasks/<TASK_ID>/` evidence discipline.
 - When `BaseDeploy`/system infrastructure already owns Caddy for HappyTG public ingress, do not start the compose `caddy` service as part of the app stack; configure/reuse the system Caddy route instead and keep compose `caddy` limited to isolated Docker mode.
+- When rebuilding or restarting Docker `api` for Codex Desktop host-proxy control, include both `infra/docker-compose.codex-desktop.yml` and `infra/docker-compose.codex-desktop-host-proxy.yml`; otherwise `HAPPYTG_CODEX_DESKTOP_CONTROL=host-proxy` can be lost and Desktop controls fall back to unsupported mode. Source: `HTG-2026-06-14-desktop-readonly-history-controls`.
 
 ### Stack
 

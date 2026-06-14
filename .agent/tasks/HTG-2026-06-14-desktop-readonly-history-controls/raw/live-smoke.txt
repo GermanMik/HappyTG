@@ -1,0 +1,14 @@
+== API env ==
+CODEX_HOME=/codex-home
+HAPPYTG_CODEX_DESKTOP_PROXY_TIMEOUT_MS=10000
+HAPPYTG_CODEX_DESKTOP_CONTROL=host-proxy
+HAPPYTG_CODEX_DESKTOP_PROXY_URL=http://host.docker.internal:4318
+== Ready ==
+{"ok":true,"service":"codex-desktop-host-proxy","authRequired":false}
+{"ok":true,"service":"api","stateStorePath":"/app/apps/api/.happytg-dev/control-plane.json"}
+== API control ==
+{"control":{"canResume":true,"canContinue":true,"canStop":true,"canCreateTask":true}}
+== API detail ==
+{"status":200,"sessionId":"019ec1b8-e7d9-73b1-81e8-03e7c11212aa","canContinue":true,"canResume":true,"canStop":true,"canCreateTask":true,"reasonCode":null,"historyCount":24,"projectPath":"C:\\Develop\\Projects\\BaseDeploy"}
+== Mini App detail ==
+{"status":200,"hasContinueForm":true,"promptDisabled":false,"hasFetchFailed":false,"hasBaseDeploy":true}

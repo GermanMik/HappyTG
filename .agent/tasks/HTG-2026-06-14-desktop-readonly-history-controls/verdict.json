@@ -1,0 +1,5 @@
+{
+  "taskId": "HTG-2026-06-14-desktop-readonly-history-controls",
+  "verdict": "pass",
+  "reason": "Runtime adapter regression tests, API tests, typecheck, build, diff-check, and live read-only smoke passed. A real non-empty live continue was intentionally not sent to avoid mutating the user's old Desktop thread."
+}

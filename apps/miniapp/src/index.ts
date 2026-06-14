@@ -288,32 +288,8 @@ function renderSectionTitle(title: string, action?: string): string {
   </div>`;
 }
 
-function sessionResultLabel(session: Pick<MiniAppSessionCard, "state" | "verificationState" | "attention">): string {
-  if (session.attention === "approval") {
-    return "Нужно решение";
-  }
-  if (session.verificationState === "passed") {
-    return "PASS";
-  }
-  if (session.verificationState === "failed" || session.verificationState === "stale") {
-    return "Нужна правка";
-  }
-  if (session.verificationState === "running" || session.state === "verifying") {
-    return "Проверка";
-  }
-  if (session.state === "completed") {
-    return "Готово";
-  }
-  if (session.state === "failed" || session.state === "cancelled") {
-    return "Ошибка";
-  }
-  if (session.state === "blocked" || session.state === "needs_approval") {
-    return "Блокер";
-  }
-  if (session.state === "running" || session.state === "resuming") {
-    return "В работе";
-  }
-  return "Открыть";
+function sessionResultLabel(session: Pick<MiniAppSessionCard, "state">): string {
+  return session.state;
 }
 
 function sessionResultTone(session: Pick<MiniAppSessionCard, "state" | "verificationState" | "attention">): BadgeTone {

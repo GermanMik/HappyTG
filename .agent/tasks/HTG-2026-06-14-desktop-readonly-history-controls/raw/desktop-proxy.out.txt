@@ -1,0 +1,5 @@
+
+> @happytg/host-daemon@0.4.28 desktop-proxy C:\Develop\Projects\HappyTG\apps\host-daemon
+> tsx src/index.ts desktop-proxy
+
+{"at":"2026-06-14T16:01:55.729Z","level":"INFO","scope":"codex-desktop-host-proxy","message":"Codex Desktop host proxy listening","metadata":{"host":"127.0.0.1","port":4318,"authRequired":false}}

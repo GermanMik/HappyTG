@@ -12,6 +12,7 @@ import {
   classifyCodexSmokeStderr,
   CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE,
   CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE,
+  CODEX_DESKTOP_SESSION_READ_ONLY_REASON_CODE,
   CodexDesktopStateAdapter,
   codexCliMissingMessage,
   createCodexDesktopAppServerControlContract,
@@ -567,6 +568,79 @@ test("Codex Desktop adapter reads newest dated session files before old files", 
   }
 });
 
+test("Codex Desktop adapter keeps unlisted JSONL sessions read-only", async () => {
+  const codexHome = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-readonly-session-"));
+  try {
+    const sessionDir = path.join(codexHome, "sessions", "2026", "06", "13");
+    await mkdir(sessionDir, { recursive: true });
+    await writeFile(
+      path.join(codexHome, "session_index.jsonl"),
+      `${JSON.stringify({ id: "session-old", thread_name: "Old JSONL task", updated_at: "2026-06-13T08:00:00.000Z" })}\n`,
+      "utf8"
+    );
+    await writeFile(
+      path.join(sessionDir, "rollout-2026-06-13T08-00-00-session-old.jsonl"),
+      `${JSON.stringify({ timestamp: "2026-06-13T08:00:00.000Z", payload: { id: "session-old", cwd: "C:/Develop/Projects/BaseDeploy", role: "assistant", content: "Safe desktop answer" } })}\n`,
+      "utf8"
+    );
+
+    const adapter = new CodexDesktopStateAdapter({
+      codexHome,
+      controlContract: {
+        supportsResume: true,
+        supportsContinue: true,
+        supportsStop: true,
+        supportsNewTask: true,
+        async listSessions() {
+          return [];
+        },
+        async getSessionDetail() {
+          throw new Error("thread not found: session-old");
+        },
+        async resumeSession(session) {
+          return { ok: true, action: "resume", source: "codex-desktop", session };
+        },
+        async continueSession(session) {
+          return { ok: true, action: "continue", source: "codex-desktop", session };
+        },
+        async stopSession(session) {
+          return { ok: true, action: "stop", source: "codex-desktop", session };
+        },
+        async createTask(input) {
+          return {
+            ok: true,
+            action: "new-task",
+            source: "codex-desktop",
+            task: {
+              id: "session-new",
+              title: input.title ?? "Desktop task",
+              projectPath: input.projectPath,
+              status: "created"
+            }
+          };
+        }
+      }
+    });
+
+    const sessions = await adapter.listSessions({ limit: 10 });
+    const detail = await adapter.getSessionDetail("session-old");
+    const session = await adapter.getSession("session-old");
+
+    assert.equal(sessions[0]?.id, "session-old");
+    assert.equal(sessions[0]?.canResume, false);
+    assert.equal(sessions[0]?.canContinue, false);
+    assert.equal(sessions[0]?.canStop, false);
+    assert.equal(sessions[0]?.canCreateTask, true);
+    assert.equal(sessions[0]?.unsupportedReasonCode, CODEX_DESKTOP_SESSION_READ_ONLY_REASON_CODE);
+    assert.match(sessions[0]?.unsupportedReason ?? "", /local history only/i);
+    assert.equal(detail?.session.canContinue, false);
+    assert.equal(detail?.history.length, 1);
+    assert.equal(session?.canContinue, false);
+  } finally {
+    await rm(codexHome, { recursive: true, force: true });
+  }
+});
+
 test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-control-"));
   let adapter: CodexDesktopStateAdapter | undefined;
@@ -613,6 +687,7 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
           };
         }
         const threads = new Map([["session-1", thread("session-1")]]);
+        const resumedThreads = new Set();
         function send(id, result) {
           process.stdout.write(JSON.stringify({ id, result }) + "\\n");
         }
@@ -656,6 +731,7 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
               break;
             }
             case "thread/resume":
+              resumedThreads.add(message.params.threadId);
               send(message.id, { thread: thread(message.params.threadId) });
               break;
             case "thread/turns/list":
@@ -668,15 +744,20 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
               threads.set("new-thread", thread("new-thread", "active"));
               send(message.id, { thread: threads.get("new-thread") });
               break;
-            case "turn/start":
-              if (threads.has(message.params.threadId)) {
-                const current = threads.get(message.params.threadId);
+            case "turn/start": {
+              const current = threads.get(message.params.threadId);
+              if (!resumedThreads.has(message.params.threadId) && current?.status?.type !== "active") {
+                process.stdout.write(JSON.stringify({ id: message.id, error: { code: -32000, message: "thread not found: " + message.params.threadId } }) + "\\n");
+                break;
+              }
+              if (current) {
                 current.status = { type: "active" };
                 current.updatedAt = 1777626060;
                 threads.set(message.params.threadId, current);
               }
               send(message.id, { turn: { id: "turn-new", status: "inProgress" } });
               break;
+            }
             default:
               process.stdout.write(JSON.stringify({ id: message.id, error: { code: -32601, message: "unexpected " + message.method } }) + "\\n");
           }
@@ -700,11 +781,11 @@ test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC"
     assert.equal(sessions[0]?.canStop, true);
     assert.equal(sessions[0]?.canCreateTask, true);
 
-    const resumed = await adapter.resumeSession(sessions[0]!);
     const continued = await adapter.continueSession(sessions[0]!, {
       userId: "usr_1",
       prompt: "Continue Desktop task"
     });
+    const resumed = await adapter.resumeSession(sessions[0]!);
     const stopped = await adapter.stopSession(sessions[0]!);
     const created = await adapter.createTask({
       userId: "usr_1",
