@@ -1,5 +1,5 @@
 {
-	email {$CADDY_ACME_EMAIL:}
+	email {$CADDY_ACME_EMAIL:noreply@example.com}
 }
 
 {$HAPPYTG_DOMAIN:happytg.gerta.crazedns.ru} {

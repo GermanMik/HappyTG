@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-06-14-installer-codex-desktop-docker-support",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "local-2026-06-14T15:01:40.705Z"
+  },
+  "checks": [
+    {
+      "name": "bootstrap-test",
+      "status": "passed",
+      "artifact": "raw/bootstrap-test.txt"
+    },
+    {
+      "name": "bootstrap-typecheck",
+      "status": "passed",
+      "artifact": "raw/bootstrap-typecheck.txt"
+    },
+    {
+      "name": "docker-compose-config",
+      "status": "passed",
+      "artifact": "raw/docker-compose-config.txt"
+    },
+    {
+      "name": "diff-check",
+      "status": "passed",
+      "artifact": "raw/diff-check.txt"
+    },
+    {
+      "name": "task-validate",
+      "status": "passed",
+      "artifact": "raw/task-validate.txt"
+    }
+  ],
+  "generatedAt": "2026-06-14T15:01:40.705Z"
+}

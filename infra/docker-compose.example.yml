@@ -141,6 +141,8 @@ services:
     restart: unless-stopped
     env_file:
       - ../.env
+    environment:
+      CADDY_ACME_EMAIL: ${CADDY_ACME_EMAIL:-noreply@example.com}
     depends_on:
       - api
       - bot

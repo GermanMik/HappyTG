@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 import { renderText } from "./cli.js";
 import { CommandExecutionError, runCommand } from "./install/commands.js";
+import { CODEX_DESKTOP_COMPOSE_FILE } from "./install/docker-services.js";
 import { createInstallRuntimeError } from "./install/errors.js";
 import { runHappyTGInstall } from "./install/index.js";
 import { runDockerLaunch } from "./install/launch.js";
@@ -615,6 +616,136 @@ test("runHappyTGInstall launch-mode docker validates config, starts Compose, and
     assert.match(result.finalization?.items.find((item) => item.id === "start-daemon")?.message ?? "", /No host-daemon autostart was configured/);
     assert.equal(result.finalization?.items.some((item) => item.message.includes("Start repo services: `pnpm dev`")), false);
     assert.match(JSON.stringify(result.reportJson.launch), /docker compose --env-file \.env -f infra\/docker-compose\.example\.yml up --build -d/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runHappyTGInstall launch-mode docker includes Codex Desktop projection override when host home is configured", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-docker-codex-desktop-"));
+  const repoPath = path.join(tempDir, "HappyTG");
+  const codexHome = path.join(tempDir, ".codex");
+  const pnpmPath = path.join(tempDir, "pnpm");
+  const dockerPath = path.join(tempDir, "docker");
+  const dockerCalls: Array<{ args: string[]; env?: NodeJS.ProcessEnv }> = [];
+
+  try {
+    await mkdir(repoPath, { recursive: true });
+    await mkdir(codexHome, { recursive: true });
+    await writeFile(path.join(repoPath, ".env"), `HAPPYTG_HOST_CODEX_HOME=${codexHome}\n`, "utf8");
+
+    const result = await runHappyTGInstall({
+      json: true,
+      nonInteractive: true,
+      cwd: tempDir,
+      launchCwd: tempDir,
+      bootstrapRepoRoot: REPO_ROOT,
+      repoDir: repoPath,
+      repoUrl: primarySource.url,
+      branch: "main",
+      telegramBotToken: "123456:abcdefghijklmnopqrstuvwx",
+      telegramAllowedUserIds: ["1001"],
+      backgroundMode: "skip",
+      launchMode: "docker",
+      postChecks: []
+    }, {
+      fetchImpl: async () => new Response("ok", { status: 200 }),
+      runBootstrapCheck: async () => setupReportWithPorts({
+        status: "pass",
+        ports: []
+      }),
+      deps: {
+        detectInstallerEnvironment: async () => baseEnvironment(),
+        readInstallDraft: async () => undefined,
+        detectRepoModeChoices: async () => ({
+          clonePath: repoPath,
+          currentInspection: repoInspection(tempDir),
+          updateInspection: repoInspection(repoPath),
+          choices: [
+            {
+              mode: "clone" as const,
+              label: "Clone fresh checkout",
+              path: repoPath,
+              available: true,
+              detail: "Clone HappyTG into the target."
+            }
+          ]
+        }),
+        syncRepository: async () => ({
+          path: repoPath,
+          sync: "cloned",
+          repoSource: "primary",
+          repoUrl: primarySource.url,
+          attempts: 1,
+          fallbackUsed: false
+        }),
+        resolveExecutable: async (command) => command === "pnpm" ? pnpmPath : command === "docker" ? dockerPath : undefined,
+        runCommand: async ({ command, args, env }) => {
+          const normalizedArgs = [...(args ?? [])];
+          if (command === dockerPath) {
+            dockerCalls.push({ args: normalizedArgs, env });
+            if (normalizedArgs[0] === "compose" && normalizedArgs[1] === "version") {
+              return { stdout: "Docker Compose version v2.29.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs[0] === "info") {
+              return { stdout: "Server Version: 27.0.0\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.at(-1) === "config") {
+              return { stdout: "services:\n  api: {}\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.includes("up")) {
+              return { stdout: "Container happytg-api Started\n", stderr: "", exitCode: 0, binaryPath: dockerPath, shell: false, fallbackUsed: false };
+            }
+            if (normalizedArgs.includes("ps")) {
+              return {
+                stdout: JSON.stringify([
+                  { Service: "api", State: "running", Health: "healthy" },
+                  { Service: "bot", State: "running", Health: "healthy" },
+                  { Service: "miniapp", State: "running", Health: "healthy" },
+                  { Service: "worker", State: "running", Health: "healthy" }
+                ]),
+                stderr: "",
+                exitCode: 0,
+                binaryPath: dockerPath,
+                shell: false,
+                fallbackUsed: false
+              };
+            }
+          }
+          return { stdout: "", stderr: "", exitCode: 0, binaryPath: pnpmPath, shell: false, fallbackUsed: false };
+        },
+        writeMergedEnvFile: async () => ({
+          envFilePath: path.join(repoPath, ".env"),
+          created: true,
+          changed: true,
+          addedKeys: ["TELEGRAM_BOT_TOKEN"],
+          preservedKeys: []
+        }),
+        fetchTelegramBotIdentity: async () => ({
+          ok: true,
+          username: "happytg_bot"
+        }),
+        configureBackgroundMode: async ({ mode }) => ({
+          mode,
+          status: "skipped",
+          detail: "Background daemon setup was skipped."
+        })
+      }
+    });
+
+    const expectedComposePrefix = ["compose", "--env-file", ".env", "-f", "infra/docker-compose.example.yml", "-f", CODEX_DESKTOP_COMPOSE_FILE];
+    assert.deepEqual(dockerCalls.map((call) => call.args), [
+      ["compose", "version"],
+      ["info"],
+      [...expectedComposePrefix, "config"],
+      [...expectedComposePrefix, "up", "--build", "-d"],
+      [...expectedComposePrefix, "ps", "--format", "json"]
+    ]);
+    assert.equal(dockerCalls.find((call) => call.args.includes("up"))?.env?.HAPPYTG_HOST_CODEX_HOME, codexHome);
+    assert.equal(result.launch.dockerServicePlan?.desktop?.projection, "enabled");
+    assert.equal(result.launch.dockerServicePlan?.desktop?.control, "not-configured");
+    assert.match(result.finalization?.items.find((item) => item.id === "codex-desktop-docker")?.message ?? "", /read-only projection enabled/);
+    assert.match(JSON.stringify(result.reportJson.launch), /docker-compose\.codex-desktop\.yml/);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

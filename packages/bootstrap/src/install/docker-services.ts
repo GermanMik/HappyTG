@@ -13,6 +13,7 @@ import {
 
 import { runCommand } from "./commands.js";
 import type {
+  CodexDesktopDockerPlan,
   DockerCaddyAction,
   DockerServiceId,
   DockerServiceStrategy,
@@ -27,6 +28,125 @@ const HAPPYTG_CADDY_END = "# END HappyTG managed block";
 
 export const DOCKER_COMPOSE_FILE = "infra/docker-compose.example.yml";
 export const DOCKER_COMPOSE_PREFIX = `docker compose --env-file .env -f ${DOCKER_COMPOSE_FILE}`;
+export const CODEX_DESKTOP_COMPOSE_FILE = "infra/docker-compose.codex-desktop.yml";
+export const CODEX_DESKTOP_HOST_PROXY_COMPOSE_FILE = "infra/docker-compose.codex-desktop-host-proxy.yml";
+
+function nonEmptyEnvValue(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function dockerHostPath(value: string, platform: NodeJS.Platform): string {
+  return platform === "win32" ? value.replace(/\\/gu, "/") : value;
+}
+
+async function firstExistingCodexHome(input: {
+  repoEnv: NodeJS.ProcessEnv;
+  installEnv: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+}): Promise<{ path?: string; warnings: string[] }> {
+  const warnings: string[] = [];
+  const explicitCandidates = [
+    { label: "repo .env", value: nonEmptyEnvValue(input.repoEnv.HAPPYTG_HOST_CODEX_HOME) },
+    { label: "installer env", value: nonEmptyEnvValue(input.installEnv.HAPPYTG_HOST_CODEX_HOME) }
+  ].filter((item): item is { label: string; value: string } => Boolean(item.value));
+  const candidates = [
+    ...explicitCandidates,
+    ...(input.platform === process.platform
+      ? [{
+        label: "default home",
+        value: resolveHome("~/.codex", {
+          env: input.installEnv,
+          platform: input.platform
+        })
+      }]
+      : [])
+  ];
+  const seen = new Set<string>();
+
+  for (const candidate of candidates) {
+    const resolved = resolveHome(candidate.value, {
+      env: input.installEnv,
+      platform: input.platform
+    });
+    const key = resolved.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+
+    if (await fileExists(resolved)) {
+      return {
+        path: resolved,
+        warnings
+      };
+    }
+
+    if (candidate.label !== "default home") {
+      warnings.push(`Configured HAPPYTG_HOST_CODEX_HOME from ${candidate.label} was not readable at ${resolved}.`);
+    }
+  }
+
+  return { warnings };
+}
+
+function hostProxyRequested(input: {
+  repoEnv: NodeJS.ProcessEnv;
+  installEnv: NodeJS.ProcessEnv;
+}): boolean {
+  const control = nonEmptyEnvValue(input.repoEnv.HAPPYTG_CODEX_DESKTOP_CONTROL)
+    ?? nonEmptyEnvValue(input.installEnv.HAPPYTG_CODEX_DESKTOP_CONTROL);
+  if (control?.toLowerCase() === "host-proxy") {
+    return true;
+  }
+
+  return Boolean(
+    nonEmptyEnvValue(input.repoEnv.HAPPYTG_CODEX_DESKTOP_PROXY_URL)
+    ?? nonEmptyEnvValue(input.installEnv.HAPPYTG_CODEX_DESKTOP_PROXY_URL)
+  );
+}
+
+async function buildCodexDesktopDockerPlan(input: {
+  repoEnv: NodeJS.ProcessEnv;
+  installEnv: NodeJS.ProcessEnv;
+  platform: NodeJS.Platform;
+}): Promise<{ plan: CodexDesktopDockerPlan; env: Record<string, string>; overrideFiles: string[] }> {
+  const env: Record<string, string> = {};
+  const overrideFiles: string[] = [];
+  const codexHome = await firstExistingCodexHome(input);
+  const proxyEnabled = hostProxyRequested(input);
+
+  if (codexHome.path) {
+    env.HAPPYTG_HOST_CODEX_HOME = dockerHostPath(codexHome.path, input.platform);
+    overrideFiles.push(CODEX_DESKTOP_COMPOSE_FILE);
+  }
+
+  if (proxyEnabled) {
+    overrideFiles.push(CODEX_DESKTOP_HOST_PROXY_COMPOSE_FILE);
+  }
+
+  const detail = [
+    codexHome.path
+      ? `Codex Desktop read-only projection enabled from ${env.HAPPYTG_HOST_CODEX_HOME}.`
+      : "Codex Desktop read-only projection was not enabled because no readable host `.codex` directory was found.",
+    proxyEnabled
+      ? "Codex Desktop host-proxy override enabled from operator env."
+      : "Codex Desktop host-proxy override not enabled; mutating Desktop controls remain read-only unless configured."
+  ].join(" ");
+
+  return {
+    env,
+    overrideFiles,
+    plan: {
+      projection: codexHome.path ? "enabled" : "unavailable",
+      control: proxyEnabled ? "host-proxy" : "not-configured",
+      codexHome: env.HAPPYTG_HOST_CODEX_HOME,
+      overrideFiles,
+      detail,
+      warnings: codexHome.warnings
+    }
+  };
+}
 
 function localHostForContainers(platform: NodeJS.Platform): string {
   return platform === "win32" || platform === "darwin" || platform === "linux"
@@ -556,14 +676,21 @@ export async function buildDockerServiceStrategyPlan(input: {
   resolveExecutableImpl?: typeof resolveExecutable;
   runCommandImpl?: typeof runCommand;
 }): Promise<DockerServiceStrategyPlan> {
+  const desktop = await buildCodexDesktopDockerPlan({
+    repoEnv: input.repoEnv,
+    installEnv: input.installEnv,
+    platform: input.platform
+  });
+
   if (input.strategy === "isolated") {
     return {
       strategy: "isolated",
       reusedServices: [],
       composeServices: [],
-      env: {},
-      overrideFiles: [],
-      detail: "Isolated Docker stack selected; Compose will start HappyTG-owned Redis, Postgres, MinIO, and Caddy containers.",
+      env: desktop.env,
+      overrideFiles: desktop.overrideFiles,
+      detail: `Isolated Docker stack selected; Compose will start HappyTG-owned Redis, Postgres, MinIO, and Caddy containers. ${desktop.plan.detail}`,
+      desktop: desktop.plan,
       caddy: await buildSystemCaddyPlan({
         repoPath: input.repoPath,
         env: input.repoEnv,
@@ -621,11 +748,18 @@ export async function buildDockerServiceStrategyPlan(input: {
       ? ["redis", "postgres", "minio", "caddy"]
       : ["redis", "postgres", "minio"],
     composeServices: caddyReused ? COMPOSE_APP_SERVICES : COMPOSE_APP_SERVICES_WITH_CADDY,
-    env,
-    overrideFiles,
+    env: {
+      ...env,
+      ...desktop.env
+    },
+    overrideFiles: [
+      ...desktop.overrideFiles,
+      ...overrideFiles
+    ],
     detail: caddyReused
-      ? "Reuse existing system Redis/Postgres/MinIO/Caddy selected; Compose will start only HappyTG app/observability services."
-      : "Reuse existing system Redis/Postgres/MinIO selected; Compose will still start HappyTG Caddy.",
+      ? `Reuse existing system Redis/Postgres/MinIO/Caddy selected; Compose will start only HappyTG app/observability services. ${desktop.plan.detail}`
+      : `Reuse existing system Redis/Postgres/MinIO selected; Compose will still start HappyTG Caddy. ${desktop.plan.detail}`,
+    desktop: desktop.plan,
     caddy
   };
 }

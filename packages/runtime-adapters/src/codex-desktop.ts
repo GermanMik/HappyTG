@@ -334,7 +334,9 @@ async function collectJsonlFiles(root: string, maxFiles: number): Promise<string
       return;
     }
 
-    for (const entry of entries) {
+    const sortedEntries = [...entries].sort((left, right) => right.name.localeCompare(left.name));
+
+    for (const entry of sortedEntries) {
       if (files.length >= maxFiles) {
         return;
       }

@@ -148,6 +148,7 @@ Rules:
 - Preserve the architecture invariants listed above.
 - Mutating host operations must remain serialized, policy-checked and approval-guarded.
 - For non-trivial work, follow the existing proof-loop and `.agent/tasks/<TASK_ID>/` evidence discipline.
+- When `BaseDeploy`/system infrastructure already owns Caddy for HappyTG public ingress, do not start the compose `caddy` service as part of the app stack; configure/reuse the system Caddy route instead and keep compose `caddy` limited to isolated Docker mode.
 
 ### Stack
 

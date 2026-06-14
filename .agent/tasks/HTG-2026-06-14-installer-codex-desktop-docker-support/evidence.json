@@ -1,0 +1,53 @@
+{
+  "taskId": "HTG-2026-06-14-installer-codex-desktop-docker-support",
+  "criteria": [
+    {
+      "criterion": "Docker installer can mount host Codex home so Docker API sees Desktop projects and sessions.",
+      "status": "passed",
+      "evidence": "packages/bootstrap/src/install/docker-services.ts and raw/bootstrap-test.txt"
+    },
+    {
+      "criterion": "Docker compose commands include infra/docker-compose.codex-desktop.yml when HAPPYTG_HOST_CODEX_HOME points to a readable host .codex directory.",
+      "status": "passed",
+      "evidence": "packages/bootstrap/src/install.runtime.test.ts and raw/bootstrap-test.txt"
+    },
+    {
+      "criterion": "Docker compose commands do not include the Codex Desktop projection override when no readable host Codex home is available.",
+      "status": "passed",
+      "evidence": "packages/bootstrap/src/install.test.ts and raw/bootstrap-test.txt"
+    },
+    {
+      "criterion": "Host-proxy compose override remains explicit opt-in.",
+      "status": "passed",
+      "evidence": "packages/bootstrap/src/install.test.ts and raw/bootstrap-test.txt"
+    },
+    {
+      "criterion": "Finalization and next-step commands render the same override files used by docker args.",
+      "status": "passed",
+      "evidence": "packages/bootstrap/src/install/launch.ts and raw/bootstrap-test.txt"
+    },
+    {
+      "criterion": "Existing Docker isolated/reuse installer behavior remains covered.",
+      "status": "passed",
+      "evidence": "raw/bootstrap-test.txt"
+    }
+  ],
+  "artifacts": [
+    "spec.md",
+    "state.json",
+    "evidence.md",
+    "evidence.json",
+    "verdict.json",
+    "problems.md",
+    "raw/bootstrap-test.txt",
+    "raw/bootstrap-typecheck.txt",
+    "raw/docker-compose-config.txt",
+    "raw/diff-check.txt",
+    "raw/task-validate.txt",
+    "raw/build.txt",
+    "raw/test-unit.txt",
+    "raw/test-integration.txt",
+    "raw/lint.txt"
+  ],
+  "generatedAt": "2026-06-14T15:01:40.705Z"
+}

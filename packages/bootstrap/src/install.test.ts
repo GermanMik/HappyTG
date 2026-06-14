@@ -6,6 +6,11 @@ import { PassThrough } from "node:stream";
 import test from "node:test";
 
 import { runCommand } from "./install/commands.js";
+import {
+  CODEX_DESKTOP_COMPOSE_FILE,
+  CODEX_DESKTOP_HOST_PROXY_COMPOSE_FILE,
+  buildDockerServiceStrategyPlan
+} from "./install/docker-services.js";
 import { mergeEnvTemplate, writeMergedEnvFile } from "./install/env.js";
 import { detectLinuxFamily } from "./install/platform.js";
 import { defaultDirtyWorktreeStrategy, detectRepoModeChoices, inspectRepo } from "./install/repo.js";
@@ -157,6 +162,89 @@ test("mergeEnvTemplate preserves existing values and writeMergedEnvFile is idemp
     assert.ok(first.backupPath);
     assert.equal(second.backupPath, undefined);
     assert.match(await readFile(path.join(tempDir, ".env"), "utf8"), /TELEGRAM_BOT_USERNAME=happytg_bot/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("Docker service strategy includes Codex Desktop projection override when host home is readable", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-codex-desktop-plan-"));
+  try {
+    const codexHome = path.join(tempDir, ".codex");
+    await mkdir(codexHome, { recursive: true });
+
+    const plan = await buildDockerServiceStrategyPlan({
+      strategy: "isolated",
+      repoPath: tempDir,
+      repoEnv: {
+        HAPPYTG_HOST_CODEX_HOME: codexHome
+      },
+      installEnv: {
+        HOME: tempDir
+      },
+      platform: "linux"
+    });
+
+    assert.equal(plan.desktop?.projection, "enabled");
+    assert.equal(plan.desktop?.control, "not-configured");
+    assert.deepEqual(plan.overrideFiles, [CODEX_DESKTOP_COMPOSE_FILE]);
+    assert.equal(plan.env.HAPPYTG_HOST_CODEX_HOME, codexHome);
+    assert.match(plan.detail, /Codex Desktop read-only projection enabled/);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("Docker service strategy skips Codex Desktop projection override without readable host home", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-codex-desktop-missing-"));
+  try {
+    const plan = await buildDockerServiceStrategyPlan({
+      strategy: "isolated",
+      repoPath: tempDir,
+      repoEnv: {},
+      installEnv: {
+        HOME: tempDir
+      },
+      platform: "linux"
+    });
+
+    assert.equal(plan.desktop?.projection, "unavailable");
+    assert.equal(plan.desktop?.control, "not-configured");
+    assert.deepEqual(plan.overrideFiles, []);
+    assert.equal(plan.env.HAPPYTG_HOST_CODEX_HOME, undefined);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("Docker service strategy includes Codex Desktop host-proxy override only on explicit operator env", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-install-codex-desktop-proxy-"));
+  try {
+    const withoutProxy = await buildDockerServiceStrategyPlan({
+      strategy: "isolated",
+      repoPath: tempDir,
+      repoEnv: {},
+      installEnv: {
+        HOME: tempDir
+      },
+      platform: "linux"
+    });
+    const withProxy = await buildDockerServiceStrategyPlan({
+      strategy: "isolated",
+      repoPath: tempDir,
+      repoEnv: {
+        HAPPYTG_CODEX_DESKTOP_PROXY_URL: "http://host.docker.internal:4318"
+      },
+      installEnv: {
+        HOME: tempDir
+      },
+      platform: "linux"
+    });
+
+    assert.equal(withoutProxy.desktop?.control, "not-configured");
+    assert.equal(withoutProxy.overrideFiles.includes(CODEX_DESKTOP_HOST_PROXY_COMPOSE_FILE), false);
+    assert.equal(withProxy.desktop?.control, "host-proxy");
+    assert.deepEqual(withProxy.overrideFiles, [CODEX_DESKTOP_HOST_PROXY_COMPOSE_FILE]);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

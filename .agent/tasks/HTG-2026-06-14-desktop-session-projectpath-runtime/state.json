@@ -1,0 +1,46 @@
+{
+  "task_id": "HTG-2026-06-14-desktop-session-projectpath-runtime",
+  "session_id": "local-2026-06-14-desktop-session-projectpath-runtime",
+  "current_phase": "complete",
+  "phase_history": [
+    {
+      "phase": "freeze",
+      "entered_at": "2026-06-14T09:06:00.000Z",
+      "event": "TaskSpecFrozen"
+    },
+    {
+      "phase": "evidence",
+      "entered_at": "2026-06-14T09:06:00.000Z",
+      "event": "EvidenceUpdated"
+    },
+    {
+      "phase": "complete",
+      "entered_at": "2026-06-14T09:06:00.000Z",
+      "event": "VerificationPassed"
+    }
+  ],
+  "verification_state": "passed",
+  "approvals": [],
+  "artifact_manifest": [
+    "spec.md",
+    "state.json",
+    "evidence.md",
+    "evidence.json",
+    "verdict.json",
+    "problems.md",
+    "raw/runtime-adapters-test.txt",
+    "raw/runtime-adapters-typecheck.txt",
+    "raw/api-typecheck.txt",
+    "raw/miniapp-test.txt",
+    "raw/diff-check.txt",
+    "raw/task-validate.txt",
+    "raw/docker-rebuild.txt",
+    "raw/docker-ps.txt",
+    "raw/live-smoke.txt"
+  ],
+  "unresolved_issues": [],
+  "timestamps": {
+    "created_at": "2026-06-14T09:06:00.000Z",
+    "updated_at": "2026-06-14T09:06:00.000Z"
+  }
+}

@@ -1,0 +1,1 @@
+Targeted whitespace validation is recorded in raw/diff-check.txt. TypeScript checks are recorded in raw/runtime-adapters-typecheck.txt and raw/api-typecheck.txt.

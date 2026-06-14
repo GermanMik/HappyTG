@@ -1,0 +1,5 @@
+warning: in the working copy of 'packages/bootstrap/src/install.runtime.test.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install.test.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install/docker-services.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install/launch.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'packages/bootstrap/src/install/types.ts', CRLF will be replaced by LF the next time Git touches it

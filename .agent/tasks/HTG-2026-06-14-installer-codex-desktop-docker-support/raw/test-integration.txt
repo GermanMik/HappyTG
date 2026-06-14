@@ -1,0 +1,5 @@
+Docker compose integration config was validated with:
+
+docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml -f infra/docker-compose.codex-desktop-host-proxy.yml config --quiet
+
+See raw/docker-compose-config.txt.

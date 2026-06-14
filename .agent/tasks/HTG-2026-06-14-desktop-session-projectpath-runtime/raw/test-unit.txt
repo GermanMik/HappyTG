@@ -1,0 +1,1 @@
+Unit validation is recorded in raw/runtime-adapters-test.txt and raw/miniapp-test.txt.

@@ -1,0 +1,5 @@
+No package lint command was run for this scoped installer change. Targeted whitespace validation was run with:
+
+git diff --check -- packages/bootstrap/src/install/docker-services.ts packages/bootstrap/src/install/launch.ts packages/bootstrap/src/install/types.ts packages/bootstrap/src/install.test.ts packages/bootstrap/src/install.runtime.test.ts .agent/tasks/HTG-2026-06-14-installer-codex-desktop-docker-support
+
+See raw/diff-check.txt.

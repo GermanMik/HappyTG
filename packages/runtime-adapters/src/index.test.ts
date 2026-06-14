@@ -529,6 +529,44 @@ test("Codex Desktop adapter limits session projections for list screens", async 
   }
 });
 
+test("Codex Desktop adapter reads newest dated session files before old files", async () => {
+  const codexHome = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-session-newest-"));
+  try {
+    const oldDir = path.join(codexHome, "sessions", "2026", "01", "01");
+    const recentDir = path.join(codexHome, "sessions", "2026", "06", "14");
+    await mkdir(oldDir, { recursive: true });
+    await mkdir(recentDir, { recursive: true });
+    await writeFile(
+      path.join(codexHome, "session_index.jsonl"),
+      [
+        JSON.stringify({ id: "session-old", thread_name: "Old", updated_at: "2026-01-01T08:00:00.000Z" }),
+        JSON.stringify({ id: "session-recent", thread_name: "Recent", updated_at: "2026-06-14T08:00:00.000Z" })
+      ].join("\n") + "\n",
+      "utf8"
+    );
+    await writeFile(
+      path.join(oldDir, "rollout-2026-01-01T08-00-00-session-old.jsonl"),
+      `${JSON.stringify({ timestamp: "2026-01-01T08:00:00.000Z", payload: { id: "session-old", cwd: "C:/Develop/Projects/Old" } })}\n`,
+      "utf8"
+    );
+    await writeFile(
+      path.join(recentDir, "rollout-2026-06-14T08-00-00-session-recent.jsonl"),
+      `${JSON.stringify({ timestamp: "2026-06-14T08:00:00.000Z", payload: { id: "session-recent", cwd: "C:/Develop/Projects/HappyTG" } })}\n`,
+      "utf8"
+    );
+
+    const adapter = new CodexDesktopStateAdapter({ codexHome, maxSessionFiles: 1 });
+    const sessions = await adapter.listSessions({ limit: 2 });
+    const recent = sessions.find((session) => session.id === "session-recent");
+    const old = sessions.find((session) => session.id === "session-old");
+
+    assert.equal(recent?.projectPath?.replace(/\\/gu, "/"), "C:/Develop/Projects/HappyTG");
+    assert.equal(old?.projectPath, undefined);
+  } finally {
+    await rm(codexHome, { recursive: true, force: true });
+  }
+});
+
 test("Codex Desktop adapter controls sessions through Codex app-server JSON-RPC", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-codex-desktop-control-"));
   let adapter: CodexDesktopStateAdapter | undefined;
