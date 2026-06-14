@@ -6,7 +6,8 @@ This directory contains self-hosted deployment helpers.
 - [Codex Desktop Projection Override](./docker-compose.codex-desktop.yml): read-only host `.codex` mount for Desktop projections.
 - [Codex Desktop Host Proxy Override](./docker-compose.codex-desktop-host-proxy.yml): Docker API client config for a Windows host-side Desktop control proxy.
 - [Shared App Dockerfile](./Dockerfile.app): generic Node + pnpm runtime image for API, worker, bot, and Mini App surfaces.
-- [Caddyfile](./caddy/Caddyfile): path-based public topology skeleton for `happytg.gerta.crazedns.ru`.
+- [Caddyfile](./caddy/Caddyfile): path-based public topology skeleton for `happytg.gerta.crazedns.ru`. Used by the compose `caddy` service in isolated Docker mode.
+- If `BaseDeploy` owns Caddy for HappyTG public routes, skip the compose `caddy` service and configure those routes in the system Caddyfile instead.
 - [Prometheus config](./prometheus/prometheus.yml): internal scrape config for API `/metrics`.
 - [Grafana provisioning](./grafana/provisioning/): Prometheus datasource scaffold.
 - [DB migrations](./db/migrations/): reserved migration directory for the future PostgreSQL schema.

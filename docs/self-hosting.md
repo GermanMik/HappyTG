@@ -33,6 +33,8 @@ The starter Caddy config is `infra/caddy/Caddyfile`.
 
 For operator-owned system Caddy, the Mini App upstream often listens at `/` on a host port such as `127.0.0.1:3007`. In that topology, route public `/miniapp` with `handle_path /miniapp*` so Caddy strips the prefix before proxying. If Caddy proxies `/miniapp` without stripping it, the upstream can return 404; if the HappyTG hostname falls through to another site block, Telegram menu dry-run can report HTTP 200 without HappyTG identity. Treat that as a broken route, not a successful public preflight.
 
+If `BaseDeploy` already runs Caddy, do not start the compose `caddy` service as part of the HappyTG stack; keep the public route in `BaseDeploy`'s Caddyfile and leave this repository-level `caddy` container out of the running app baseline.
+
 If upstream public `443` maps to Caddy:
 
 ```env
@@ -95,6 +97,14 @@ Leave `HAPPYTG_BROWSER_API_URL` empty for the public Telegram Mini App path. Whe
    Interactive Docker install asks whether to reuse healthy system services or run an isolated Docker stack. Isolated mode starts API, worker, bot, Mini App, Caddy, Redis/Postgres/MinIO, and observability through Compose. Reuse mode starts only the app/observability services with `--no-deps`, passes container-reachable `COMPOSE_REDIS_URL`, `COMPOSE_DATABASE_URL`, and `COMPOSE_S3_ENDPOINT`, and skips duplicate reused `redis`, `postgres`, `minio`, and `caddy` containers.
 
    System Caddy remains operator-owned. If valid HappyTG routes already exist and `caddy validate` passes, the installer reports reuse. If routes are missing, the default is to print a snippet; patching a Caddyfile requires a second confirmation, backup, validation, and reload.
+
+   If `BaseDeploy` owns Caddy, run only the app/control-plane services (and optional observability) without `caddy`:
+
+   ```bash
+   docker compose --env-file .env -f infra/docker-compose.example.yml up --build -d api bot miniapp worker postgres redis minio prometheus grafana
+   ```
+
+   If you are using the installer, set `--docker-services reuse` with `--docker-caddy reuse-system` (or `--docker-caddy skip`) so the installer does not start another `caddy` container.
 
    Docker install does not start `apps/host-daemon` or the Codex Desktop host proxy.
 
