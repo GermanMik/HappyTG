@@ -20,11 +20,13 @@ export const CODEX_DESKTOP_CONTROL_UNSUPPORTED_REASON_CODE = "CODEX_DESKTOP_CONT
 export const CODEX_DESKTOP_APP_SERVER_UNAVAILABLE_REASON_CODE = "CODEX_DESKTOP_APP_SERVER_UNAVAILABLE";
 export const CODEX_DESKTOP_HOST_PROXY_UNAVAILABLE_REASON_CODE = "CODEX_DESKTOP_HOST_PROXY_UNAVAILABLE";
 export const CODEX_DESKTOP_HISTORY_UNAVAILABLE_REASON_CODE = "CODEX_DESKTOP_HISTORY_UNAVAILABLE";
+export const CODEX_DESKTOP_SESSION_READ_ONLY_REASON_CODE = "CODEX_DESKTOP_SESSION_READ_ONLY";
 
 const DEFAULT_UNSUPPORTED_REASON = "Codex Desktop control is unsupported because no stable Desktop/CLI/app-server contract was proven.";
 const APP_SERVER_EXPERIMENTAL_REASON = "Codex Desktop app-server control remains disabled by default because the local Codex CLI marks app-server as experimental.";
 const APP_SERVER_UNAVAILABLE_REASON = "Codex Desktop app-server control is unavailable. Start Codex Desktop or make `codex app-server` available on this host.";
 const HOST_PROXY_UNAVAILABLE_REASON = "Codex Desktop host proxy is unavailable. Start `pnpm daemon:desktop-proxy` on the Windows host and verify Docker can reach `HAPPYTG_CODEX_DESKTOP_PROXY_URL`.";
+const SESSION_READ_ONLY_REASON = "Codex Desktop session is available as local history only; app-server cannot control this thread.";
 const DEFAULT_MAX_SESSION_FILES = 500;
 const DEFAULT_HISTORY_MAX_RECORDS = 80;
 const DEFAULT_HISTORY_SUMMARY_MAX_CHARS = 320;
@@ -1073,8 +1075,16 @@ export function createCodexDesktopAppServerControlContract(options: {
       };
     },
     async continueSession(session, input) {
+      const activeSession = session.status === "active"
+        ? session
+        : toSession((await client.request<AppServerThreadResponse>("thread/resume", {
+            threadId: session.id,
+            cwd: session.projectPath ?? null,
+            excludeTurns: true,
+            persistExtendedHistory: true
+          })).thread, session);
       const turn = await client.request<AppServerTurnStartResponse>("turn/start", {
-        threadId: session.id,
+        threadId: activeSession.id,
         input: [
           {
             type: "text",
@@ -1082,7 +1092,7 @@ export function createCodexDesktopAppServerControlContract(options: {
             text_elements: []
           }
         ],
-        cwd: session.projectPath ?? null,
+        cwd: activeSession.projectPath ?? null,
         approvalPolicy
       });
       return {
@@ -1090,7 +1100,7 @@ export function createCodexDesktopAppServerControlContract(options: {
         action: "continue",
         source: "codex-desktop",
         session: {
-          ...session,
+          ...activeSession,
           updatedAt: new Date().toISOString(),
           status: turn.turn.status === "inProgress" ? "active" : "recent",
           canResume: true,
@@ -1476,12 +1486,30 @@ export class CodexDesktopStateAdapter {
     return this.controlCapabilitiesInFlight;
   }
 
-  private decorateSession(session: Omit<CodexDesktopSession, "canResume" | "canContinue" | "canStop" | "canCreateTask" | "unsupportedReason" | "unsupportedReasonCode">, capabilities: CodexDesktopControlCapabilities): CodexDesktopSession {
-    const canResume = Boolean(capabilities.supportsResume && this.controlContract.resumeSession);
-    const canContinue = Boolean(capabilities.supportsContinue && this.controlContract.continueSession);
-    const canStop = Boolean(capabilities.supportsStop && this.controlContract.stopSession);
+  private requiresConfirmedSessionControl(): boolean {
+    return Boolean(this.controlContract.listSessions || this.controlContract.getSessionDetail);
+  }
+
+  private decorateSession(
+    session: Omit<CodexDesktopSession, "canResume" | "canContinue" | "canStop" | "canCreateTask" | "unsupportedReason" | "unsupportedReasonCode">,
+    capabilities: CodexDesktopControlCapabilities,
+    options: { confirmedControl?: boolean } = {}
+  ): CodexDesktopSession {
+    const canControlSession = !this.requiresConfirmedSessionControl() || options.confirmedControl === true;
+    const canResume = Boolean(canControlSession && capabilities.supportsResume && this.controlContract.resumeSession);
+    const canContinue = Boolean(canControlSession && capabilities.supportsContinue && this.controlContract.continueSession);
+    const canStop = Boolean(canControlSession && capabilities.supportsStop && this.controlContract.stopSession);
     const canCreateTask = Boolean(capabilities.supportsNewTask && this.controlContract.createTask);
-    const unsupportedReason = canResume && canContinue && canStop && canCreateTask ? undefined : this.unsupportedReason();
+    const hasAnyControlCapability = Boolean(capabilities.supportsResume || capabilities.supportsContinue || capabilities.supportsStop || capabilities.supportsNewTask);
+    const isReadOnlySession = !canControlSession && hasAnyControlCapability;
+    const unsupportedReason = canResume && canContinue && canStop && canCreateTask
+      ? undefined
+      : isReadOnlySession
+        ? SESSION_READ_ONLY_REASON
+        : this.unsupportedReason();
+    const unsupportedReasonCode = isReadOnlySession
+      ? CODEX_DESKTOP_SESSION_READ_ONLY_REASON_CODE
+      : capabilities.unsupportedReasonCode ?? this.unsupportedReasonCode();
     return {
       ...session,
       canResume,
@@ -1489,8 +1517,8 @@ export class CodexDesktopStateAdapter {
       canStop,
       canCreateTask,
       ...(unsupportedReason ? {
-        unsupportedReason: capabilities.unsupportedReason ?? unsupportedReason,
-        unsupportedReasonCode: capabilities.unsupportedReasonCode ?? this.unsupportedReasonCode()
+        unsupportedReason: isReadOnlySession ? unsupportedReason : capabilities.unsupportedReason ?? unsupportedReason,
+        unsupportedReasonCode
       } : {})
     };
   }
@@ -1700,14 +1728,26 @@ export class CodexDesktopStateAdapter {
 
     const capabilities = await this.controlCapabilities();
     const sessionsById = new Map<string, CodexDesktopSession>();
-    const projectSession = (session: Omit<CodexDesktopSession, "canResume" | "canStop" | "canCreateTask" | "unsupportedReason" | "unsupportedReasonCode">): CodexDesktopSession => {
+    const normalizeProjectSession = (session: CodexDesktopSession): CodexDesktopSession => {
+      const normalizedProjectPath = session.projectPath ? normalizePathKey(session.projectPath) : undefined;
+      const project = normalizedProjectPath ? projectByPath.get(normalizedProjectPath.toLowerCase()) : undefined;
+      return {
+        ...session,
+        projectPath: normalizedProjectPath,
+        projectId: session.projectId ?? project?.id
+      };
+    };
+    const projectSession = (
+      session: Omit<CodexDesktopSession, "canResume" | "canContinue" | "canStop" | "canCreateTask" | "unsupportedReason" | "unsupportedReasonCode">,
+      options: { confirmedControl?: boolean } = {}
+    ): CodexDesktopSession => {
       const normalizedProjectPath = session.projectPath ? normalizePathKey(session.projectPath) : undefined;
       const project = normalizedProjectPath ? projectByPath.get(normalizedProjectPath.toLowerCase()) : undefined;
       return this.decorateSession({
         ...session,
         projectPath: normalizedProjectPath,
         projectId: session.projectId ?? project?.id
-      }, capabilities);
+      }, capabilities, options);
     };
 
     for (const draft of drafts.values()) {
@@ -1736,22 +1776,14 @@ export class CodexDesktopStateAdapter {
         updatedAt: session.updatedAt,
         status: session.status,
         source: "codex-desktop"
-      }));
+      }, { confirmedControl: true }));
     }
 
     if (this.controlContract.listSessions && (capabilities.supportsResume || capabilities.supportsContinue || capabilities.supportsStop || capabilities.supportsNewTask)) {
       try {
         const appServerSessions = await this.withControlTimeout(this.controlContract.listSessions({ limit: maxSessionFiles }));
         for (const session of appServerSessions) {
-          sessionsById.set(session.id, projectSession({
-            id: session.id,
-            title: session.title,
-            projectPath: session.projectPath,
-            projectId: session.projectId,
-            updatedAt: session.updatedAt,
-            status: session.status,
-            source: "codex-desktop"
-          }));
+          sessionsById.set(session.id, normalizeProjectSession(session));
         }
       } catch {
         // File-backed projections remain useful even when app-server listing is temporarily unavailable.
@@ -1843,6 +1875,9 @@ export class CodexDesktopStateAdapter {
       try {
         const appServerDetail = await this.withControlTimeout(this.controlContract.getSessionDetail(session, { maxRecords }));
         if (appServerDetail.history.length > 0 || files.length === 0) {
+          if (appServerDetail.session.canResume || appServerDetail.session.canContinue || appServerDetail.session.canStop) {
+            this.rememberControlSession(appServerDetail.session);
+          }
           return {
             session: appServerDetail.session,
             history: appServerDetail.history,

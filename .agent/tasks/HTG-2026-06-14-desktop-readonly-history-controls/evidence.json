@@ -1,0 +1,42 @@
+{
+  "taskId": "HTG-2026-06-14-desktop-readonly-history-controls",
+  "status": "complete",
+  "findings": [
+    {
+      "kind": "bug",
+      "summary": "Old JSONL-backed Codex Desktop session was rendered with canContinue=true, but app-server returned thread not found during continue."
+    }
+  ],
+  "validation": [
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters test",
+      "ok": true,
+      "raw": "raw/test-unit.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters typecheck",
+      "ok": true,
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/runtime-adapters build",
+      "ok": true,
+      "raw": "raw/build.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/api test",
+      "ok": true,
+      "raw": "raw/test-api.txt"
+    },
+    {
+      "command": "git diff --check",
+      "ok": true,
+      "raw": "raw/diff-check.txt"
+    },
+    {
+      "command": "live smoke: /ready, /control, /sessions/:id, Mini App detail",
+      "ok": true,
+      "raw": "raw/live-smoke.txt"
+    }
+  ]
+}

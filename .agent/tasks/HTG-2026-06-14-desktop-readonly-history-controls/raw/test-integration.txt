@@ -1,0 +1,2 @@
+Not run as a separate integration suite. Live smoke covered host proxy readiness, API readiness, API Codex Desktop control, API old-session detail, and Mini App old-session render.
+

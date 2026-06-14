@@ -1,0 +1,2 @@
+Not run. No lint-specific source style rule was changed; `tsc --noEmit`, package build, package tests, API tests, and `git diff --check` passed.
+
