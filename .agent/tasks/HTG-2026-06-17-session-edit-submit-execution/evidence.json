@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-06-17-session-edit-submit-execution",
+  "phase": "freeze/spec",
+  "verificationState": "pending",
+  "artifacts": [
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/spec.md",
+    ".agent/prompts/happytg-session-edit-submit-execution-fix.md"
+  ],
+  "checks": []
+}
