@@ -42,7 +42,7 @@ async function withEnv<T>(overrides: Record<string, string | undefined>, run: ()
 
 test("mini app ready endpoint returns 503 when api health fails", async () => {
   const server = createMiniAppServer({
-    async fetchJson(pathname) {
+    async fetchJson(pathname, init) {
       assert.equal(pathname, "/health");
       throw new Error("api unavailable");
     }
@@ -1135,7 +1135,7 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
 
     assert.equal(created.status, 200);
     assert.equal(payload.task.id, "cdt_1");
-    assert.equal(payload.sessionHref, "/codex/desktop-session?id=cdt_1");
+    assert.equal(payload.sessionHref, "/codex/desktop-session?id=cdt_1&userId=usr_1");
     assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/tasks?userId=usr_1"), true);
     assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/sessions/desktop-supported/resume?userId=usr_1"), true);
     assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/sessions/desktop-supported/continue?userId=usr_1"), true);
@@ -1146,7 +1146,7 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
 
 test("task page renders scoped canonical artifacts", async () => {
   const server = createMiniAppServer({
-    async fetchJson(pathname) {
+    async fetchJson(pathname, init) {
       if (pathname === "/health") {
         return { ok: true } as never;
       }
@@ -1320,12 +1320,12 @@ test("projects page renders workspaces and new task creates a Codex session", as
     assert.match(projectsHtml, /Codex Desktop projects/);
     assert.match(projectsHtml, /VideoCall/);
     assert.match(projectsHtml, /C:\/Develop\/Projects\/VideoCall/);
-    assert.match(projectsHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1"/);
+    assert.match(projectsHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1&amp;userId=usr_1"/);
     assert.match(projectsHtml, /Прошедшие задачи/);
     const cliTasksHref = projectsHtml.match(/href="(\/projects\/tasks\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG&amp;userId=usr_1)"/)?.[1];
     assert.ok(cliTasksHref);
-    assert.match(projectsHtml, /href="\/new-task\?source=codex-desktop&amp;projectId=cdp_1&amp;intent=implement"/);
-    assert.match(projectsHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question"/);
+    assert.match(projectsHtml, /href="\/new-task\?source=codex-desktop&amp;projectId=cdp_1&amp;intent=implement&amp;userId=usr_1"/);
+    assert.match(projectsHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;userId=usr_1"/);
     assert.match(projectsHtml, /href="\/projects\/tasks\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FVideoCall&amp;userId=usr_1"/);
     assert.match(projectsHtml, /Создать Codex-сессию/);
     assert.match(projectsHtml, /data-task-feedback/);
@@ -1334,6 +1334,8 @@ test("projects page renders workspaces and new task creates a Codex session", as
     const projectDetailHtml = await projectDetailResponse.text();
     assert.equal(projectDetailResponse.status, 200);
     assert.match(projectDetailHtml, /Прошедшие задачи/);
+    assert.match(projectDetailHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1&amp;userId=usr_1"/);
+    assert.match(projectDetailHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;userId=usr_1"/);
     assert.match(projectDetailHtml, /href="\/projects\/tasks\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG&amp;userId=usr_1"/);
 
     const pastTasksResponse = await fetch(`http://127.0.0.1:${address.port}${cliTasksHref.replaceAll("&amp;", "&")}`);
@@ -1363,7 +1365,7 @@ test("projects page renders workspaces and new task creates a Codex session", as
     const payload = await taskResponse.json() as { sessionHref: string; session: { runtime: string } };
 
     assert.equal(taskResponse.status, 200);
-    assert.equal(payload.sessionHref, "/session/ses_42");
+    assert.equal(payload.sessionHref, "/session/ses_42?userId=usr_1");
     assert.equal(payload.session.runtime, "codex-cli");
 
     const questionResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
@@ -1383,7 +1385,9 @@ test("projects page renders workspaces and new task creates a Codex session", as
       })
     });
 
+    const questionPayload = await questionResponse.json() as { sessionHref: string };
     assert.equal(questionResponse.status, 200);
+    assert.equal(questionPayload.sessionHref, "/session/ses_42?userId=usr_1");
   } finally {
     await closeServer(server);
   }
@@ -1391,7 +1395,7 @@ test("projects page renders workspaces and new task creates a Codex session", as
 
 test("session page renders timeline, summary, and task link", async () => {
   const server = createMiniAppServer({
-    async fetchJson(pathname) {
+    async fetchJson(pathname, init) {
       if (pathname === "/health") {
         return { ok: true } as never;
       }
@@ -1447,6 +1451,62 @@ test("session page renders timeline, summary, and task link", async () => {
           actions: ["diff", "summary"]
         } as never;
       }
+      if (pathname === "/api/v1/miniapp/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "ws_1",
+              hostId: "host_1",
+              hostLabel: "devbox",
+              hostStatus: "active",
+              repoName: "projection-repo",
+              path: "/repo",
+              defaultBranch: "main",
+              activeSessions: 1,
+              href: "/project/ws_1",
+              newSessionHref: "/new-task?hostId=host_1&workspaceId=ws_1"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return { projects: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/control?userId=usr_1") {
+        return {
+          control: {
+            canResume: false,
+            canContinue: false,
+            canStop: false,
+            canCreateTask: false
+          }
+        } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        assert.equal(init?.method, "POST");
+        assert.deepEqual(JSON.parse(String(init?.body)), {
+          hostId: "host_1",
+          workspaceId: "ws_1",
+          mode: "quick",
+          title: "Implementation question",
+          prompt: "Intent: implementation question.\nContext session: ses_2.\n\nWhat should happen next?",
+          acceptanceCriteria: [],
+          runtime: "codex-cli"
+        });
+        return {
+          session: {
+            id: "ses_followup",
+            title: "Implementation question",
+            state: "ready",
+            runtime: "codex-cli",
+            hostLabel: "devbox",
+            repoName: "projection-repo",
+            lastUpdatedAt: "2026-04-07T10:05:00.000Z",
+            href: "/session/ses_followup",
+            nextAction: "open"
+          }
+        } as never;
+      }
       throw new Error(`Unexpected path ${pathname}`);
     }
   });
@@ -1466,8 +1526,42 @@ test("session page renders timeline, summary, and task link", async () => {
     assert.match(html, /Codex CLI/);
     assert.match(html, /Verifier running/);
     assert.match(html, /Proof Progress/);
+    assert.match(html, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;contextSessionId=ses_2&amp;userId=usr_1"/);
+    assert.match(html, /href="\/new-task\?workspaceId=ws_1&amp;intent=implement&amp;contextSessionId=ses_2&amp;userId=usr_1"/);
     assert.match(html, /href="\/task\/HTG-0002"/);
     assert.match(html, /SessionCreated/);
+
+    const legacyResponse = await fetch(`http://127.0.0.1:${address.port}/?screen=session&id=ses_2&userId=usr_1`);
+    const legacyHtml = await legacyResponse.text();
+    assert.equal(legacyResponse.status, 200);
+    assert.match(legacyHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;contextSessionId=ses_2&amp;userId=usr_1"/);
+
+    const followupHref = html.match(/href="(\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;contextSessionId=ses_2&amp;userId=usr_1)"/)?.[1];
+    assert.ok(followupHref);
+    const formResponse = await fetch(`http://127.0.0.1:${address.port}${followupHref.replaceAll("&amp;", "&")}`);
+    const formHtml = await formResponse.text();
+    assert.equal(formResponse.status, 200);
+    assert.match(formHtml, /data-new-task-form/);
+
+    const createResponse = await fetch(`http://127.0.0.1:${address.port}${followupHref.replaceAll("&amp;", "&")}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        hostId: "host_1",
+        workspaceId: "ws_1",
+        mode: "quick",
+        title: "Implementation question",
+        prompt: "What should happen next?",
+        acceptanceCriteria: [],
+        intent: "question",
+        contextSessionId: "ses_2"
+      })
+    });
+    const createPayload = await createResponse.json() as { sessionHref: string };
+    assert.equal(createResponse.status, 200);
+    assert.equal(createPayload.sessionHref, "/session/ses_followup?userId=usr_1");
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }

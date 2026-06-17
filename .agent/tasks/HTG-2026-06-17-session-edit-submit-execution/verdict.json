@@ -1,6 +1,12 @@
 {
   "taskId": "HTG-2026-06-17-session-edit-submit-execution",
-  "phase": "freeze/spec",
-  "verificationState": "pending",
-  "findings": []
+  "phase": "build",
+  "verificationState": "running",
+  "findings": [
+    {
+      "id": "HTG-SESSION-FOLLOWUP-CONTEXT",
+      "severity": "fixed",
+      "summary": "Direct Mini App user context was lost across follow-up submission links and success navigation."
+    }
+  ]
 }

@@ -1,10 +1,25 @@
 {
   "taskId": "HTG-2026-06-17-session-edit-submit-execution",
-  "phase": "freeze/spec",
-  "verificationState": "pending",
+  "phase": "build",
+  "verificationState": "running",
   "artifacts": [
     ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/spec.md",
-    ".agent/prompts/happytg-session-edit-submit-execution-fix.md"
+    ".agent/prompts/happytg-session-edit-submit-execution-fix.md",
+    "apps/miniapp/src/index.ts",
+    "apps/miniapp/src/index.test.ts",
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/test-miniapp.txt",
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/diff-check-build.txt"
   ],
-  "checks": []
+  "checks": [
+    {
+      "command": "pnpm --filter @happytg/miniapp test",
+      "status": "passed",
+      "artifact": "raw/test-miniapp.txt"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "artifact": "raw/diff-check-build.txt"
+    }
+  ]
 }
