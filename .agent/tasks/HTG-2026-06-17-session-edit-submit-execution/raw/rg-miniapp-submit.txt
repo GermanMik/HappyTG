@@ -1,0 +1,75 @@
+packages\protocol\src\index.ts:598:  pendingDispatches: PendingDispatch[];
+packages\protocol\src\index.ts:949:  pendingDispatches: PendingDispatch[];
+packages\protocol\src\index.ts:1025:    pendingDispatches: []
+packages\protocol\src\index.test.ts:33:  assert.deepEqual(store.pendingDispatches, []);
+apps\host-daemon\src\codex-desktop-proxy.ts:242:          return adapter.continueSession(session, body);
+apps\host-daemon\src\index.test.ts:275:    async continueSession(inputSession) {
+apps\host-daemon\src\index.ts:266:    dispatches: response.pendingDispatches
+apps\miniapp\src\index.test.ts:1088:    assert.match(detailHtml, /data-desktop-continue-form/);
+apps\miniapp\src\index.test.ts:1109:    const continued = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-continue?userId=usr_1`, {
+apps\miniapp\src\index.test.ts:1123:    const created = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+apps\miniapp\src\index.test.ts:1226:              newSessionHref: "/new-task?hostId=host_1&workspaceId=ws_1"
+apps\miniapp\src\index.test.ts:1323:    assert.match(projectsHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1"/);
+apps\miniapp\src\index.test.ts:1327:    assert.match(projectsHtml, /href="\/new-task\?source=codex-desktop&amp;projectId=cdp_1&amp;intent=implement"/);
+apps\miniapp\src\index.test.ts:1328:    assert.match(projectsHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question"/);
+apps\miniapp\src\index.test.ts:1349:    const taskResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+apps\miniapp\src\index.test.ts:1369:    const questionResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+apps\api\src\index.test.ts:191:            newSessionHref: "/new-task?hostId=host_1&workspaceId=ws_1"
+apps\api\src\index.test.ts:196:    async createSession(body: unknown) {
+apps\miniapp\src\index.ts:330:function newTaskHref(input: {
+apps\miniapp\src\index.ts:347:  return query ? `/new-task?${query}` : "/new-task";
+apps\miniapp\src\index.ts:1949:        document.querySelector("[data-desktop-continue-form]")?.addEventListener("submit", function (event) {
+apps\miniapp\src\index.ts:1968:          fetch(miniAppUrl("/codex/desktop-continue"), {
+apps\miniapp\src\index.ts:1994:        document.querySelector("[data-new-task-form]")?.addEventListener("change", function (event) {
+apps\miniapp\src\index.ts:2005:            var submit = document.querySelector("[data-new-task-form] [type=submit]");
+apps\miniapp\src\index.ts:2013:        document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
+apps\miniapp\src\index.ts:2203:        ${linkButton("Новая задача", "/new-task", true)}
+apps\miniapp\src\index.ts:2204:        ${linkButton("Задать вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}
+apps\miniapp\src\index.ts:2220:          <div class="actions">${linkButton("Новая задача", "/new-task", true)}${linkButton("Проекты", "/projects")}</div>
+apps\miniapp\src\index.ts:2476:    ${session.canCreateTask ? linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: session.projectId, intent: "implement", contextSessionId: session.id }), true) : disabledButton("Новая задача", reason)}
+apps\miniapp\src\index.ts:2477:    ${session.canCreateTask ? linkButton("Вопрос по реализации", newTaskHref({ source: "codex-desktop", projectId: session.projectId, intent: "question", title: "Implementation question", contextSessionId: session.id })) : disabledButton("Вопрос по реализации", reason)}
+apps\miniapp\src\index.ts:2486:    <form data-desktop-continue-form class="grid form-card">
+apps\miniapp\src\index.ts:2614:        ${linkButton("Новая задача", "/new-task", true)}
+apps\miniapp\src\index.ts:2615:        ${linkButton("Задать вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}
+apps\miniapp\src\index.ts:2659:      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="meta-line">${escapeHtml(compactPath(project.path))}</div>${renderDetails("Скрытые детали", [{ label: "path", value: project.path }])}</div><div class="status-meta">${renderBadge(project.active ? "Running" : "Ready", project.active ? "info" : "success")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { path: routePath, userId: input.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div></li>`).join("")}</ul>`}
+apps\miniapp\src\index.ts:2710:    <div class="status-meta">${project.hostStatus ? renderBadge(project.hostStatus) : ""}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId: options.userId }))}${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}</div>
+apps\miniapp\src\index.ts:2726:    <div class="status-meta">${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { userId: options.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div>
+apps\miniapp\src\index.ts:2751:      <div class="actions">${linkButton("Новая задача", "/new-task", true)}${linkButton("Вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}</div>
+apps\miniapp\src\index.ts:2806:    ${!hasAnyProjects ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form class="inline-form">
+apps\miniapp\src\index.ts:2955:function renderSessionDetail(detail: {
+apps\miniapp\src\index.ts:2962:  const questionHref = newTaskHref({
+apps\miniapp\src\index.ts:2968:  const taskHref = newTaskHref({
+apps\miniapp\src\index.ts:3264:    if (url.pathname.startsWith("/project") || url.pathname === "/projects" || url.pathname === "/new-task") {
+apps\miniapp\src\index.ts:3411:          html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
+apps\miniapp\src\index.ts:3592:        const body = `<section class="panel hero"><h1>${escapeHtml(project.repoName)}</h1><p class="meta-line">${escapeHtml(project.hostLabel ?? "host n/a")} · active ${project.activeSessions}</p><div class="actions">${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId }))}${linkButton("Projects", withUser("/projects", url))}</div>${renderDetails("Project details", [{ label: "path", value: project.path }, { label: "host", value: project.hostLabel }, { label: "branch", value: project.defaultBranch }])}</section>
+apps\miniapp\src\index.ts:3606:        const body = `<section class="panel hero"><p class="eyebrow">Хост / Диагностика</p><h1>${escapeHtml(detail.host.label)}</h1><p class="muted">${detail.host.activeSessions} active sessions · ${detail.host.repoNames.length} reported repos</p><div class="actions">${linkButton("Использовать для новой задачи", "/new-task", true)}${linkButton("Проверить состояние", "/hosts")}</div>${detail.host.lastError ? `<div class="notice notice-danger">${escapeHtml(detail.host.lastError)}</div>` : ""}</section>
+apps\miniapp\src\index.ts:3635:      route("GET", "/new-task", async ({ req, res, url }) => {
+apps\miniapp\src\index.ts:3678:      route("POST", "/codex/desktop-continue", async ({ req, res, url }) => {
+apps\miniapp\src\index.ts:3705:      route("POST", "/new-task", async ({ req, res, url }) => {
+apps\miniapp\src\index.ts:3802:        html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
+apps\api\src\index.ts:169:        json(res, 200, await service.createSession(body));
+apps\api\src\index.ts:351:        const created = await service.createSession({
+apps\api\src\service.ts:378:    newSessionHref: `/new-task?hostId=${encodeURIComponent(workspace.hostId)}&workspaceId=${encodeURIComponent(workspace.id)}`
+apps\api\src\service.ts:898:        const result = await this.codexDesktop.continueSession(session, { userId, prompt });
+apps\api\src\service.ts:1078:      const pendingDispatches = store.pendingDispatches.filter((item) => item.hostId === host.id && item.status === "queued");
+apps\api\src\service.ts:1084:        pendingDispatches
+apps\api\src\service.ts:1109:      dispatches: store.pendingDispatches.filter((item) => item.hostId === input.hostId && item.status === "queued")
+apps\api\src\service.ts:1127:  async createSession(input: CreateSessionRequest): Promise<{ session: Session; task?: TaskBundle; approval?: ApprovalRequest; dispatch?: PendingDispatch }> {
+apps\api\src\service.ts:1208:      store.pendingDispatches.push(dispatch);
+apps\api\src\service.ts:1340:      store.pendingDispatches.push(dispatch);
+apps\api\src\service.ts:1462:      store.pendingDispatches.push(dispatch);
+apps\api\src\service.ts:1508:          store.pendingDispatches.push(dispatch);
+apps\api\src\service.ts:1539:      const dispatch = store.pendingDispatches.find((item) => item.id === input.dispatchId && item.sessionId === input.sessionId);
+apps\api\src\service.ts:1631:      const dispatch = store.pendingDispatches.find((item) => item.id === input.dispatchId && item.sessionId === input.sessionId);
+apps\api\src\service.ts:1693:      const cancelledDispatches = store.pendingDispatches
+apps\api\src\service.test.ts:133:  const sessionResult = await service.createSession({
+apps\api\src\service.test.ts:188:  const sessionResult = await service.createSession({
+apps\api\src\service.test.ts:229:    const created = await service.createSession({
+apps\api\src\service.test.ts:247:    assert.equal(store.pendingDispatches.find((item) => item.sessionId === created.session.id)?.status, "cancelled");
+apps\api\src\service.test.ts:290:  const created = await service.createSession({
+apps\api\src\service.test.ts:386:  const created = await service.createSession({
+apps\api\src\service.test.ts:547:        async continueSession(session, input) {
+apps\api\src\service.test.ts:632:        async continueSession(session) {
+apps\api\src\service.test.ts:714:    const session = await service.createSession({
+apps\api\src\service.test.ts:857:    const proofSession = service.createSession({
+apps\api\src\service.test.ts:950:      () => service.createSession({

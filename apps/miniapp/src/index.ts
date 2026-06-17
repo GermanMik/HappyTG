@@ -335,6 +335,7 @@ function newTaskHref(input: {
   intent?: NewTaskIntent;
   title?: string;
   contextSessionId?: string;
+  userId?: string;
 }): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(input)) {
@@ -345,6 +346,21 @@ function newTaskHref(input: {
 
   const query = params.toString();
   return query ? `/new-task?${query}` : "/new-task";
+}
+
+function appendUserId(href: string, userId?: string): string {
+  if (!userId) {
+    return href;
+  }
+
+  const [base, query = ""] = href.split("?", 2);
+  const params = new URLSearchParams(query);
+  if (!params.has("userId")) {
+    params.set("userId", userId);
+  }
+
+  const nextQuery = params.toString();
+  return nextQuery ? `${base}?${nextQuery}` : base;
 }
 
 function buildMiniAppTaskPrompt(input: { intent?: unknown; prompt?: unknown; contextSessionId?: unknown }): string {
@@ -2707,7 +2723,7 @@ function renderProjectCards(projects: MiniAppProjectCard[], options: { userId?: 
         { label: "host", value: project.hostLabel }
       ])}
     </div>
-    <div class="status-meta">${project.hostStatus ? renderBadge(project.hostStatus) : ""}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId: options.userId }))}${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}</div>
+    <div class="status-meta">${project.hostStatus ? renderBadge(project.hostStatus) : ""}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId: options.userId }))}${linkButton("Новая задача", appendUserId(project.newSessionHref, options.userId), true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question", userId: options.userId }))}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -2723,7 +2739,7 @@ function renderDesktopProjectCards(projects: CodexDesktopProject[], options: { u
       <div class="status-meta">${renderBadge("Codex Desktop", "info")}${renderBadge(project.active ? "Running" : "Ready", project.active ? "info" : "success")}</div>
       ${renderDetails("Скрытые детали", [{ label: "path", value: project.path }])}
     </div>
-    <div class="status-meta">${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { userId: options.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div>
+    <div class="status-meta">${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { userId: options.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement", userId: options.userId }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question", userId: options.userId }))}</div>
   </li>`).join("")}</ul>`;
 }
 
@@ -2748,7 +2764,7 @@ function renderProjectsView(
       <p class="eyebrow">Проекты</p>
       <h1>Проекты</h1>
       <p class="muted">Codex CLI и Codex Desktop workspaces без raw paths в основном слое.</p>
-      <div class="actions">${linkButton("Новая задача", "/new-task", true)}${linkButton("Вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}</div>
+      <div class="actions">${linkButton("Новая задача", appendUserId("/new-task", options.userId), true)}${linkButton("Вопрос", newTaskHref({ intent: "question", title: "Implementation question", userId: options.userId }))}</div>
     </section>
     ${desktopProjectsUnavailable ? `<section class="notice notice-warn">${escapeHtml(`Desktop projects unavailable${options?.desktopProjectsLoad?.error ? `: ${options.desktopProjectsLoad.error}` : ""}.`)}</section>` : ""}
     <section class="grid">
@@ -2958,17 +2974,19 @@ function renderSessionDetail(detail: {
   approval?: MiniAppApprovalCard;
   events: SessionEvent[];
   actions: string[];
-}): string {
+}, options: { userId?: string } = {}): string {
   const questionHref = newTaskHref({
     workspaceId: detail.task?.workspaceId,
     intent: "question",
     title: "Implementation question",
-    contextSessionId: detail.session.id
+    contextSessionId: detail.session.id,
+    userId: options.userId
   });
   const taskHref = newTaskHref({
     workspaceId: detail.task?.workspaceId,
     intent: "implement",
-    contextSessionId: detail.session.id
+    contextSessionId: detail.session.id,
+    userId: options.userId
   });
   return `
     <section class="panel hero">
@@ -3408,7 +3426,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
             events: SessionEvent[];
             actions: string[];
           }>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(id)}`);
-          html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
+          html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail, { userId: url.searchParams.get("userId") ?? undefined }), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
           return;
         }
         if (screen === "diff" && url.searchParams.get("sessionId")) {
@@ -3589,7 +3607,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
 
         const userId = url.searchParams.get("userId") ?? undefined;
-        const body = `<section class="panel hero"><h1>${escapeHtml(project.repoName)}</h1><p class="meta-line">${escapeHtml(project.hostLabel ?? "host n/a")} · active ${project.activeSessions}</p><div class="actions">${linkButton("Новая задача", project.newSessionHref, true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question" }))}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId }))}${linkButton("Projects", withUser("/projects", url))}</div>${renderDetails("Project details", [{ label: "path", value: project.path }, { label: "host", value: project.hostLabel }, { label: "branch", value: project.defaultBranch }])}</section>
+        const body = `<section class="panel hero"><h1>${escapeHtml(project.repoName)}</h1><p class="meta-line">${escapeHtml(project.hostLabel ?? "host n/a")} · active ${project.activeSessions}</p><div class="actions">${linkButton("Новая задача", appendUserId(project.newSessionHref, userId), true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question", userId }))}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId }))}${linkButton("Projects", withUser("/projects", url))}</div>${renderDetails("Project details", [{ label: "path", value: project.path }, { label: "host", value: project.hostLabel }, { label: "branch", value: project.defaultBranch }])}</section>
           <section class="grid">
             <div class="kv-item"><div class="eyebrow">Runtime</div><strong>Codex CLI</strong></div>
             <div class="kv-item"><div class="eyebrow">Host</div><strong>${escapeHtml(project.hostLabel ?? "host n/a")}</strong></div>
@@ -3749,7 +3767,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
         }
         json(res, 200, {
           ...created,
-          sessionHref: newTaskSessionHref(created, body.runtime)
+          sessionHref: withUser(newTaskSessionHref(created, body.runtime), url)
         });
       }),
       route("GET", "/task/:id", async ({ req, res, params, url }) => {
@@ -3799,7 +3817,7 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           events: SessionEvent[];
           actions: string[];
         }>(req, url, `/api/v1/miniapp/sessions/${params.id}`);
-        html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
+        html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail, { userId: url.searchParams.get("userId") ?? undefined }), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
       })
     ],
     logger,

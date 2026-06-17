@@ -1,0 +1,90 @@
+
+> happytg@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix
+> turbo build
+
+• turbo 2.9.18
+
+   • Packages in scope: @happytg/api, @happytg/approval-engine, @happytg/bootstrap, @happytg/bot, @happytg/hooks, @happytg/host-daemon, @happytg/miniapp, @happytg/policy-engine, @happytg/protocol, @happytg/repo-proof, @happytg/runtime-adapters, @happytg/session-engine, @happytg/shared, @happytg/telegram-kit, @happytg/worker
+   • Running build in 15 packages
+   • Remote caching disabled, using shared worktree cache
+
+@happytg/bot:build: cache miss, executing 00d6fe8509d59279
+@happytg/worker:build: cache miss, executing 36d51ff44bf4fb1f
+@happytg/approval-engine:build: cache miss, executing 4788a6a9ba96b7dc
+@happytg/repo-proof:build: cache miss, executing 5fb17f89ae609c41
+@happytg/telegram-kit:build: cache miss, executing 6661ac9d38266f96
+@happytg/policy-engine:build: cache miss, executing bbe8c5760a946b4b
+@happytg/protocol:build: cache miss, executing 6a091783612a4a78
+@happytg/runtime-adapters:build: cache miss, executing 4c00621140e38d6a
+@happytg/bootstrap:build: cache miss, executing 0f6f8dc9a7918052
+@happytg/miniapp:build: cache miss, executing 452042517f8997ce
+@happytg/bot:build: 
+@happytg/bot:build: > @happytg/bot@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\apps\bot
+@happytg/bot:build: > tsc -p tsconfig.json
+@happytg/bot:build: 
+@happytg/worker:build: 
+@happytg/worker:build: > @happytg/worker@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\apps\worker
+@happytg/worker:build: > tsc -p tsconfig.json
+@happytg/worker:build: 
+@happytg/approval-engine:build: 
+@happytg/approval-engine:build: > @happytg/approval-engine@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\approval-engine
+@happytg/approval-engine:build: > tsc -p tsconfig.json
+@happytg/approval-engine:build: 
+@happytg/repo-proof:build: 
+@happytg/repo-proof:build: > @happytg/repo-proof@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\repo-proof
+@happytg/repo-proof:build: > tsc -p tsconfig.json
+@happytg/repo-proof:build: 
+@happytg/telegram-kit:build: 
+@happytg/telegram-kit:build: > @happytg/telegram-kit@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\telegram-kit
+@happytg/telegram-kit:build: > tsc -p tsconfig.json
+@happytg/telegram-kit:build: 
+@happytg/policy-engine:build: 
+@happytg/policy-engine:build: > @happytg/policy-engine@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\policy-engine
+@happytg/policy-engine:build: > tsc -p tsconfig.json
+@happytg/policy-engine:build: 
+@happytg/protocol:build: 
+@happytg/protocol:build: > @happytg/protocol@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\protocol
+@happytg/protocol:build: > tsc -p tsconfig.json
+@happytg/protocol:build: 
+@happytg/runtime-adapters:build: 
+@happytg/runtime-adapters:build: > @happytg/runtime-adapters@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\runtime-adapters
+@happytg/runtime-adapters:build: > tsc -p tsconfig.json
+@happytg/runtime-adapters:build: 
+@happytg/bootstrap:build: 
+@happytg/bootstrap:build: > @happytg/bootstrap@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\bootstrap
+@happytg/bootstrap:build: > tsc -p tsconfig.json
+@happytg/bootstrap:build: 
+@happytg/miniapp:build: 
+@happytg/miniapp:build: > @happytg/miniapp@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\apps\miniapp
+@happytg/miniapp:build: > tsc -p tsconfig.json
+@happytg/miniapp:build: 
+@happytg/hooks:build: cache miss, executing 21f6860d46db22a1
+@happytg/session-engine:build: cache miss, executing e6995918fd050cf0
+@happytg/host-daemon:build: cache miss, executing 61ad5a58b8353da7
+@happytg/api:build: cache miss, executing c63cb28c6fd69938
+@happytg/shared:build: cache miss, executing 2fcb2f9afc613d50
+@happytg/hooks:build: 
+@happytg/hooks:build: > @happytg/hooks@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\hooks
+@happytg/hooks:build: > tsc -p tsconfig.json
+@happytg/hooks:build: 
+@happytg/session-engine:build: 
+@happytg/session-engine:build: > @happytg/session-engine@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\session-engine
+@happytg/session-engine:build: > tsc -p tsconfig.json
+@happytg/session-engine:build: 
+@happytg/host-daemon:build: 
+@happytg/host-daemon:build: > @happytg/host-daemon@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\apps\host-daemon
+@happytg/host-daemon:build: > tsc -p tsconfig.json
+@happytg/host-daemon:build: 
+@happytg/api:build: 
+@happytg/api:build: > @happytg/api@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\apps\api
+@happytg/api:build: > tsc -p tsconfig.json
+@happytg/api:build: 
+@happytg/shared:build: 
+@happytg/shared:build: > @happytg/shared@0.4.29 build C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\packages\shared
+@happytg/shared:build: > tsc -p tsconfig.json
+@happytg/shared:build: 
+
+ Tasks:    15 successful, 15 total
+Cached:    0 cached, 15 total
+  Time:    8.512s 
+
