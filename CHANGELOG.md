@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.4.29
+
+### Fixed
+
+- Mini App follow-up links from session details now preserve direct `?userId=` context for `Задать вопрос` and `Новая задача`.
+- Legacy `/?screen=session&id=...` session detail entrypoints keep the same follow-up context as `/session/:id`.
+- Project and Desktop project follow-up links preserve direct Mini App context, and `/new-task` success responses return a context-preserving `sessionHref`.
+- Regression coverage proves follow-up prompts keep `Context session: <id>.` and post to `/api/v1/miniapp/sessions?userId=...`.
+
+### Verification
+
+- Scoped Mini App test, typecheck, lint, build, release validation, diff check, and proof-bundle validation passed.
+
 ## v0.4.28
 
 ### Fixed

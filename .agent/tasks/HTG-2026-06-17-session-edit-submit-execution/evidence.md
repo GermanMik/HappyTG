@@ -20,8 +20,27 @@
 - `raw/test-miniapp-initial.txt`
 - `raw/test-miniapp.txt`
 - `raw/diff-check-build.txt`
+- `raw/typecheck-miniapp.txt`
+- `raw/lint-miniapp.txt`
+- `raw/build-miniapp.txt`
+- `raw/release-check-0.4.29.txt`
+- `raw/task-validate.txt`
+- `raw/lint-full.txt`
+- `raw/typecheck-full.txt`
+- `raw/test-full.txt`
+- `raw/build-full.txt`
+- `raw/diff-check-final.txt`
 
 ## Verification
 
 - `pnpm --filter @happytg/miniapp test` passed: 27 tests, 0 failed.
 - `git diff --check` passed.
+- `pnpm --filter @happytg/miniapp typecheck` passed.
+- `pnpm --filter @happytg/miniapp lint` passed.
+- `pnpm --filter @happytg/miniapp build` passed.
+- `pnpm release:check --version 0.4.29` passed.
+- `pnpm happytg task validate --repo . --task HTG-2026-06-17-session-edit-submit-execution` passed.
+- `pnpm lint` passed.
+- `pnpm typecheck` passed.
+- `pnpm test` passed.
+- `pnpm build` passed.

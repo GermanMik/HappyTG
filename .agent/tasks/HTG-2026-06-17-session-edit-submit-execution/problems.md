@@ -7,4 +7,4 @@
 ## Status
 
 - Fixed in build stage.
-- Fresh verifier pass pending.
+- Fresh verifier gates passed.

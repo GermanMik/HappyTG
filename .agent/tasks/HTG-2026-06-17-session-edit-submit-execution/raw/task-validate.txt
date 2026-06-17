@@ -1,0 +1,9 @@
+
+> happytg@0.4.29 happytg C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix
+> tsx packages/bootstrap/src/cli.ts "task" "validate" "--repo" "." "--task" "HTG-2026-06-17-session-edit-submit-execution"
+
+Task: HTG-2026-06-17-session-edit-submit-execution
+Bundle: C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\.agent\tasks\HTG-2026-06-17-session-edit-submit-execution
+Validation: missing raw\build.txt, raw\test-unit.txt, raw\test-integration.txt, raw\lint.txt
+Phase: unknown
+Verification: unknown

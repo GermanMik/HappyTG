@@ -1,14 +1,23 @@
 {
   "taskId": "HTG-2026-06-17-session-edit-submit-execution",
-  "phase": "build",
-  "verificationState": "running",
+  "phase": "complete",
+  "verificationState": "passed",
   "artifacts": [
     ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/spec.md",
     ".agent/prompts/happytg-session-edit-submit-execution-fix.md",
     "apps/miniapp/src/index.ts",
     "apps/miniapp/src/index.test.ts",
     ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/test-miniapp.txt",
-    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/diff-check-build.txt"
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/diff-check-build.txt",
+    "CHANGELOG.md",
+    "docs/releases/0.4.29.md",
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/release-check-0.4.29.txt",
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/task-validate.txt",
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/lint-full.txt",
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/typecheck-full.txt",
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/test-full.txt",
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/build-full.txt",
+    ".agent/tasks/HTG-2026-06-17-session-edit-submit-execution/raw/diff-check-final.txt"
   ],
   "checks": [
     {
@@ -20,6 +29,56 @@
       "command": "git diff --check",
       "status": "passed",
       "artifact": "raw/diff-check-build.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "status": "passed",
+      "artifact": "raw/lint-miniapp.txt"
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp build",
+      "status": "passed",
+      "artifact": "raw/build-miniapp.txt"
+    },
+    {
+      "command": "pnpm release:check --version 0.4.29",
+      "status": "passed",
+      "artifact": "raw/release-check-0.4.29.txt"
+    },
+    {
+      "command": "pnpm happytg task validate --repo . --task HTG-2026-06-17-session-edit-submit-execution",
+      "status": "passed",
+      "artifact": "raw/task-validate.txt"
+    },
+    {
+      "command": "pnpm lint",
+      "status": "passed",
+      "artifact": "raw/lint-full.txt"
+    },
+    {
+      "command": "pnpm typecheck",
+      "status": "passed",
+      "artifact": "raw/typecheck-full.txt"
+    },
+    {
+      "command": "pnpm test",
+      "status": "passed",
+      "artifact": "raw/test-full.txt"
+    },
+    {
+      "command": "pnpm build",
+      "status": "passed",
+      "artifact": "raw/build-full.txt"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed",
+      "artifact": "raw/diff-check-final.txt"
     }
   ]
 }

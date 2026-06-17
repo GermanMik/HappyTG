@@ -1,0 +1,4 @@
+
+> @happytg/miniapp@0.4.28 lint C:\Develop\Projects\HappyTG-worktrees\session-edit-continue-fix\apps\miniapp
+> tsc -p tsconfig.json --noEmit
+

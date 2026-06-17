@@ -43,9 +43,9 @@ When an operator opens an existing session, chooses a question/task follow-up, e
 
 - `init`: complete
 - `freeze/spec`: complete
-- `build`: pending
-- `evidence`: pending
-- `fresh verify`: pending
-- `minimal fix`: pending
-- `fresh verify`: pending
-- `complete`: pending
+- `build`: complete
+- `evidence`: complete
+- `fresh verify`: complete
+- `minimal fix`: not needed after verifier gates passed
+- `fresh verify`: complete
+- `complete`: complete

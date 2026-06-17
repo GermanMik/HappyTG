@@ -1,12 +1,25 @@
 {
   "taskId": "HTG-2026-06-17-session-edit-submit-execution",
-  "phase": "build",
-  "verificationState": "running",
+  "phase": "complete",
+  "verificationState": "passed",
   "findings": [
     {
       "id": "HTG-SESSION-FOLLOWUP-CONTEXT",
       "severity": "fixed",
       "summary": "Direct Mini App user context was lost across follow-up submission links and success navigation."
     }
+  ],
+  "checks": [
+    "pnpm --filter @happytg/miniapp test",
+    "pnpm --filter @happytg/miniapp typecheck",
+    "pnpm --filter @happytg/miniapp lint",
+    "pnpm --filter @happytg/miniapp build",
+    "pnpm release:check --version 0.4.29",
+    "pnpm happytg task validate --repo . --task HTG-2026-06-17-session-edit-submit-execution",
+    "pnpm lint",
+    "pnpm typecheck",
+    "pnpm test",
+    "pnpm build",
+    "git diff --check"
   ]
 }
