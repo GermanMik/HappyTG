@@ -1,0 +1,49 @@
+{
+  "taskId": "HTG-2026-06-19-desktop-continue-live-fix",
+  "phase": "complete",
+  "checks": [
+    {
+      "name": "miniapp tests",
+      "command": "tsx --test apps/miniapp/src/index.test.ts",
+      "status": "passed",
+      "raw": "raw/test-miniapp-final.txt"
+    },
+    {
+      "name": "runtime adapter tests",
+      "command": "tsx --test packages/runtime-adapters/src/index.test.ts",
+      "status": "passed",
+      "raw": "raw/test-runtime-adapters.txt"
+    },
+    {
+      "name": "lint",
+      "command": "corepack pnpm lint",
+      "status": "passed",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "name": "build",
+      "command": "corepack pnpm build",
+      "status": "passed",
+      "raw": "raw/build.txt"
+    },
+    {
+      "name": "task validate",
+      "command": "tsx packages/bootstrap/src/cli.ts task validate --repo . --task HTG-2026-06-19-desktop-continue-live-fix",
+      "status": "passed",
+      "raw": "raw/task-validate.txt"
+    },
+    {
+      "name": "release check",
+      "command": "node scripts/release/validate-release.mjs --version 0.4.30",
+      "status": "passed",
+      "raw": "raw/release-check-0.4.30.txt"
+    }
+  ],
+  "liveSmoke": {
+    "status": "passed",
+    "sessionId": "019ed3d8-904b-7eb0-97bd-1c10f09df378",
+    "sessionHref": "/codex/desktop-session?id=019ed3d8-904b-7eb0-97bd-1c10f09df378&historyOrder=newest-first&userId=usr_1",
+    "jsonlConfirmedAt": "2026-06-19T17:40:32Z",
+    "raw": "raw/current-live-smoke-3.txt"
+  }
+}

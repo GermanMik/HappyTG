@@ -1,0 +1,5 @@
+Task: HTG-2026-06-19-desktop-continue-live-fix
+Bundle: C:\Develop\Projects\HappyTG\.agent\tasks\HTG-2026-06-19-desktop-continue-live-fix
+Validation: ok
+Phase: unknown
+Verification: unknown

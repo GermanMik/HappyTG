@@ -1087,6 +1087,8 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
     assert.match(detailHtml, /data-desktop-action="stop"/);
     assert.match(detailHtml, /data-desktop-continue-form/);
     assert.match(detailHtml, /name="prompt"/);
+    assert.match(detailHtml, /payload\.sessionHref/);
+    assert.match(detailHtml, /window\.location\.assign\(href\)/);
     assert.match(detailHtml, /Новая задача/);
     assert.match(detailHtml, /Вопрос по реализации/);
     assert.match(detailHtml, /История пока пуста/);
@@ -1116,9 +1118,10 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
         prompt: "Continue Desktop task"
       })
     });
-    const continuedPayload = await continued.json() as { action: string };
+    const continuedPayload = await continued.json() as { action: string; sessionHref: string };
     assert.equal(continued.status, 200);
     assert.equal(continuedPayload.action, "continue");
+    assert.equal(continuedPayload.sessionHref, "/codex/desktop-session?id=desktop-supported&historyOrder=newest-first&userId=usr_1");
 
     const created = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
       method: "POST",

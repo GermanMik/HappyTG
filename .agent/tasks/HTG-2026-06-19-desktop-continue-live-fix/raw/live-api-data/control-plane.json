@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "users": [
+    {
+      "id": "usr_1",
+      "displayName": "Smoke User",
+      "status": "active",
+      "createdAt": "2026-06-19T00:00:00.000Z"
+    }
+  ],
+  "telegramIdentities": [],
+  "miniAppLaunchGrants": [],
+  "miniAppSessions": [],
+  "hosts": [],
+  "hostRegistrations": [],
+  "workspaces": [],
+  "sessions": [],
+  "sessionEvents": [],
+  "tasks": [],
+  "approvals": [],
+  "approvalDecisions": [],
+  "policies": [
+    {
+      "id": "pol_global_default",
+      "layer": "global",
+      "scopeRef": "global",
+      "status": "active",
+      "version": 1,
+      "createdAt": "2026-06-19T17:40:12.741Z",
+      "rules": [
+        {
+          "id": "rule_allow_status",
+          "actionKind": "read_status",
+          "effect": "allow",
+          "reason": "Fast-path host and session status checks are allowed"
+        },
+        {
+          "id": "rule_allow_workspace_read",
+          "actionKind": "workspace_read",
+          "effect": "allow",
+          "reason": "Read-only workspace inspection is allowed"
+        },
+        {
+          "id": "rule_require_workspace_write",
+          "actionKind": "workspace_write",
+          "effect": "require_approval",
+          "reason": "Workspace mutations require explicit approval"
+        },
+        {
+          "id": "rule_require_outside_root_write",
+          "actionKind": "workspace_write_outside_root",
+          "effect": "require_approval",
+          "reason": "Out-of-root writes require explicit approval"
+        },
+        {
+          "id": "rule_require_git_push",
+          "actionKind": "git_push",
+          "effect": "require_approval",
+          "reason": "Git push is a risky mutation"
+        },
+        {
+          "id": "rule_require_bootstrap_install",
+          "actionKind": "bootstrap_install",
+          "effect": "require_approval",
+          "reason": "Installing packages changes host state"
+        },
+        {
+          "id": "rule_require_bootstrap_edit",
+          "actionKind": "bootstrap_config_edit",
+          "effect": "require_approval",
+          "reason": "Config edits require explicit approval"
+        },
+        {
+          "id": "rule_allow_pair",
+          "actionKind": "daemon_pair",
+          "effect": "allow",
+          "reason": "Pairing is allowed with short-lived registration codes"
+        },
+        {
+          "id": "rule_allow_resume",
+          "actionKind": "session_resume",
+          "effect": "allow",
+          "reason": "Resume attempts are allowed and revalidated server-side"
+        },
+        {
+          "id": "rule_allow_codex_desktop_resume",
+          "actionKind": "codex_desktop_resume",
+          "effect": "allow",
+          "reason": "Codex Desktop resume attempts are allowed only through a proven adapter contract"
+        },
+        {
+          "id": "rule_allow_codex_desktop_continue",
+          "actionKind": "codex_desktop_continue",
+          "effect": "allow",
+          "reason": "Codex Desktop continuation prompts are allowed only through a proven adapter contract"
+        },
+        {
+          "id": "rule_allow_codex_desktop_stop",
+          "actionKind": "codex_desktop_stop",
+          "effect": "allow",
+          "reason": "Codex Desktop stop attempts are allowed only through a proven adapter control handle"
+        },
+        {
+          "id": "rule_allow_codex_desktop_new_task",
+          "actionKind": "codex_desktop_new_task",
+          "effect": "allow",
+          "reason": "Codex Desktop task creation is allowed only through a proven adapter contract"
+        },
+        {
+          "id": "rule_allow_verify",
+          "actionKind": "verification_run",
+          "effect": "allow",
+          "reason": "Verification is allowed because it should be read-focused"
+        }
+      ]
+    }
+  ],
+  "evidenceArtifacts": [],
+  "verificationRuns": [],
+  "runtimeAdapters": [],
+  "mcpBindings": [],
+  "hookDefinitions": [],
+  "hookExecutions": [],
+  "auditRecords": [
+    {
+      "id": "aud_20efdef6a8634358964c2cd4",
+      "actorType": "user",
+      "actorRef": "usr_1",
+      "action": "codex_desktop.continue.attempt",
+      "targetRef": "019ed3d8-904b-7eb0-97bd-1c10f09df378",
+      "metadata": {
+        "actionKind": "codex_desktop_continue",
+        "policyOutcome": "allow",
+        "reason": "Codex Desktop continuation prompts are allowed only through a proven adapter contract",
+        "source": "codex-desktop",
+        "hasPrompt": true
+      },
+      "createdAt": "2026-06-19T17:40:12.741Z"
+    },
+    {
+      "id": "aud_14f14de5e9d4469e985b8ede",
+      "actorType": "user",
+      "actorRef": "usr_1",
+      "action": "codex_desktop.continue.completed",
+      "targetRef": "019ed3d8-904b-7eb0-97bd-1c10f09df378",
+      "metadata": {
+        "ok": true
+      },
+      "createdAt": "2026-06-19T17:40:17.582Z"
+    }
+  ],
+  "secretReferences": [],
+  "bootstrapReports": [],
+  "installPlans": [],
+  "pendingDispatches": []
+}
