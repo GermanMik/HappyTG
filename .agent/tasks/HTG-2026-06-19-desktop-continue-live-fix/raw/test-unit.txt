@@ -1,0 +1,71 @@
+✔ mini app ready endpoint returns 503 when api health fails (43.4833ms)
+✔ mini app favicon route avoids browser 404 noise (12.493ms)
+✔ mini app entrypoint accepts HEAD probes from launch clients (11.8331ms)
+✔ mini app page routes accept HEAD probes from launch clients (10.5227ms)
+✔ overview page renders hosts, sessions, approvals, and tasks (96.6859ms)
+✔ mini app links honor the /miniapp reverse-proxy base path (7.7388ms)
+✔ public reverse-proxied mini app uses same-origin browser API when local env points at localhost (38.3975ms)
+✔ local direct mini app keeps the explicit local API origin without reverse-proxy headers (0.4306ms)
+✔ auth-pending shell exposes retry-safe auth feedback controls (9.6362ms)
+✔ mini app forwards browser session cookie as bearer auth (14.2109ms)
+✔ codex panel renders source-aware Desktop and CLI sessions with disabled unsupported actions (47.9196ms)
+✔ codex panel renders readable timeout warning for slow Desktop sessions (47.3164ms)
+✔ codex panel applies requested session sort order (9.3995ms)
+✔ codex project view shows only selected project sessions and caps results at five (15.067ms)
+✔ codex project view matches equivalent Windows project paths (11.1252ms)
+✔ codex project view gives widened Desktop session fetch an extended timeout budget (71.6033ms)
+✔ mini app renders supported Desktop actions and forwards new Desktop task to API (23.0816ms)
+✔ task page renders scoped canonical artifacts (8.9965ms)
+✔ projects page renders workspaces and new task creates a Codex session (20.493ms)
+✔ session page renders timeline, summary, and task link (24.0814ms)
+✔ session page renders auth bridge when API session detail returns 401 (7.4802ms)
+✔ legacy screen=session route renders auth bridge when API session detail returns 401 (25.7587ms)
+✔ approval page renders real authenticated action buttons (7.3821ms)
+✔ startMiniAppServer returns an actionable message when the port is already in use (5538.9808ms)
+✔ startMiniAppServer reuses an already-running HappyTG mini app on the same port (63.7642ms)
+✔ startMiniAppServer rejects when a different HappyTG service occupies the mini app port (4.4588ms)
+✔ startMiniAppServer names a foreign HTTP listener when the port is occupied (6.6272ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6848.8135
+✔ checkCodexReadiness reports available Codex and captures smoke warnings (417.0357ms)
+✔ tool execution model classifies actions and serializes mutations (2.0718ms)
+✔ Codex Desktop adapter parses projects from global state without private payloads (5.5144ms)
+✔ Codex Desktop host-proxy control contract delegates projects, sessions, and tasks over HTTP (71.482ms)
+✔ Codex Desktop adapter parses session_index and session files as sanitized sessions (23.659ms)
+✔ Codex Desktop adapter limits session projections for list screens (17.4835ms)
+✔ Codex Desktop adapter reads newest dated session files before old files (9.511ms)
+✔ Codex Desktop adapter keeps unlisted JSONL sessions read-only (14.3071ms)
+✔ Codex Desktop adapter controls sessions through Codex app-server JSON-RPC (248.0491ms)
+✔ Codex Desktop default adapter keeps unknown experimental control modes unsupported (6.3716ms)
+✔ Codex Desktop default adapter enables app-server control when explicitly configured (108.7499ms)
+✔ Codex Desktop adapter tolerates missing and corrupt state (19.9536ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from Path (286.2987ms)
+✔ checkCodexReadiness resolves a Windows-style codex.cmd shim from lowercase path and pathext (248.4013ms)
+✔ checkCodexReadiness keeps Windows shim resolution working when PATH/Path and PATHEXT/pathext are duplicated (258.3707ms)
+✔ checkCodexReadiness closes stdin so smoke runs do not hang waiting for EOF (167.2702ms)
+✔ checkCodexReadiness preserves spaced prompts when it runs through a Windows cmd wrapper (567.6418ms)
+✔ checkCodexReadiness runs smoke from a neutral cwd when provided (431.9932ms)
+✔ checkCodexReadiness treats a Windows shell command-not-found result as missing (4.7374ms)
+✔ checkCodexReadiness marks only true ENOENT failures as missing (203.8027ms)
+✔ classifyCodexSmokeStderr ignores known benign Codex internal warnings only (2.4345ms)
+✔ summarizeCodexSmokeStderr extracts concise actionable root causes (1.531ms)
+✔ codexCliMissingMessage explains PATH diagnosis and reinstall fallback (0.1832ms)
+✔ runCodexExec reads summary from the Codex output file (219.9106ms)
+✔ runCodexExec marks timeout and returns a timeout summary (30.7717ms)
+✔ runCodexExec settles timeout even when the child ignores normal termination (31.9798ms)
+✔ runCodexExec caps stdout and stderr while reporting truncation metadata (222.9392ms)
+✔ runCodexExec returns actionable guidance when Codex CLI is missing (6.2779ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4253.6085

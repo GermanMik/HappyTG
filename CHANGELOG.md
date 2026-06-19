@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.4.30
+
+### Fixed
+
+- Mini App Codex Desktop `Continue` submissions now return a concrete `sessionHref` and navigate to newest history instead of doing a blind reload.
+- The continue form restores control after an accepted submit and shows a clear accepted state before navigation.
+- Codex Desktop host-proxy/app-server warmup now has a `10000ms` control timeout, so old Desktop sessions are not disabled by the previous `2500ms` window.
+- Default Mini App Desktop session list fetches now get a `10000ms` startup budget unless an operator explicitly overrides `HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS`.
+
+### Verification
+
+- Focused Mini App/runtime-adapter tests, typecheck, lint, build, proof-bundle validation, and live app-route smoke against old Desktop session `019ed3d8-904b-7eb0-97bd-1c10f09df378` passed.
+
 ## v0.4.29
 
 ### Fixed

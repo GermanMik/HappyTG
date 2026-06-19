@@ -1,0 +1,18 @@
+{
+  "apiReady": {
+    "ok": true,
+    "service": "api"
+  },
+  "miniReady": "ok",
+  "selectedSessionId": "019ed3d8-904b-7eb0-97bd-1c10f09df378",
+  "selectedSessionTitle": "Починить отправку задачи сессии",
+  "selectedSessionStatusBefore": "recent",
+  "continueAction": "continue",
+  "sessionHref": "/codex/desktop-session?id=019ed3d8-904b-7eb0-97bd-1c10f09df378&historyOrder=newest-first&userId=usr_1",
+  "resultSessionStatus": "active",
+  "historyMatchCount": 0,
+  "historyMatchedSummaries": [],
+  "detailSessionStatus": "active",
+  "detailHistoryCount": 80,
+  "detailHistoryTruncated": true
+}

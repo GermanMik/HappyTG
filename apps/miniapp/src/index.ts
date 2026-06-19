@@ -1998,9 +1998,17 @@ export function renderPage(
               });
             }
             return response.json();
-          }).then(function () {
-            setActionFeedback(feedback, "success", "Prompt отправлен. Обновляем history.");
-            location.reload();
+          }).then(function (payload) {
+            setActionFeedback(feedback, "success", "Prompt принят. Открываем обновленную history.");
+            form.reset();
+            if (submit) submit.disabled = false;
+            if (submit) submit.textContent = "Отправить";
+            var href = payload && payload.sessionHref ? payload.sessionHref : "";
+            if (href) {
+              window.location.assign(href);
+            } else {
+              location.reload();
+            }
           }).catch(function (error) {
             if (submit) submit.disabled = false;
             if (submit) submit.textContent = "Отправить";
@@ -3125,11 +3133,12 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
   };
   const fetchForRequest = <T>(req: { headers: Record<string, string | string[] | undefined> }, url: URL, pathname: string) => dependencies.fetchJson<T>(withUser(pathname, url), authInit(req));
   const defaultCodexFetchTimeoutMs = 6000;
-  const codexFetchTimeoutMs = Number(process.env.HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS ?? String(defaultCodexFetchTimeoutMs));
+  const codexFetchTimeoutOverride = process.env.HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS?.trim();
+  const codexFetchTimeoutMs = Number(codexFetchTimeoutOverride ?? String(defaultCodexFetchTimeoutMs));
   const effectiveCodexFetchTimeoutMs = () => Number.isFinite(codexFetchTimeoutMs) && codexFetchTimeoutMs > 0 ? codexFetchTimeoutMs : defaultCodexFetchTimeoutMs;
   const desktopSessionsFetchTimeoutMs = (limit: number) => {
     const baseTimeoutMs = effectiveCodexFetchTimeoutMs();
-    return limit >= 100 ? Math.max(baseTimeoutMs, 10_000) : baseTimeoutMs;
+    return limit >= 100 || !codexFetchTimeoutOverride ? Math.max(baseTimeoutMs, 10_000) : baseTimeoutMs;
   };
   const describeFetchError = (error: unknown, timeoutMs: number): string | undefined => {
     if (!(error instanceof Error)) {
@@ -3708,7 +3717,10 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
           const result = await postForRequest<CodexDesktopControlResult>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(body.sessionId)}/continue`, {
             prompt: body.prompt
           });
-          json(res, 200, result);
+          json(res, 200, {
+            ...result,
+            sessionHref: withUser(desktopSessionHistoryHref(result.session?.id ?? body.sessionId, "newest-first"), url)
+          });
         } catch (error) {
           if (error instanceof MiniAppFetchError) {
             json(res, error.status, {

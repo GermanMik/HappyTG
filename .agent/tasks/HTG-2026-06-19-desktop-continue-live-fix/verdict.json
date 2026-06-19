@@ -1,0 +1,10 @@
+{
+  "taskId": "HTG-2026-06-19-desktop-continue-live-fix",
+  "verdict": "passed",
+  "acceptanceCriteriaSatisfied": true,
+  "notes": [
+    "Mini App continue returns a concrete sessionHref and navigates there.",
+    "Runtime host-proxy control timeout now tolerates app-server warmup.",
+    "Live app-route smoke delivered the test prompt into old Desktop session 019ed3d8-904b-7eb0-97bd-1c10f09df378."
+  ]
+}
