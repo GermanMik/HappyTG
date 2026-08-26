@@ -1,0 +1,13 @@
+id: full
+description: Advanced self-hosted workstation or server profile.
+extends: recommended
+includes:
+  - docker
+  - docker-compose
+  - reverse-proxy-hints
+  - artifact-storage-prereqs
+  - advanced-verify
+verify:
+  - docker.version
+  - docker.compose
+  - happytg.self-hosted-pass

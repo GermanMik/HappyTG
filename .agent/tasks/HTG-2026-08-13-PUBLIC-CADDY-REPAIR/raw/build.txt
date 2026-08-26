@@ -1,0 +1,3 @@
+docker compose --env-file .env -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml up -d --build --no-deps miniapp -> exit 0
+happytg-miniapp-1 -> running, RestartCount=0, image=sha256:cec90a3b36174bd3933e00f2f871b2f02cb033cdfdb00bf20fbb6d0956303abd
+pnpm --filter @happytg/miniapp build -> exit 0

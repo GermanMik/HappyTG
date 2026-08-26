@@ -1,0 +1,13 @@
+id: recommended
+description: Default developer profile for local HappyTG use.
+extends: minimal
+includes:
+  - pnpm
+  - ide-hints
+  - happytg-helper-scripts
+  - host-daemon-prereqs
+  - diagnostics
+verify:
+  - pnpm.version
+  - happytg.workspace
+  - happytg.host-daemon-prereqs

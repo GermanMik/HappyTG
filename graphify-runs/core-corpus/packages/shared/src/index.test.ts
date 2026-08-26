@@ -1,0 +1,418 @@
+import assert from "node:assert/strict";
+import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import os from "node:os";
+import path from "node:path";
+import test from "node:test";
+
+import type { Logger } from "./index.js";
+import {
+  FileStateStore,
+  createJsonServer,
+  createLogger,
+  findExecutable,
+  getLocalStateDir,
+  loadHappyTGEnv,
+  json,
+  normalizeSpawnEnv,
+  redactSecrets,
+  readJsonFile,
+  readTextFileOrEmpty,
+  renderPrometheusMetrics,
+  resolveMiniAppBaseUrl,
+  resolveHome,
+  route,
+  telegramTokenStatus,
+  writeJsonFileAtomic,
+  writeTextFileAtomic
+} from "./index.js";
+
+const silentLogger: Logger = {
+  info() {},
+  warn() {},
+  error() {}
+};
+
+test("resolveHome and atomic file helpers round-trip data", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-files-"));
+  try {
+    const jsonPath = path.join(tempDir, "nested", "data.json");
+    const textPath = path.join(tempDir, "nested", "notes.txt");
+
+    assert.equal(resolveHome("~/workspace", {
+      env: { HOME: tempDir }
+    }), path.join(tempDir, "workspace"));
+    assert.equal(resolveHome("~", {
+      env: { HOME: tempDir }
+    }), tempDir);
+
+    await writeJsonFileAtomic(jsonPath, { ok: true, count: 2 });
+    await writeTextFileAtomic(textPath, "hello");
+
+    assert.deepEqual(await readJsonFile(jsonPath, { ok: false }), { ok: true, count: 2 });
+    assert.equal(await readTextFileOrEmpty(textPath), "hello");
+    assert.equal(await readTextFileOrEmpty(path.join(tempDir, "missing.txt")), "");
+    assert.equal((await readFile(jsonPath, "utf8")).endsWith("\n"), true);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("resolveHome honors Windows HOME, USERPROFILE, and HOMEDRIVE/HOMEPATH overrides", () => {
+  const windowsHomeOverride = resolveHome("~/workspace", {
+    env: {
+      HOME: "C:\\Temp\\windows-home",
+      USERPROFILE: "C:\\Users\\fallback"
+    },
+    platform: "win32"
+  });
+  const windowsUserProfile = resolveHome("~/workspace", {
+    env: {
+      USERPROFILE: "C:\\Users\\profile"
+    },
+    platform: "win32"
+  });
+  const windowsHomeDrive = resolveHome("~/workspace", {
+    env: {
+      HOMEDRIVE: "C:",
+      HOMEPATH: "\\Users\\drive-home"
+    },
+    platform: "win32"
+  });
+  const windowsStateDir = getLocalStateDir({
+    USERPROFILE: "C:\\Users\\profile"
+  } as NodeJS.ProcessEnv, "win32");
+
+  assert.equal(resolveHome("~", {
+    env: {
+      HOME: "C:\\Temp\\windows-home"
+    },
+    platform: "win32"
+  }), "C:\\Temp\\windows-home");
+  assert.equal(windowsHomeOverride, "C:\\Temp\\windows-home\\workspace");
+  assert.equal(windowsUserProfile, "C:\\Users\\profile\\workspace");
+  assert.equal(windowsHomeDrive, "C:\\Users\\drive-home\\workspace");
+  assert.equal(windowsStateDir, "C:\\Users\\profile\\.happytg");
+});
+
+test("resolveHome honors Windows home overrides with case-insensitive env keys", () => {
+  assert.equal(resolveHome("~", {
+    env: {
+      home: "C:\\Temp\\case-home"
+    } as NodeJS.ProcessEnv,
+    platform: "win32"
+  }), "C:\\Temp\\case-home");
+  assert.equal(resolveHome("~/workspace", {
+    env: {
+      UserProfile: "C:\\Users\\CaseProfile"
+    } as NodeJS.ProcessEnv,
+    platform: "win32"
+  }), "C:\\Users\\CaseProfile\\workspace");
+  assert.equal(resolveHome("~/workspace", {
+    env: {
+      homedrive: "D:",
+      homepath: "\\Users\\CaseDrive"
+    } as NodeJS.ProcessEnv,
+    platform: "win32"
+  }), "D:\\Users\\CaseDrive\\workspace");
+  assert.equal(getLocalStateDir({
+    userprofile: "C:\\Users\\CaseProfile"
+  } as NodeJS.ProcessEnv, "win32"), "C:\\Users\\CaseProfile\\.happytg");
+});
+
+test("findExecutable searches PATH and appends Windows executable extensions", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-"));
+  try {
+    const windowsCodex = path.join(tempDir, "codex.cmd");
+    const unixGit = path.join(tempDir, "git");
+    await Promise.all([
+      writeFile(windowsCodex, "@echo off\r\n", "utf8"),
+      writeFile(unixGit, "#!/bin/sh\n", "utf8")
+    ]);
+    await chmod(unixGit, 0o755);
+
+    const windowsResolved = await findExecutable("codex", {
+        PATH: tempDir,
+        PATHEXT: ".COM;.EXE;.BAT;.CMD"
+      }, "win32");
+    const unixResolved = await findExecutable("git", {
+        PATH: tempDir
+      }, "linux");
+    const explicitWindowsResolved = await findExecutable(path.join(tempDir, "codex"), {
+        PATH: tempDir,
+        PATHEXT: ".COM;.EXE;.BAT;.CMD"
+      }, "win32");
+
+    assert.equal(windowsResolved, windowsCodex);
+    assert.equal(unixResolved, unixGit);
+    assert.equal(explicitWindowsResolved, windowsCodex);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("findExecutable honors Windows path and PATHEXT keys regardless of casing", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-case-"));
+  try {
+    const windowsCodex = path.join(tempDir, "codex.cmd");
+    await writeFile(windowsCodex, "@echo off\r\n", "utf8");
+
+    const resolved = await findExecutable("codex", {
+      path: tempDir,
+      pathext: ".cmd;.exe"
+    } as NodeJS.ProcessEnv, "win32");
+
+    assert.equal(resolved, windowsCodex);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("findExecutable prefers Windows wrapper companions over bare shim files", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-wrapper-"));
+  try {
+    const bareCodex = path.join(tempDir, "codex");
+    const windowsCodex = path.join(tempDir, "codex.cmd");
+    await Promise.all([
+      writeFile(bareCodex, "#!/bin/sh\n", "utf8"),
+      writeFile(windowsCodex, "@echo off\r\n", "utf8")
+    ]);
+
+    const resolved = await findExecutable("codex", {
+      PATH: tempDir,
+      PATHEXT: ".CMD;.EXE"
+    }, "win32");
+
+    assert.equal(resolved, windowsCodex);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("findExecutable and normalizeSpawnEnv preserve usable Windows PATH and PATHEXT values across duplicate-cased keys", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-executable-dupe-"));
+  try {
+    const windowsCodex = path.join(tempDir, "codex.cmd");
+    await writeFile(windowsCodex, "@echo off\r\n", "utf8");
+
+    const env = {
+      Path: "",
+      PATH: tempDir,
+      PATHEXT: "",
+      pathext: ".cmd;.exe",
+      HOME: "C:\\Users\\tester"
+    } as NodeJS.ProcessEnv;
+
+    const resolved = await findExecutable("codex", env, "win32");
+    const normalized = normalizeSpawnEnv(env, "win32");
+
+    assert.equal(resolved, windowsCodex);
+    assert.equal(normalized.Path, tempDir);
+    assert.equal(normalized.PATHEXT, ".cmd;.exe");
+    assert.equal(normalized.PATH, undefined);
+    assert.equal(normalized.HOME, "C:\\Users\\tester");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("loadHappyTGEnv fills missing values without overriding existing env", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-env-"));
+  try {
+    const envFilePath = path.join(tempDir, ".env");
+    await writeFile(envFilePath, "TELEGRAM_BOT_TOKEN=123:test_token_value_1234567890\nLOG_LEVEL=debug\n", "utf8");
+
+    const env: NodeJS.ProcessEnv = {
+      LOG_LEVEL: "info"
+    };
+    const loaded = loadHappyTGEnv({
+      cwd: tempDir,
+      env
+    });
+
+    assert.equal(loaded.envFilePath, envFilePath);
+    assert.deepEqual(loaded.loadedKeys, ["TELEGRAM_BOT_TOKEN"]);
+    assert.equal(env.TELEGRAM_BOT_TOKEN, "123:test_token_value_1234567890");
+    assert.equal(env.LOG_LEVEL, "info");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("normalizeSpawnEnv de-duplicates Windows Path keys and preserves PATHEXT", () => {
+  const normalized = normalizeSpawnEnv({
+    PATH: "C:\\wrong",
+    Path: "C:\\Users\\tester\\AppData\\Roaming\\npm",
+    PATHEXT: ".COM;.EXE;.BAT;.CMD",
+    HOME: "C:\\Users\\tester"
+  }, "win32");
+
+  assert.equal(normalized.Path, "C:\\wrong;C:\\Users\\tester\\AppData\\Roaming\\npm");
+  assert.equal(normalized.PATHEXT, ".COM;.EXE;.BAT;.CMD");
+  assert.equal(normalized.PATH, undefined);
+  assert.equal(normalized.HOME, "C:\\Users\\tester");
+});
+
+test("resolveMiniAppBaseUrl prefers local Mini App URL over local public API URL only when no public HTTPS URL is available", () => {
+  assert.equal(resolveMiniAppBaseUrl({
+    HAPPYTG_MINIAPP_PORT: "3007",
+    HAPPYTG_APP_URL: "http://localhost:3007",
+    HAPPYTG_PUBLIC_URL: "http://localhost:4000"
+  }), "http://localhost:3007");
+
+  assert.equal(resolveMiniAppBaseUrl({
+    HAPPYTG_APP_URL: "http://localhost:3007",
+    HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+  }), "https://happy.example.com/miniapp");
+
+  assert.equal(resolveMiniAppBaseUrl({
+    HAPPYTG_APP_URL: "https://app.example.com/miniapp",
+    HAPPYTG_PUBLIC_URL: "https://happy.example.com"
+  }), "https://app.example.com/miniapp");
+});
+
+test("telegramTokenStatus distinguishes missing, placeholder, invalid, and configured values", () => {
+  assert.equal(telegramTokenStatus({}).status, "missing");
+  assert.equal(telegramTokenStatus({ TELEGRAM_BOT_TOKEN: "replace-me" }).status, "placeholder");
+  assert.equal(telegramTokenStatus({ TELEGRAM_BOT_TOKEN: "abc" }).status, "invalid");
+  assert.equal(telegramTokenStatus({ TELEGRAM_BOT_TOKEN: "123456:abcdefghijklmnopqrstuvwx" }).status, "configured");
+  assert.equal(telegramTokenStatus({
+    telegram_bot_token: "123456:abcdefghijklmnopqrstuvwx"
+  } as NodeJS.ProcessEnv).status, "configured");
+});
+
+test("FileStateStore serializes concurrent updates through its queue", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-shared-store-"));
+  try {
+    const store = new FileStateStore(path.join(tempDir, "control-plane.json"));
+
+    await Promise.all([
+      store.update(async (state) => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        state.users.push({
+          id: "usr_1",
+          displayName: "First",
+          status: "active",
+          createdAt: "2026-04-07T10:00:00.000Z"
+        });
+      }),
+      store.update((state) => {
+        state.users.push({
+          id: "usr_2",
+          displayName: "Second",
+          status: "active",
+          createdAt: "2026-04-07T10:00:01.000Z"
+        });
+      })
+    ]);
+
+    const finalState = await store.read();
+    assert.deepEqual(finalState.users.map((user) => user.id).sort(), ["usr_1", "usr_2"]);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("createJsonServer resolves route params and query data", async () => {
+  const server = createJsonServer(
+    [
+      route("GET", "/items/:itemId", async ({ res, params, url }) => {
+        json(res, 200, {
+          itemId: params.itemId,
+          filter: url.searchParams.get("filter")
+        });
+      })
+    ],
+    silentLogger
+  );
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/items/abc?filter=recent`);
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(body, {
+      itemId: "abc",
+      filter: "recent"
+    });
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("createJsonServer returns a structured 500 when handler throws", async () => {
+  const server = createJsonServer(
+    [
+      route("GET", "/boom", async () => {
+        throw new Error("boom");
+      })
+    ],
+    silentLogger
+  );
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/boom`);
+    const body = await response.json();
+
+    assert.equal(response.status, 500);
+    assert.deepEqual(body, {
+      error: "Internal server error",
+      detail: "boom"
+    });
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("redactSecrets and createLogger remove sensitive metadata values", () => {
+  assert.deepEqual(redactSecrets({
+    token: "secret-token",
+    nested: {
+      password: "secret-password",
+      value: "safe"
+    }
+  }), {
+    token: "[REDACTED]",
+    nested: {
+      password: "[REDACTED]",
+      value: "safe"
+    }
+  });
+
+  const originalLog = console.log;
+  const lines: string[] = [];
+  console.log = (line?: unknown) => {
+    lines.push(String(line));
+  };
+  try {
+    createLogger("test").info("hello", {
+      authorization: "Bearer secret",
+      visible: "ok"
+    });
+  } finally {
+    console.log = originalLog;
+  }
+
+  assert.match(lines[0] ?? "", /\[REDACTED\]/);
+  assert.doesNotMatch(lines[0] ?? "", /Bearer secret/);
+  assert.match(lines[0] ?? "", /"visible":"ok"/);
+});
+
+test("renderPrometheusMetrics returns stable service gauges", () => {
+  const metrics = renderPrometheusMetrics("api", Date.now() - 5_000);
+  assert.match(metrics, /happytg_service_up\{service="api"\} 1/);
+  assert.match(metrics, /happytg_service_uptime_seconds\{service="api"\}/);
+  assert.match(metrics, /happytg_nodejs_memory_rss_bytes\{service="api"\}/);
+});

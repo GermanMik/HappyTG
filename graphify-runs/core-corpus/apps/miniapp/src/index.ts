@@ -1,0 +1,3848 @@
+import { fileURLToPath } from "node:url";
+
+import {
+  createJsonServer,
+  createLogger,
+  html,
+  json,
+  loadHappyTGEnv,
+  readJsonBody,
+  readPort,
+  route,
+  text,
+  validatePublicHttpsUrl,
+  type Logger
+} from "../../../packages/shared/src/index.js";
+import type {
+  CodexDesktopControlResult,
+  CodexDesktopControlStatus,
+  CodexDesktopHistoryEntry,
+  CodexDesktopProject,
+  CodexDesktopSession,
+  CodexDesktopSessionDetail,
+  CreateSessionRequest,
+  MiniAppApprovalCard,
+  MiniAppDashboardProjection,
+  MiniAppDiffProjection,
+  MiniAppHostCard,
+  MiniAppProjectCard,
+  MiniAppReportCard,
+  MiniAppSessionCard,
+  MiniAppVerifyProjection,
+  SessionEvent,
+  TaskBundle,
+  Workspace
+} from "../../../packages/protocol/src/index.js";
+
+const logger = createLogger("miniapp");
+loadHappyTGEnv();
+const apiBaseUrl = process.env.HAPPYTG_API_URL ?? "http://localhost:4000";
+const configuredBrowserApiBaseUrl = resolveBrowserApiBaseUrl();
+const miniAppSessionCookieName = "happytg_miniapp_session";
+const port = readPort(process.env, ["HAPPYTG_MINIAPP_PORT", "PORT"], 3001);
+
+export interface MiniAppDependencies {
+  fetchJson<T>(pathname: string, init?: RequestInit): Promise<T>;
+}
+
+export class MiniAppFetchError extends Error {
+  constructor(
+    readonly pathname: string,
+    readonly status: number,
+    readonly detail: string
+  ) {
+    super(`Mini App fetch failed for ${pathname}: ${status}`);
+  }
+}
+
+async function defaultFetchJson<T>(pathname: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(new URL(pathname, apiBaseUrl), init);
+  if (!response.ok) {
+    const textBody = await response.text();
+    let detail = textBody;
+    try {
+      const parsed = JSON.parse(textBody) as { detail?: unknown; error?: unknown; reason?: unknown };
+      detail = String(parsed.detail ?? parsed.error ?? parsed.reason ?? textBody);
+    } catch {
+      detail = textBody;
+    }
+    throw new MiniAppFetchError(pathname, response.status, detail);
+  }
+
+  return (await response.json()) as T;
+}
+
+function resolveBrowserApiBaseUrl(env = process.env): string {
+  const explicit = env.HAPPYTG_BROWSER_API_URL?.trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const publicUrl = env.HAPPYTG_PUBLIC_URL?.trim();
+  if (publicUrl) {
+    try {
+      const parsed = new URL(publicUrl);
+      if (parsed.protocol === "https:") {
+        return parsed.origin;
+      }
+    } catch {
+      // Fall back to the direct API URL below.
+    }
+  }
+
+  return env.HAPPYTG_API_URL ?? "http://localhost:4000";
+}
+
+function firstHeaderValue(value: string | string[] | undefined): string | undefined {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const trimmed = raw?.trim();
+  return trimmed ? trimmed.split(",")[0]?.trim() : undefined;
+}
+
+function resolveRequestOrigin(headers: Record<string, string | string[] | undefined>): string | undefined {
+  const host = firstHeaderValue(headers["x-forwarded-host"]) ?? firstHeaderValue(headers.host);
+  const proto = firstHeaderValue(headers["x-forwarded-proto"]) ?? "http";
+  if (!host) {
+    return undefined;
+  }
+
+  try {
+    return new URL(`${proto}://${host}`).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+export function resolveBrowserApiBaseUrlForRequest(
+  headers: Record<string, string | string[] | undefined>,
+  env = process.env
+): string {
+  const explicit = env.HAPPYTG_BROWSER_API_URL?.trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const basePath = normalizeBasePath(headers["x-forwarded-prefix"] ?? env.HAPPYTG_MINIAPP_BASE_PATH);
+  const requestOrigin = resolveRequestOrigin(headers);
+  if (basePath && requestOrigin && validatePublicHttpsUrl(requestOrigin, "Mini App request origin").ok) {
+    return "";
+  }
+
+  return resolveBrowserApiBaseUrl(env);
+}
+
+function normalizeBasePath(value: string | string[] | undefined): string {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const trimmed = raw?.trim();
+  if (!trimmed || trimmed === "/") {
+    return "";
+  }
+
+  return `/${trimmed.replace(/^\/+|\/+$/gu, "")}`;
+}
+
+function prefixRootRelativeLinks(html: string, basePath: string): string {
+  if (!basePath) {
+    return html;
+  }
+
+  return html.replace(/href="\/(?!\/)/gu, `href="${basePath}/`);
+}
+
+function parseCookieHeader(header: string | string[] | undefined): Record<string, string> {
+  const raw = Array.isArray(header) ? header.join(";") : header;
+  if (!raw) {
+    return {};
+  }
+
+  return Object.fromEntries(raw
+    .split(";")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const separator = item.indexOf("=");
+      if (separator === -1) {
+        return [item, ""];
+      }
+
+      return [item.slice(0, separator), decodeURIComponent(item.slice(separator + 1))];
+    }));
+}
+
+function miniAppSessionToken(headers: Record<string, string | string[] | undefined>): string | undefined {
+  const authorization = headers.authorization;
+  if (typeof authorization === "string" && authorization.toLowerCase().startsWith("bearer ")) {
+    return authorization.slice("bearer ".length).trim();
+  }
+
+  return parseCookieHeader(headers.cookie)[miniAppSessionCookieName];
+}
+
+const proofProgressSteps = [
+  { phase: "quick", label: "Quick" },
+  { phase: "freeze", label: "Freeze/Spec" },
+  { phase: "build", label: "Build" },
+  { phase: "evidence", label: "Evidence" },
+  { phase: "verify", label: "Fresh Verify" },
+  { phase: "fix", label: "Minimal Fix" },
+  { phase: "complete", label: "Complete" }
+] as const;
+
+type BadgeTone = "neutral" | "info" | "success" | "warn" | "danger";
+type NewTaskIntent = "implement" | "question" | "review";
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function toneForState(value: string): BadgeTone {
+  const state = value.toLowerCase();
+  if (["active", "approved", "clean", "completed", "complete", "done", "online", "pass", "passed", "ready", "ok", "paired", "success"].some((token) => state.includes(token))) {
+    return "success";
+  }
+  if (["codex", "desktop", "info", "running", "verifying"].some((token) => state.includes(token))) {
+    return "info";
+  }
+  if (["approval", "dirty", "medium", "pending", "queued", "created", "waiting", "warn"].some((token) => state.includes(token))) {
+    return "warn";
+  }
+  if (["blocked", "cancelled", "danger", "error", "fail", "failed", "high", "missing", "offline", "rejected", "revoked", "unsupported"].some((token) => state.includes(token))) {
+    return "danger";
+  }
+  return "neutral";
+}
+
+function renderStatusChip(label: string, tone = toneForState(label)): string {
+  return `<span class="status-chip badge badge-${tone} status-${tone}">${escapeHtml(label)}</span>`;
+}
+
+function renderBadge(label: string, tone = toneForState(label)): string {
+  return renderStatusChip(label, tone);
+}
+
+function compactDate(value: string | undefined): string {
+  if (!value) {
+    return "time n/a";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function compactPath(value: string | undefined): string {
+  if (!value) {
+    return "project n/a";
+  }
+
+  const parts = value.split(/[\\/]/u).filter(Boolean);
+  return parts.length > 1 ? parts.slice(-2).join("/") : parts[0] ?? value;
+}
+
+function renderDetails(label: string, rows: Array<{ label: string; value?: string | number | boolean }>): string {
+  const visibleRows = rows.filter((row) => row.value !== undefined && row.value !== "");
+  if (visibleRows.length === 0) {
+    return "";
+  }
+
+  return `<details class="meta-details collapsible">
+    <summary>${escapeHtml(label)}</summary>
+    <dl>${visibleRows.map((row) => `<div><dt>${escapeHtml(row.label)}</dt><dd>${escapeHtml(String(row.value))}</dd></div>`).join("")}</dl>
+  </details>`;
+}
+
+function renderCollapsible(label: string, body: string, options: { open?: boolean; className?: string } = {}): string {
+  if (!body.trim()) {
+    return "";
+  }
+
+  return `<details class="meta-details collapsible${options.className ? ` ${escapeHtml(options.className)}` : ""}"${options.open ? " open" : ""}>
+    <summary>${escapeHtml(label)}</summary>
+    ${body}
+  </details>`;
+}
+
+function renderMetric(label: string, value: string | number, tone: BadgeTone = "neutral"): string {
+  return `<div class="kv-item metric metric-${tone}">
+    <div class="eyebrow">${escapeHtml(label)}</div>
+    <strong>${escapeHtml(String(value))}</strong>
+  </div>`;
+}
+
+function renderSectionTitle(title: string, action?: string): string {
+  return `<div class="panel-header">
+    <h2>${escapeHtml(title)}</h2>
+    ${action ?? ""}
+  </div>`;
+}
+
+function sessionResultLabel(session: Pick<MiniAppSessionCard, "state">): string {
+  return session.state;
+}
+
+function sessionResultTone(session: Pick<MiniAppSessionCard, "state" | "verificationState" | "attention">): BadgeTone {
+  if (session.verificationState === "passed" || session.state === "completed") {
+    return "success";
+  }
+  if (session.verificationState === "failed" || session.verificationState === "stale" || session.state === "failed" || session.state === "cancelled") {
+    return "danger";
+  }
+  if (session.attention || session.state === "blocked" || session.state === "needs_approval") {
+    return "warn";
+  }
+  if (session.state === "running" || session.state === "verifying" || session.state === "resuming") {
+    return "info";
+  }
+  return "neutral";
+}
+
+function normalizeNewTaskIntent(value: unknown): NewTaskIntent {
+  return value === "question" || value === "review" ? value : "implement";
+}
+
+function intentLabel(intent: NewTaskIntent): string {
+  switch (intent) {
+    case "question":
+      return "Вопрос";
+    case "review":
+      return "Проверить результат";
+    default:
+      return "Реализовать";
+  }
+}
+
+function defaultModeForIntent(intent: NewTaskIntent): "quick" | "proof" {
+  return intent === "implement" ? "proof" : "quick";
+}
+
+function newTaskHref(input: {
+  source?: string;
+  hostId?: string;
+  workspaceId?: string;
+  projectId?: string;
+  intent?: NewTaskIntent;
+  title?: string;
+  contextSessionId?: string;
+  userId?: string;
+}): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(input)) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  const query = params.toString();
+  return query ? `/new-task?${query}` : "/new-task";
+}
+
+function appendUserId(href: string, userId?: string): string {
+  if (!userId) {
+    return href;
+  }
+
+  const [base, query = ""] = href.split("?", 2);
+  const params = new URLSearchParams(query);
+  if (!params.has("userId")) {
+    params.set("userId", userId);
+  }
+
+  const nextQuery = params.toString();
+  return nextQuery ? `${base}?${nextQuery}` : base;
+}
+
+function buildMiniAppTaskPrompt(input: { intent?: unknown; prompt?: unknown; contextSessionId?: unknown }): string {
+  const prompt = String(input.prompt ?? "").trim();
+  const hasIntentContext = typeof input.intent === "string" || typeof input.contextSessionId === "string";
+  if (!hasIntentContext) {
+    return prompt;
+  }
+
+  const intent = normalizeNewTaskIntent(input.intent);
+  const contextSessionId = String(input.contextSessionId ?? "").trim();
+  const header = intent === "question"
+    ? "Intent: implementation question."
+    : intent === "review"
+      ? "Intent: review the current implementation result."
+      : "Intent: implementation task.";
+  const context = contextSessionId ? `\nContext session: ${contextSessionId}.` : "";
+
+  return `${header}${context}\n\n${prompt}`.trim();
+}
+
+function renderProofProgress(task: { phase: string; verificationState: string }, options?: { sessionState?: string }): string {
+  const activePhase = task.verificationState === "running" || options?.sessionState === "verifying"
+    ? "verify"
+    : task.phase;
+  const currentStepIndex = proofProgressSteps.findIndex((step) => step.phase === activePhase);
+  const verificationBadge = renderBadge(task.verificationState);
+
+  return `
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Proof Progress</h2>
+        ${verificationBadge}
+      </div>
+      <ol class="progress-list">
+        ${proofProgressSteps.map((step, index) => {
+          const status = index < currentStepIndex
+            ? "done"
+            : index === currentStepIndex
+              ? "current"
+              : "pending";
+          const statusLabel = status === "done" ? "done" : status === "current" ? "current" : "pending";
+          return `<li class="progress-step progress-step-${status}">
+            <span class="progress-marker">${index + 1}</span>
+            <div>
+              <strong>${escapeHtml(step.label)}</strong>
+              <div class="muted">${statusLabel}</div>
+            </div>
+          </li>`;
+        }).join("")}
+      </ol>
+    </section>
+  `;
+}
+
+export function formatMiniAppPortConflictMessage(listenPort: number): string {
+  return formatMiniAppPortConflictMessageDetailed(listenPort);
+}
+
+export function formatMiniAppPortReuseMessage(listenPort: number): string {
+  return `Port ${listenPort} already has a HappyTG Mini App. Reuse the running mini app if it is yours, or start a new one with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
+}
+
+export function formatMiniAppPortConflictMessageDetailed(
+  listenPort: number,
+  options?: {
+    service?: string;
+    description?: string;
+  }
+): string {
+  if (options?.service) {
+    return `Port ${listenPort} is already in use by HappyTG ${options.service}, not HappyTG Mini App. Free it, or start the Mini App with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
+  }
+
+  if (options?.description) {
+    return `Port ${listenPort} is already in use by ${options.description}. Free it, or start the Mini App with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
+  }
+
+  return `Port ${listenPort} is already in use by another process. Free it, or start the Mini App with HAPPYTG_MINIAPP_PORT/PORT, then try again.`;
+}
+
+export interface MiniAppStartupResult {
+  status: "listening" | "reused";
+  port: number;
+}
+
+interface PortOccupantInfo {
+  service?: string;
+  description?: string;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function detectPortOccupant(listenPort: number, fetchImpl: typeof fetch = fetch): Promise<PortOccupantInfo> {
+  for (const pathname of ["/ready", "/health", "/"]) {
+    try {
+      const response = await fetchImpl(`http://127.0.0.1:${listenPort}${pathname}`, {
+        signal: AbortSignal.timeout(750)
+      });
+      const contentType = response.headers.get("content-type") ?? "";
+      const bodyText = contentType.includes("application/json") || contentType.startsWith("text/")
+        ? await response.text()
+        : "";
+      if (contentType.includes("application/json")) {
+        try {
+          const payload = JSON.parse(bodyText) as { service?: string };
+          if (payload.service) {
+            return {
+              service: payload.service
+            };
+          }
+        } catch {
+          // Ignore malformed JSON and keep probing for another fingerprint.
+        }
+      }
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const titleMatch = bodyText.match(/<title>([^<]+)<\/title>/iu);
+      const title = titleMatch?.[1]?.trim();
+      return {
+        description: title ? `HTTP listener (${title})` : `HTTP listener (${response.status})`
+      };
+    } catch {
+      continue;
+    }
+  }
+
+  return {};
+}
+
+type NavKey = "home" | "codex" | "sessions" | "projects" | "approvals" | "hosts" | "reports";
+
+type AppShellStatusItem = {
+  value: string;
+  href: string;
+  tone?: BadgeTone;
+};
+
+type AppShellStatus = {
+  pc?: AppShellStatusItem;
+  codex?: AppShellStatusItem;
+  approvals?: AppShellStatusItem;
+};
+
+type RenderPageOptions = {
+  basePath?: string;
+  needsAuth?: boolean;
+  authResetSession?: boolean;
+  browserApiBaseUrl?: string;
+  navKey?: NavKey;
+  shellStatus?: AppShellStatus;
+};
+
+function compactCount(count: number, label: string): string {
+  return `${count} ${label}`;
+}
+
+function renderAppShellStatus(status: AppShellStatus = {}): string {
+  const items: Array<{ key: keyof AppShellStatus; label: string; fallback: AppShellStatusItem }> = [
+    { key: "pc", label: "PC", fallback: { value: "Хосты", href: "/hosts", tone: "neutral" } },
+    { key: "codex", label: "Codex", fallback: { value: "Сессии", href: "/codex", tone: "neutral" } },
+    { key: "approvals", label: "Approvals", fallback: { value: "Решения", href: "/approvals", tone: "neutral" } }
+  ];
+
+  return `<nav class="app-status-strip" aria-label="Быстрый статус">
+    ${items.map((item) => {
+      const resolved = status[item.key] ?? item.fallback;
+      const tone = resolved.tone ?? toneForState(resolved.value);
+      return `<a href="${escapeHtml(resolved.href)}" class="shell-status-${tone}"><small>${escapeHtml(item.label)}</small><strong>${escapeHtml(resolved.value)}</strong></a>`;
+    }).join("")}
+  </nav>`;
+}
+
+function shellStatusFromDashboard(dashboard: MiniAppDashboardProjection, hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const hasAttention = dashboard.stats.pendingApprovals > 0 || dashboard.stats.blockedSessions > 0 || dashboard.stats.verifyProblems > 0;
+  return {
+    pc: {
+      value: dashboard.lastContext?.hostLabel ?? "Хост ?",
+      href: hrefs.hosts ?? "/hosts",
+      tone: dashboard.lastContext?.hostLabel ? "success" : "neutral"
+    },
+    codex: {
+      value: compactCount(dashboard.stats.activeSessions, "активн."),
+      href: hrefs.codex ?? "/codex",
+      tone: dashboard.stats.blockedSessions > 0 || dashboard.stats.verifyProblems > 0 ? "danger" : dashboard.stats.activeSessions > 0 ? "info" : "success"
+    },
+    approvals: {
+      value: compactCount(dashboard.stats.pendingApprovals, "реш."),
+      href: hrefs.approvals ?? "/approvals",
+      tone: hasAttention ? "warn" : "success"
+    }
+  };
+}
+
+function shellStatusFromCodex(input: { cliSessions: MiniAppSessionCard[]; desktopSessions: CodexDesktopSession[]; desktopProjects: CodexDesktopProject[] }, hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const running = input.cliSessions.filter((session) => session.state === "running").length + input.desktopSessions.filter((session) => session.status === "active").length;
+  const unsupported = input.desktopSessions.some((session) => Boolean(session.unsupportedReason));
+  return {
+    pc: {
+      value: compactCount(input.desktopProjects.length, "проект."),
+      href: hrefs.hosts ?? "/projects",
+      tone: input.desktopProjects.length > 0 ? "success" : "neutral"
+    },
+    codex: {
+      value: compactCount(input.cliSessions.length + input.desktopSessions.length, "сесс."),
+      href: hrefs.codex ?? "/codex",
+      tone: unsupported ? "danger" : running > 0 ? "info" : "success"
+    },
+    approvals: {
+      value: "Решения",
+      href: hrefs.approvals ?? "/approvals",
+      tone: "neutral"
+    }
+  };
+}
+
+function shellStatusFromProjects(projects: MiniAppProjectCard[], desktopProjects: CodexDesktopProject[], hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const activeProjects = projects.filter((project) => project.activeSessions > 0).length + desktopProjects.filter((project) => project.active).length;
+  return {
+    pc: {
+      value: compactCount(projects.length + desktopProjects.length, "проект."),
+      href: hrefs.hosts ?? "/projects",
+      tone: projects.length + desktopProjects.length > 0 ? "success" : "neutral"
+    },
+    codex: {
+      value: compactCount(activeProjects, "активн."),
+      href: hrefs.codex ?? "/sessions",
+      tone: activeProjects > 0 ? "info" : "success"
+    },
+    approvals: {
+      value: "Решения",
+      href: hrefs.approvals ?? "/approvals",
+      tone: "neutral"
+    }
+  };
+}
+
+function shellStatusFromApprovals(approvals: MiniAppApprovalCard[], hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const waiting = approvals.filter((approval) => approval.state === "waiting_human").length;
+  return {
+    pc: {
+      value: "Хосты",
+      href: hrefs.hosts ?? "/hosts",
+      tone: "neutral"
+    },
+    codex: {
+      value: compactCount(new Set(approvals.map((approval) => approval.sessionId)).size, "сесс."),
+      href: hrefs.codex ?? "/sessions",
+      tone: approvals.length > 0 ? "warn" : "success"
+    },
+    approvals: {
+      value: compactCount(waiting, "ждут"),
+      href: hrefs.approvals ?? "/approvals",
+      tone: waiting > 0 ? "warn" : "success"
+    }
+  };
+}
+
+function shellStatusFromHosts(hosts: MiniAppHostCard[], hrefs: { hosts?: string; codex?: string; approvals?: string } = {}): AppShellStatus {
+  const online = hosts.filter((host) => host.status === "active").length;
+  const activeSessions = hosts.reduce((sum, host) => sum + host.activeSessions, 0);
+  return {
+    pc: {
+      value: `${online}/${hosts.length} online`,
+      href: hrefs.hosts ?? "/hosts",
+      tone: online > 0 ? "success" : "danger"
+    },
+    codex: {
+      value: compactCount(activeSessions, "активн."),
+      href: hrefs.codex ?? "/sessions",
+      tone: activeSessions > 0 ? "info" : "success"
+    },
+    approvals: {
+      value: "Решения",
+      href: hrefs.approvals ?? "/approvals",
+      tone: "neutral"
+    }
+  };
+}
+
+function shellStatusFromSession(session: Pick<MiniAppSessionCard, "state" | "hostLabel" | "repoName" | "runtime">, approval?: MiniAppApprovalCard): AppShellStatus {
+  return {
+    pc: {
+      value: session.hostLabel ?? session.repoName ?? "Хост ?",
+      href: "/hosts",
+      tone: session.hostLabel ? "success" : "neutral"
+    },
+    codex: {
+      value: session.state,
+      href: "/sessions",
+      tone: toneForState(session.state)
+    },
+    approvals: {
+      value: approval?.state === "waiting_human" ? "1 ждёт" : "0 ждут",
+      href: approval?.href ?? "/approvals",
+      tone: approval?.state === "waiting_human" ? "warn" : "success"
+    }
+  };
+}
+
+function shellStatusFromDesktopSession(session: Pick<CodexDesktopSession, "status" | "projectPath" | "canCreateTask">): AppShellStatus {
+  return {
+    pc: {
+      value: compactPath(session.projectPath),
+      href: "/projects",
+      tone: session.projectPath ? "success" : "neutral"
+    },
+    codex: {
+      value: session.status,
+      href: "/codex",
+      tone: toneForState(session.status)
+    },
+    approvals: {
+      value: session.canCreateTask ? "Ready" : "Решения",
+      href: "/approvals",
+      tone: session.canCreateTask ? "success" : "neutral"
+    }
+  };
+}
+
+export function renderPage(
+  title: string,
+  body: string,
+  options?: RenderPageOptions
+): string {
+  const basePath = normalizeBasePath(options?.basePath);
+  const page = `<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title}</title>
+    <style>
+      :root {
+        --bg: #f5f6f7;
+        --bg-accent: linear-gradient(180deg, #fbfcfd 0%, #eef2f5 100%);
+        --surface: rgba(255, 255, 255, 0.94);
+        --surface-soft: #f0f5f3;
+        --surface-strong: #ffffff;
+        --ink: #17211d;
+        --muted: #64716d;
+        --accent: #0a7c66;
+        --accent-strong: #075845;
+        --warn: #9a6700;
+        --danger: #b42318;
+        --info: #2366a0;
+        --border: rgba(23, 33, 29, 0.12);
+        --shadow: 0 12px 26px rgba(21, 31, 27, 0.08);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 14px 14px 124px;
+        background: var(--bg);
+        background-image: var(--bg-accent);
+        color: var(--ink);
+        font-family: "Segoe UI Variable Text", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      }
+      main {
+        max-width: 1080px;
+        margin: 0 auto;
+      }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 12px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+      .hero {
+        background: var(--surface-strong);
+        border-color: rgba(13, 127, 102, 0.16);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+      }
+      h1, h2 {
+        margin-top: 0;
+        letter-spacing: 0;
+      }
+      h1 {
+        font-size: 24px;
+        line-height: 1.12;
+        margin-bottom: 8px;
+      }
+      h2 {
+        font-size: 18px;
+        line-height: 1.25;
+        margin-bottom: 12px;
+      }
+      code, pre {
+        font-family: "SFMono-Regular", ui-monospace, monospace;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        max-height: 48vh;
+        overflow: auto;
+      }
+      a {
+        color: var(--accent);
+        text-decoration-thickness: 1px;
+      }
+      ul {
+        padding-left: 20px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .topbar a {
+        text-decoration: none;
+        color: var(--accent-strong);
+      }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 1px solid currentColor;
+      }
+      .badge-neutral {
+        color: #6f675c;
+        background: rgba(111, 103, 92, 0.08);
+      }
+      .badge-info {
+        color: #2d5b7c;
+        background: rgba(45, 91, 124, 0.1);
+      }
+      .badge-success {
+        color: #0c7c59;
+        background: rgba(12, 124, 89, 0.1);
+      }
+      .badge-warn {
+        color: #8b5e10;
+        background: rgba(139, 94, 16, 0.1);
+      }
+      .badge-danger {
+        color: #a7382a;
+        background: rgba(167, 56, 42, 0.1);
+      }
+      .status-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .status-list li {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 0;
+        border-top: 1px solid var(--border);
+      }
+      .status-list li:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .status-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+      .session-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .result-line {
+        margin-top: 8px;
+        color: var(--ink);
+      }
+      .meta-line {
+        margin-top: 4px;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+      }
+      .meta-details {
+        margin-top: 10px;
+      }
+      .meta-details summary {
+        cursor: pointer;
+        color: var(--accent-strong);
+        font-weight: 650;
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .meta-details dl {
+        margin: 8px 0 0;
+        display: grid;
+        gap: 8px;
+      }
+      .meta-details dl div {
+        display: grid;
+        gap: 2px;
+      }
+      .meta-details dt {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+      .meta-details dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      .inline-form {
+        display: grid;
+        gap: 10px;
+      }
+      .form-row {
+        display: grid;
+        gap: 10px;
+      }
+      .intent-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .intent-grid label {
+        display: block;
+        position: relative;
+      }
+      .intent-grid label span {
+        min-height: 48px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.92);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-weight: 650;
+      }
+      .intent-grid input {
+        position: absolute;
+        width: 1px;
+        min-height: 1px;
+        padding: 0;
+        border: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .intent-grid input:checked + span {
+        border-color: var(--accent);
+        background: rgba(10, 124, 102, 0.1);
+        color: var(--accent-strong);
+      }
+      .progress-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+      .progress-step {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+      .progress-step-done {
+        border-color: rgba(12, 124, 89, 0.35);
+        background: rgba(12, 124, 89, 0.08);
+      }
+      .progress-step-current {
+        border-color: rgba(45, 91, 124, 0.35);
+        background: rgba(45, 91, 124, 0.08);
+      }
+      .progress-marker {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+      .kv-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .kv-item {
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.82);
+      }
+      .eyebrow {
+        margin: 0 0 8px;
+        font-size: 12px;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .button {
+        min-height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.95);
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 650;
+        transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      }
+      .button-primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+      .button-danger {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .button:disabled {
+        opacity: 0.64;
+        cursor: wait;
+        transform: none;
+      }
+      .button:not(:disabled):active {
+        transform: translateY(1px);
+      }
+      .notice {
+        border-radius: 8px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.92);
+      }
+      .notice-info {
+        border-color: rgba(28, 93, 153, 0.2);
+        background: rgba(28, 93, 153, 0.08);
+      }
+      .notice-success {
+        border-color: rgba(12, 124, 89, 0.24);
+        background: rgba(12, 124, 89, 0.08);
+      }
+      .notice-warn {
+        border-color: rgba(154, 103, 0, 0.24);
+        background: rgba(154, 103, 0, 0.08);
+      }
+      .notice-danger {
+        border-color: rgba(180, 35, 24, 0.22);
+        background: rgba(180, 35, 24, 0.08);
+      }
+      .auth-steps {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .auth-step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.84);
+      }
+      .auth-step::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #bcc8c4;
+      }
+      .auth-step[data-state="running"]::before {
+        background: var(--info);
+        box-shadow: 0 0 0 6px rgba(28, 93, 153, 0.12);
+      }
+      .auth-step[data-state="done"]::before {
+        background: var(--accent);
+      }
+      .auth-step[data-state="error"]::before {
+        background: var(--danger);
+      }
+      .bottom-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        border-top: 1px solid var(--border);
+        background: rgba(250, 252, 250, 0.94);
+        backdrop-filter: blur(12px);
+      }
+      .bottom-nav a {
+        min-height: 62px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 650;
+        border-top: 2px solid transparent;
+      }
+      .bottom-nav a[aria-current="page"] {
+        color: var(--accent-strong);
+        border-top-color: var(--accent);
+        background: rgba(13, 127, 102, 0.08);
+      }
+      .empty {
+        border: 1px dashed var(--border);
+        background: rgba(255, 255, 255, 0.82);
+        border-radius: 8px;
+        padding: 16px;
+      }
+      .draft-recovery {
+        display: none;
+        border-color: rgba(154, 103, 0, 0.35);
+        background: #fff8e7;
+      }
+      .timeline {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .timeline li {
+        border-left: 2px solid var(--border);
+        padding: 0 0 12px 12px;
+      }
+      .timeline li p {
+        margin-bottom: 6px;
+      }
+      textarea, input, select {
+        width: 100%;
+        min-height: 46px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        font: inherit;
+        background: rgba(255, 255, 255, 0.95);
+      }
+      textarea {
+        min-height: 108px;
+        resize: vertical;
+      }
+      #task-draft {
+        min-height: 150px;
+      }
+      @media (min-width: 760px) {
+        body {
+          padding: 24px 24px 96px;
+        }
+        h1 {
+          font-size: 30px;
+        }
+        .form-row {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .status-list li {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .status-meta {
+          justify-content: flex-end;
+        }
+        .bottom-nav {
+          grid-template-columns: repeat(6, 1fr);
+        }
+      }
+      :root {
+        color-scheme: light dark;
+        --bg: var(--tg-theme-secondary-bg-color, #eef3f8);
+        --bg-accent: none;
+        --surface: var(--tg-theme-bg-color, #ffffff);
+        --surface-soft: color-mix(in srgb, var(--tg-theme-section-bg-color, #f6f8fb) 88%, var(--tg-theme-button-color, #0a84ff));
+        --surface-strong: var(--tg-theme-bg-color, #ffffff);
+        --ink: var(--tg-theme-text-color, #111827);
+        --muted: var(--tg-theme-hint-color, #64748b);
+        --accent: var(--tg-theme-button-color, #0a84ff);
+        --accent-strong: var(--tg-theme-link-color, #006ee6);
+        --button-text: var(--tg-theme-button-text-color, #ffffff);
+        --warn: #b26a00;
+        --danger: #dc2626;
+        --success: #12805c;
+        --info: #0a84ff;
+        --border: rgba(15, 23, 42, 0.1);
+        --shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+        --radius-card: 18px;
+        --radius-control: 12px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: var(--tg-theme-secondary-bg-color, #0e1621);
+          --surface: var(--tg-theme-bg-color, #17212b);
+          --surface-soft: #1f2c38;
+          --surface-strong: #1b2632;
+          --ink: var(--tg-theme-text-color, #f5f7fb);
+          --muted: var(--tg-theme-hint-color, #9aa8b5);
+          --border: rgba(226, 232, 240, 0.12);
+          --shadow: none;
+        }
+      }
+      body {
+        min-width: 320px;
+        padding: calc(10px + env(safe-area-inset-top)) 12px calc(86px + env(safe-area-inset-bottom));
+        background: var(--bg);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+      main {
+        width: min(100%, 440px);
+      }
+      .panel {
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+        margin: 0 0 12px;
+        backdrop-filter: none;
+      }
+      .panel.hero,
+      .notice,
+      .empty,
+      .kv-item,
+      .auth-step,
+      .progress-step,
+      .status-list li,
+      .wizard-step,
+      .form-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow);
+      }
+      .panel.hero {
+        padding: 16px;
+      }
+      .panel-header {
+        margin: 0 0 8px;
+      }
+      .panel-header h2,
+      h2 {
+        font-size: 16px;
+        line-height: 1.25;
+        margin: 0;
+      }
+      h1 {
+        font-size: 22px;
+        line-height: 1.12;
+        margin: 0 0 8px;
+      }
+      h2 + .muted,
+      h1 + .muted {
+        margin-top: 4px;
+      }
+      .topbar {
+        position: sticky;
+        top: env(safe-area-inset-top);
+        z-index: 15;
+        margin: -2px 0 8px;
+        padding: 8px 2px 6px;
+        background: color-mix(in srgb, var(--bg) 84%, transparent);
+        backdrop-filter: blur(16px);
+      }
+      .topbar-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+      }
+      .topbar a {
+        color: var(--ink);
+      }
+      .app-status-strip,
+      .dashboard-status-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 8px 0 12px;
+      }
+      .app-status-strip a,
+      .dashboard-status-strip span {
+        min-height: 38px;
+        display: grid;
+        position: relative;
+        align-content: center;
+        gap: 1px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        color: var(--ink);
+        text-decoration: none;
+        overflow: hidden;
+      }
+      .app-status-strip a::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--muted);
+      }
+      .app-status-strip .shell-status-info::before {
+        background: var(--info);
+      }
+      .app-status-strip .shell-status-success::before {
+        background: var(--success);
+      }
+      .app-status-strip .shell-status-warn::before {
+        background: var(--warn);
+      }
+      .app-status-strip .shell-status-danger::before {
+        background: var(--danger);
+      }
+      .app-status-strip small,
+      .dashboard-status-strip small {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .app-status-strip strong,
+      .dashboard-status-strip strong {
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .grid,
+      .kv-grid {
+        grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+        gap: 8px;
+      }
+      .status-list {
+        display: grid;
+        gap: 10px;
+      }
+      .status-list li {
+        padding: 12px;
+        border-top: 1px solid var(--border);
+      }
+      .status-list li:first-child {
+        padding-top: 12px;
+      }
+      .status-meta,
+      .actions {
+        gap: 8px;
+      }
+      .status-chip,
+      .badge {
+        min-height: 24px;
+        border: 0;
+        border-radius: 999px;
+        padding: 4px 9px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+      .badge-neutral,
+      .status-neutral {
+        color: var(--muted);
+        background: color-mix(in srgb, var(--muted) 12%, transparent);
+      }
+      .badge-info,
+      .status-info {
+        color: var(--info);
+        background: color-mix(in srgb, var(--info) 12%, transparent);
+      }
+      .badge-success,
+      .status-success {
+        color: var(--success);
+        background: color-mix(in srgb, var(--success) 12%, transparent);
+      }
+      .badge-warn,
+      .status-warn {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 14%, transparent);
+      }
+      .badge-danger,
+      .status-danger {
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 12%, transparent);
+      }
+      .button {
+        min-height: 44px;
+        border-radius: var(--radius-control);
+        padding: 9px 12px;
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: none;
+      }
+      .button-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--button-text);
+      }
+      .button-danger {
+        border-color: color-mix(in srgb, var(--danger) 56%, transparent);
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+      }
+      .button-compact {
+        min-height: 36px;
+        padding: 7px 10px;
+      }
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        padding: 4px;
+        border-radius: 16px;
+        background: var(--surface-soft);
+      }
+      .segmented .button {
+        min-height: 36px;
+        border: 0;
+        background: transparent;
+      }
+      .segmented .button-primary {
+        background: var(--accent);
+        color: var(--button-text);
+      }
+      .meta-line,
+      .result-line,
+      .muted {
+        color: var(--muted);
+      }
+      .meta-line {
+        font-size: 12px;
+      }
+      .result-line {
+        font-size: 13px;
+      }
+      .meta-details {
+        margin-top: 10px;
+      }
+      .meta-details summary {
+        width: 100%;
+        min-height: 42px;
+        padding: 0;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 700;
+        list-style-position: inside;
+      }
+      .meta-details dl,
+      .meta-details .details-body {
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+      }
+      details.panel.meta-details {
+        padding: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow);
+      }
+      .empty,
+      .notice,
+      .kv-item {
+        padding: 12px;
+      }
+      .notice {
+        margin-bottom: 12px;
+      }
+      .metric strong,
+      .kv-item strong {
+        font-size: 18px;
+      }
+      .eyebrow {
+        margin: 0 0 4px;
+        font-size: 11px;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+      textarea,
+      input,
+      select {
+        min-height: 44px;
+        border-radius: var(--radius-control);
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .inline-form {
+        gap: 12px;
+      }
+      .wizard-step,
+      .form-card {
+        padding: 12px;
+      }
+      .wizard-step {
+        display: grid;
+        gap: 10px;
+      }
+      .wizard-step-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .step-index {
+        min-width: 26px;
+        height: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: var(--accent);
+        color: var(--button-text);
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .intent-grid {
+        grid-template-columns: 1fr;
+      }
+      .intent-grid label span {
+        min-height: 44px;
+        border-radius: var(--radius-control);
+        background: var(--surface-soft);
+      }
+      .intent-grid input:checked + span {
+        background: color-mix(in srgb, var(--accent) 13%, var(--surface));
+      }
+      .timeline {
+        display: grid;
+        gap: 10px;
+      }
+      .timeline li {
+        border-left: 2px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+        padding: 0 0 2px 12px;
+      }
+      .bottom-nav {
+        grid-template-columns: repeat(4, 1fr);
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+        background: color-mix(in srgb, var(--surface) 92%, transparent);
+      }
+      .bottom-nav a {
+        min-height: 50px;
+        border-top: 0;
+        border-radius: 14px;
+        font-size: 11px;
+      }
+      .bottom-nav a[aria-current="page"] {
+        color: var(--accent);
+        border-top-color: transparent;
+        background: color-mix(in srgb, var(--accent) 10%, transparent);
+      }
+      @media (min-width: 760px) {
+        body {
+          padding: 22px 22px 96px;
+        }
+        main {
+          width: min(100%, 900px);
+        }
+        .panel.hero,
+        .notice,
+        .empty,
+        .status-list li,
+        .wizard-step,
+        .form-card {
+          padding: 16px;
+        }
+        .bottom-nav {
+          left: 50%;
+          right: auto;
+          width: min(100%, 480px);
+          transform: translateX(-50%);
+          border: 1px solid var(--border);
+          border-bottom: 0;
+          border-radius: 18px 18px 0 0;
+        }
+        .intent-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="topbar">
+        <div class="topbar-title">
+          <a href="/"><strong>HappyTG</strong></a>
+          <span class="badge badge-info">Mini App</span>
+        </div>
+      </div>
+      ${renderAppShellStatus(options?.shellStatus)}
+      <section id="draft-recovery" class="panel draft-recovery">
+        <h2>Есть незавершенный ввод</h2>
+        <p class="muted">Можно продолжить с места остановки или начать заново. Это только локальный draft, backend state не меняется.</p>
+        <div class="actions">
+          <button class="button button-primary" type="button" data-draft-restore>Продолжить</button>
+          <button class="button" type="button" data-draft-clear>Начать заново</button>
+        </div>
+      </section>
+      ${body}
+    </main>
+    ${renderBottomNav(options?.navKey)}
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+      window.HAPPYTgApiBase = ${JSON.stringify(options?.browserApiBaseUrl ?? configuredBrowserApiBaseUrl)};
+      window.HAPPYTgMiniAppBasePath = ${JSON.stringify(basePath)};
+      window.HAPPYTgNeedsAuth = ${JSON.stringify(Boolean(options?.needsAuth))};
+      window.HAPPYTgResetSession = ${JSON.stringify(Boolean(options?.authResetSession))};
+      window.HAPPYTgSessionCookie = ${JSON.stringify(miniAppSessionCookieName)};
+      (function () {
+        var key = "happytg:miniapp:draft:v1";
+        var sessionKey = "happytg:miniapp:session:v1";
+        var ttlMs = 24 * 60 * 60 * 1000;
+        var recovery = document.getElementById("draft-recovery");
+        var authTitle = document.querySelector("[data-auth-title]");
+        var authDetail = document.querySelector("[data-auth-detail]");
+        var authStatus = document.querySelector("[data-auth-status]");
+        var authRetry = document.querySelector("[data-auth-retry]");
+        var authReload = document.querySelector("[data-auth-reload]");
+        function apiUrl(pathname) {
+          return new URL(pathname, window.HAPPYTgApiBase || window.location.origin);
+        }
+        function miniAppUrl(pathname) {
+          return (window.HAPPYTgMiniAppBasePath || "") + pathname;
+        }
+        function setNotice(target, tone, message) {
+          if (!target) return;
+          target.className = "notice notice-" + tone;
+          target.textContent = message;
+        }
+        function setActionFeedback(target, tone, message) {
+          if (!target) return;
+          target.hidden = false;
+          setNotice(target, tone, message);
+        }
+        function setAuthStep(name, state) {
+          var step = document.querySelector('[data-auth-step=\"' + name + '\"]');
+          if (step) {
+            step.setAttribute("data-state", state);
+          }
+        }
+        function setAuthState(config) {
+          if (authTitle && config.title) authTitle.textContent = config.title;
+          if (authDetail && config.detail) authDetail.textContent = config.detail;
+          if (authStatus && config.notice) setNotice(authStatus, config.tone || "info", config.notice);
+          if (authRetry) authRetry.hidden = !config.retry;
+          if (config.telegram) setAuthStep("telegram", config.telegram);
+          if (config.session) setAuthStep("session", config.session);
+          if (config.screen) setAuthStep("screen", config.screen);
+        }
+        function readError(response, fallback) {
+          return response.text().then(function (bodyText) {
+            if (!bodyText) return fallback;
+            try {
+              var payload = JSON.parse(bodyText);
+              return payload.detail || payload.error || fallback;
+            } catch (_error) {
+              return bodyText;
+            }
+          }, function () {
+            return fallback;
+          });
+        }
+        function readDraft() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(key) || "null");
+            if (!parsed || !parsed.savedAt || Date.now() - parsed.savedAt > ttlMs) {
+              localStorage.removeItem(key);
+              return null;
+            }
+            return parsed;
+          } catch (_error) {
+            localStorage.removeItem(key);
+            return null;
+          }
+        }
+        function readSession() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(sessionKey) || "null");
+            if (!parsed || !parsed.token || (parsed.expiresAt && Date.parse(parsed.expiresAt) <= Date.now())) {
+              localStorage.removeItem(sessionKey);
+              return null;
+            }
+            return parsed;
+          } catch (_error) {
+            localStorage.removeItem(sessionKey);
+            return null;
+          }
+        }
+        function persistSession(session) {
+          localStorage.setItem(sessionKey, JSON.stringify(session));
+          var maxAge = session.expiresAt ? Math.max(1, Math.floor((Date.parse(session.expiresAt) - Date.now()) / 1000)) : 3600;
+          var cookiePath = window.HAPPYTgMiniAppBasePath || "/";
+          var secure = location.protocol === "https:" ? "; secure" : "";
+          document.cookie = window.HAPPYTgSessionCookie + "=" + encodeURIComponent(session.token) + "; path=" + cookiePath + "; max-age=" + maxAge + "; samesite=lax" + secure;
+        }
+        function clearSession() {
+          localStorage.removeItem(sessionKey);
+          var cookiePath = window.HAPPYTgMiniAppBasePath || "/";
+          var secure = location.protocol === "https:" ? "; secure" : "";
+          document.cookie = window.HAPPYTgSessionCookie + "=; path=" + cookiePath + "; max-age=0; samesite=lax" + secure;
+        }
+        function token() {
+          return readSession()?.token;
+        }
+        var draft = readDraft();
+        if (draft && recovery) {
+          recovery.style.display = "block";
+        }
+        document.querySelectorAll("[data-draft]").forEach(function (input) {
+          input.addEventListener("input", function () {
+            localStorage.setItem(key, JSON.stringify({
+              path: location.pathname + location.search,
+              value: input.value,
+              savedAt: Date.now()
+            }));
+          });
+        });
+        document.querySelector("[data-draft-restore]")?.addEventListener("click", function () {
+          var current = readDraft();
+          if (!current) return;
+          var input = document.querySelector("[data-draft]");
+          if (input && "value" in input) input.value = current.value || "";
+        });
+        document.querySelector("[data-draft-clear]")?.addEventListener("click", function () {
+          localStorage.removeItem(key);
+          if (recovery) recovery.style.display = "none";
+        });
+        authReload?.addEventListener("click", function () {
+          location.reload();
+        });
+        var webApp = window.Telegram && window.Telegram.WebApp;
+        if (window.HAPPYTgResetSession) {
+          clearSession();
+        }
+        var savedSession = readSession();
+        var authRequestStarted = false;
+        var initDataWaitStartedAt = 0;
+        var initDataWaitTimer = 0;
+        var initDataWaitTimeoutMs = 5000;
+        var initDataPollMs = 250;
+        if (savedSession) {
+          persistSession(savedSession);
+          if (window.HAPPYTgNeedsAuth) {
+            setAuthState({
+              title: "Возвращаем рабочий экран",
+              detail: "Локальная Mini App session найдена, обновляем страницу.",
+              notice: "Сессия уже есть. Загружаем целевой экран.",
+              tone: "success",
+              telegram: "done",
+              session: "done",
+              screen: "running",
+              retry: false
+            });
+            location.reload();
+            return;
+          }
+        }
+        function attemptMiniAppAuth() {
+          var currentWebApp = window.Telegram && window.Telegram.WebApp;
+          if (!currentWebApp || !currentWebApp.initData) {
+            return false;
+          }
+          currentWebApp.ready();
+          if (savedSession || authRequestStarted) {
+            return true;
+          }
+          authRequestStarted = true;
+          var params = new URLSearchParams(location.search);
+          setAuthState({
+            title: "Подключаем HappyTG",
+            detail: "Проверяем Telegram и запрашиваем короткую Mini App session.",
+            notice: "Подключение выполняется. Это занимает секунды.",
+            tone: "info",
+            telegram: "running",
+            session: "running",
+            screen: "pending",
+            retry: false
+          });
+          fetch(apiUrl("/api/v1/miniapp/auth/session"), {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              initData: currentWebApp.initData,
+              startAppPayload: params.get("tgWebAppStartParam") || params.get("startapp") || params.get("payload")
+            })
+          }).then(function (response) {
+            if (!response.ok) {
+              return readError(response, "Не удалось подтвердить Mini App session.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
+            return response.json();
+          }).then(function (payload) {
+            if (!payload || !payload.appSession) {
+              throw new Error("Backend не выдал Mini App session.");
+            }
+            persistSession(payload.appSession);
+            setAuthState({
+              title: "Доступ подтвержден",
+              detail: "Сессия создана, открываем рабочий экран.",
+              notice: "Подключение завершено. Загружаем целевую страницу.",
+              tone: "success",
+              telegram: "done",
+              session: "done",
+              screen: "running",
+              retry: false
+            });
+            if (window.HAPPYTgNeedsAuth) {
+              location.reload();
+            }
+          }).catch(function (error) {
+            setAuthState({
+              title: "Mini App не подключилась",
+              detail: "HappyTG не смог получить рабочую session через Telegram.",
+              notice: error instanceof Error && error.message ? error.message : "Проверьте соединение и откройте Mini App снова из бота.",
+              tone: "danger",
+              telegram: "done",
+              session: "error",
+              screen: "pending",
+              retry: true
+            });
+            authRequestStarted = false;
+          });
+          return true;
+        }
+        function waitForTelegramInitData() {
+          initDataWaitTimer = 0;
+          if (attemptMiniAppAuth()) {
+            return;
+          }
+          if (!window.HAPPYTgNeedsAuth) {
+            return;
+          }
+          if (!initDataWaitStartedAt) {
+            initDataWaitStartedAt = Date.now();
+          }
+          if (Date.now() - initDataWaitStartedAt >= initDataWaitTimeoutMs) {
+            setAuthState({
+              title: "Ждем подтверждение из Telegram",
+              detail: "Этот экран нужно открывать из Telegram Mini App, чтобы передать initData и выдать короткую session.",
+              notice: "Не получили данные Telegram. Откройте Mini App из бота и попробуйте снова.",
+              tone: "warn",
+              telegram: "error",
+              session: "pending",
+              screen: "pending",
+              retry: true
+            });
+            return;
+          }
+          setAuthState({
+            title: "Открываем HappyTG",
+            detail: "Mini App session проверяется через Telegram.",
+            notice: "Ждем initData от Telegram. Если экран открыт вне Telegram, подключение не завершится.",
+            tone: "info",
+            telegram: "running",
+            session: "pending",
+            screen: "pending",
+            retry: false
+          });
+          if (!initDataWaitTimer) {
+            initDataWaitTimer = window.setTimeout(waitForTelegramInitData, initDataPollMs);
+          }
+        }
+        authRetry?.addEventListener("click", function () {
+          initDataWaitStartedAt = Date.now();
+          if (!initDataWaitTimer) {
+            waitForTelegramInitData();
+          }
+        });
+        if (webApp && webApp.initData) {
+          attemptMiniAppAuth();
+        } else if (window.HAPPYTgNeedsAuth) {
+          waitForTelegramInitData();
+        }
+        document.querySelectorAll("[data-approval-action]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            var feedback = document.querySelector("[data-action-feedback]");
+            var sessionToken = token();
+            if (!sessionToken) {
+              setActionFeedback(feedback, "danger", "Нет Mini App session. Откройте экран заново из бота.");
+              return;
+            }
+            button.disabled = true;
+            var previousLabel = button.textContent;
+            button.textContent = "Отправляем...";
+            setActionFeedback(feedback, "info", "Отправляем решение и обновляем состояние.");
+            fetch(apiUrl("/api/v1/miniapp/approvals/" + encodeURIComponent(button.getAttribute("data-approval-id") || "") + "/resolve"), {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "authorization": "Bearer " + sessionToken
+              },
+              body: JSON.stringify({
+                decision: button.getAttribute("data-decision"),
+                scope: button.getAttribute("data-scope") || undefined,
+                nonce: button.getAttribute("data-nonce") || undefined
+              })
+            }).then(function (response) {
+              if (!response.ok) {
+                return readError(response, "Не удалось выполнить действие по подтверждению.").then(function (detail) {
+                  throw new Error(detail);
+                });
+              }
+              return response.json();
+            }).then(function () {
+              setActionFeedback(feedback, "success", "Решение сохранено. Обновляем экран.");
+              location.reload();
+            }).catch(function (error) {
+              button.disabled = false;
+              button.textContent = previousLabel;
+              setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось выполнить действие. Попробуйте снова.");
+            });
+          });
+        });
+        document.querySelectorAll("[data-desktop-action]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            var feedback = document.querySelector("[data-action-feedback]");
+            var sessionToken = token();
+            if (!sessionToken) {
+              setActionFeedback(feedback, "danger", "Нет Mini App session. Откройте экран заново из бота.");
+              return;
+            }
+            var action = button.getAttribute("data-desktop-action") || "";
+            var sessionId = button.getAttribute("data-session-id") || "";
+            button.disabled = true;
+            var previousLabel = button.textContent;
+            button.textContent = "Отправляем...";
+            setActionFeedback(feedback, "info", "Отправляем Codex Desktop действие через API.");
+            fetch(miniAppUrl("/codex/desktop-action"), {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "authorization": "Bearer " + sessionToken
+              },
+              body: JSON.stringify({ sessionId: sessionId, action: action })
+            }).then(function (response) {
+              if (!response.ok) {
+                return readError(response, "Desktop action unsupported.").then(function (detail) {
+                  throw new Error(detail);
+                });
+              }
+              return response.json();
+            }).then(function () {
+              setActionFeedback(feedback, "success", "Действие принято. Обновляем экран.");
+              location.reload();
+            }).catch(function (error) {
+              button.disabled = false;
+              button.textContent = previousLabel;
+              setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось выполнить Desktop action.");
+            });
+          });
+        });
+        document.querySelector("[data-desktop-continue-form]")?.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var form = event.currentTarget;
+          var submit = form.querySelector("[type=submit]");
+          var feedback = form.querySelector("[data-continue-feedback]");
+          var sessionToken = token();
+          if (!sessionToken) {
+            setActionFeedback(feedback, "danger", "Нет Mini App session. Откройте экран заново из бота.");
+            return;
+          }
+          var data = new FormData(form);
+          var prompt = String(data.get("prompt") || "").trim();
+          if (!prompt) {
+            setActionFeedback(feedback, "danger", "prompt is required");
+            return;
+          }
+          if (submit) submit.disabled = true;
+          if (submit) submit.textContent = "Отправляем...";
+          setActionFeedback(feedback, "info", "Отправляем prompt в Codex Desktop session.");
+          fetch(miniAppUrl("/codex/desktop-continue"), {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "authorization": "Bearer " + sessionToken
+            },
+            body: JSON.stringify({
+              sessionId: data.get("sessionId"),
+              prompt: prompt
+            })
+          }).then(function (response) {
+            if (!response.ok) {
+              return readError(response, "Не удалось продолжить Desktop session.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
+            return response.json();
+          }).then(function (payload) {
+            setActionFeedback(feedback, "success", "Prompt принят. Открываем обновленную history.");
+            form.reset();
+            if (submit) submit.disabled = false;
+            if (submit) submit.textContent = "Отправить";
+            var href = payload && payload.sessionHref ? payload.sessionHref : "";
+            if (href) {
+              window.location.assign(href);
+            } else {
+              location.reload();
+            }
+          }).catch(function (error) {
+            if (submit) submit.disabled = false;
+            if (submit) submit.textContent = "Отправить";
+            setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось продолжить Desktop session.");
+          });
+        });
+        document.querySelector("[data-new-task-form]")?.addEventListener("change", function (event) {
+          if (event.target && event.target.name === "runtime") {
+            var runtime = event.target.value || "codex-cli";
+            document.querySelectorAll("[data-source-fields]").forEach(function (section) {
+              section.hidden = section.getAttribute("data-source-fields") !== runtime;
+            });
+          }
+          if (event.target && event.target.name === "intent") {
+            var intent = event.target.value || "implement";
+            var mode = document.querySelector("[name=mode]");
+            var title = document.querySelector("[name=title]");
+            var submit = document.querySelector("[data-new-task-form] [type=submit]");
+            if (mode) mode.value = intent === "implement" ? "proof" : "quick";
+            if (title && (!title.value || title.value === "Mini App task" || title.value === "Implementation question" || title.value === "Review implementation result")) {
+              title.value = intent === "question" ? "Implementation question" : intent === "review" ? "Review implementation result" : "Mini App task";
+            }
+            if (submit) submit.textContent = intent === "question" ? "Отправить вопрос" : "Создать Codex-сессию";
+          }
+        });
+        document.querySelector("[data-new-task-form]")?.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var form = event.currentTarget;
+          var submit = form.querySelector("[type=submit]");
+          var feedback = form.querySelector("[data-task-feedback]");
+          if (submit) submit.disabled = true;
+          if (submit) submit.textContent = "Создаем...";
+          setActionFeedback(feedback, "info", "Создаем сессию и готовим переход к деталям.");
+          var data = new FormData(form);
+          var runtime = String(data.get("runtime") || "codex-cli");
+          var desktopProject = form.querySelector("[name=projectId]");
+          var selectedDesktopProject = desktopProject && desktopProject.options ? desktopProject.options[desktopProject.selectedIndex] : null;
+          fetch(location.pathname + location.search, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              hostId: data.get("hostId"),
+              workspaceId: data.get("workspaceId"),
+              runtime: runtime,
+              projectId: runtime === "codex-desktop" ? data.get("projectId") : undefined,
+              projectPath: runtime === "codex-desktop" && selectedDesktopProject ? selectedDesktopProject.getAttribute("data-project-path") : undefined,
+              intent: data.get("intent") || "implement",
+              contextSessionId: data.get("contextSessionId") || undefined,
+              mode: data.get("mode") || "proof",
+              title: data.get("title") || "Mini App task",
+              prompt: data.get("prompt") || "",
+              acceptanceCriteria: String(data.get("acceptanceCriteria") || "")
+                .split(/\\r?\\n/)
+                .map(function (item) { return item.trim(); })
+                .filter(Boolean)
+            })
+          }).then(function (response) {
+            if (!response.ok) {
+              return readError(response, "Не удалось создать сессию.").then(function (detail) {
+                throw new Error(detail);
+              });
+            }
+            return response.json();
+          }).then(function (payload) {
+            localStorage.removeItem(key);
+            var href = payload.sessionHref || (payload.session && payload.session.href) || "/sessions";
+            if (window.HAPPYTgMiniAppBasePath && href.charAt(0) === "/") {
+              href = window.HAPPYTgMiniAppBasePath + href;
+            }
+            setActionFeedback(feedback, "success", "Сессия создана. Открываем детальную страницу.");
+            location.href = href;
+          }).catch(function (error) {
+            if (submit) submit.disabled = false;
+            if (submit) submit.textContent = "Создать Codex-сессию";
+            setActionFeedback(feedback, "danger", error instanceof Error && error.message ? error.message : "Не удалось создать сессию.");
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>`;
+  return prefixRootRelativeLinks(page, basePath);
+}
+
+function linkButton(label: string, href: string, primary = false): string {
+  return `<a class="button${primary ? " button-primary" : ""}" href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
+}
+
+function disabledButton(label: string, reason?: string): string {
+  return `<button class="button" type="button" disabled title="${escapeHtml(reason ?? "unsupported")}">${escapeHtml(label)}</button>`;
+}
+
+function renderBottomNav(active?: NavKey): string {
+  const items: Array<{ key: NavKey; href: string; label: string }> = [
+    { key: "home", href: "/", label: "Главная" },
+    { key: "sessions", href: "/sessions", label: "Сессии" },
+    { key: "projects", href: "/projects", label: "Проекты" },
+    { key: "hosts", href: "/hosts", label: "Статус" }
+  ];
+  const activeKey = active === "codex" || active === "approvals"
+    ? "sessions"
+    : active === "reports"
+      ? "projects"
+      : active;
+  return `<nav class="bottom-nav" aria-label="Основная навигация">${items.map((item) => `<a href="${item.href}"${item.key === activeKey ? ' aria-current="page"' : ""}>${item.label}</a>`).join("")}</nav>`;
+}
+
+function renderEmptyState(title: string, detail: string, actionLabel: string, href: string): string {
+  return `<div class="empty">
+    <h2>${escapeHtml(title)}</h2>
+    <p class="muted">${escapeHtml(detail)}</p>
+    <div class="actions">${linkButton(actionLabel, href, true)}</div>
+  </div>`;
+}
+
+function renderAuthPending(): string {
+  return `<section class="panel hero">
+    <p class="eyebrow">Подключение</p>
+    <h1 data-auth-title>Открываем HappyTG</h1>
+    <p class="muted" data-auth-detail>Mini App session проверяется через Telegram.</p>
+    <div class="notice notice-info" data-auth-status>Ждем initData и короткую Mini App session.</div>
+    <div class="auth-steps">
+      <div class="auth-step" data-auth-step="telegram" data-state="pending"><strong>Telegram</strong><span class="muted">Получить initData</span></div>
+      <div class="auth-step" data-auth-step="session" data-state="pending"><strong>Session</strong><span class="muted">Выдать короткий токен</span></div>
+      <div class="auth-step" data-auth-step="screen" data-state="pending"><strong>Экран</strong><span class="muted">Открыть нужный раздел</span></div>
+    </div>
+    <div class="actions">
+      <button class="button button-primary" type="button" data-auth-retry hidden>Повторить подключение</button>
+      <button class="button" type="button" data-auth-reload>Обновить экран</button>
+    </div>
+  </section>`;
+}
+
+function approvalActionButton(label: string, approval: MiniAppApprovalCard, decision: "approved" | "rejected", scope?: string, primary = false): string {
+  return `<button class="button${primary ? " button-primary" : decision === "rejected" ? " button-danger" : ""}" type="button" data-approval-action data-approval-id="${escapeHtml(approval.id)}" data-decision="${decision}" data-scope="${escapeHtml(scope ?? "")}" data-nonce="${escapeHtml(approval.nonce ?? "")}">${escapeHtml(label)}</button>`;
+}
+
+function nextActionLabel(action: string | undefined): string {
+  switch (action) {
+    case undefined:
+    case "":
+      return "Открыть";
+    case "open approval":
+    case "open_approval":
+      return "Открыть approval";
+    case "open verify":
+    case "open_verify":
+      return "Открыть verify";
+    case "run_fix":
+      return "Запустить fix";
+    case "resume":
+      return "Продолжить";
+    case "open":
+      return "Открыть";
+    default:
+      return /[А-Яа-яЁё]/u.test(action) ? action : "Открыть";
+  }
+}
+
+function attentionLabel(attention: string | undefined): string | undefined {
+  switch (attention) {
+    case "approval":
+      return "Нужно подтверждение";
+    case "blocked":
+      return "Сессия остановилась";
+    case "verify":
+      return "Verify требует внимания";
+    case "unsupported":
+      return "Действие недоступно";
+    default:
+      return attention;
+  }
+}
+
+function renderDashboardView(dashboard: MiniAppDashboardProjection): string {
+  const topAttention = dashboard.attention[0];
+  const codexState = dashboard.stats.blockedSessions > 0 || dashboard.stats.verifyProblems > 0
+    ? "Error"
+    : dashboard.stats.activeSessions > 0
+      ? "Running"
+      : "Ready";
+  const approvalState = dashboard.stats.pendingApprovals > 0 ? `${dashboard.stats.pendingApprovals} waiting` : "Clean";
+  const pcState = dashboard.lastContext?.hostLabel ? dashboard.lastContext.hostLabel : "Проверить";
+  const topAttentionBlock = topAttention
+    ? `<div class="notice notice-${topAttention.severity === "danger" ? "danger" : topAttention.severity === "warn" ? "warn" : "info"}">
+        <p class="eyebrow">Требует внимания</p>
+        <strong>${escapeHtml(topAttention.title)}</strong>
+        <div class="muted">${escapeHtml(topAttention.detail)}</div>
+        <div class="actions">${linkButton(nextActionLabel(topAttention.nextAction), topAttention.href, true)}</div>
+      </div>`
+    : `<div class="notice notice-success">
+        <p class="eyebrow">Следующее действие</p>
+        <strong>Сейчас ничего не требует внимания</strong>
+        <div class="muted">Можно запустить новую задачу или открыть последние сессии.</div>
+      </div>`;
+  const attention = dashboard.attention.length > 0
+    ? `<ul class="status-list">${dashboard.attention.map((item) => `<li>
+        <div><strong>${escapeHtml(item.title)}</strong><div class="muted">${escapeHtml(item.detail)}</div></div>
+        <div class="status-meta">${renderBadge(item.severity)}${linkButton(nextActionLabel(item.nextAction), item.href)}</div>
+      </li>`).join("")}</ul>`
+    : renderEmptyState("Сейчас ничего не требует внимания", "Активные проблемы, approvals и verify failures появятся здесь.", "Открыть sessions", "/sessions");
+
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Сейчас</p>
+      <h1>HappyTG</h1>
+      <p class="muted">Работа по проектам · summary-first · next action</p>
+      <div class="dashboard-status-strip">
+        <span><small>PC</small><strong>${escapeHtml(pcState)}</strong></span>
+        <span><small>Codex</small><strong>${escapeHtml(codexState)}</strong></span>
+        <span><small>Approvals</small><strong>${escapeHtml(approvalState)}</strong></span>
+      </div>
+      ${topAttentionBlock}
+      <div class="actions">
+        ${linkButton("Новая задача", "/new-task", true)}
+        ${linkButton("Задать вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}
+        ${linkButton("Codex", "/codex")}
+        ${dashboard.recentSessions[0] ? linkButton("Продолжить последнюю", dashboard.recentSessions[0].href) : ""}
+      </div>
+    </section>
+    <section class="panel">
+      ${renderSectionTitle("Результаты сессий", linkButton("Все", "/sessions"))}
+      ${renderSessionCards(dashboard.recentSessions)}
+    </section>
+    <section class="panel">
+      ${renderSectionTitle("Проекты", linkButton("Открыть", "/projects"))}
+      <div class="status-list">
+        <div class="kv-item">
+          <div class="eyebrow">Последний контекст</div>
+          <strong>${escapeHtml(dashboard.lastContext?.repoName ?? "Проект не выбран")}</strong>
+          <div class="meta-line">${escapeHtml(dashboard.lastContext?.hostLabel ?? "Откройте Projects для выбора source")}</div>
+          <div class="actions">${linkButton("Новая задача", "/new-task", true)}${linkButton("Проекты", "/projects")}</div>
+        </div>
+      </div>
+    </section>
+    <details class="panel meta-details">
+      <summary>Очередь и отчеты</summary>
+      <section class="grid">
+        ${renderMetric("Активные", dashboard.stats.activeSessions, dashboard.stats.activeSessions > 0 ? "info" : "neutral")}
+        ${renderMetric("Approvals", dashboard.stats.pendingApprovals, dashboard.stats.pendingApprovals > 0 ? "warn" : "success")}
+        ${renderMetric("Блокеры", dashboard.stats.blockedSessions, dashboard.stats.blockedSessions > 0 ? "danger" : "success")}
+        ${renderMetric("Verify", dashboard.stats.verifyProblems, dashboard.stats.verifyProblems > 0 ? "danger" : "success")}
+      </section>
+      <h2>Требует внимания</h2>
+      ${attention}
+      <h2>Последние отчеты</h2>
+      ${renderReportCards(dashboard.recentReports)}
+    </details>
+  `;
+}
+
+function runtimeLabel(runtime: string | undefined): string {
+  if (runtime === "codex-cli") {
+    return "Codex CLI";
+  }
+  if (runtime === "codex-desktop") {
+    return "Codex Desktop";
+  }
+  return runtime ?? "runtime n/a";
+}
+
+function projectTasksHref(source: "codex-cli" | "codex-desktop", project: string, options: { path?: string; userId?: string } = {}): string {
+  return codexPanelHref({ path: options.path ?? "/projects/tasks", source, project, userId: options.userId });
+}
+
+function codexPanelHref(input: {
+  path?: string;
+  source?: string;
+  state?: string;
+  project?: string;
+  q?: string;
+  sort?: string;
+  limit?: number;
+  userId?: string;
+}): string {
+  const params = new URLSearchParams();
+  if (input.source && input.source !== "all") {
+    params.set("source", input.source);
+  }
+  if (input.state && input.state !== "all") {
+    params.set("state", input.state);
+  }
+  if (input.project && input.project !== "all") {
+    params.set("project", input.project);
+  }
+  if (input.q?.trim()) {
+    params.set("q", input.q.trim());
+  }
+  if (input.sort && input.sort !== "updated-desc") {
+    params.set("sort", input.sort);
+  }
+  if (input.limit && input.limit > 0) {
+    params.set("limit", String(input.limit));
+  }
+  if (input.userId) {
+    params.set("userId", input.userId);
+  }
+  const query = params.toString();
+  const path = input.path ?? "/codex";
+  return query ? `${path}?${query}` : path;
+}
+
+type CodexPanelSort = "updated-desc" | "updated-asc" | "title-asc" | "title-desc";
+type DesktopHistoryOrder = "oldest-first" | "newest-first";
+
+function normalizeCodexPanelSort(value: string | undefined): CodexPanelSort {
+  switch (value) {
+    case "updated-asc":
+    case "title-asc":
+    case "title-desc":
+      return value;
+    default:
+      return "updated-desc";
+  }
+}
+
+function compareSessionCards(left: MiniAppSessionCard, right: MiniAppSessionCard, sort: CodexPanelSort): number {
+  switch (sort) {
+    case "updated-asc":
+      return left.lastUpdatedAt.localeCompare(right.lastUpdatedAt);
+    case "title-asc":
+      return left.title.localeCompare(right.title);
+    case "title-desc":
+      return right.title.localeCompare(left.title);
+    case "updated-desc":
+    default:
+      return right.lastUpdatedAt.localeCompare(left.lastUpdatedAt);
+  }
+}
+
+function normalizeDesktopHistoryOrder(value: string | undefined): DesktopHistoryOrder {
+  return value === "newest-first" ? "newest-first" : "oldest-first";
+}
+
+function desktopSessionHistoryHref(sessionId: string, historyOrder: DesktopHistoryOrder, userId?: string): string {
+  const params = new URLSearchParams({
+    id: sessionId,
+    historyOrder
+  });
+  if (userId) {
+    params.set("userId", userId);
+  }
+  return `/codex/desktop-session?${params.toString()}`;
+}
+
+function renderSessionCards(sessions: MiniAppSessionCard[]): string {
+  if (sessions.length === 0) {
+    return renderEmptyState("Нет активных сессий", "Когда host будет подключен, новая задача появится здесь.", "Проверить hosts", "/hosts");
+  }
+
+  return `<ul class="status-list">${sessions.map((session) => `<li class="session-card">
+    <div>
+      <div class="session-title-row">
+        ${renderBadge(sessionResultLabel(session), sessionResultTone(session))}
+        <strong><a href="${escapeHtml(session.href)}">${escapeHtml(session.title)}</a></strong>
+      </div>
+      <div class="meta-line">${escapeHtml(session.repoName ?? compactPath(session.projectPath))} · ${escapeHtml(compactDate(session.lastUpdatedAt))}</div>
+      <div class="status-meta">${renderBadge(runtimeLabel(session.runtime), "info")}${renderBadge(session.desktopStatus ?? session.state)}${session.verificationState ? renderBadge(session.verificationState) : ""}</div>
+      ${session.attention ? `<div class="result-line"><strong>Следующее действие:</strong> ${escapeHtml(attentionLabel(session.attention) ?? session.attention)}</div>` : ""}
+      ${renderDetails("Технические детали", [
+        { label: "session", value: session.id },
+        { label: "state", value: session.desktopStatus ?? session.state },
+        { label: "phase", value: session.phase },
+        { label: "verify", value: session.verificationState },
+        { label: "host", value: session.hostLabel },
+        { label: "path", value: session.projectPath },
+        { label: "updated", value: session.lastUpdatedAt },
+        { label: "unsupported", value: session.unsupportedReasonCode ?? session.unsupportedReason }
+      ])}
+    </div>
+    <div class="status-meta">${linkButton(nextActionLabel(session.nextAction), session.href, Boolean(session.attention))}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function desktopSessionCard(session: CodexDesktopSession): MiniAppSessionCard {
+  return {
+    id: session.id,
+    title: session.title,
+    state: session.status === "active" ? "running" : session.status === "archived" ? "completed" : session.status === "unknown" ? "blocked" : "paused",
+    runtime: "codex-desktop",
+    source: "codex-desktop",
+    desktopStatus: session.status,
+    repoName: session.projectPath ? session.projectPath.split(/[\\/]/u).filter(Boolean).at(-1) : "Desktop project",
+    projectPath: session.projectPath,
+    lastUpdatedAt: session.updatedAt,
+    href: `/codex/desktop-session?id=${encodeURIComponent(session.id)}`,
+    nextAction: "open",
+    canResume: session.canResume,
+    canStop: session.canStop,
+    canCreateTask: session.canCreateTask,
+    unsupportedReason: session.unsupportedReason,
+    unsupportedReasonCode: session.unsupportedReasonCode
+  };
+}
+
+type NewTaskCreatedPayload = {
+  task?: { id: string };
+  session?: MiniAppSessionCard | CodexDesktopSession;
+};
+
+function newTaskSessionHref(created: NewTaskCreatedPayload, runtime: string | undefined): string {
+  const session = created.session;
+  if (session && "href" in session && typeof session.href === "string") {
+    return session.href;
+  }
+
+  if (runtime === "codex-desktop") {
+    const desktopSessionId = session?.source === "codex-desktop" ? session.id : created.task?.id;
+    return desktopSessionId
+      ? `/codex/desktop-session?id=${encodeURIComponent(desktopSessionId)}`
+      : "/codex?source=codex-desktop";
+  }
+
+  return "/sessions";
+}
+
+function desktopUnsupportedReason(session: Pick<CodexDesktopSession, "unsupportedReason" | "unsupportedReasonCode">): string {
+  const reason = session.unsupportedReason ?? "Stable Codex Desktop control contract is unavailable.";
+  return session.unsupportedReasonCode ? `[${session.unsupportedReasonCode}] ${reason}` : reason;
+}
+
+function renderSourceSwitcher(activeSource: string, options: { path?: string; project?: string; state?: string; q?: string; sort?: string; limit?: number; userId?: string } = {}): string {
+  const items = [
+    { value: "all", label: "Все" },
+    { value: "codex-desktop", label: "Codex Desktop" },
+    { value: "codex-cli", label: "Codex CLI" }
+  ];
+  return `<div class="segmented">${items.map((item) => linkButton(item.label, codexPanelHref({
+    path: options.path,
+    source: item.value,
+    project: options.project,
+    state: options.state,
+    q: options.q,
+    sort: options.sort,
+    limit: options.limit,
+    userId: options.userId
+  }), item.value === activeSource)).join("")}</div>`;
+}
+
+function matchesCodexSearch(card: MiniAppSessionCard, query: string): boolean {
+  if (!query) {
+    return true;
+  }
+
+  const haystack = [
+    card.title,
+    card.repoName,
+    card.hostLabel,
+    card.projectPath,
+    card.runtime,
+    card.state
+  ].filter(Boolean).join(" ").toLowerCase();
+  return haystack.includes(query.toLowerCase());
+}
+
+function normalizeCodexProjectPath(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const normalized = trimmed.replace(/\\/gu, "/").replace(/\/+$/u, "");
+  if (/^(?:[a-z]:\/|\/\/)/iu.test(normalized)) {
+    return normalized.toLowerCase();
+  }
+
+  return normalized;
+}
+
+function matchesCodexProject(card: MiniAppSessionCard, project: string | undefined): boolean {
+  if (!project || project === "all") {
+    return true;
+  }
+  if (card.repoName === project) {
+    return true;
+  }
+
+  const cardProjectPath = normalizeCodexProjectPath(card.projectPath);
+  const selectedProjectPath = normalizeCodexProjectPath(project);
+  return Boolean(cardProjectPath && selectedProjectPath && cardProjectPath === selectedProjectPath);
+}
+
+function renderDesktopActions(session: CodexDesktopSession): string {
+  const reason = desktopUnsupportedReason(session);
+  return `<div class="actions">
+    ${session.canResume ? `<button class="button button-primary" type="button" data-desktop-action="resume" data-session-id="${escapeHtml(session.id)}">Resume</button>` : disabledButton("Resume", reason)}
+    ${session.canStop ? `<button class="button button-danger" type="button" data-desktop-action="stop" data-session-id="${escapeHtml(session.id)}">Stop</button>` : disabledButton("Stop", reason)}
+    ${session.canCreateTask ? linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: session.projectId, intent: "implement", contextSessionId: session.id }), true) : disabledButton("Новая задача", reason)}
+    ${session.canCreateTask ? linkButton("Вопрос по реализации", newTaskHref({ source: "codex-desktop", projectId: session.projectId, intent: "question", title: "Implementation question", contextSessionId: session.id })) : disabledButton("Вопрос по реализации", reason)}
+  </div>`;
+}
+
+function renderDesktopContinueForm(session: CodexDesktopSession): string {
+  const canContinue = Boolean(session.canContinue ?? session.canResume);
+  const reason = desktopUnsupportedReason(session);
+  return `<section class="panel">
+    ${renderSectionTitle("Продолжить сессию")}
+    <form data-desktop-continue-form class="grid form-card">
+      <input type="hidden" name="sessionId" value="${escapeHtml(session.id)}">
+      <label><span class="eyebrow">Prompt</span><textarea name="prompt" placeholder="Новый запрос для этой Desktop-сессии"${canContinue ? "" : " disabled"}></textarea></label>
+      <div class="actions">
+        <button class="button button-primary" type="submit"${canContinue ? "" : ` disabled title="${escapeHtml(reason)}"`}>Отправить</button>
+      </div>
+      <div class="notice notice-info" data-continue-feedback hidden>Ждем prompt.</div>
+    </form>
+  </section>`;
+}
+
+function renderDesktopHistoryItem(entry: CodexDesktopHistoryEntry): string {
+  const role = entry.role ? ` · ${entry.role}` : "";
+  return `<li>
+    <strong>${entry.sequence}. ${escapeHtml(entry.summary || entry.title || entry.kind)}</strong>
+    <div class="meta-line">${escapeHtml(compactDate(entry.occurredAt))}</div>
+    ${renderDetails("Event details", [
+      { label: "kind", value: entry.kind },
+      { label: "role", value: role.trim().replace(/^·\s*/u, "") },
+      { label: "source", value: entry.source },
+      { label: "occurred", value: entry.occurredAt }
+    ])}
+  </li>`;
+}
+
+function renderDesktopHistory(detail: CodexDesktopSessionDetail, options: { historyOrder?: DesktopHistoryOrder; userId?: string } = {}): string {
+  const historyOrder = normalizeDesktopHistoryOrder(options.historyOrder);
+  const historyControls = `<div class="actions">
+    ${linkButton("Сначала старые", desktopSessionHistoryHref(detail.session.id, "oldest-first", options.userId), historyOrder === "oldest-first")}
+    ${linkButton("Сначала новые", desktopSessionHistoryHref(detail.session.id, "newest-first", options.userId), historyOrder === "newest-first")}
+  </div>`;
+  if (detail.history.length === 0) {
+    const unavailable = Boolean(detail.historyUnsupportedReasonCode);
+    return `${historyControls}${renderEmptyState(
+      unavailable ? "History недоступна" : "История пока пуста",
+      unavailable
+        ? detail.historyUnsupportedReason ?? "No bounded Codex Desktop history records were found for this session."
+        : "Codex Desktop еще не вернул bounded history records для этой сессии.",
+      unavailable ? "Codex Desktop" : "Обновить",
+      unavailable ? "/codex?source=codex-desktop" : `/codex/desktop-session?id=${encodeURIComponent(detail.session.id)}`
+    )}`;
+  }
+
+  const history = [...detail.history]
+    .sort((left, right) => historyOrder === "newest-first"
+      ? right.sequence - left.sequence
+      : left.sequence - right.sequence);
+
+  return `${historyControls}<ol class="timeline">${history.map(renderDesktopHistoryItem).join("")}</ol>
+    ${detail.historyTruncated ? `<p class="muted">History truncated to a bounded read-only preview.</p>` : ""}`;
+}
+
+function renderCodexPanel(input: {
+  cliSessions: MiniAppSessionCard[];
+  desktopProjects: CodexDesktopProject[];
+  desktopSessions: CodexDesktopSession[];
+  load?: {
+    cliSessions?: {
+      ok: boolean;
+      error?: string;
+    };
+    desktopProjects?: {
+      ok: boolean;
+      error?: string;
+    };
+    desktopSessions?: {
+      ok: boolean;
+      error?: string;
+    };
+  };
+  source?: string;
+  state?: string;
+  project?: string;
+  q?: string;
+  sort?: string;
+  desktopSessionLimit?: number;
+  routePath?: string;
+  resetHref?: string;
+  userId?: string;
+}): string {
+  const source = input.source ?? "all";
+  const query = input.q?.trim() ?? "";
+  const sort = normalizeCodexPanelSort(input.sort);
+  const desktopSessionLimit = input.desktopSessionLimit ?? 50;
+  const hasProjectFilter = Boolean(input.project && input.project !== "all");
+  const routePath = input.routePath ?? "/codex";
+  const resetHref = input.resetHref ?? routePath;
+  const desktopCards = input.desktopSessions.map(desktopSessionCard);
+  const cliCards = input.cliSessions.map((session) => ({
+    ...session,
+    runtime: "codex-cli" as const,
+    source: "codex-cli" as const
+  }));
+  const cards = [...desktopCards, ...cliCards]
+    .filter((card) => source === "all" || card.source === source || card.runtime === source)
+    .filter((card) => !input.state || input.state === "all" || card.state === input.state || card.desktopStatus === input.state || card.attention === input.state || (input.state === "unsupported" && Boolean(card.unsupportedReason)))
+    .filter((card) => matchesCodexProject(card, input.project))
+  .filter((card) => matchesCodexSearch(card, query))
+  .sort((left, right) => compareSessionCards(left, right, sort));
+  const visibleCards = hasProjectFilter ? cards.slice(0, 5) : cards;
+  const loadWarnings: string[] = [];
+  if (input.load?.cliSessions && !input.load.cliSessions.ok) {
+    loadWarnings.push(`MiniApp sessions unavailable${input.load.cliSessions.error ? `: ${input.load.cliSessions.error}` : ""}.`);
+  }
+  if (input.load?.desktopProjects && !input.load.desktopProjects.ok) {
+    loadWarnings.push(`Desktop projects unavailable${input.load.desktopProjects.error ? `: ${input.load.desktopProjects.error}` : ""}.`);
+  }
+  if (input.load?.desktopSessions && !input.load.desktopSessions.ok) {
+    loadWarnings.push(`Desktop sessions unavailable${input.load.desktopSessions.error ? `: ${input.load.desktopSessions.error}` : ""}.`);
+  }
+  const canLoadMoreDesktop = !hasProjectFilter && input.desktopSessions.length >= desktopSessionLimit && desktopSessionLimit < 200;
+  const moreDesktopHref = codexPanelHref({
+    path: routePath,
+    source,
+    state: input.state,
+    project: input.project,
+    q: query,
+    sort,
+    limit: Math.min(200, Math.max(desktopSessionLimit * 2, 100)),
+    userId: input.userId
+  });
+
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Сессии</p>
+      <h1>Codex / Сессии</h1>
+      <p class="muted">Codex Desktop / CLI operational queue: сначала next action, детали ниже.</p>
+      <div class="actions">
+        ${linkButton("Новая задача", "/new-task", true)}
+        ${linkButton("Задать вопрос", newTaskHref({ intent: "question", title: "Implementation question" }))}
+      </div>
+    </section>
+      <section class="panel">
+        <form method="GET" action="${escapeHtml(routePath)}" class="inline-form form-card">
+          <input type="hidden" name="source" value="${escapeHtml(source)}">
+          ${input.project ? `<input type="hidden" name="project" value="${escapeHtml(input.project)}">` : ""}
+          ${desktopSessionLimit !== 50 ? `<input type="hidden" name="limit" value="${escapeHtml(String(desktopSessionLimit))}">` : ""}
+          ${input.userId ? `<input type="hidden" name="userId" value="${escapeHtml(input.userId)}">` : ""}
+          <label><span class="eyebrow">Поиск</span><input name="q" value="${escapeHtml(query)}" placeholder="Сессия, проект или путь"></label>
+          <div class="actions"><button class="button button-primary" type="submit">Найти</button>${linkButton("Сбросить", resetHref)}</div>
+          ${renderSourceSwitcher(source, { path: routePath, project: input.project, state: input.state, q: query, sort, limit: desktopSessionLimit !== 50 ? desktopSessionLimit : undefined, userId: input.userId })}
+          <details class="meta-details">
+            <summary>Фильтры</summary>
+            <div class="form-row">
+              <label><span class="eyebrow">Статус</span><select name="state">
+                ${["all", "active", "recent", "archived", "unknown", "running", "paused", "completed", "blocked", "unsupported"].map((state) => `<option value="${state}"${input.state === state ? " selected" : ""}>${state}</option>`).join("")}
+              </select></label>
+              <label><span class="eyebrow">Сортировка</span><select name="sort">
+                ${[
+                  ["updated-desc", "Updated newest"],
+                  ["updated-asc", "Updated oldest"],
+                  ["title-asc", "Title A-Z"],
+                  ["title-desc", "Title Z-A"]
+                ].map(([value, label]) => `<option value="${value}"${sort === value ? " selected" : ""}>${label}</option>`).join("")}
+              </select></label>
+            </div>
+          </details>
+        </form>
+    </section>
+    ${loadWarnings.length > 0 ? `<section class="notice notice-warn">${loadWarnings.map((warning) => `<div>${escapeHtml(warning)}</div>`).join("")}</section>` : ""}
+    <section class="panel">
+      ${renderSectionTitle("Операционная очередь", renderBadge(`${visibleCards.length} visible`, "info"))}
+      ${renderSessionCards(visibleCards)}
+      ${canLoadMoreDesktop ? `<div class="actions">${linkButton(`Показать до ${Math.min(200, Math.max(desktopSessionLimit * 2, 100))} Desktop sessions`, moreDesktopHref)}</div>` : ""}
+    </section>
+    <details class="panel meta-details">
+      <summary>Проекты и счетчики</summary>
+      <section class="grid">
+        ${renderMetric("Desktop projects", input.desktopProjects.length, input.desktopProjects.length > 0 ? "info" : "neutral")}
+        ${renderMetric("Desktop sessions", input.desktopSessions.length, input.desktopSessions.length > 0 ? "info" : "neutral")}
+        ${renderMetric("CLI sessions", input.cliSessions.length, input.cliSessions.length > 0 ? "success" : "neutral")}
+      </section>
+      <h2>Codex Desktop projects</h2>
+      ${input.desktopProjects.length === 0 ? renderEmptyState("Desktop projects не найдены", "Adapter returned no local Codex Desktop projects.", "Обновить", "/codex?source=codex-desktop") : `<ul class="status-list">${input.desktopProjects.map((project) => `<li><div><strong>${escapeHtml(project.label)}</strong><div class="meta-line">${escapeHtml(compactPath(project.path))}</div>${renderDetails("Скрытые детали", [{ label: "path", value: project.path }])}</div><div class="status-meta">${renderBadge(project.active ? "Running" : "Ready", project.active ? "info" : "success")}${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { path: routePath, userId: input.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement" }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question" }))}</div></li>`).join("")}</ul>`}
+    </details>
+  `;
+}
+
+function renderDesktopSessionDetail(detail: CodexDesktopSessionDetail, options: { historyOrder?: string; userId?: string } = {}): string {
+  const session = detail.session;
+  const historyOrder = normalizeDesktopHistoryOrder(options.historyOrder);
+  const latest = detail.history.at(-1);
+  const sessionCard = desktopSessionCard(session);
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Сейчас · Codex Desktop</p>
+      <h1>${escapeHtml(session.title)}</h1>
+      <div class="session-title-row">${renderBadge(sessionResultLabel(sessionCard), sessionResultTone(sessionCard))}<span class="muted">${escapeHtml(compactPath(session.projectPath))} · ${escapeHtml(compactDate(session.updatedAt))}</span></div>
+      <p class="result-line">${escapeHtml(latest?.summary ?? "Результат появится после первого ответа Codex Desktop.")}</p>
+      <div class="notice notice-info" data-action-feedback hidden>Ждем действие.</div>
+      ${renderDesktopActions(session)}
+      ${renderDetails("Технические детали", [
+        { label: "session", value: session.id },
+        { label: "status", value: session.status },
+        { label: "updated", value: session.updatedAt },
+        { label: "path", value: session.projectPath },
+        { label: "contract", value: session.canResume || session.canStop || session.canCreateTask ? "partial" : "unsupported" }
+      ])}
+    </section>
+    ${renderDesktopContinueForm(session)}
+    <section class="panel">
+      ${renderSectionTitle("История")}
+      <p class="muted">Результат и ход работы. Технические event details открываются внутри записей.</p>
+      ${renderDesktopHistory(detail, { historyOrder, userId: options.userId })}
+    </section>
+  `;
+}
+
+function renderProjectCards(projects: MiniAppProjectCard[], options: { userId?: string } = {}): string {
+  if (projects.length === 0) {
+    return renderEmptyState("CLI проекты не найдены", "Подключите host daemon и дождитесь hello со списком workspaces.", "Проверить хосты", "/hosts");
+  }
+
+  return `<ul class="status-list">${projects.map((project) => `<li class="project-card">
+    <div>
+      <strong><a href="${escapeHtml(project.href)}">${escapeHtml(project.repoName)}</a></strong>
+      <div class="meta-line">${escapeHtml(project.defaultBranch ?? "branch n/a")} · ${project.activeSessions} active sessions</div>
+      <div class="status-meta">${renderBadge("Codex CLI", "info")}${project.hostStatus ? renderBadge(project.hostStatus) : ""}${project.activeSessions > 0 ? renderBadge("Running", "info") : renderBadge("Ready", "success")}</div>
+      ${renderDetails("Скрытые детали", [
+        { label: "path", value: project.path },
+        { label: "branch", value: project.defaultBranch },
+        { label: "host", value: project.hostLabel }
+      ])}
+    </div>
+    <div class="status-meta">${project.hostStatus ? renderBadge(project.hostStatus) : ""}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId: options.userId }))}${linkButton("Новая задача", appendUserId(project.newSessionHref, options.userId), true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question", userId: options.userId }))}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderDesktopProjectCards(projects: CodexDesktopProject[], options: { userId?: string } = {}): string {
+  if (projects.length === 0) {
+    return renderEmptyState("Desktop projects не найдены", "Codex Desktop adapter did not return local projects.", "Codex Desktop", "/codex?source=codex-desktop");
+  }
+
+  return `<ul class="status-list">${projects.map((project) => `<li class="project-card">
+    <div>
+      <strong>${escapeHtml(project.label)}</strong>
+      <div class="meta-line">${escapeHtml(compactPath(project.path))}</div>
+      <div class="status-meta">${renderBadge("Codex Desktop", "info")}${renderBadge(project.active ? "Running" : "Ready", project.active ? "info" : "success")}</div>
+      ${renderDetails("Скрытые детали", [{ label: "path", value: project.path }])}
+    </div>
+    <div class="status-meta">${linkButton("Прошедшие задачи", projectTasksHref("codex-desktop", project.path, { userId: options.userId }))}${linkButton("Новая задача", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "implement", userId: options.userId }), project.active)}${linkButton("Вопрос", newTaskHref({ source: "codex-desktop", projectId: project.id, intent: "question", title: "Implementation question", userId: options.userId }))}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderProjectsView(
+  projects: MiniAppProjectCard[],
+  desktopProjects: CodexDesktopProject[],
+  options: {
+    desktopProjectsLoad?: {
+      ok: boolean;
+      error?: string;
+    };
+    userId?: string;
+  } = {}
+): string {
+  const totalProjects = projects.length + desktopProjects.length;
+  const desktopProjectsUnavailable = options?.desktopProjectsLoad && !options.desktopProjectsLoad.ok;
+  const empty = totalProjects === 0
+    ? `<section class="panel">${renderEmptyState("Проекты не найдены", "Подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список projects.", "Проверить хосты", "/hosts")}</section>`
+    : "";
+
+  return `<section class="panel hero">
+      <p class="eyebrow">Проекты</p>
+      <h1>Проекты</h1>
+      <p class="muted">Codex CLI и Codex Desktop workspaces без raw paths в основном слое.</p>
+      <div class="actions">${linkButton("Новая задача", appendUserId("/new-task", options.userId), true)}${linkButton("Вопрос", newTaskHref({ intent: "question", title: "Implementation question", userId: options.userId }))}</div>
+    </section>
+    ${desktopProjectsUnavailable ? `<section class="notice notice-warn">${escapeHtml(`Desktop projects unavailable${options?.desktopProjectsLoad?.error ? `: ${options.desktopProjectsLoad.error}` : ""}.`)}</section>` : ""}
+    <section class="grid">
+      ${renderMetric("CLI projects", projects.length, projects.length > 0 ? "success" : "neutral")}
+      ${renderMetric("Desktop projects", desktopProjects.length, desktopProjects.length > 0 ? "info" : "neutral")}
+      ${renderMetric("Active Desktop", desktopProjects.filter((project) => project.active).length, desktopProjects.some((project) => project.active) ? "info" : "success")}
+    </section>
+    ${empty}
+    <section class="panel">
+      ${renderSectionTitle("Codex CLI projects")}
+      ${renderProjectCards(projects, { userId: options.userId })}
+    </section>
+    <section class="panel">
+      ${renderSectionTitle("Codex Desktop projects")}
+      ${renderDesktopProjectCards(desktopProjects, { userId: options.userId })}
+    </section>`;
+}
+
+function renderNewTaskForm(
+  projects: MiniAppProjectCard[],
+  selected?: {
+    hostId?: string;
+    workspaceId?: string;
+    source?: string;
+    projectId?: string;
+    intent?: string;
+    title?: string;
+    contextSessionId?: string;
+  },
+  desktop?: { projects: CodexDesktopProject[]; control?: CodexDesktopControlStatus }
+): string {
+  const selectedWorkspaceId = selected?.workspaceId ?? projects[0]?.id;
+  const selectedProject = projects.find((project) => project.id === selectedWorkspaceId) ?? projects[0];
+  const desktopProjects = desktop?.projects ?? [];
+  const desktopCanCreate = Boolean(desktop?.control?.canCreateTask);
+  const selectedSource = selected?.source === "codex-desktop" || (projects.length === 0 && desktopCanCreate) ? "codex-desktop" : "codex-cli";
+  const selectedIntent = normalizeNewTaskIntent(selected?.intent);
+  const selectedMode = defaultModeForIntent(selectedIntent);
+  const title = selected?.title ?? (selectedIntent === "question" ? "Implementation question" : selectedIntent === "review" ? "Review implementation result" : "Mini App task");
+  const desktopReason = desktop?.control?.unsupportedReason || desktop?.control?.unsupportedReasonCode
+    ? desktopUnsupportedReason(desktop.control)
+    : "Stable Codex Desktop New Task contract is unavailable.";
+  const options = projects.map((project) => `<option value="${escapeHtml(project.id)}" data-host-id="${escapeHtml(project.hostId)}"${project.id === selectedProject?.id ? " selected" : ""}>${escapeHtml(project.repoName)} · ${escapeHtml(project.hostLabel ?? "host n/a")}</option>`).join("");
+  const selectedDesktopProjectId = selected?.projectId ?? desktopProjects[0]?.id;
+  const desktopOptions = desktopProjects.map((project) => `<option value="${escapeHtml(project.id)}" data-project-path="${escapeHtml(project.path)}"${project.id === selectedDesktopProjectId ? " selected" : ""}>${escapeHtml(project.label)} · ${escapeHtml(project.path)}</option>`).join("");
+  const hasAnyProjects = projects.length > 0 || desktopProjects.length > 0;
+
+  return `<section class="panel hero">
+    <p class="eyebrow">Новая задача</p>
+    <h1>${escapeHtml(intentLabel(selectedIntent))}</h1>
+    <p class="muted">Wizard для запуска Codex без технической формы на первом экране.</p>
+    <div class="actions">${linkButton("Сессии", "/sessions")}${linkButton("Проекты", "/projects")}</div>
+  </section>
+  <section class="panel">
+    ${!hasAnyProjects ? renderEmptyState("Нет доступных проектов", "Сначала подключите host daemon или Codex Desktop adapter, чтобы HappyTG получил список workspaces.", "Проверить hosts", "/hosts") : `<form data-new-task-form class="inline-form">
+      <input type="hidden" name="hostId" value="${escapeHtml(selectedProject?.hostId ?? selected?.hostId ?? "")}">
+      <input type="hidden" name="contextSessionId" value="${escapeHtml(selected?.contextSessionId ?? "")}">
+      <div class="notice notice-info" data-task-feedback hidden>Создаем сессию.</div>
+      <section class="wizard-step">
+        <div class="wizard-step-title"><h2><span class="step-index">1</span> Проект</h2>${renderBadge(selectedSource === "codex-desktop" ? "Codex Desktop" : "Codex CLI", "info")}</div>
+        <label><span class="eyebrow">Source</span><select id="runtime" name="runtime">
+          <option value="codex-cli"${selectedSource === "codex-cli" ? " selected" : ""}${projects.length > 0 ? "" : " disabled"}>Codex CLI${projects.length > 0 ? "" : " (no host project)"}</option>
+          <option value="codex-desktop"${selectedSource === "codex-desktop" ? " selected" : ""}${desktopCanCreate ? "" : " disabled"}>Codex Desktop${desktopCanCreate ? "" : " (unsupported)"}</option>
+        </select></label>
+        <div data-source-fields="codex-cli"${selectedSource === "codex-cli" ? "" : " hidden"}>
+          <label class="eyebrow" for="workspaceId">CLI проект</label>
+          <select id="workspaceId" name="workspaceId" onchange="this.form.hostId.value = this.options[this.selectedIndex].getAttribute('data-host-id') || ''">${options}</select>
+        </div>
+        <div data-source-fields="codex-desktop"${selectedSource === "codex-desktop" ? "" : " hidden"}>
+          <label class="eyebrow" for="projectId">Desktop проект</label>
+          <select id="projectId" name="projectId">${desktopOptions}</select>
+        </div>
+      </section>
+      <section class="wizard-step">
+        <div class="wizard-step-title"><h2><span class="step-index">2</span> Что сделать</h2></div>
+        <div class="intent-grid" role="radiogroup" aria-label="Intent">
+          ${(["implement", "question", "review"] as const).map((intent) => `<label><input type="radio" name="intent" value="${intent}"${selectedIntent === intent ? " checked" : ""}><span>${escapeHtml(intentLabel(intent))}</span></label>`).join("")}
+        </div>
+      </section>
+      <section class="wizard-step">
+        <div class="wizard-step-title"><h2><span class="step-index">3</span> Инструкция</h2></div>
+        <textarea id="task-draft" name="prompt" data-draft placeholder="${selectedIntent === "question" ? "Что нужно уточнить по реализации?" : selectedIntent === "review" ? "Что проверить в результате сессии?" : "Что нужно реализовать или исправить?"}"></textarea>
+      </section>
+      <section class="wizard-step">
+        <div class="wizard-step-title"><h2><span class="step-index">4</span> Параметры</h2></div>
+        <div class="form-row">
+          <label><span class="eyebrow">Mode</span><select id="mode" name="mode">
+            <option value="proof"${selectedMode === "proof" ? " selected" : ""}>proof</option>
+            <option value="quick"${selectedMode === "quick" ? " selected" : ""}>quick</option>
+          </select></label>
+          <label><span class="eyebrow">Название</span><input id="title" name="title" value="${escapeHtml(title)}"></label>
+        </div>
+        <label class="eyebrow" for="acceptanceCriteria">Критерии приемки</label>
+        <textarea id="acceptanceCriteria" name="acceptanceCriteria" placeholder="Каждый критерий с новой строки"></textarea>
+      </section>
+      <details class="meta-details form-card">
+        <summary>Advanced settings</summary>
+        <div class="details-body">
+          ${desktopCanCreate ? "<p class=\"muted\">Desktop task creation доступен для выбранного adapter.</p>" : `<div class="notice notice-warn">New Desktop Task disabled: ${escapeHtml(desktopReason)}</div>`}
+          <p class="muted">Context session, source defaults and unsupported adapter details скрыты здесь.</p>
+        </div>
+      </details>
+      <div class="actions"><button class="button button-primary" type="submit">${selectedIntent === "question" ? "Отправить вопрос" : "Создать Codex-сессию"}</button>${linkButton("Отмена", "/projects")}</div>
+    </form>`}
+  </section>`;
+}
+
+function renderApprovalCards(approvals: MiniAppApprovalCard[]): string {
+  if (approvals.length === 0) {
+    return renderEmptyState("Нет pending approvals", "Если агенту понадобится рискованное действие, запрос появится отдельной карточкой.", "Открыть сессии", "/sessions");
+  }
+
+  return `<ul class="status-list">${approvals.map((approval) => `<li class="approval-card">
+    <div>
+      <strong><a href="${escapeHtml(approval.href)}">${escapeHtml(approval.title)}</a></strong>
+      <div class="meta-line">${escapeHtml(approval.reason)} · expires ${escapeHtml(compactDate(approval.expiresAt))}</div>
+      <div class="status-meta">${renderBadge("Approval", "warn")}${renderBadge(approval.risk)}${renderBadge(approval.state)}</div>
+      ${renderDetails("Скрытые детали", [
+        { label: "approval", value: approval.id },
+        { label: "session", value: approval.sessionId },
+        { label: "scope", value: approval.scope },
+        { label: "expiresAt", value: approval.expiresAt }
+      ])}
+    </div>
+    <div class="status-meta">${linkButton("Открыть", approval.href, approval.state === "waiting_human")}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderHostCards(hosts: MiniAppHostCard[]): string {
+  if (hosts.length === 0) {
+    return renderEmptyState("Host еще не подключен", "Подключите host daemon через pairing, чтобы HappyTG мог работать рядом с repo.", "Открыть хосты", "/hosts");
+  }
+
+  return `<ul class="status-list">${hosts.map((host) => `<li class="host-card">
+    <div>
+      <strong><a href="${escapeHtml(host.href)}">${escapeHtml(host.label)}</a></strong>
+      <div class="meta-line">${host.activeSessions} active sessions · ${host.repoNames.length} repos</div>
+      <div class="status-meta">${renderBadge(host.status)}${host.lastError ? renderBadge("Error", "danger") : renderBadge("Clean", "success")}</div>
+      ${host.lastError ? renderDetails("Last error", [{ label: "error", value: host.lastError }]) : ""}
+      ${renderDetails("Reported repos", host.repoNames.map((repo, index) => ({ label: `repo ${index + 1}`, value: repo })))}
+    </div>
+    <div class="status-meta">${linkButton("Открыть", host.href)}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderReportCards(reports: MiniAppReportCard[]): string {
+  if (reports.length === 0) {
+    return renderEmptyState("Отчетов пока нет", "Proof-loop отчеты появятся после первой задачи с evidence и verify.", "Открыть сессии", "/sessions");
+  }
+
+  return `<ul class="status-list">${reports.map((report) => `<li class="report-card">
+    <div><strong><a href="${escapeHtml(report.href)}">${escapeHtml(report.title)}</a></strong><div class="muted">${escapeHtml(compactDate(report.generatedAt))}</div></div>
+    <div class="status-meta">${renderBadge(report.status)}${linkButton("Отчет", report.href)}</div>
+  </li>`).join("")}</ul>`;
+}
+
+function renderDiffView(diff: MiniAppDiffProjection): string {
+  const filters = ["все", "код", "конфиг", "тесты", "docs"].map((label) => `<span class="badge badge-info">${label}</span>`).join("");
+  const highRiskBody = diff.summary.highRiskFiles.length > 0
+    ? `<ul class="status-list">${diff.summary.highRiskFiles.map((file) => `<li><strong>${escapeHtml(file)}</strong>${renderBadge("High risk", "danger")}</li>`).join("")}</ul>`
+    : `<p class="muted">High risk files не отмечены.</p>`;
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Diff / Проверка</p>
+      <h1>Изменения по сессии</h1>
+      <p class="muted">Decision-first summary: количество файлов, риск и следующий переход.</p>
+      <div class="grid">
+        ${renderMetric("Files", diff.summary.changedFiles, diff.summary.changedFiles > 0 ? "info" : "neutral")}
+        ${renderMetric("High risk", diff.summary.highRiskFiles.length, diff.summary.highRiskFiles.length > 0 ? "danger" : "success")}
+        ${renderMetric("Raw diff", diff.rawAvailable ? "available" : "hidden", diff.rawAvailable ? "warn" : "neutral")}
+      </div>
+    </section>
+    ${renderCollapsible("Фильтры", `<div class="actions">${filters}</div>`, { className: "form-card" })}
+    ${renderCollapsible("High risk files", highRiskBody, { open: diff.summary.highRiskFiles.length > 0, className: "form-card" })}
+    <section class="panel">
+      ${renderSectionTitle("Файлы")}
+      ${diff.files.length === 0 ? renderEmptyState("Diff пока недоступен", "Host еще не отправил diff artifacts для этой сессии.", "Открыть session", `/session/${encodeURIComponent(diff.sessionId)}`) : `<ul class="status-list">${diff.files.map((file) => `<li><div><strong>${escapeHtml(file.path)}</strong><div class="muted">${escapeHtml(file.summary)}</div></div><div class="status-meta">${renderBadge(file.category)}${renderBadge(file.status)}</div></li>`).join("")}</ul>`}
+    </section>
+  `;
+}
+
+function renderVerifyView(verify: MiniAppVerifyProjection): string {
+  const headline = verify.state === "passed" ? "PASS" : verify.state === "failed" ? "FAIL" : verify.state.toUpperCase();
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Fresh verify</p>
+      <h1>${escapeHtml(headline)}</h1>
+      <p class="muted">Decision-first summary: что проверено, что упало и что делать дальше.</p>
+      <div class="grid">
+        ${renderMetric("Checked", verify.checkedCriteria.length, verify.checkedCriteria.length > 0 ? "info" : "neutral")}
+        ${renderMetric("Failed", verify.failedCriteria.length, verify.failedCriteria.length > 0 ? "danger" : "success")}
+        ${renderMetric("State", headline, toneForState(headline))}
+      </div>
+      <div class="actions">
+        ${verify.nextAction === "run_fix" ? linkButton("Запустить fix", `/session/${encodeURIComponent(verify.sessionId)}`, true) : ""}
+        ${linkButton("Открыть evidence", verify.evidenceHref ?? `/session/${encodeURIComponent(verify.sessionId)}`)}
+        ${linkButton("Diff", `/diff/${encodeURIComponent(verify.sessionId)}`)}
+      </div>
+    </section>
+    ${renderCollapsible("Acceptance criteria", `<pre>${escapeHtml([...verify.checkedCriteria.map((item) => `OK ${item}`), ...verify.failedCriteria.map((item) => `FAIL ${item}`)].join("\n") || "Verifier details are not available yet.")}</pre>`, { className: "form-card", open: verify.failedCriteria.length > 0 })}
+  `;
+}
+
+function renderSessionDetail(detail: {
+  session: MiniAppSessionCard & { prompt: string; currentSummary?: string; lastError?: string };
+  task?: TaskBundle;
+  approval?: MiniAppApprovalCard;
+  events: SessionEvent[];
+  actions: string[];
+}, options: { userId?: string } = {}): string {
+  const questionHref = newTaskHref({
+    workspaceId: detail.task?.workspaceId,
+    intent: "question",
+    title: "Implementation question",
+    contextSessionId: detail.session.id,
+    userId: options.userId
+  });
+  const taskHref = newTaskHref({
+    workspaceId: detail.task?.workspaceId,
+    intent: "implement",
+    contextSessionId: detail.session.id,
+    userId: options.userId
+  });
+  return `
+    <section class="panel hero">
+      <p class="eyebrow">Сейчас</p>
+      <h1>${escapeHtml(detail.session.title)}</h1>
+      <div class="session-title-row">${renderBadge(sessionResultLabel(detail.session), sessionResultTone(detail.session))}<span class="muted">${escapeHtml(runtimeLabel(detail.session.runtime))} · ${escapeHtml(detail.session.repoName ?? "repo n/a")} · ${escapeHtml(compactDate(detail.session.lastUpdatedAt))}</span></div>
+      <p class="result-line">${escapeHtml(detail.session.currentSummary ?? "Сводки пока нет.")}</p>
+      ${detail.session.lastError ? `<div class="notice notice-danger">${escapeHtml(detail.session.lastError)}</div>` : ""}
+      ${renderDetails("Технические детали", [
+        { label: "session", value: detail.session.id },
+        { label: "state", value: detail.session.state },
+        { label: "phase", value: detail.session.phase },
+        { label: "verify", value: detail.session.verificationState },
+        { label: "host", value: detail.session.hostLabel },
+        { label: "path", value: detail.session.projectPath }
+      ])}
+    </section>
+    <section class="panel">
+      ${renderSectionTitle("Что нужно сделать дальше")}
+      <div class="actions">
+        ${detail.approval && detail.approval.state === "waiting_human" ? linkButton("Открыть approval", detail.approval.href, true) : ""}
+        ${linkButton("Задать вопрос", questionHref, !detail.approval || detail.approval.state !== "waiting_human")}
+        ${linkButton("Новая задача", taskHref)}
+        ${detail.task ? linkButton("Proof timeline", `/task/${encodeURIComponent(detail.task.id)}`) : ""}
+        ${linkButton("Diff", `/diff/${encodeURIComponent(detail.session.id)}`)}
+        ${linkButton("Verify", `/verify/${encodeURIComponent(detail.session.id)}`)}
+      </div>
+    </section>
+    ${detail.task ? renderProofProgress(detail.task, { sessionState: detail.session.state }) : ""}
+    <details class="panel meta-details">
+      <summary>История</summary>
+      <ol class="timeline">${detail.events.map((event) => `<li><strong>${event.sequence}. ${escapeHtml(event.type)}</strong><div class="muted">${escapeHtml(event.occurredAt)}</div><pre>${escapeHtml(JSON.stringify(event.payload, null, 2))}</pre></li>`).join("") || "<li>No events recorded.</li>"}</ol>
+    </details>
+  `;
+}
+
+export async function startMiniAppServer(
+  server = createMiniAppServer(),
+  options?: {
+    port?: number;
+    logger?: Pick<Logger, "info">;
+    fetchImpl?: typeof fetch;
+    reuseProbeWindowMs?: number;
+    reuseProbeIntervalMs?: number;
+  }
+): Promise<MiniAppStartupResult> {
+  const listenPort = options?.port ?? port;
+  const activeLogger = options?.logger ?? logger;
+  const fetchImpl = options?.fetchImpl ?? fetch;
+  const reuseProbeWindowMs = options?.reuseProbeWindowMs ?? 2_000;
+  const reuseProbeIntervalMs = options?.reuseProbeIntervalMs ?? Math.min(100, reuseProbeWindowMs);
+
+  async function listenOnce(): Promise<"listening" | "in_use"> {
+    return await new Promise<"listening" | "in_use">((resolve, reject) => {
+      const onListening = () => {
+        cleanup();
+        resolve("listening");
+      };
+      const onError = (error: NodeJS.ErrnoException) => {
+        cleanup();
+        if (error.code === "EADDRINUSE") {
+          resolve("in_use");
+          return;
+        }
+        reject(error);
+      };
+      const cleanup = () => {
+        server.off("listening", onListening);
+        server.off("error", onError);
+      };
+
+      server.once("listening", onListening);
+      server.once("error", onError);
+      server.listen(listenPort);
+    });
+  }
+
+  if (await listenOnce() === "listening") {
+    activeLogger.info("Mini App listening", { port: listenPort, apiBaseUrl });
+    return { status: "listening", port: listenPort };
+  }
+
+  const occupant = await detectPortOccupant(listenPort, fetchImpl);
+  if (occupant.service !== "miniapp") {
+    throw new Error(formatMiniAppPortConflictMessageDetailed(listenPort, occupant));
+  }
+
+  if (reuseProbeWindowMs > 0) {
+    for (let waitedMs = 0; waitedMs < reuseProbeWindowMs; waitedMs += reuseProbeIntervalMs) {
+      await delay(reuseProbeIntervalMs);
+      const occupantAfterDelay = await detectPortOccupant(listenPort, fetchImpl);
+      if (!occupantAfterDelay.service && !occupantAfterDelay.description) {
+        if (await listenOnce() === "listening") {
+          activeLogger.info("Mini App listening", { port: listenPort, apiBaseUrl });
+          return { status: "listening", port: listenPort };
+        }
+
+        const retryOccupant = await detectPortOccupant(listenPort, fetchImpl);
+        if (retryOccupant.service !== "miniapp") {
+          throw new Error(formatMiniAppPortConflictMessageDetailed(listenPort, retryOccupant));
+        }
+        continue;
+      }
+
+      if (occupantAfterDelay.service !== "miniapp") {
+        throw new Error(formatMiniAppPortConflictMessageDetailed(listenPort, occupantAfterDelay));
+      }
+    }
+  }
+
+  activeLogger.info(formatMiniAppPortReuseMessage(listenPort), { port: listenPort });
+  return { status: "reused", port: listenPort };
+}
+
+export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJson: defaultFetchJson }) {
+  const withUser = (pathname: string, url: URL) => {
+    const userId = url.searchParams.get("userId");
+    return userId ? `${pathname}${pathname.includes("?") ? "&" : "?"}userId=${encodeURIComponent(userId)}` : pathname;
+  };
+  const basePathFor = (req: { headers: Record<string, string | string[] | undefined> }) => normalizeBasePath(req.headers["x-forwarded-prefix"] ?? process.env.HAPPYTG_MINIAPP_BASE_PATH);
+  const expiredSessionCookieHeaders = (req: { headers: Record<string, string | string[] | undefined> }) => {
+    const cookiePath = basePathFor(req) || "/";
+    const expired = `${miniAppSessionCookieName}=; path=${cookiePath}; max-age=0; samesite=lax`;
+    return [expired, `${expired}; secure`];
+  };
+  const hasSessionContext = (req: { headers: Record<string, string | string[] | undefined> }, url: URL) => Boolean(miniAppSessionToken(req.headers) || url.searchParams.get("userId"));
+  const authInit = (req: { headers: Record<string, string | string[] | undefined> }): RequestInit | undefined => {
+    const sessionToken = miniAppSessionToken(req.headers);
+    return sessionToken
+      ? {
+          headers: {
+            authorization: `Bearer ${sessionToken}`
+          }
+        }
+      : undefined;
+  };
+  const fetchForRequest = <T>(req: { headers: Record<string, string | string[] | undefined> }, url: URL, pathname: string) => dependencies.fetchJson<T>(withUser(pathname, url), authInit(req));
+  const defaultCodexFetchTimeoutMs = 6000;
+  const codexFetchTimeoutOverride = process.env.HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS?.trim();
+  const codexFetchTimeoutMs = Number(codexFetchTimeoutOverride ?? String(defaultCodexFetchTimeoutMs));
+  const effectiveCodexFetchTimeoutMs = () => Number.isFinite(codexFetchTimeoutMs) && codexFetchTimeoutMs > 0 ? codexFetchTimeoutMs : defaultCodexFetchTimeoutMs;
+  const desktopSessionsFetchTimeoutMs = (limit: number) => {
+    const baseTimeoutMs = effectiveCodexFetchTimeoutMs();
+    return limit >= 100 || !codexFetchTimeoutOverride ? Math.max(baseTimeoutMs, 10_000) : baseTimeoutMs;
+  };
+  const describeFetchError = (error: unknown, timeoutMs: number): string | undefined => {
+    if (!(error instanceof Error)) {
+      return "Unknown mini app fetch error.";
+    }
+
+    if (error.name === "AbortError" || /operation was aborted|aborted/iu.test(error.message)) {
+      return `request timed out after ${timeoutMs}ms`;
+    }
+
+    return error.message || "Mini app fetch failed.";
+  };
+  const fetchForRequestWithFallback = async <T>(
+    req: { headers: Record<string, string | string[] | undefined> },
+    url: URL,
+    pathname: string,
+    fallback: T,
+    options?: { timeoutMs?: number }
+  ): Promise<{ ok: boolean; data: T; error?: string }> => {
+    const timeoutMs = options?.timeoutMs ?? effectiveCodexFetchTimeoutMs();
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+    }, timeoutMs);
+    try {
+      const response = await dependencies.fetchJson<T>(withUser(pathname, url), {
+        ...authInit(req),
+        signal: controller.signal
+      });
+      return {
+        ok: true,
+        data: response
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        data: fallback,
+        error: describeFetchError(error, timeoutMs)
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  const fallbackCodexDesktopSessionDetail = (sessionId: string, error?: string): CodexDesktopSessionDetail => ({
+    session: {
+      id: sessionId,
+      title: `Codex Desktop ${sessionId}`,
+      updatedAt: new Date().toISOString(),
+      status: "unknown",
+      source: "codex-desktop",
+      canResume: false,
+      canContinue: false,
+      canStop: false,
+      canCreateTask: false,
+      unsupportedReason: error ?? "Codex Desktop session detail is temporarily unavailable.",
+      unsupportedReasonCode: "CODEX_DESKTOP_DETAIL_UNAVAILABLE"
+    },
+    history: [],
+    historyTruncated: false,
+    historyUnsupportedReason: error
+      ? `Codex Desktop session detail is temporarily unavailable: ${error}`
+      : "Codex Desktop did not return session detail.",
+    historyUnsupportedReasonCode: "CODEX_DESKTOP_HISTORY_UNAVAILABLE"
+  });
+  const desktopSessionLimitForRequest = (url: URL): number => {
+    const rawLimit = Number(url.searchParams.get("limit"));
+    if (Number.isInteger(rawLimit) && rawLimit > 0) {
+      return Math.min(Math.max(rawLimit, 50), 200);
+    }
+    return url.searchParams.get("project") && url.searchParams.get("source") !== "codex-cli" ? 100 : 50;
+  };
+  const fetchCodexForRequest = async (req: { headers: Record<string, string | string[] | undefined> }, url: URL) => {
+    const desktopSessionLimit = desktopSessionLimitForRequest(url);
+    const [cliSessions, desktopProjects, desktopSessions] = await Promise.all([
+      fetchForRequestWithFallback<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions", { sessions: [] }),
+      fetchForRequestWithFallback<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects", { projects: [] }),
+      fetchForRequestWithFallback<{ sessions: CodexDesktopSession[] }>(req, url, `/api/v1/codex-desktop/sessions?limit=${desktopSessionLimit}`, { sessions: [] }, {
+        timeoutMs: desktopSessionsFetchTimeoutMs(desktopSessionLimit)
+      })
+    ]);
+    return {
+      cliSessions: cliSessions.data.sessions,
+      desktopProjects: desktopProjects.data.projects,
+      desktopSessions: desktopSessions.data.sessions,
+      desktopSessionLimit,
+      load: {
+        cliSessions: {
+          ok: cliSessions.ok,
+          error: cliSessions.error
+        },
+        desktopProjects: {
+          ok: desktopProjects.ok,
+          error: desktopProjects.error
+        },
+        desktopSessions: {
+          ok: desktopSessions.ok,
+          error: desktopSessions.error
+        }
+      }
+    };
+  };
+  const postForRequest = <T>(
+    req: { headers: Record<string, string | string[] | undefined> },
+    url: URL,
+    pathname: string,
+    body: unknown
+  ) => {
+    const authorizationHeaders = authInit(req)?.headers as Record<string, string> | undefined;
+    return dependencies.fetchJson<T>(withUser(pathname, url), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(authorizationHeaders ?? {})
+      },
+      body: JSON.stringify(body)
+    });
+  };
+  const renderForRequest = (
+    req: { headers: Record<string, string | string[] | undefined> },
+    title: string,
+    body: string,
+    options?: { needsAuth?: boolean; authResetSession?: boolean; navKey?: NavKey; shellStatus?: AppShellStatus }
+  ) => renderPage(title, body, {
+    basePath: basePathFor(req),
+    needsAuth: options?.needsAuth,
+    authResetSession: options?.authResetSession,
+    navKey: options?.navKey,
+    shellStatus: options?.shellStatus,
+    browserApiBaseUrl: resolveBrowserApiBaseUrlForRequest(req.headers)
+  });
+  const requireSessionContext = (
+    req: { headers: Record<string, string | string[] | undefined> },
+    res: Parameters<typeof text>[0],
+    url: URL,
+    title: string,
+    navKey: NavKey
+  ): boolean => {
+    if (hasSessionContext(req, url)) {
+      return true;
+    }
+
+    html(res, 200, renderForRequest(req, title, renderAuthPending(), { needsAuth: true, navKey }));
+    return false;
+  };
+  const navKeyForUrl = (url: URL): NavKey => {
+    const screen = url.searchParams.get("screen");
+    if (url.pathname.startsWith("/codex") || screen === "codex" || screen === "codex-session") {
+      return "codex";
+    }
+    if (url.pathname.startsWith("/project") || url.pathname === "/projects" || url.pathname === "/new-task") {
+      return "projects";
+    }
+    if (url.pathname.startsWith("/approval") || url.pathname === "/approvals" || screen === "approvals") {
+      return "approvals";
+    }
+    if (url.pathname.startsWith("/host") || url.pathname === "/hosts") {
+      return "hosts";
+    }
+    if (url.pathname.startsWith("/report") || url.pathname.startsWith("/task")) {
+      return "reports";
+    }
+    if (url.pathname.startsWith("/session") || url.pathname.startsWith("/diff") || url.pathname.startsWith("/verify") || screen === "session" || screen === "diff" || screen === "verify" || screen === "sessions") {
+      return "sessions";
+    }
+    return "home";
+  };
+  const titleForAuthRetry = (url: URL): string => {
+    const navKey = navKeyForUrl(url);
+    switch (navKey) {
+      case "codex":
+        return "Codex";
+      case "sessions":
+        return "Сессии";
+      case "projects":
+        return "Проекты";
+      case "approvals":
+        return "Подтверждения";
+      case "hosts":
+        return "Хосты";
+      case "reports":
+        return "Отчеты";
+      case "home":
+      default:
+        return "HappyTG Mini App";
+    }
+  };
+  const renderUnauthorizedFetchAsAuthPending = (context: {
+    error: unknown;
+    req: { method?: string; headers: Record<string, string | string[] | undefined> };
+    res: Parameters<typeof text>[0];
+    url?: URL;
+  }): boolean => {
+    if (!(context.error instanceof MiniAppFetchError) || context.error.status !== 401 || !context.url || context.req.method?.toUpperCase() !== "GET") {
+      return false;
+    }
+
+    const navKey = navKeyForUrl(context.url);
+    context.res.setHeader("set-cookie", expiredSessionCookieHeaders(context.req));
+    html(context.res, 200, renderForRequest(context.req, titleForAuthRetry(context.url), renderAuthPending(), {
+      needsAuth: true,
+      authResetSession: true,
+      navKey
+    }));
+    return true;
+  };
+
+  return createJsonServer(
+    [
+      route("GET", "/health", async ({ res }) => {
+        text(res, 200, "ok");
+      }),
+      route("GET", "/favicon.ico", async ({ res }) => {
+        text(res, 204, "");
+      }),
+      route("HEAD", "/", async ({ res }) => {
+        res.statusCode = 200;
+        res.setHeader("content-type", "text/html; charset=utf-8");
+        res.setHeader("x-happytg-service", "miniapp");
+        res.end();
+      }),
+      route("HEAD", "/:page", async ({ res }) => {
+        res.statusCode = 200;
+        res.setHeader("content-type", "text/html; charset=utf-8");
+        res.setHeader("x-happytg-service", "miniapp");
+        res.end();
+      }),
+      route("GET", "/ready", async ({ res }) => {
+        try {
+          await dependencies.fetchJson<{ ok: boolean }>("/health");
+          json(res, 200, { ok: true, service: "miniapp", apiBaseUrl });
+        } catch (error) {
+          json(res, 503, {
+            ok: false,
+            service: "miniapp",
+            apiBaseUrl,
+            detail: error instanceof Error ? error.message : "Unknown error"
+          });
+        }
+      }),
+      route("GET", "/", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "HappyTG Mini App", "home")) {
+          return;
+        }
+
+        const screen = url.searchParams.get("screen");
+        if (screen === "codex") {
+          const codex = await fetchCodexForRequest(req, url);
+          html(res, 200, renderForRequest(req, "Codex", renderCodexPanel({
+            ...codex,
+            source: url.searchParams.get("source") ?? "all",
+            state: url.searchParams.get("state") ?? undefined,
+            project: url.searchParams.get("project") ?? undefined,
+            q: url.searchParams.get("q") ?? undefined,
+            sort: url.searchParams.get("sort") ?? undefined,
+            userId: url.searchParams.get("userId") ?? undefined
+          }), { navKey: "codex", shellStatus: shellStatusFromCodex(codex, { hosts: withUser("/projects", url), codex: withUser("/codex", url), approvals: withUser("/approvals", url) }) }));
+          return;
+        }
+        if (screen === "codex-session" && url.searchParams.get("id")) {
+          const id = url.searchParams.get("id")!;
+          const detail = await fetchForRequestWithFallback<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`, fallbackCodexDesktopSessionDetail(id));
+          html(res, 200, renderForRequest(req, `Codex Desktop ${id}`, renderDesktopSessionDetail({
+            ...detail.data,
+            ...(detail.ok ? {} : { session: {
+              ...detail.data.session,
+              unsupportedReason: detail.data.session.unsupportedReason
+                ? `${detail.data.session.unsupportedReason}${detail.error ? `: ${detail.error}` : ""}`
+                : detail.error
+                  ? `Session detail request failed: ${detail.error}`
+                  : `Session detail request failed.`
+            } })
+          }, {
+            historyOrder: url.searchParams.get("historyOrder") ?? undefined,
+            userId: url.searchParams.get("userId") ?? undefined
+          }), { navKey: "codex", shellStatus: shellStatusFromDesktopSession(detail.data.session) }));
+          return;
+        }
+        if (screen === "sessions") {
+          const sessions = await fetchForRequest<{ sessions: MiniAppSessionCard[] }>(req, url, "/api/v1/miniapp/sessions");
+          html(res, 200, renderForRequest(req, "Сессии", `<section class="panel hero"><h1>Сессии</h1><p class="muted">Операционный список с next action для каждой задачи.</p></section>${renderSessionCards(sessions.sessions)}`, { navKey: "sessions", shellStatus: shellStatusFromCodex({ cliSessions: sessions.sessions, desktopSessions: [], desktopProjects: [] }, { codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
+          return;
+        }
+        if (screen === "approvals") {
+          const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
+          html(res, 200, renderForRequest(req, "Подтверждения", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Короткие решения по рисковым действиям.</p></section>${renderApprovalCards(approvals.approvals)}`, { navKey: "approvals", shellStatus: shellStatusFromApprovals(approvals.approvals, { approvals: withUser("/approvals", url), codex: withUser("/sessions", url) }) }));
+          return;
+        }
+        if (screen === "session" && url.searchParams.get("id")) {
+          const id = url.searchParams.get("id")!;
+          const detail = await fetchForRequest<{
+            session: MiniAppSessionCard & { prompt: string; currentSummary?: string; lastError?: string };
+            task?: TaskBundle;
+            approval?: MiniAppApprovalCard;
+            events: SessionEvent[];
+            actions: string[];
+          }>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(id)}`);
+          html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail, { userId: url.searchParams.get("userId") ?? undefined }), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
+          return;
+        }
+        if (screen === "diff" && url.searchParams.get("sessionId")) {
+          const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/diff`);
+          html(res, 200, renderForRequest(req, "Дифф", renderDiffView(diff), { navKey: "sessions", shellStatus: { pc: { value: compactCount(diff.summary.changedFiles, "файл."), href: withUser("/projects", url), tone: diff.summary.changedFiles > 0 ? "info" : "neutral" }, codex: { value: diff.summary.highRiskFiles.length > 0 ? "Risk" : "Diff", href: withUser(`/session/${encodeURIComponent(diff.sessionId)}`, url), tone: diff.summary.highRiskFiles.length > 0 ? "danger" : "info" }, approvals: { value: "Решения", href: withUser("/approvals", url), tone: "neutral" } } }));
+          return;
+        }
+        if (screen === "verify" && url.searchParams.get("sessionId")) {
+          const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${encodeURIComponent(url.searchParams.get("sessionId")!)}/verify`);
+          html(res, 200, renderForRequest(req, "Проверка", renderVerifyView(verify), { navKey: "sessions", shellStatus: { pc: { value: compactCount(verify.checkedCriteria.length, "пров."), href: verify.reportHref ?? withUser("/reports", url), tone: verify.checkedCriteria.length > 0 ? "info" : "neutral" }, codex: { value: verify.state, href: withUser(`/session/${encodeURIComponent(verify.sessionId)}`, url), tone: toneForState(verify.state) }, approvals: { value: compactCount(verify.failedCriteria.length, "fail"), href: withUser("/approvals", url), tone: verify.failedCriteria.length > 0 ? "danger" : "success" } } }));
+          return;
+        }
+
+        const dashboard = await fetchForRequest<MiniAppDashboardProjection>(req, url, "/api/v1/miniapp/dashboard");
+        html(res, 200, renderForRequest(req, "HappyTG Mini App", renderDashboardView(dashboard), { navKey: "home", shellStatus: shellStatusFromDashboard(dashboard, { hosts: withUser("/hosts", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
+      }),
+      route("GET", "/sessions", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Сессии", "sessions")) {
+          return;
+        }
+
+        const codex = await fetchCodexForRequest(req, url);
+        html(res, 200, renderForRequest(req, "Сессии", renderCodexPanel({
+          ...codex,
+          source: url.searchParams.get("source") ?? "all",
+          state: url.searchParams.get("state") ?? undefined,
+          q: url.searchParams.get("q") ?? undefined,
+          sort: url.searchParams.get("sort") ?? undefined,
+          userId: url.searchParams.get("userId") ?? undefined
+        }), { navKey: "sessions", shellStatus: shellStatusFromCodex(codex, { hosts: withUser("/projects", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
+      }),
+      route("GET", "/codex", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Codex", "codex")) {
+          return;
+        }
+
+        const codex = await fetchCodexForRequest(req, url);
+        html(res, 200, renderForRequest(req, "Codex", renderCodexPanel({
+          ...codex,
+          source: url.searchParams.get("source") ?? "all",
+          state: url.searchParams.get("state") ?? undefined,
+          project: url.searchParams.get("project") ?? undefined,
+          q: url.searchParams.get("q") ?? undefined,
+          sort: url.searchParams.get("sort") ?? undefined,
+          resetHref: withUser("/codex", url),
+          userId: url.searchParams.get("userId") ?? undefined
+        }), { navKey: "codex", shellStatus: shellStatusFromCodex(codex, { hosts: withUser("/projects", url), codex: withUser("/codex", url), approvals: withUser("/approvals", url) }) }));
+      }),
+      route("GET", "/codex/desktop-session", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
+          return;
+        }
+
+        const id = url.searchParams.get("id");
+        if (!id) {
+          html(res, 404, renderForRequest(req, "Codex Desktop session not found", renderEmptyState("Desktop session не найдена", "Adapter did not return this session.", "Codex", "/codex?source=codex-desktop"), { navKey: "codex" }));
+          return;
+        }
+
+        const detail = await fetchForRequestWithFallback<CodexDesktopSessionDetail>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(id)}`, fallbackCodexDesktopSessionDetail(id));
+        html(res, 200, renderForRequest(req, `Codex Desktop ${id}`, renderDesktopSessionDetail({
+          ...detail.data,
+          ...(detail.ok ? {} : { session: {
+            ...detail.data.session,
+            unsupportedReason: detail.data.session.unsupportedReason
+              ? `${detail.data.session.unsupportedReason}${detail.error ? `: ${detail.error}` : ""}`
+              : detail.error
+                ? `Session detail request failed: ${detail.error}`
+                : `Session detail request failed.`
+          } })
+        }, {
+          historyOrder: url.searchParams.get("historyOrder") ?? undefined,
+          userId: url.searchParams.get("userId") ?? undefined
+        }), { navKey: "codex", shellStatus: shellStatusFromDesktopSession(detail.data.session) }));
+      }),
+      route("GET", "/approvals", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Подтверждения", "approvals")) {
+          return;
+        }
+
+        const approvals = await fetchForRequest<{ approvals: MiniAppApprovalCard[] }>(req, url, "/api/v1/miniapp/approvals");
+        html(res, 200, renderForRequest(req, "Подтверждения", `<section class="panel hero"><h1>Подтверждения</h1><p class="muted">Approve/deny без длинных логов в чате.</p></section>${renderApprovalCards(approvals.approvals)}`, { navKey: "approvals", shellStatus: shellStatusFromApprovals(approvals.approvals, { approvals: withUser("/approvals", url), codex: withUser("/sessions", url) }) }));
+      }),
+      route("GET", "/approval/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Подтверждение", "approvals")) {
+          return;
+        }
+
+        const detail = await fetchForRequest<{ approval: MiniAppApprovalCard; session?: MiniAppSessionCard }>(req, url, `/api/v1/miniapp/approvals/${params.id}`);
+        const approvalActions = detail.approval.state === "waiting_human"
+          ? `${approvalActionButton("Разрешить один раз", detail.approval, "approved", "once", true)}${approvalActionButton("Разрешить на фазу", detail.approval, "approved", "phase")}${approvalActionButton("Разрешить на сессию", detail.approval, "approved", "session")}${approvalActionButton("Отклонить", detail.approval, "rejected")}`
+          : "";
+        const body = `<section class="panel hero">
+          <p class="eyebrow">Подтверждение</p>
+          <h1>${escapeHtml(detail.approval.title)}</h1>
+          <p class="muted">${escapeHtml(detail.approval.reason)}</p>
+          <div class="notice notice-info" data-action-feedback hidden>Ждем действие.</div>
+          <div class="grid">
+            ${renderMetric("Риск", detail.approval.risk, toneForState(detail.approval.risk))}
+            ${renderMetric("Scope", detail.approval.scope ?? "once", "info")}
+            ${renderMetric("Истекает", compactDate(detail.approval.expiresAt), "warn")}
+          </div>
+          <div class="actions">${approvalActions}${detail.session ? linkButton("Открыть сессию", detail.session.href) : ""}</div>
+        </section>
+        <section class="panel">
+          ${renderSectionTitle("Что будет разрешено")}
+          <div class="notice notice-warn">
+            <strong>${escapeHtml(detail.approval.reason)}</strong>
+            <div class="meta-line">${escapeHtml(detail.session?.title ?? detail.approval.sessionId)}</div>
+          </div>
+          ${renderDetails("Raw command / policy details", [
+            { label: "approval", value: detail.approval.id },
+            { label: "session", value: detail.approval.sessionId },
+            { label: "state", value: detail.approval.state },
+            { label: "nonce", value: detail.approval.nonce },
+            { label: "expiresAt", value: detail.approval.expiresAt }
+          ])}
+        </section>`;
+        html(res, 200, renderForRequest(req, `Подтверждение ${detail.approval.id}`, body, { navKey: "approvals", shellStatus: shellStatusFromApprovals([detail.approval], { approvals: withUser("/approvals", url), codex: detail.session?.href ?? withUser("/sessions", url) }) }));
+      }),
+      route("GET", "/hosts", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Хосты", "hosts")) {
+          return;
+        }
+
+        const hosts = await fetchForRequest<{ hosts: MiniAppHostCard[] }>(req, url, "/api/v1/miniapp/hosts");
+        html(res, 200, renderForRequest(req, "Хосты", `<section class="panel hero"><h1>Хосты</h1><p class="muted">Online state, repos and active sessions.</p></section>${renderHostCards(hosts.hosts)}`, { navKey: "hosts", shellStatus: shellStatusFromHosts(hosts.hosts, { hosts: withUser("/hosts", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
+      }),
+      route("GET", "/projects", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Проекты", "projects")) {
+          return;
+        }
+
+        const [projects, desktopProjects] = await Promise.all([
+          fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects"),
+          fetchForRequestWithFallback<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects", { projects: [] })
+        ]);
+        html(res, 200, renderForRequest(req, "Проекты", renderProjectsView(projects.projects, desktopProjects.data.projects, {
+          desktopProjectsLoad: {
+            ok: desktopProjects.ok,
+            error: desktopProjects.error
+          },
+          userId: url.searchParams.get("userId") ?? undefined
+        }), { navKey: "projects", shellStatus: shellStatusFromProjects(projects.projects, desktopProjects.data.projects, { hosts: withUser("/projects", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
+      }),
+      route("GET", "/projects/tasks", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Прошедшие задачи", "projects")) {
+          return;
+        }
+
+        const data = await fetchCodexForRequest(req, url);
+        html(res, 200, renderForRequest(req, "Прошедшие задачи", renderCodexPanel({
+          cliSessions: data.cliSessions,
+          desktopProjects: data.desktopProjects,
+          desktopSessions: data.desktopSessions,
+          desktopSessionLimit: data.desktopSessionLimit,
+          load: data.load,
+          source: url.searchParams.get("source") ?? "all",
+          state: url.searchParams.get("state") ?? "all",
+          project: url.searchParams.get("project") ?? undefined,
+          q: url.searchParams.get("q") ?? undefined,
+          sort: url.searchParams.get("sort") ?? undefined,
+          routePath: "/projects/tasks",
+          resetHref: withUser("/projects", url),
+          userId: url.searchParams.get("userId") ?? undefined
+        }), { navKey: "projects", shellStatus: shellStatusFromCodex(data, { hosts: withUser("/projects", url), codex: withUser("/projects/tasks", url), approvals: withUser("/approvals", url) }) }));
+      }),
+      route("GET", "/project/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Проект", "projects")) {
+          return;
+        }
+
+        const projects = await fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects");
+        const project = projects.projects.find((item) => item.id === params.id);
+        if (!project) {
+          html(res, 404, renderForRequest(req, "Проект не найден", renderEmptyState("Проект не найден", "Workspace is not available for this Mini App session.", "Проекты", "/projects"), { navKey: "projects" }));
+          return;
+        }
+
+        const userId = url.searchParams.get("userId") ?? undefined;
+        const body = `<section class="panel hero"><h1>${escapeHtml(project.repoName)}</h1><p class="meta-line">${escapeHtml(project.hostLabel ?? "host n/a")} · active ${project.activeSessions}</p><div class="actions">${linkButton("Новая задача", appendUserId(project.newSessionHref, userId), true)}${linkButton("Вопрос", newTaskHref({ workspaceId: project.id, intent: "question", title: "Implementation question", userId }))}${linkButton("Прошедшие задачи", projectTasksHref("codex-cli", project.path, { userId }))}${linkButton("Projects", withUser("/projects", url))}</div>${renderDetails("Project details", [{ label: "path", value: project.path }, { label: "host", value: project.hostLabel }, { label: "branch", value: project.defaultBranch }])}</section>
+          <section class="grid">
+            <div class="kv-item"><div class="eyebrow">Runtime</div><strong>Codex CLI</strong></div>
+            <div class="kv-item"><div class="eyebrow">Host</div><strong>${escapeHtml(project.hostLabel ?? "host n/a")}</strong></div>
+            <div class="kv-item"><div class="eyebrow">Active sessions</div><strong>${project.activeSessions}</strong></div>
+          </section>`;
+        html(res, 200, renderForRequest(req, `Проект ${project.repoName}`, body, { navKey: "projects", shellStatus: shellStatusFromProjects([project], [], { hosts: withUser("/projects", url), codex: projectTasksHref("codex-cli", project.path, { userId }), approvals: withUser("/approvals", url) }) }));
+      }),
+      route("GET", "/host/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Хост", "hosts")) {
+          return;
+        }
+
+        const detail = await fetchForRequest<{ host: MiniAppHostCard; workspaces: Workspace[]; sessions: MiniAppSessionCard[] }>(req, url, `/api/v1/miniapp/hosts/${params.id}`);
+        const body = `<section class="panel hero"><p class="eyebrow">Хост / Диагностика</p><h1>${escapeHtml(detail.host.label)}</h1><p class="muted">${detail.host.activeSessions} active sessions · ${detail.host.repoNames.length} reported repos</p><div class="actions">${linkButton("Использовать для новой задачи", "/new-task", true)}${linkButton("Проверить состояние", "/hosts")}</div>${detail.host.lastError ? `<div class="notice notice-danger">${escapeHtml(detail.host.lastError)}</div>` : ""}</section>
+          <section class="panel">${renderSectionTitle("Repos")}<ul class="status-list">${detail.workspaces.map((workspace) => `<li><div><strong>${escapeHtml(workspace.repoName)}</strong><div class="status-meta">${renderBadge(workspace.status)}</div>${renderDetails("Скрытые детали", [{ label: "path", value: workspace.path }])}</div></li>`).join("")}</ul></section>
+          <section class="panel">${renderSectionTitle("Sessions")}${renderSessionCards(detail.sessions)}</section>`;
+        html(res, 200, renderForRequest(req, `Хост ${detail.host.label}`, body, { navKey: "hosts", shellStatus: shellStatusFromHosts([detail.host], { hosts: withUser("/hosts", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
+      }),
+      route("GET", "/reports", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Отчеты", "reports")) {
+          return;
+        }
+
+        const reports = await fetchForRequest<{ reports: MiniAppReportCard[] }>(req, url, "/api/v1/miniapp/reports");
+        html(res, 200, renderForRequest(req, "Отчеты", `<section class="panel hero"><h1>Отчеты</h1><p class="muted">Proof-loop summaries вместо raw listing.</p></section>${renderReportCards(reports.reports)}`, { navKey: "reports", shellStatus: { pc: { value: compactCount(reports.reports.length, "отчет."), href: withUser("/reports", url), tone: reports.reports.length > 0 ? "info" : "neutral" }, codex: { value: "Сессии", href: withUser("/sessions", url), tone: "neutral" }, approvals: { value: "Решения", href: withUser("/approvals", url), tone: "neutral" } } }));
+      }),
+      route("GET", "/diff/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Дифф", "sessions")) {
+          return;
+        }
+
+        const diff = await fetchForRequest<MiniAppDiffProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/diff`);
+        html(res, 200, renderForRequest(req, "Дифф", renderDiffView(diff), { navKey: "sessions", shellStatus: { pc: { value: compactCount(diff.summary.changedFiles, "файл."), href: withUser("/projects", url), tone: diff.summary.changedFiles > 0 ? "info" : "neutral" }, codex: { value: diff.summary.highRiskFiles.length > 0 ? "Risk" : "Diff", href: withUser(`/session/${encodeURIComponent(diff.sessionId)}`, url), tone: diff.summary.highRiskFiles.length > 0 ? "danger" : "info" }, approvals: { value: "Решения", href: withUser("/approvals", url), tone: "neutral" } } }));
+      }),
+      route("GET", "/verify/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Проверка", "sessions")) {
+          return;
+        }
+
+        const verify = await fetchForRequest<MiniAppVerifyProjection>(req, url, `/api/v1/miniapp/sessions/${params.id}/verify`);
+        html(res, 200, renderForRequest(req, "Проверка", renderVerifyView(verify), { navKey: "sessions", shellStatus: { pc: { value: compactCount(verify.checkedCriteria.length, "пров."), href: verify.reportHref ?? withUser("/reports", url), tone: verify.checkedCriteria.length > 0 ? "info" : "neutral" }, codex: { value: verify.state, href: withUser(`/session/${encodeURIComponent(verify.sessionId)}`, url), tone: toneForState(verify.state) }, approvals: { value: compactCount(verify.failedCriteria.length, "fail"), href: withUser("/approvals", url), tone: verify.failedCriteria.length > 0 ? "danger" : "success" } } }));
+      }),
+      route("GET", "/new-task", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Новая задача", "projects")) {
+          return;
+        }
+
+        const [projects, desktopProjects, desktopControl] = await Promise.all([
+          fetchForRequest<{ projects: MiniAppProjectCard[] }>(req, url, "/api/v1/miniapp/projects"),
+          fetchForRequestWithFallback<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects", { projects: [] }),
+          fetchForRequestWithFallback<{ control: CodexDesktopControlStatus }>(req, url, "/api/v1/codex-desktop/control", {
+            control: {
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false,
+              unsupportedReason: "Codex Desktop control contract is unavailable.",
+              unsupportedReasonCode: "CODEX_DESKTOP_CONTROL_UNAVAILABLE"
+            }
+          })
+        ]);
+        html(res, 200, renderForRequest(req, "Новая задача", renderNewTaskForm(projects.projects, {
+          hostId: url.searchParams.get("hostId") ?? undefined,
+          workspaceId: url.searchParams.get("workspaceId") ?? undefined,
+          source: url.searchParams.get("source") ?? undefined,
+          projectId: url.searchParams.get("projectId") ?? undefined,
+          intent: url.searchParams.get("intent") ?? undefined,
+          title: url.searchParams.get("title") ?? undefined,
+          contextSessionId: url.searchParams.get("contextSessionId") ?? undefined
+        }, { projects: desktopProjects.data.projects, control: desktopControl.data.control }), { navKey: "projects", shellStatus: shellStatusFromProjects(projects.projects, desktopProjects.data.projects, { hosts: withUser("/projects", url), codex: withUser("/sessions", url), approvals: withUser("/approvals", url) }) }));
+      }),
+      route("POST", "/codex/desktop-action", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
+          return;
+        }
+
+        const body = await readJsonBody<{ sessionId?: string; action?: string }>(req);
+        if (!body.sessionId || (body.action !== "resume" && body.action !== "stop")) {
+          json(res, 400, { error: "Desktop sessionId and supported action are required" });
+          return;
+        }
+
+        const result = await postForRequest<CodexDesktopControlResult>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(body.sessionId)}/${body.action}`, {});
+        json(res, 200, result);
+      }),
+      route("POST", "/codex/desktop-continue", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Codex Desktop", "codex")) {
+          return;
+        }
+
+        const body = await readJsonBody<{ sessionId?: string; prompt?: string }>(req);
+        if (!body.sessionId || !body.prompt?.trim()) {
+          json(res, 400, { error: "Desktop sessionId and prompt are required" });
+          return;
+        }
+
+        try {
+          const result = await postForRequest<CodexDesktopControlResult>(req, url, `/api/v1/codex-desktop/sessions/${encodeURIComponent(body.sessionId)}/continue`, {
+            prompt: body.prompt
+          });
+          json(res, 200, {
+            ...result,
+            sessionHref: withUser(desktopSessionHistoryHref(result.session?.id ?? body.sessionId, "newest-first"), url)
+          });
+        } catch (error) {
+          if (error instanceof MiniAppFetchError) {
+            json(res, error.status, {
+              error: error.detail,
+              detail: error.message
+            });
+            return;
+          }
+          throw error;
+        }
+      }),
+      route("POST", "/new-task", async ({ req, res, url }) => {
+        if (!requireSessionContext(req, res, url, "Новая задача", "projects")) {
+          return;
+        }
+
+        const body = await readJsonBody<Omit<CreateSessionRequest, "userId" | "runtime"> & {
+          runtime?: string;
+          projectId?: string;
+          projectPath?: string;
+          intent?: string;
+          contextSessionId?: string;
+        }>(req);
+        const prompt = buildMiniAppTaskPrompt(body);
+        const { intent: _intent, contextSessionId: _contextSessionId, ...sessionBody } = body;
+        const requestBody = {
+          ...sessionBody,
+          prompt
+        };
+        let desktopBody = requestBody;
+        if (body.runtime === "codex-desktop" && body.projectId && !body.projectPath) {
+          const desktopProjects = await fetchForRequest<{ projects: CodexDesktopProject[] }>(req, url, "/api/v1/codex-desktop/projects");
+          const project = desktopProjects.projects.find((item) => item.id === body.projectId);
+          desktopBody = {
+            ...requestBody,
+            projectPath: project?.path
+          };
+        }
+        let created: NewTaskCreatedPayload;
+        try {
+          created = body.runtime === "codex-desktop"
+            ? await postForRequest<CodexDesktopControlResult>(req, url, "/api/v1/codex-desktop/tasks", desktopBody)
+            : await postForRequest<{ session: MiniAppSessionCard }>(req, url, "/api/v1/miniapp/sessions", {
+                ...requestBody,
+                runtime: "codex-cli"
+              });
+        } catch (error) {
+          if (error instanceof MiniAppFetchError) {
+            json(res, error.status, {
+              error: error.detail,
+              detail: error.message
+            });
+            return;
+          }
+          throw error;
+        }
+        json(res, 200, {
+          ...created,
+          sessionHref: withUser(newTaskSessionHref(created, body.runtime), url)
+        });
+      }),
+      route("GET", "/task/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Задача", "reports")) {
+          return;
+        }
+
+        const bundle = await fetchForRequest<{
+          task: { id: string; rootPath: string; phase: string; verificationState: string };
+          sections: Array<{ id: string; label: string; files: string[] }>;
+          validation: { ok: boolean; missing: string[] };
+        }>(req, url, `/api/v1/miniapp/tasks/${params.id}/bundle`);
+        const artifactList = bundle.sections
+          .flatMap((section) => section.files.map((file) => `${section.label}: ${file}`))
+          .join("\n");
+        const body = `
+          <section class="panel hero">
+            <p class="eyebrow">Отчет / Артефакт</p>
+            <div class="panel-header">
+              <h1>Task ${escapeHtml(bundle.task.id)}</h1>
+              ${renderBadge(bundle.task.verificationState)}
+            </div>
+            <div class="kv-grid">
+              ${renderMetric("Phase", bundle.task.phase, "info")}
+              ${renderMetric("Validation", bundle.validation.ok ? "ok" : `missing ${bundle.validation.missing.join(", ")}`, bundle.validation.ok ? "success" : "danger")}
+            </div>
+            ${renderDetails("Скрытые детали", [{ label: "Bundle path", value: bundle.task.rootPath }])}
+          </section>
+          ${renderProofProgress(bundle.task)}
+          <section class="panel">
+            <h2>Artifacts</h2>
+            <pre>${escapeHtml(artifactList || "No scoped artifacts available.")}</pre>
+          </section>
+        `;
+
+        html(res, 200, renderForRequest(req, `Задача ${bundle.task.id}`, body, { navKey: "reports", shellStatus: { pc: { value: bundle.validation.ok ? "Proof OK" : "Missing", href: withUser("/reports", url), tone: bundle.validation.ok ? "success" : "danger" }, codex: { value: bundle.task.phase, href: withUser("/sessions", url), tone: "info" }, approvals: { value: bundle.task.verificationState, href: withUser("/reports", url), tone: toneForState(bundle.task.verificationState) } } }));
+      }),
+      route("GET", "/session/:id", async ({ req, res, params, url }) => {
+        if (!requireSessionContext(req, res, url, "Сессия", "sessions")) {
+          return;
+        }
+
+        const detail = await fetchForRequest<{
+          session: MiniAppSessionCard & { prompt: string; currentSummary?: string; lastError?: string };
+          task?: TaskBundle;
+          approval?: MiniAppApprovalCard;
+          events: SessionEvent[];
+          actions: string[];
+        }>(req, url, `/api/v1/miniapp/sessions/${params.id}`);
+        html(res, 200, renderForRequest(req, `Сессия ${detail.session.id}`, renderSessionDetail(detail, { userId: url.searchParams.get("userId") ?? undefined }), { navKey: "sessions", shellStatus: shellStatusFromSession(detail.session, detail.approval) }));
+      })
+    ],
+    logger,
+    {
+      onError: renderUnauthorizedFetchAsAuthPending
+    }
+  );
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const server = createMiniAppServer();
+  void startMiniAppServer(server).catch((error) => {
+    console.error(error instanceof Error ? error.message : "Mini App failed to start.");
+    process.exitCode = 1;
+  });
+}

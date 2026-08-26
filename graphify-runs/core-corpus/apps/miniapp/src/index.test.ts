@@ -1,0 +1,1855 @@
+import assert from "node:assert/strict";
+import { createServer, createServer as createHttpServer } from "node:http";
+import test from "node:test";
+
+import {
+  createMiniAppServer,
+  formatMiniAppPortConflictMessage,
+  formatMiniAppPortConflictMessageDetailed,
+  formatMiniAppPortReuseMessage,
+  MiniAppFetchError,
+  resolveBrowserApiBaseUrlForRequest,
+  startMiniAppServer
+} from "./index.js";
+
+async function closeServer(server: ReturnType<typeof createHttpServer>): Promise<void> {
+  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+}
+
+async function withEnv<T>(overrides: Record<string, string | undefined>, run: () => Promise<T>): Promise<T> {
+  const previous = new Map<string, string | undefined>();
+  for (const [key, value] of Object.entries(overrides)) {
+    previous.set(key, process.env[key]);
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  try {
+    return await run();
+  } finally {
+    for (const [key, value] of previous.entries()) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
+test("mini app ready endpoint returns 503 when api health fails", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname, init) {
+      assert.equal(pathname, "/health");
+      throw new Error("api unavailable");
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/ready`);
+    const payload = await response.json() as { ok: boolean; detail: string };
+
+    assert.equal(response.status, 503);
+    assert.equal(payload.ok, false);
+    assert.match(payload.detail, /api unavailable/);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("mini app favicon route avoids browser 404 noise", async () => {
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/favicon.ico`);
+
+    assert.equal(response.status, 204);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("mini app entrypoint accepts HEAD probes from launch clients", async () => {
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/`, {
+      method: "HEAD"
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("x-happytg-service"), "miniapp");
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("mini app page routes accept HEAD probes from launch clients", async () => {
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/projects`, {
+      method: "HEAD"
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("x-happytg-service"), "miniapp");
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("overview page renders hosts, sessions, approvals, and tasks", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/dashboard?userId=usr_1") {
+        return {
+          stats: {
+            activeSessions: 1,
+            pendingApprovals: 1,
+            blockedSessions: 0,
+            verifyProblems: 0
+          },
+          attention: [
+            {
+              id: "apr_1",
+              kind: "approval",
+              title: "Нужно подтверждение",
+              detail: "workspace write",
+              severity: "warn",
+              href: "/approval/apr_1",
+              nextAction: "Открыть approval"
+            }
+          ],
+          recentSessions: [
+            {
+              id: "ses_1",
+              title: "Quick fix",
+              state: "completed",
+              runtime: "codex-cli",
+              phase: "complete",
+              verificationState: "passed",
+              hostLabel: "devbox",
+              repoName: "projection-repo",
+              lastUpdatedAt: "2026-04-21T04:00:00.000Z",
+              attention: "verify",
+              href: "/session/ses_1",
+              nextAction: "open verify"
+            }
+          ],
+          recentReports: [
+            {
+              id: "HTG-0001",
+              title: "Quick fix",
+              status: "passed",
+              generatedAt: "2026-04-21T04:00:00.000Z",
+              href: "/task/HTG-0001"
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/?userId=usr_1`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+    assert.match(html, /Работа по проектам/);
+    assert.match(html, /Результаты сессий/);
+    assert.match(html, /Следующее действие/);
+    assert.match(html, /Codex CLI/);
+    assert.match(html, /devbox/);
+    assert.match(html, /Нужно подтверждение/);
+    assert.match(html, /Открыть approval/);
+    assert.match(html, /Verify требует внимания/);
+    assert.match(html, /Открыть verify/);
+    assert.match(html, /href="\/session\/ses_1"/);
+    assert.match(html, /href="\/task\/HTG-0001"/);
+    assert.match(html, /happytg:miniapp:draft:v1/);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("mini app links honor the /miniapp reverse-proxy base path", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/dashboard?userId=usr_1") {
+        return {
+          stats: {
+            activeSessions: 1,
+            pendingApprovals: 0,
+            blockedSessions: 0,
+            verifyProblems: 0
+          },
+          attention: [],
+          recentSessions: [
+            {
+              id: "ses_1",
+              title: "Quick fix",
+              state: "running",
+              hostLabel: "devbox",
+              repoName: "repo",
+              lastUpdatedAt: "2026-04-21T04:00:00.000Z",
+              href: "/session/ses_1",
+              nextAction: "open"
+            }
+          ],
+          recentReports: [
+            {
+              id: "HTG-0001",
+              title: "Quick fix",
+              status: "passed",
+              generatedAt: "2026-04-21T04:00:00.000Z",
+              href: "/task/HTG-0001"
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/?userId=usr_1`, {
+      headers: {
+        "x-forwarded-prefix": "/miniapp"
+      }
+    });
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /href="\/miniapp\/sessions"/);
+    assert.match(html, /href="\/miniapp\/session\/ses_1"/);
+    assert.match(html, /href="\/miniapp\/task\/HTG-0001"/);
+    assert.doesNotMatch(html, /href="\/sessions"/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("public reverse-proxied mini app uses same-origin browser API when local env points at localhost", async () => {
+  await withEnv({
+    HAPPYTG_BROWSER_API_URL: "",
+    HAPPYTG_PUBLIC_URL: "http://localhost:4000",
+    HAPPYTG_API_URL: "http://localhost:4000"
+  }, async () => {
+    const server = createMiniAppServer({
+      async fetchJson(pathname) {
+        if (pathname === "/health") {
+          return { ok: true } as never;
+        }
+        if (pathname === "/api/v1/miniapp/dashboard?userId=usr_1") {
+          return {
+            stats: {
+              activeSessions: 0,
+              pendingApprovals: 0,
+              blockedSessions: 0,
+              verifyProblems: 0
+            },
+            attention: [],
+            recentSessions: [],
+            recentReports: []
+          } as never;
+        }
+        throw new Error(`Unexpected path ${pathname}`);
+      }
+    });
+
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Mini App server did not bind to a TCP port");
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${address.port}/?userId=usr_1`, {
+        headers: {
+          "x-forwarded-prefix": "/miniapp",
+          "x-forwarded-proto": "https",
+          "x-forwarded-host": "happytg.gerta.crazedns.ru"
+        }
+      });
+      const html = await response.text();
+
+      assert.equal(response.status, 200);
+      assert.match(html, /window\.HAPPYTgApiBase = "";/);
+      assert.match(html, /aria-current="page">Главная/);
+    } finally {
+      await closeServer(server);
+    }
+  });
+});
+
+test("local direct mini app keeps the explicit local API origin without reverse-proxy headers", async () => {
+  assert.equal(resolveBrowserApiBaseUrlForRequest({}, {
+    HAPPYTG_BROWSER_API_URL: "",
+    HAPPYTG_PUBLIC_URL: "http://localhost:4000",
+    HAPPYTG_API_URL: "http://localhost:4000"
+  }), "http://localhost:4000");
+});
+
+test("auth-pending shell exposes retry-safe auth feedback controls", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/`, {
+      headers: {
+        "x-forwarded-prefix": "/miniapp",
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "happytg.gerta.crazedns.ru"
+      }
+    });
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /data-auth-status/);
+    assert.match(html, /Повторить подключение/);
+    assert.match(html, /data-auth-step="telegram"/);
+    assert.match(html, /window\.HAPPYTgNeedsAuth = true/);
+    assert.match(html, /https:\/\/telegram\.org\/js\/telegram-web-app\.js/);
+    assert.match(html, /var initDataWaitTimer = 0/);
+    assert.match(html, /if \(!initDataWaitTimer\) \{\s+initDataWaitTimer = window\.setTimeout\(waitForTelegramInitData, initDataPollMs\);/);
+    assert.match(html, /initDataWaitTimeoutMs = 5000/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("mini app forwards browser session cookie as bearer auth", async () => {
+  const calls: Array<{ pathname: string; authorization?: string }> = [];
+  const server = createMiniAppServer({
+    async fetchJson(pathname, init) {
+      calls.push({
+        pathname,
+        authorization: init?.headers instanceof Headers
+          ? init.headers.get("authorization") ?? undefined
+          : (init?.headers as Record<string, string> | undefined)?.authorization
+      });
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects") {
+        return { projects: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50") {
+        return { sessions: [] } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/sessions`, {
+      headers: {
+        cookie: "happytg_miniapp_session=mas_token"
+      }
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(calls, [
+      {
+        pathname: "/api/v1/miniapp/sessions",
+        authorization: "Bearer mas_token"
+      },
+      {
+        pathname: "/api/v1/codex-desktop/projects",
+        authorization: "Bearer mas_token"
+      },
+      {
+        pathname: "/api/v1/codex-desktop/sessions?limit=50",
+        authorization: "Bearer mas_token"
+      }
+    ]);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("codex panel renders source-aware Desktop and CLI sessions with disabled unsupported actions", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "ses_cli",
+              title: "CLI fixture",
+              state: "ready",
+              runtime: "codex-cli",
+              repoName: "HappyTG",
+              projectPath: "C:/Develop/Projects/HappyTG",
+              hostLabel: "devbox",
+              lastUpdatedAt: "2026-04-28T08:00:00.000Z",
+              href: "/session/ses_cli",
+              nextAction: "open"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "HappyTG",
+              path: "C:/Develop/Projects/HappyTG",
+              source: "codex-desktop",
+              active: true
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "desktop-session-1",
+              title: "Desktop fixture",
+              projectPath: "C:/Develop/Projects/HappyTG",
+              projectId: "cdp_1",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false,
+              unsupportedReason: "contract missing",
+              unsupportedReasonCode: "CODEX_DESKTOP_CONTROL_UNSUPPORTED",
+              rawPayload: "RAW_PROMPT_SECRET"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions/desktop-session-1?userId=usr_1") {
+        return {
+          session: {
+            id: "desktop-session-1",
+            title: "Desktop fixture",
+            projectPath: "C:/Develop/Projects/HappyTG",
+            projectId: "cdp_1",
+            updatedAt: "2026-04-28T09:00:00.000Z",
+            status: "recent",
+            source: "codex-desktop",
+            canResume: false,
+            canContinue: false,
+            canStop: false,
+            canCreateTask: false,
+            unsupportedReason: "contract missing",
+            unsupportedReasonCode: "CODEX_DESKTOP_CONTROL_UNSUPPORTED"
+          },
+          history: [
+            {
+              id: "cdh_1",
+              sequence: 1,
+              occurredAt: "2026-04-28T09:01:00.000Z",
+              kind: "message",
+              role: "assistant",
+              title: "assistant message",
+              summary: "Safe desktop answer",
+              source: "codex-desktop"
+            }
+          ],
+          historyTruncated: false
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=all&state=recent&q=Desktop`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /Codex Desktop \/ CLI/);
+    assert.match(html, /Codex Desktop/);
+    assert.match(html, /Codex CLI/);
+    assert.match(html, /Desktop fixture/);
+    assert.match(html, /recent/);
+    assert.match(html, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
+    assert.doesNotMatch(html, /Desktop actions may be disabled/);
+    assert.match(html, /Прошедшие задачи/);
+    assert.match(html, /href="\/codex\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG&amp;userId=usr_1"/);
+    assert.doesNotMatch(html, /CLI fixture/);
+    assert.doesNotMatch(html, /RAW_PROMPT_SECRET/);
+
+    const cliProjectResponse = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-cli&project=C%3A%2FDevelop%2FProjects%2FHappyTG`);
+    const cliProjectHtml = await cliProjectResponse.text();
+    assert.equal(cliProjectResponse.status, 200);
+    assert.match(cliProjectHtml, /CLI fixture/);
+    assert.doesNotMatch(cliProjectHtml, /Desktop fixture/);
+
+    const detailResponse = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-session?id=desktop-session-1&userId=usr_1`);
+    const detailHtml = await detailResponse.text();
+    assert.equal(detailResponse.status, 200);
+    assert.match(detailHtml, /Resume/);
+    assert.match(detailHtml, /Stop/);
+    assert.match(detailHtml, /Продолжить сессию/);
+    assert.match(detailHtml, /Новая задача/);
+    assert.match(detailHtml, /Вопрос по реализации/);
+    assert.match(detailHtml, /disabled/);
+    assert.match(detailHtml, /CODEX_DESKTOP_CONTROL_UNSUPPORTED/);
+    assert.doesNotMatch(detailHtml, /<section class="notice notice-warn">\[CODEX_DESKTOP_CONTROL_UNSUPPORTED\]/);
+    assert.match(detailHtml, /Результат и ход работы/);
+    assert.match(detailHtml, /Safe desktop answer/);
+    assert.doesNotMatch(detailHtml, /data-desktop-action="resume"/);
+    assert.doesNotMatch(detailHtml, /RAW_PROMPT_SECRET/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("codex panel renders readable timeout warning for slow Desktop sessions", async () => {
+  await withEnv({ HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS: "10" }, async () => {
+    const server = createMiniAppServer({
+      async fetchJson(pathname, init) {
+        if (pathname === "/health") {
+          return { ok: true } as never;
+        }
+        if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+          return { sessions: [] } as never;
+        }
+        if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+          return { projects: [] } as never;
+        }
+        if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+          const signal = init?.signal;
+          await new Promise((resolve, reject) => {
+            const abort = () => {
+              const error = new Error("This operation was aborted");
+              error.name = "AbortError";
+              reject(error);
+            };
+            if (signal?.aborted) {
+              abort();
+              return;
+            }
+            signal?.addEventListener("abort", abort, { once: true });
+            setTimeout(resolve, 50);
+          });
+          return { sessions: [] } as never;
+        }
+        throw new Error(`Unexpected path ${pathname}`);
+      }
+    });
+
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Mini App server did not bind to a TCP port");
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${address.port}/codex?source=codex-desktop&userId=usr_1`);
+      const html = await response.text();
+
+      assert.equal(response.status, 200);
+      assert.match(html, /Desktop sessions unavailable: request timed out after 10ms/);
+      assert.doesNotMatch(html, /This operation was aborted/);
+    } finally {
+      await closeServer(server);
+    }
+  });
+});
+
+test("codex panel applies requested session sort order", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return { projects: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "desktop-zeta",
+              title: "Zeta answer",
+              updatedAt: "2026-04-28T10:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: true,
+              canContinue: true,
+              canStop: true,
+              canCreateTask: true
+            },
+            {
+              id: "desktop-alpha",
+              title: "Alpha answer",
+              updatedAt: "2026-04-28T08:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: true,
+              canContinue: true,
+              canStop: true,
+              canCreateTask: true
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-desktop&sort=title-asc`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /name="sort"/);
+    assert.match(html, /value="title-asc" selected/);
+    assert.ok(html.indexOf("Alpha answer") < html.indexOf("Zeta answer"));
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("codex project view shows only selected project sessions and caps results at five", async () => {
+  const calls: string[] = [];
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      calls.push(pathname);
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "HappyTG",
+              path: "C:/Develop/Projects/HappyTG",
+              source: "codex-desktop",
+              active: true
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=100&userId=usr_1") {
+        return {
+          sessions: [
+            ...Array.from({ length: 6 }, (_, index) => ({
+              id: `desktop-happytg-${index + 1}`,
+              title: `HappyTG Desktop task ${index + 1}`,
+              projectPath: "C:/Develop/Projects/HappyTG",
+              updatedAt: `2026-04-28T09:0${index}:00.000Z`,
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            })),
+            {
+              id: "desktop-other-project",
+              title: "Other project Desktop task",
+              projectPath: "C:/Develop/Projects/Other",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            },
+            {
+              id: "desktop-unscoped",
+              title: "Unscoped Desktop task",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-desktop&project=C%3A%2FDevelop%2FProjects%2FHappyTG`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.ok(calls.includes("/api/v1/codex-desktop/sessions?limit=100&userId=usr_1"));
+    assert.match(html, /HappyTG Desktop task 6/);
+    assert.match(html, /HappyTG Desktop task 5/);
+    assert.match(html, /HappyTG Desktop task 4/);
+    assert.match(html, /HappyTG Desktop task 3/);
+    assert.match(html, /HappyTG Desktop task 2/);
+    assert.doesNotMatch(html, /HappyTG Desktop task 1/);
+    assert.doesNotMatch(html, /Other project Desktop task/);
+    assert.doesNotMatch(html, /Unscoped Desktop task/);
+    assert.doesNotMatch(html, /did not attach a project path/);
+    assert.match(html, /value="100"/);
+    assert.doesNotMatch(html, /Показать до 200 Desktop sessions/);
+    assert.match(html, /5 visible/);
+    assert.doesNotMatch(html, /Нет сессий/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("codex project view matches equivalent Windows project paths", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "HappyTG",
+              path: "C:\\Develop\\Projects\\HappyTG",
+              source: "codex-desktop",
+              active: true
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=100&userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "desktop-happytg-path-variant",
+              title: "HappyTG Desktop path variant",
+              projectPath: "C:/Develop/Projects/HappyTG/",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            },
+            {
+              id: "desktop-other-project",
+              title: "Other Desktop path variant",
+              projectPath: "C:/Develop/Projects/Other",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            },
+            {
+              id: "desktop-unscoped",
+              title: "Unscoped Desktop path variant",
+              updatedAt: "2026-04-28T09:00:00.000Z",
+              status: "recent",
+              source: "codex-desktop",
+              canResume: false,
+              canContinue: false,
+              canStop: false,
+              canCreateTask: false
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-desktop&project=c%3A%5Cdevelop%5Cprojects%5Chappytg`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /HappyTG Desktop path variant/);
+    assert.doesNotMatch(html, /Other Desktop path variant/);
+    assert.doesNotMatch(html, /Unscoped Desktop path variant/);
+    assert.match(html, /1 visible/);
+    assert.doesNotMatch(html, /Нет активных сессий/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("codex project view gives widened Desktop session fetch an extended timeout budget", async () => {
+  await withEnv({ HAPPYTG_MINIAPP_CODEX_FETCH_TIMEOUT_MS: "10" }, async () => {
+    const server = createMiniAppServer({
+      async fetchJson(pathname, init) {
+        if (pathname === "/health") {
+          return { ok: true } as never;
+        }
+        if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+          return { sessions: [] } as never;
+        }
+        if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+          return {
+            projects: [
+              {
+                id: "cdp_1",
+                label: "HappyTG",
+                path: "C:/Develop/Projects/HappyTG",
+                source: "codex-desktop",
+                active: true
+              }
+            ]
+          } as never;
+        }
+        if (pathname === "/api/v1/codex-desktop/sessions?limit=100&userId=usr_1") {
+          const signal = init?.signal;
+          await new Promise((resolve, reject) => {
+            const abort = () => {
+              const error = new Error("This operation was aborted");
+              error.name = "AbortError";
+              reject(error);
+            };
+            if (signal?.aborted) {
+              abort();
+              return;
+            }
+            signal?.addEventListener("abort", abort, { once: true });
+            setTimeout(resolve, 50);
+          });
+          return {
+            sessions: [
+              {
+                id: "desktop-slow-project",
+                title: "Slow project Desktop session",
+                projectPath: "C:/Develop/Projects/HappyTG",
+                updatedAt: "2026-04-28T09:00:00.000Z",
+                status: "recent",
+                source: "codex-desktop",
+                canResume: false,
+                canContinue: false,
+                canStop: false,
+                canCreateTask: false
+              }
+            ]
+          } as never;
+        }
+        throw new Error(`Unexpected path ${pathname}`);
+      }
+    });
+
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Mini App server did not bind to a TCP port");
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${address.port}/codex?userId=usr_1&source=codex-desktop&project=C%3A%2FDevelop%2FProjects%2FHappyTG`);
+      const html = await response.text();
+
+      assert.equal(response.status, 200);
+      assert.match(html, /Slow project Desktop session/);
+      assert.doesNotMatch(html, /Desktop sessions unavailable: request timed out after 10ms/);
+    } finally {
+      await closeServer(server);
+    }
+  });
+});
+
+test("mini app renders supported Desktop actions and forwards new Desktop task to API", async () => {
+  const calls: Array<{ pathname: string; init?: RequestInit }> = [];
+  const desktopSession = {
+    id: "desktop-supported",
+    title: "Desktop supported",
+    projectPath: "C:/Develop/Projects/HappyTG",
+    projectId: "cdp_1",
+    updatedAt: "2026-04-28T09:00:00.000Z",
+    status: "active",
+    source: "codex-desktop",
+    canResume: true,
+    canContinue: true,
+    canStop: true,
+    canCreateTask: true
+  };
+  const server = createMiniAppServer({
+    async fetchJson(pathname, init) {
+      calls.push({ pathname, init });
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "HappyTG",
+              path: "C:/Develop/Projects/HappyTG",
+              source: "codex-desktop"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+        return { sessions: [desktopSession] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/control?userId=usr_1") {
+        return {
+          control: {
+            canResume: true,
+            canContinue: true,
+            canStop: true,
+            canCreateTask: true
+          }
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions/desktop-supported?userId=usr_1") {
+        return {
+          session: desktopSession,
+          history: [],
+          historyTruncated: false
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/tasks?userId=usr_1") {
+        assert.equal(init?.method, "POST");
+        assert.deepEqual(JSON.parse(String(init?.body)), {
+          runtime: "codex-desktop",
+          projectPath: "C:/Develop/Projects/HappyTG",
+          prompt: "Run Desktop task"
+        });
+        return {
+          task: {
+            id: "cdt_1",
+            title: "Desktop task",
+            status: "created"
+          }
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions/desktop-supported/resume?userId=usr_1") {
+        assert.equal(init?.method, "POST");
+        return {
+          ok: true,
+          action: "resume",
+          source: "codex-desktop",
+          session: desktopSession
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions/desktop-supported/continue?userId=usr_1") {
+        assert.equal(init?.method, "POST");
+        assert.deepEqual(JSON.parse(String(init?.body)), {
+          prompt: "Continue Desktop task"
+        });
+        return {
+          ok: true,
+          action: "continue",
+          source: "codex-desktop",
+          session: {
+            ...desktopSession,
+            status: "active"
+          }
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const detailResponse = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-session?id=desktop-supported&userId=usr_1`);
+    const detailHtml = await detailResponse.text();
+    assert.equal(detailResponse.status, 200);
+    assert.match(detailHtml, /data-desktop-action="resume"/);
+    assert.match(detailHtml, /data-desktop-action="stop"/);
+    assert.match(detailHtml, /data-desktop-continue-form/);
+    assert.match(detailHtml, /name="prompt"/);
+    assert.match(detailHtml, /payload\.sessionHref/);
+    assert.match(detailHtml, /window\.location\.assign\(href\)/);
+    assert.match(detailHtml, /Новая задача/);
+    assert.match(detailHtml, /Вопрос по реализации/);
+    assert.match(detailHtml, /История пока пуста/);
+    assert.doesNotMatch(detailHtml, /CODEX_DESKTOP_HISTORY_UNAVAILABLE/);
+
+    const action = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-action?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        sessionId: "desktop-supported",
+        action: "resume"
+      })
+    });
+    const actionPayload = await action.json() as { action: string };
+    assert.equal(action.status, 200);
+    assert.equal(actionPayload.action, "resume");
+
+    const continued = await fetch(`http://127.0.0.1:${address.port}/codex/desktop-continue?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        sessionId: "desktop-supported",
+        prompt: "Continue Desktop task"
+      })
+    });
+    const continuedPayload = await continued.json() as { action: string; sessionHref: string };
+    assert.equal(continued.status, 200);
+    assert.equal(continuedPayload.action, "continue");
+    assert.equal(continuedPayload.sessionHref, "/codex/desktop-session?id=desktop-supported&historyOrder=newest-first&userId=usr_1");
+
+    const created = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        runtime: "codex-desktop",
+        projectPath: "C:/Develop/Projects/HappyTG",
+        prompt: "Run Desktop task"
+      })
+    });
+    const payload = await created.json() as { task: { id: string }; sessionHref: string };
+
+    assert.equal(created.status, 200);
+    assert.equal(payload.task.id, "cdt_1");
+    assert.equal(payload.sessionHref, "/codex/desktop-session?id=cdt_1&userId=usr_1");
+    assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/tasks?userId=usr_1"), true);
+    assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/sessions/desktop-supported/resume?userId=usr_1"), true);
+    assert.equal(calls.some((call) => call.pathname === "/api/v1/codex-desktop/sessions/desktop-supported/continue?userId=usr_1"), true);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("task page renders scoped canonical artifacts", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname, init) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/tasks/HTG-0001/bundle?userId=usr_1") {
+        return {
+          task: {
+            id: "HTG-0001",
+            rootPath: "/repo/.agent/tasks/HTG-0001",
+            phase: "verify",
+            verificationState: "failed"
+          },
+          validation: {
+            ok: false,
+            missing: ["raw/test-unit.txt"]
+          },
+          sections: [
+            {
+              id: "spec",
+              label: "Spec",
+              files: ["spec.md"]
+            },
+            {
+              id: "verify",
+              label: "Verify",
+              files: ["verdict.json", "problems.md"]
+            }
+          ]
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/task/HTG-0001?userId=usr_1`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /Задача HTG-0001/);
+    assert.match(html, /Proof Progress/);
+    assert.match(html, /Fresh Verify/);
+    assert.match(html, /missing raw\/test-unit.txt/);
+    assert.match(html, /Spec: spec\.md/);
+    assert.match(html, /Verify: verdict\.json/);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("projects page renders workspaces and new task creates a Codex session", async () => {
+  const calls: Array<{ pathname: string; init?: RequestInit }> = [];
+  const server = createMiniAppServer({
+    async fetchJson(pathname, init) {
+      calls.push({ pathname, init });
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "ws_1",
+              hostId: "host_1",
+              hostLabel: "devbox",
+              hostStatus: "active",
+              repoName: "HappyTG",
+              path: "C:/Develop/Projects/HappyTG",
+              defaultBranch: "main",
+              activeSessions: 2,
+              href: "/project/ws_1",
+              newSessionHref: "/new-task?hostId=host_1&workspaceId=ws_1"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "cdp_1",
+              label: "VideoCall",
+              path: "C:/Develop/Projects/VideoCall",
+              source: "codex-desktop",
+              active: false
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1" && init?.method === "POST") {
+        assert.equal(init?.method, "POST");
+        const body = JSON.parse(String(init?.body)) as { title: string; prompt: string };
+        if (body.title === "Implementation question") {
+          assert.deepEqual(body, {
+            hostId: "host_1",
+            workspaceId: "ws_1",
+            mode: "quick",
+            title: "Implementation question",
+            prompt: "Intent: implementation question.\nContext session: ses_42.\n\nWhat changed?",
+            acceptanceCriteria: [],
+            runtime: "codex-cli"
+          });
+        } else {
+          assert.deepEqual(body, {
+            hostId: "host_1",
+            workspaceId: "ws_1",
+            mode: "proof",
+            title: "Release check",
+            prompt: "Check project management",
+            acceptanceCriteria: ["Codex session visible"],
+            runtime: "codex-cli"
+          });
+        }
+        return {
+          session: {
+            id: "ses_42",
+            title: "Release check",
+            state: "created",
+            runtime: "codex-cli",
+            hostLabel: "devbox",
+            repoName: "HappyTG",
+            lastUpdatedAt: "2026-04-22T04:00:00.000Z",
+            href: "/session/ses_42",
+            nextAction: "open"
+          }
+        } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return {
+          sessions: [
+            {
+              id: "ses_past",
+              title: "Past CLI task",
+              state: "completed",
+              runtime: "codex-cli",
+              hostLabel: "devbox",
+              repoName: "HappyTG",
+              projectPath: "C:/Develop/Projects/HappyTG",
+              lastUpdatedAt: "2026-04-22T03:00:00.000Z",
+              href: "/session/ses_past",
+              nextAction: "open"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const projectsResponse = await fetch(`http://127.0.0.1:${address.port}/projects?userId=usr_1`);
+    const projectsHtml = await projectsResponse.text();
+
+    assert.equal(projectsResponse.status, 200);
+    assert.match(projectsHtml, /HappyTG/);
+    assert.match(projectsHtml, /C:\/Develop\/Projects\/HappyTG/);
+    assert.match(projectsHtml, /Codex Desktop projects/);
+    assert.match(projectsHtml, /VideoCall/);
+    assert.match(projectsHtml, /C:\/Develop\/Projects\/VideoCall/);
+    assert.match(projectsHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1&amp;userId=usr_1"/);
+    assert.match(projectsHtml, /Прошедшие задачи/);
+    const cliTasksHref = projectsHtml.match(/href="(\/projects\/tasks\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG&amp;userId=usr_1)"/)?.[1];
+    assert.ok(cliTasksHref);
+    assert.match(projectsHtml, /href="\/new-task\?source=codex-desktop&amp;projectId=cdp_1&amp;intent=implement&amp;userId=usr_1"/);
+    assert.match(projectsHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;userId=usr_1"/);
+    assert.match(projectsHtml, /href="\/projects\/tasks\?source=codex-desktop&amp;project=C%3A%2FDevelop%2FProjects%2FVideoCall&amp;userId=usr_1"/);
+    assert.match(projectsHtml, /Создать Codex-сессию/);
+    assert.match(projectsHtml, /data-task-feedback/);
+
+    const projectDetailResponse = await fetch(`http://127.0.0.1:${address.port}/project/ws_1?userId=usr_1`);
+    const projectDetailHtml = await projectDetailResponse.text();
+    assert.equal(projectDetailResponse.status, 200);
+    assert.match(projectDetailHtml, /Прошедшие задачи/);
+    assert.match(projectDetailHtml, /href="\/new-task\?hostId=host_1&amp;workspaceId=ws_1&amp;userId=usr_1"/);
+    assert.match(projectDetailHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;userId=usr_1"/);
+    assert.match(projectDetailHtml, /href="\/projects\/tasks\?source=codex-cli&amp;project=C%3A%2FDevelop%2FProjects%2FHappyTG&amp;userId=usr_1"/);
+
+    const pastTasksResponse = await fetch(`http://127.0.0.1:${address.port}${cliTasksHref.replaceAll("&amp;", "&")}`);
+    const pastTasksHtml = await pastTasksResponse.text();
+    assert.equal(pastTasksResponse.status, 200);
+    assert.match(pastTasksHtml, /Past CLI task/);
+    assert.match(pastTasksHtml, /<a href="\/projects" aria-current="page">Проекты<\/a>/);
+    assert.doesNotMatch(pastTasksHtml, /<a href="\/codex" aria-current="page">Codex<\/a>/);
+    assert.match(pastTasksHtml, /<form method="GET" action="\/projects\/tasks"/);
+    assert.match(pastTasksHtml, /name="userId" value="usr_1"/);
+    assert.match(pastTasksHtml, /href="\/projects\?userId=usr_1"/);
+
+    const taskResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        hostId: "host_1",
+        workspaceId: "ws_1",
+        mode: "proof",
+        title: "Release check",
+        prompt: "Check project management",
+        acceptanceCriteria: ["Codex session visible"]
+      })
+    });
+    const payload = await taskResponse.json() as { sessionHref: string; session: { runtime: string } };
+
+    assert.equal(taskResponse.status, 200);
+    assert.equal(payload.sessionHref, "/session/ses_42?userId=usr_1");
+    assert.equal(payload.session.runtime, "codex-cli");
+
+    const questionResponse = await fetch(`http://127.0.0.1:${address.port}/new-task?userId=usr_1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        hostId: "host_1",
+        workspaceId: "ws_1",
+        mode: "quick",
+        title: "Implementation question",
+        prompt: "What changed?",
+        acceptanceCriteria: [],
+        intent: "question",
+        contextSessionId: "ses_42"
+      })
+    });
+
+    const questionPayload = await questionResponse.json() as { sessionHref: string };
+    assert.equal(questionResponse.status, 200);
+    assert.equal(questionPayload.sessionHref, "/session/ses_42?userId=usr_1");
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("session page renders timeline, summary, and task link", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname, init) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions/ses_2?userId=usr_1") {
+        return {
+          session: {
+            id: "ses_2",
+            title: "Proof task",
+            state: "verifying",
+            runtime: "codex-cli",
+            phase: "verify",
+            verificationState: "running",
+            hostLabel: "devbox",
+            repoName: "projection-repo",
+            lastUpdatedAt: "2026-04-07T10:00:00.000Z",
+            href: "/session/ses_2",
+            nextAction: "open",
+            currentSummary: "Verifier running",
+            lastError: undefined,
+            prompt: "Run proof"
+          },
+          task: {
+            id: "HTG-0002",
+            sessionId: "ses_2",
+            workspaceId: "ws_1",
+            rootPath: "/repo/.agent/tasks/HTG-0002",
+            mode: "proof",
+            title: "Proof task",
+            acceptanceCriteria: ["criterion"],
+            phase: "verify",
+            verificationState: "running",
+            createdAt: "2026-04-07T10:00:00.000Z",
+            updatedAt: "2026-04-07T10:00:00.000Z"
+          },
+          approval: {
+            id: "apr_2",
+            sessionId: "ses_2",
+            title: "Proof task",
+            state: "approved_once",
+            reason: "workspace write",
+            risk: "medium",
+            expiresAt: "2026-04-07T10:10:00.000Z",
+            href: "/approval/apr_2"
+          },
+          events: [
+            {
+              sequence: 1,
+              occurredAt: "2026-04-07T10:00:00.000Z",
+              type: "SessionCreated",
+              payload: { mode: "proof" }
+            }
+          ],
+          actions: ["diff", "summary"]
+        } as never;
+      }
+      if (pathname === "/api/v1/miniapp/projects?userId=usr_1") {
+        return {
+          projects: [
+            {
+              id: "ws_1",
+              hostId: "host_1",
+              hostLabel: "devbox",
+              hostStatus: "active",
+              repoName: "projection-repo",
+              path: "/repo",
+              defaultBranch: "main",
+              activeSessions: 1,
+              href: "/project/ws_1",
+              newSessionHref: "/new-task?hostId=host_1&workspaceId=ws_1"
+            }
+          ]
+        } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return { projects: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/control?userId=usr_1") {
+        return {
+          control: {
+            canResume: false,
+            canContinue: false,
+            canStop: false,
+            canCreateTask: false
+          }
+        } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        assert.equal(init?.method, "POST");
+        assert.deepEqual(JSON.parse(String(init?.body)), {
+          hostId: "host_1",
+          workspaceId: "ws_1",
+          mode: "quick",
+          title: "Implementation question",
+          prompt: "Intent: implementation question.\nContext session: ses_2.\n\nWhat should happen next?",
+          acceptanceCriteria: [],
+          runtime: "codex-cli"
+        });
+        return {
+          session: {
+            id: "ses_followup",
+            title: "Implementation question",
+            state: "ready",
+            runtime: "codex-cli",
+            hostLabel: "devbox",
+            repoName: "projection-repo",
+            lastUpdatedAt: "2026-04-07T10:05:00.000Z",
+            href: "/session/ses_followup",
+            nextAction: "open"
+          }
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/session/ses_2?userId=usr_1`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /Proof task/);
+    assert.match(html, /Codex CLI/);
+    assert.match(html, /Verifier running/);
+    assert.match(html, /Proof Progress/);
+    assert.match(html, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;contextSessionId=ses_2&amp;userId=usr_1"/);
+    assert.match(html, /href="\/new-task\?workspaceId=ws_1&amp;intent=implement&amp;contextSessionId=ses_2&amp;userId=usr_1"/);
+    assert.match(html, /href="\/task\/HTG-0002"/);
+    assert.match(html, /SessionCreated/);
+
+    const legacyResponse = await fetch(`http://127.0.0.1:${address.port}/?screen=session&id=ses_2&userId=usr_1`);
+    const legacyHtml = await legacyResponse.text();
+    assert.equal(legacyResponse.status, 200);
+    assert.match(legacyHtml, /href="\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;contextSessionId=ses_2&amp;userId=usr_1"/);
+
+    const followupHref = html.match(/href="(\/new-task\?workspaceId=ws_1&amp;intent=question&amp;title=Implementation\+question&amp;contextSessionId=ses_2&amp;userId=usr_1)"/)?.[1];
+    assert.ok(followupHref);
+    const formResponse = await fetch(`http://127.0.0.1:${address.port}${followupHref.replaceAll("&amp;", "&")}`);
+    const formHtml = await formResponse.text();
+    assert.equal(formResponse.status, 200);
+    assert.match(formHtml, /data-new-task-form/);
+
+    const createResponse = await fetch(`http://127.0.0.1:${address.port}${followupHref.replaceAll("&amp;", "&")}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        hostId: "host_1",
+        workspaceId: "ws_1",
+        mode: "quick",
+        title: "Implementation question",
+        prompt: "What should happen next?",
+        acceptanceCriteria: [],
+        intent: "question",
+        contextSessionId: "ses_2"
+      })
+    });
+    const createPayload = await createResponse.json() as { sessionHref: string };
+    assert.equal(createResponse.status, 200);
+    assert.equal(createPayload.sessionHref, "/session/ses_followup?userId=usr_1");
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test("session page renders auth bridge when API session detail returns 401", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions/ses_expired?userId=usr_1") {
+        throw new MiniAppFetchError(pathname, 401, "Mini App session auth required");
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/session/ses_expired?userId=usr_1`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+    assert.match(html, /data-auth-status/);
+    assert.match(html, /Повторить подключение/);
+    assert.match(html, /window\.HAPPYTgNeedsAuth = true/);
+    assert.match(html, /window\.HAPPYTgResetSession = true/);
+    assert.ok(html.indexOf("if (window.HAPPYTgResetSession)") < html.indexOf("var savedSession = readSession()"));
+    assert.match(response.headers.get("set-cookie") ?? "", /happytg_miniapp_session=; path=\/; max-age=0; samesite=lax/);
+    assert.doesNotMatch(html, /Internal server error/);
+    assert.doesNotMatch(html, /Mini App fetch failed/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("legacy screen=session route renders auth bridge when API session detail returns 401", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions/ses_expired?userId=usr_1") {
+        throw new MiniAppFetchError(pathname, 401, "Mini App session auth required");
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/?screen=session&id=ses_expired&userId=usr_1`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+    assert.match(html, /data-auth-status/);
+    assert.match(html, /aria-current="page">Сессии/);
+    assert.match(html, /window\.HAPPYTgResetSession = true/);
+    assert.match(response.headers.get("set-cookie") ?? "", /happytg_miniapp_session=; path=\/; max-age=0; samesite=lax/);
+    assert.doesNotMatch(html, /Internal server error/);
+    assert.doesNotMatch(html, /Mini App fetch failed/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("approval page renders real authenticated action buttons", async () => {
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/approvals/apr_1?userId=usr_1") {
+        return {
+          approval: {
+            id: "apr_1",
+            sessionId: "ses_1",
+            title: "Approval task",
+            state: "waiting_human",
+            reason: "workspace write",
+            risk: "high",
+            scope: "once",
+            nonce: "apn_1",
+            expiresAt: "2026-04-21T04:10:00.000Z",
+            href: "/approval/apr_1"
+          },
+          session: {
+            id: "ses_1",
+            title: "Approval task",
+            state: "needs_approval",
+            lastUpdatedAt: "2026-04-21T04:00:00.000Z",
+            href: "/session/ses_1",
+            nextAction: "open"
+          }
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/approval/apr_1?userId=usr_1`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /data-approval-action/);
+    assert.match(html, /data-approval-id="apr_1"/);
+    assert.match(html, /Разрешить на сессию/);
+    assert.match(html, /data-scope="session"/);
+    assert.match(html, /"authorization": "Bearer " \+ sessionToken/);
+    assert.match(html, /\/api\/v1\/miniapp\/approvals\//);
+    assert.match(html, /data-action-feedback/);
+    assert.doesNotMatch(html, /href="#"/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("startMiniAppServer returns an actionable message when the port is already in use", async () => {
+  const occupied = createServer();
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Occupied server did not bind to a TCP port");
+  }
+
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  try {
+    assert.match(formatMiniAppPortConflictMessage(address.port), /another process/);
+    await assert.rejects(
+      () => startMiniAppServer(server, { port: address.port, logger: { info() {} } }),
+      new RegExp(formatMiniAppPortConflictMessage(address.port).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    );
+  } finally {
+    await closeServer(occupied);
+    if (server.listening) {
+      await closeServer(server);
+    }
+  }
+});
+
+test("startMiniAppServer reuses an already-running HappyTG mini app on the same port", async () => {
+  const occupied = createHttpServer((req, res) => {
+    if (req.url === "/ready") {
+      res.writeHead(503, {
+        "content-type": "application/json"
+      });
+      res.end(JSON.stringify({ ok: false, service: "miniapp", detail: "api unavailable" }));
+      return;
+    }
+
+    res.writeHead(200, {
+      "content-type": "text/plain"
+    });
+    res.end("ok");
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Occupied Mini App test server did not bind to a TCP port");
+  }
+
+  const infoLogs: Array<{ message: string; metadata?: unknown }> = [];
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  try {
+    const result = await startMiniAppServer(server, {
+      port: address.port,
+      logger: {
+        info(message, metadata) {
+          infoLogs.push({ message, metadata });
+        }
+      },
+      reuseProbeWindowMs: 25,
+      reuseProbeIntervalMs: 10
+    });
+
+    assert.deepEqual(result, { status: "reused", port: address.port });
+    assert.equal(infoLogs[0]?.message, formatMiniAppPortReuseMessage(address.port));
+  } finally {
+    if (server.listening) {
+      await closeServer(server);
+    }
+    await closeServer(occupied);
+  }
+});
+
+test("startMiniAppServer rejects when a different HappyTG service occupies the mini app port", async () => {
+  const occupied = createHttpServer((_req, res) => {
+    res.writeHead(200, {
+      "content-type": "application/json"
+    });
+    res.end(JSON.stringify({ ok: true, service: "api" }));
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("HappyTG service test server did not bind to a TCP port");
+  }
+
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  try {
+    await assert.rejects(
+      () => startMiniAppServer(server, {
+        port: address.port,
+        logger: { info() {} },
+        reuseProbeWindowMs: 25,
+        reuseProbeIntervalMs: 10
+      }),
+      new RegExp(formatMiniAppPortConflictMessageDetailed(address.port, { service: "api" }).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    );
+  } finally {
+    if (server.listening) {
+      await closeServer(server);
+    }
+    await closeServer(occupied);
+  }
+});
+
+test("startMiniAppServer names a foreign HTTP listener when the port is occupied", async () => {
+  const occupied = createHttpServer((_req, res) => {
+    res.writeHead(200, {
+      "content-type": "text/html"
+    });
+    res.end("<!doctype html><title>Contacts</title>");
+  });
+  await new Promise<void>((resolve) => occupied.listen(0, resolve));
+  const address = occupied.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Foreign HTTP listener test server did not bind to a TCP port");
+  }
+
+  const server = createMiniAppServer({
+    async fetchJson() {
+      return { ok: true } as never;
+    }
+  });
+
+  try {
+    await assert.rejects(
+      () => startMiniAppServer(server, {
+        port: address.port,
+        logger: { info() {} },
+        reuseProbeWindowMs: 25,
+        reuseProbeIntervalMs: 10
+      }),
+      new RegExp(formatMiniAppPortConflictMessageDetailed(address.port, { description: "HTTP listener (Contacts)" }).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    );
+  } finally {
+    if (server.listening) {
+      await closeServer(server);
+    }
+    await closeServer(occupied);
+  }
+});

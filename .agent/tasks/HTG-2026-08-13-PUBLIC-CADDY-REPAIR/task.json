@@ -1,0 +1,17 @@
+{
+  "id": "HTG-2026-08-13-PUBLIC-CADDY-REPAIR",
+  "sessionId": "manual-session",
+  "workspaceId": "HappyTG",
+  "rootPath": "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR",
+  "phase": "complete",
+  "mode": "proof",
+  "title": "Restore HappyTG public Mini App routing through shared Caddy",
+  "acceptanceCriteria": [
+    "Mini App runtime is rebuilt from current source and remains healthy",
+    "Shared Caddy routes only HappyTG paths and hostname to ports 3008, 4001, and 4100",
+    "Forced-local and public HTTPS checks return HappyTG identity without regressing Contacts, VideoCall, NPortal, or HealthOS"
+  ],
+  "verificationState": "passed",
+  "createdAt": "2026-08-13T17:23:12.270Z",
+  "updatedAt": "2026-08-13T17:48:40.577Z"
+}

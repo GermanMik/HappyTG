@@ -1,0 +1,39 @@
+{
+  "taskId": "HTG-2026-08-13-PUBLIC-CADDY-REPAIR",
+  "criteria": [
+    {
+      "criterion": "Mini App runtime is rebuilt from current source and remains healthy",
+      "artifacts": [
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\build.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\test-unit.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\test-integration.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\lint.txt"
+      ]
+    },
+    {
+      "criterion": "Shared Caddy routes only HappyTG paths and hostname to ports 3008, 4001, and 4100",
+      "artifacts": [
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\build.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\test-unit.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\test-integration.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\lint.txt"
+      ]
+    },
+    {
+      "criterion": "Forced-local and public HTTPS checks return HappyTG identity without regressing Contacts, VideoCall, NPortal, or HealthOS",
+      "artifacts": [
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\build.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\test-unit.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\test-integration.txt",
+        "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\lint.txt"
+      ]
+    }
+  ],
+  "artifacts": [
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\build.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\test-unit.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\test-integration.txt",
+    "C:\\Develop\\Projects\\HappyTG\\.agent\\tasks\\HTG-2026-08-13-PUBLIC-CADDY-REPAIR\\raw\\lint.txt"
+  ],
+  "generatedAt": "2026-08-13T17:48:40.572Z"
+}

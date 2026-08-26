@@ -1,0 +1,9 @@
+BaseDeploy Caddy pre-SHA256: ADF2791EDD53BB218C7BBAC3F28A258E6F55C0133F6FE26175D52CF55A28F41A
+BaseDeploy Caddy post-SHA256: E4933E94B26BB3D9B3AC23954B912C7DD25B524CDB501DFEA49D49243463886E
+caddy validate -> Valid configuration; caddy reload -> exit 0; PID remained 13620
+direct miniapp 3008 -> 200 HappyTG Mini App; API 4001 /health -> 200; bot 4100 /ready -> 200
+forced-local 443 /miniapp -> 200 HappyTG Mini App; /health -> 200; dashboard -> 401; generic API -> 404
+public 443 /miniapp -> 200 HappyTG Mini App via 78.47.125.180 with trusted TLS
+public 5083 /miniapp -> 200 HappyTG Mini App; /miniapp/ready -> 200; dashboard -> 401
+pnpm happytg verify --json -> exit 0; public Caddy Mini App route identity PASS; unrelated Codex smoke cache/websocket warnings remain
+neighbor public 443: Contacts 200 identity, VideoCall /health 200, NPortal 200 identity, HealthOS root/API 200 identity

@@ -96,7 +96,7 @@ These are discipline sources, not substitutes for repository evidence. Final dec
 
 ## graphify
 
-This project has a Graphify knowledge graph at `graphify-out/`.
+This project has a primary curated Graphify knowledge graph at `graphify-runs/core-corpus/graphify-out/`.
 
 When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
 
@@ -104,7 +104,8 @@ Rules:
 - For architecture, dependency, module-relationship or large codebase navigation questions, start with a focused Graphify query/path/explain call; read `graphify-out/GRAPH_REPORT.md` only when the scoped graph is insufficient.
 - Prefer `graphify query "<specific question>" --budget 1200`, `graphify path "<A>" "<B>"`, or `graphify explain "<node>"` for cross-module questions before falling back to broad source search.
 - If `graphify-out/wiki/index.md` exists, use it for broad navigation instead of raw source browsing.
-- After code changes, run Graphify update only on the smallest relevant path/corpus; avoid full-repo `graphify update .` when the change is limited to one app/package.
+- Refresh the curated core graph by running `graphify-runs/sync-core-corpus.ps1`, then `graphify update graphify-runs/core-corpus`.
+- After code changes, run Graphify update only on the smallest relevant path/corpus; avoid full-repo `graphify update .`. The root `graphify-out/` is a broad snapshot, not the default interactive graph.
 - Do not run heavy semantic Graphify extraction automatically; use it only when the task needs architecture/dependency understanding.
 - For semantic refreshes, prefer the existing local LM Studio workflow recorded in `.agent/tasks/HTG-2026-05-06-graphify-lmstudio/`; do not use cloud Graphify backends or Ollama fallback unless explicitly requested.
 - Treat Graphify as navigation evidence, not as a replacement for reading the actual source files before edits.

@@ -1,0 +1,36 @@
+{
+  "taskId": "HTG-2026-08-13-PUBLIC-CADDY-REPAIR",
+  "status": "passed",
+  "verifier": {
+    "role": "task-verifier",
+    "runId": "vrf_20260813_happytg_public_caddy"
+  },
+  "checks": [
+    {
+      "name": "miniapp-unit",
+      "ok": true,
+      "detail": "27/27 passed"
+    },
+    {
+      "name": "miniapp-typecheck-build",
+      "ok": true,
+      "detail": "typecheck and build exited 0"
+    },
+    {
+      "name": "caddy-validate-reload",
+      "ok": true,
+      "detail": "valid configuration; SHA256-guarded reload; PID 13620 retained"
+    },
+    {
+      "name": "happytg-public",
+      "ok": true,
+      "detail": "443 and 5083 return HappyTG Mini App identity; dashboard 401; generic API 404"
+    },
+    {
+      "name": "shared-neighbors",
+      "ok": true,
+      "detail": "Contacts, VideoCall, NPortal, and HealthOS public 443 checks pass"
+    }
+  ],
+  "generatedAt": "2026-08-13T17:48:40.577Z"
+}

@@ -1,0 +1,19 @@
+rules:
+  - id: choose-minimal-on-low-privilege
+    if:
+      requestedProfile: auto
+      elevatedInstallAllowed: false
+    then:
+      profile: minimal
+  - id: choose-recommended-for-local-dev
+    if:
+      requestedProfile: auto
+      usageMode: local-dev
+    then:
+      profile: recommended
+  - id: choose-full-for-server-self-hosted
+    if:
+      requestedProfile: auto
+      usageMode: self-hosted-server
+    then:
+      profile: full

@@ -1,0 +1,2 @@
+pnpm --filter @happytg/miniapp typecheck -> exit 0
+Caddyfile validate -> exit 0

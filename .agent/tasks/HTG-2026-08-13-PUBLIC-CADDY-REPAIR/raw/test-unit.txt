@@ -1,0 +1,2 @@
+pnpm --filter @happytg/miniapp test -> exit 0
+27 tests, 27 passed, 0 failed

@@ -1,0 +1,19 @@
+{
+  "project": "HappyTG",
+  "directories": [
+    "apps",
+    "packages",
+    "scripts"
+  ],
+  "files": [
+    "AGENTS.md",
+    "ARCHITECTURE.md",
+    "README.md",
+    "package.json",
+    "pnpm-workspace.yaml",
+    "tsconfig.base.json",
+    "turbo.json"
+  ],
+  "exclude_segments": []
+}
+

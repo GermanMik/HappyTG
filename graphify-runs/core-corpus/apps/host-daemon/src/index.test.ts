@@ -1,0 +1,364 @@
+import assert from "node:assert/strict";
+import { mkdtemp, rm } from "node:fs/promises";
+import type { Server } from "node:http";
+import type { AddressInfo } from "node:net";
+import os from "node:os";
+import path from "node:path";
+import test from "node:test";
+
+import type { PendingDispatch } from "../../../packages/protocol/src/index.js";
+import { CodexDesktopStateAdapter, codexCliMissingMessage, type CodexDesktopControlContract } from "../../../packages/runtime-adapters/src/index.js";
+import { createCodexDesktopHostProxyServer } from "./codex-desktop-proxy.js";
+
+import {
+  compactJournal,
+  configuredBotTarget,
+  defaultWorkspaces,
+  firstRunGuidance,
+  hostNotPairedMessage,
+  pairingInstructions,
+  parseVerifierVerdict,
+  sandboxForDispatch,
+  shouldEmitStartupNotice,
+  startupReadinessMessage,
+  summarizeBootstrapReport
+} from "./index.js";
+
+function makeDispatch(overrides: Partial<PendingDispatch> = {}): PendingDispatch {
+  return {
+    id: "dsp_1",
+    sessionId: "ses_1",
+    hostId: "host_1",
+    workspaceId: "ws_1",
+    executionKind: "runtime_session",
+    mode: "quick",
+    runtime: "codex-cli",
+    actionKind: "workspace_read",
+    prompt: "inspect",
+    title: "Inspect",
+    status: "queued",
+    idempotencyKey: "idem_1",
+    createdAt: "2026-04-07T10:00:00.000Z",
+    updatedAt: "2026-04-07T10:00:00.000Z",
+    ...overrides
+  };
+}
+
+test("defaultWorkspaces prefers configured workspace paths", () => {
+  const workspaces = defaultWorkspaces(
+    {
+      ...process.env,
+      HAPPYTG_WORKSPACES: "/tmp/alpha,/tmp/beta"
+    },
+    "/tmp/fallback"
+  );
+
+  assert.deepEqual(workspaces, [
+    { path: "/tmp/alpha", repoName: "alpha" },
+    { path: "/tmp/beta", repoName: "beta" }
+  ]);
+});
+
+test("compactJournal keeps running entries and trims stale completed entries", () => {
+  const journal = compactJournal(
+    {
+      entries: [
+        {
+          sessionId: "ses_running",
+          dispatchId: "dsp_running",
+          state: "running",
+          lastUpdatedAt: "2026-04-07T10:00:00.000Z"
+        },
+        {
+          sessionId: "ses_recent",
+          dispatchId: "dsp_recent",
+          state: "completed",
+          lastUpdatedAt: "2026-04-07T09:59:59.000Z"
+        },
+        {
+          sessionId: "ses_old",
+          dispatchId: "dsp_old",
+          state: "failed",
+          lastUpdatedAt: "2026-04-06T09:00:00.000Z"
+        }
+      ]
+    },
+    {
+      nowMs: new Date("2026-04-07T10:00:00.000Z").getTime(),
+      retentionMs: 5_000
+    }
+  );
+
+  assert.deepEqual(
+    journal.entries.map((entry) => entry.dispatchId),
+    ["dsp_running", "dsp_recent"]
+  );
+});
+
+test("sandboxForDispatch preserves read-only safety for doctor and verify paths", () => {
+  assert.equal(sandboxForDispatch(makeDispatch({ actionKind: "workspace_read" })), "read-only");
+  assert.equal(sandboxForDispatch(makeDispatch({ actionKind: "verification_run" })), "read-only");
+  assert.equal(sandboxForDispatch(makeDispatch({ actionKind: "workspace_write" })), "workspace-write");
+});
+
+test("parseVerifierVerdict keys off the first line only", () => {
+  assert.equal(parseVerifierVerdict("VERDICT: PASS\nAll good"), "passed");
+  assert.equal(parseVerifierVerdict("VERDICT: FAIL\nNeeds fixes"), "failed");
+  assert.equal(parseVerifierVerdict("VERDICT: FAIL\nPASS later"), "failed");
+});
+
+test("startup guidance stays actionable and repeated notices are suppressed", () => {
+  const cache = new Map<string, number>();
+  const previousBotUsername = process.env.TELEGRAM_BOT_USERNAME;
+
+  delete process.env.TELEGRAM_BOT_USERNAME;
+
+  try {
+    assert.equal(
+      startupReadinessMessage({ available: false }),
+      codexCliMissingMessage()
+    );
+    assert.equal(
+      startupReadinessMessage({ available: false, missing: false }),
+      undefined
+    );
+    assert.equal(
+      firstRunGuidance({ hostId: undefined, readinessAvailable: false }),
+      codexCliMissingMessage()
+    );
+    assert.equal(
+      firstRunGuidance({ hostId: undefined, readinessAvailable: false, readinessMissing: false }),
+      "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`."
+    );
+    assert.equal(
+      firstRunGuidance({ hostId: undefined, readinessAvailable: true }),
+      "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`."
+    );
+    assert.equal(hostNotPairedMessage(), "Host is not paired yet. Run `pnpm daemon:pair`, then send the code in Telegram with `/pair <CODE>`.");
+    assert.deepEqual(pairingInstructions("PAIR-123"), [
+      "Pair with Telegram using: /pair PAIR-123",
+      "Next: keep `pnpm dev` running, send the command in Telegram, then start the daemon with `pnpm dev:daemon`."
+    ]);
+    assert.equal(configuredBotTarget({
+      TELEGRAM_BOT_USERNAME: "happytg_bot"
+    }), "@happytg_bot");
+    assert.equal(
+      hostNotPairedMessage({
+        TELEGRAM_BOT_USERNAME: "happytg_bot"
+      }),
+      "Host is not paired yet. Run `pnpm daemon:pair`, then send the code to @happytg_bot with `/pair <CODE>`."
+    );
+    assert.deepEqual(pairingInstructions("PAIR-123", {
+      TELEGRAM_BOT_USERNAME: "happytg_bot"
+    }), [
+      "Pair with @happytg_bot using: /pair PAIR-123",
+      "Next: keep `pnpm dev` running, send the command to @happytg_bot, then start the daemon with `pnpm dev:daemon`."
+    ]);
+    assert.equal(shouldEmitStartupNotice(cache, "codex", 0, 60_000), true);
+    assert.equal(shouldEmitStartupNotice(cache, "codex", 1_000, 60_000), false);
+    assert.equal(shouldEmitStartupNotice(cache, "codex", 61_000, 60_000), true);
+  } finally {
+    if (previousBotUsername === undefined) {
+      delete process.env.TELEGRAM_BOT_USERNAME;
+    } else {
+      process.env.TELEGRAM_BOT_USERNAME = previousBotUsername;
+    }
+  }
+});
+
+test("summarizeBootstrapReport includes top finding codes", () => {
+  const summary = summarizeBootstrapReport({
+    id: "btr_1",
+    hostFingerprint: "fp",
+    command: "verify",
+    status: "warn",
+    profileRecommendation: "recommended",
+    findings: [
+      { code: "CODEX_SMOKE_WARNINGS", severity: "warn", message: "warning" },
+      { code: "CODEX_CONFIG_MISSING", severity: "warn", message: "missing config" }
+    ],
+    planPreview: [],
+    reportJson: {},
+    createdAt: "2026-04-07T10:00:00.000Z"
+  });
+
+  assert.match(summary, /Bootstrap verify warn/);
+  assert.match(summary, /CODEX_SMOKE_WARNINGS/);
+  assert.match(summary, /CODEX_CONFIG_MISSING/);
+});
+
+async function listenOnRandomPort(server: Server): Promise<string> {
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      server.off("error", reject);
+      resolve();
+    });
+  });
+
+  const address = server.address() as AddressInfo;
+  return `http://127.0.0.1:${address.port}`;
+}
+
+async function closeServer(server: Server): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+test("Codex Desktop host proxy requires token and serializes mutating controls", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "happytg-desktop-proxy-"));
+  const events: string[] = [];
+  const session = {
+    id: "session-1",
+    title: "Desktop session",
+    projectPath: "C:/Develop/Projects/HappyTG",
+    updatedAt: "2026-06-10T10:00:00.000Z",
+    status: "active" as const,
+    source: "codex-desktop" as const,
+    canResume: true,
+    canContinue: true,
+    canStop: true,
+    canCreateTask: true
+  };
+  const controlContract: CodexDesktopControlContract = {
+    supportsResume: true,
+    supportsContinue: true,
+    supportsStop: true,
+    supportsNewTask: true,
+    async capabilities() {
+      return {
+        supportsResume: true,
+        supportsContinue: true,
+        supportsStop: true,
+        supportsNewTask: true
+      };
+    },
+    async listProjects() {
+      return [
+        {
+          id: "cdp_1",
+          label: "HappyTG",
+          path: "C:/Develop/Projects/HappyTG",
+          source: "codex-desktop",
+          active: true
+        }
+      ];
+    },
+    async listSessions() {
+      return [session];
+    },
+    async getSessionDetail() {
+      return {
+        session,
+        history: [],
+        historyTruncated: false
+      };
+    },
+    async resumeSession(inputSession) {
+      events.push("resume-start");
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      events.push("resume-end");
+      return {
+        ok: true,
+        action: "resume",
+        source: "codex-desktop",
+        session: inputSession
+      };
+    },
+    async continueSession(inputSession) {
+      events.push("continue-start");
+      events.push("continue-end");
+      return {
+        ok: true,
+        action: "continue",
+        source: "codex-desktop",
+        session: inputSession
+      };
+    },
+    async stopSession(inputSession) {
+      events.push("stop-start");
+      events.push("stop-end");
+      return {
+        ok: true,
+        action: "stop",
+        source: "codex-desktop",
+        session: inputSession
+      };
+    },
+    async createTask(input) {
+      return {
+        ok: true,
+        action: "new-task",
+        source: "codex-desktop",
+        task: {
+          id: "session-new",
+          title: input.title ?? "Desktop task",
+          projectPath: input.projectPath,
+          status: "running"
+        }
+      };
+    }
+  };
+  const adapter = new CodexDesktopStateAdapter({
+    codexHome: tempDir,
+    controlContract
+  });
+  const server = createCodexDesktopHostProxyServer({
+    adapter,
+    token: "secret",
+    logger: {
+      info() {},
+      warn() {},
+      error() {}
+    }
+  });
+
+  try {
+    const baseUrl = await listenOnRandomPort(server);
+    const unauthorized = await fetch(`${baseUrl}/api/v1/codex-desktop/projects`);
+    assert.equal(unauthorized.status, 401);
+
+    const headers = { authorization: "Bearer secret" };
+    const projects = await (await fetch(`${baseUrl}/api/v1/codex-desktop/projects`, { headers })).json() as { projects: Array<{ label: string }> };
+    assert.equal(projects.projects[0]?.label, "HappyTG");
+
+    const continued = await fetch(`${baseUrl}/api/v1/codex-desktop/sessions/session-1/continue`, {
+      method: "POST",
+      headers: {
+        ...headers,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        userId: "usr_1",
+        prompt: "Continue desktop task"
+      })
+    });
+    assert.equal(continued.status, 200);
+    assert.deepEqual(events, ["continue-start", "continue-end"]);
+    events.length = 0;
+
+    const resume = fetch(`${baseUrl}/api/v1/codex-desktop/sessions/session-1/resume`, {
+      method: "POST",
+      headers
+    });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const stop = fetch(`${baseUrl}/api/v1/codex-desktop/sessions/session-1/stop`, {
+      method: "POST",
+      headers
+    });
+
+    assert.equal((await resume).status, 200);
+    assert.equal((await stop).status, 200);
+    assert.deepEqual(events, ["resume-start", "resume-end", "stop-start", "stop-end"]);
+  } finally {
+    await closeServer(server);
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
