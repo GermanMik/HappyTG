@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.4.31
+
+### Fixed
+
+- Docker API, worker, bot, and Mini App readiness checks now use the shared `curl` binary instead of spawning a Node process for every probe.
+- App healthchecks now run every `30s`, reducing recurring container CPU spikes while preserving HTTP `/ready` semantics.
+- Mini App Desktop rendering uses an opaque sticky top bar, bounded session loading, staged load-more controls, and rendering containment for long session lists.
+
+### Verification
+
+- Rebuilt and restarted all four app services with the existing Codex Desktop host-proxy overrides; all reached `healthy` and returned `ok: true` from `/ready`.
+- Targeted bootstrap infrastructure tests passed 12/12, TypeScript validation passed, and Compose configuration parsed successfully.
+
 ## v0.4.30
 
 ### Fixed
