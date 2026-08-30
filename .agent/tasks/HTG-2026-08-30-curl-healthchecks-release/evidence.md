@@ -1,8 +1,8 @@
 # Evidence Bundle: HTG-2026-08-30-curl-healthchecks-release
 
 ## Summary
-- Overall status: UNKNOWN (AC5 pending Git publication and release workflow)
-- Last updated: 2026-08-30T17:13:00+03:00
+- Overall status: PASS
+- Last updated: 2026-08-30T17:29:00+03:00
 
 ## Acceptance criteria evidence
 
@@ -46,11 +46,14 @@
   - None.
 
 ### AC5
-- Status: UNKNOWN
+- Status: PASS
 - Proof:
-  - Current branch is `codex/miniapp-cpu-optimization` and has not yet been committed or pushed for this release.
+  - Release commit `b40ba39` was pushed to `codex/miniapp-cpu-optimization` and merged by PR #73 as merge commit `b0a4dc4`.
+  - `git merge-base --is-ancestor b40ba39 origin/main` passed.
+  - GitHub Release workflow `33325223971` completed `success` on `main` after passing install, metadata, typecheck, lint, test, and build gates.
+  - Published, non-draft, non-prerelease GitHub Release `v0.4.31` exists and targets `b0a4dc4`.
 - Gaps:
-  - Commit, push, merge into the default branch, and GitHub Release `v0.4.31` are still pending.
+  - None.
 
 ## Commands run
 - `tsx --test packages/bootstrap/src/infra-config.test.ts` — exit 0, 12/12 passed.
@@ -79,4 +82,4 @@
 - .agent/tasks/HTG-2026-08-30-curl-healthchecks-release/raw/diff-check.txt
 
 ## Known gaps
-- AC5 remains pending until the release commit is on the default branch and GitHub Release `v0.4.31` is verified.
+- None. The final release proof is recorded in `raw/release-check.txt`.

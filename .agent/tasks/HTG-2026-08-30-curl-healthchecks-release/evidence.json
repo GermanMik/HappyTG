@@ -1,6 +1,6 @@
 {
   "task_id": "HTG-2026-08-30-curl-healthchecks-release",
-  "overall_status": "UNKNOWN",
+  "overall_status": "PASS",
   "acceptance_criteria": [
     {
       "id": "AC1",
@@ -20,7 +20,7 @@
       "id": "AC3",
       "text": "The changed Compose contract is covered by passing targeted tests, TypeScript validation, and docker compose config --quiet; the four rebuilt app containers are healthy and each /ready endpoint returns ok: true after restart.",
       "status": "PASS",
-      "proof": ["12/12 infra tests passed; tsc passed; Compose config passed; all four images built; all four containers healthy and /ready returned ok true."],
+      "proof": ["12/12 infra tests passed; root typecheck, lint, test, and build each passed 15/15; Compose config passed; all four images built; all four containers healthy and /ready returned ok true."],
       "gaps": []
     },
     {
@@ -33,12 +33,12 @@
     {
       "id": "AC5",
       "text": "Changes are committed, pushed, merged into the default branch, and the guarded GitHub Release v0.4.31 is created from the latest default-branch commit.",
-      "status": "UNKNOWN",
-      "proof": [],
-      "gaps": ["Git lifecycle and GitHub Release are pending."]
+      "status": "PASS",
+      "proof": ["b40ba39 was pushed and merged by PR #73 as b0a4dc4; release workflow 33325223971 succeeded; published v0.4.31 targets b0a4dc4."],
+      "gaps": []
     }
   ],
   "changed_files": ["infra/Dockerfile.app", "infra/docker-compose.example.yml", "packages/bootstrap/src/infra-config.test.ts", "package.json", "apps/*/package.json", "packages/*/package.json", "CHANGELOG.md", "docs/releases/0.4.31.md"],
-  "commands_for_fresh_verifier": ["node scripts/release/validate-release.mjs --version 0.4.31", "tsx --test packages/bootstrap/src/infra-config.test.ts", "pnpm typecheck", "pnpm lint", "pnpm test", "pnpm build", "docker compose ... config --quiet", "git status --short"],
-  "known_gaps": ["AC5 is pending Git commit, push, merge, and release verification."]
+  "commands_for_fresh_verifier": ["node scripts/release/validate-release.mjs --version 0.4.31", "tsx --test packages/bootstrap/src/infra-config.test.ts", "pnpm typecheck", "pnpm lint", "pnpm test", "pnpm build", "docker compose ... config --quiet", "gh run view 33325223971", "gh release view v0.4.31"],
+  "known_gaps": []
 }

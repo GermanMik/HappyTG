@@ -1,13 +1,52 @@
 {
   "task_id": "HTG-2026-08-30-curl-healthchecks-release",
-  "overall_verdict": "UNKNOWN",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-08-30T17:29:00+03:00",
   "criteria": [
     {
       "id": "AC1",
-      "status": "UNKNOWN",
-      "reason": "Verifier has not run yet."
+      "status": "PASS",
+      "reason": "infra/Dockerfile.app installs curl and removes apt metadata; the rebuilt application image contains curl."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "API, worker, bot, and Mini App use curl -fsS --max-time 4 against /ready with interval 30s; no application healthcheck uses node -e."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "Targeted tests, TypeScript validation, Compose config, full typecheck/lint/test/build, image rebuild, restart, docker inspect, and four /ready probes all passed; containers are healthy."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "All 16 workspace package versions, CHANGELOG.md, and docs/releases/0.4.31.md are aligned; release metadata validation passed."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "b40ba39 was pushed and merged by PR #73 as b0a4dc4; workflow 33325223971 succeeded; published v0.4.31 targets b0a4dc4."
     }
   ],
-  "commands_run": [],
-  "artifacts_used": []
+  "commands_run": [
+    "node scripts/release/validate-release.mjs --version 0.4.31",
+    "tsx --test packages/bootstrap/src/infra-config.test.ts",
+    "pnpm typecheck",
+    "pnpm lint",
+    "pnpm test",
+    "pnpm build",
+    "docker compose -f infra/docker-compose.example.yml -f infra/docker-compose.codex-desktop.yml -f infra/docker-compose.codex-desktop-host-proxy.yml config --quiet",
+    "gh run view 33325223971 --repo GermanMik/HappyTG",
+    "gh release view v0.4.31 --repo GermanMik/HappyTG"
+  ],
+  "artifacts_used": [
+    ".agent/tasks/HTG-2026-08-30-curl-healthchecks-release/evidence.md",
+    ".agent/tasks/HTG-2026-08-30-curl-healthchecks-release/evidence.json",
+    ".agent/tasks/HTG-2026-08-30-curl-healthchecks-release/raw/build.txt",
+    ".agent/tasks/HTG-2026-08-30-curl-healthchecks-release/raw/test-unit.txt",
+    ".agent/tasks/HTG-2026-08-30-curl-healthchecks-release/raw/test-integration.txt",
+    ".agent/tasks/HTG-2026-08-30-curl-healthchecks-release/raw/lint.txt",
+    ".agent/tasks/HTG-2026-08-30-curl-healthchecks-release/raw/release-check.txt"
+  ]
 }

@@ -1,2 +1,7 @@
 Release validation passed for 0.4.31.
 Checked 16 package versions, CHANGELOG.md, and docs/releases/0.4.31.md.
+
+--- GitHub release workflow ---
+{"conclusion":"success","headSha":"b0a4dc4da5c985dbbcf8f120bd346c859c262a01","status":"completed","url":"https://github.com/GermanMik/HappyTG/actions/runs/33325223971"}
+{"isDraft":false,"isPrerelease":false,"name":"HappyTG 0.4.31","publishedAt":"2026-08-30T17:26:56Z","tagName":"v0.4.31","targetCommitish":"b0a4dc4da5c985dbbcf8f120bd346c859c262a01","url":"https://github.com/GermanMik/HappyTG/releases/tag/v0.4.31"}
+{"html_url":"https://github.com/GermanMik/HappyTG/pull/73","merge_commit_sha":"b0a4dc4da5c985dbbcf8f120bd346c859c262a01","merged_at":"2026-08-30T17:24:28Z","state":"closed"}
