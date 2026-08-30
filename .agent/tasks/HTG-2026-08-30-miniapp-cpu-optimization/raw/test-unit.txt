@@ -1,0 +1,9 @@
+Command: pnpm --filter @happytg/miniapp test
+Exit code: 0
+Result: 28 tests, 28 passed, 0 failed, duration 6561.9436ms.
+Focused coverage:
+- opaque topbar without backdrop blur;
+- session-card content-visibility and intrinsic-size containment;
+- broad Desktop fetch defaults to 20;
+- load-more stages 20 -> 50 -> 100 and explicit limits clamp to 20..200;
+- project-filtered fetch remains 100 and visible cards remain capped at five.

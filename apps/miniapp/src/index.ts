@@ -848,6 +848,10 @@ export function renderPage(
         border-top: 0;
         padding-top: 0;
       }
+      .session-card {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 180px;
+      }
       .status-meta {
         display: flex;
         gap: 8px;
@@ -1270,8 +1274,9 @@ export function renderPage(
         z-index: 15;
         margin: -2px 0 8px;
         padding: 8px 2px 6px;
-        background: color-mix(in srgb, var(--bg) 84%, transparent);
-        backdrop-filter: blur(16px);
+        background: var(--surface);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
       }
       .topbar-title {
         display: flex;
@@ -2559,6 +2564,12 @@ function renderDesktopHistory(detail: CodexDesktopSessionDetail, options: { hist
     ${detail.historyTruncated ? `<p class="muted">History truncated to a bounded read-only preview.</p>` : ""}`;
 }
 
+const defaultDesktopSessionLimit = 20;
+
+function nextDesktopSessionLimit(currentLimit: number): number {
+  return Math.min(200, currentLimit < 50 ? 50 : currentLimit * 2);
+}
+
 function renderCodexPanel(input: {
   cliSessions: MiniAppSessionCard[];
   desktopProjects: CodexDesktopProject[];
@@ -2590,7 +2601,7 @@ function renderCodexPanel(input: {
   const source = input.source ?? "all";
   const query = input.q?.trim() ?? "";
   const sort = normalizeCodexPanelSort(input.sort);
-  const desktopSessionLimit = input.desktopSessionLimit ?? 50;
+  const desktopSessionLimit = input.desktopSessionLimit ?? defaultDesktopSessionLimit;
   const hasProjectFilter = Boolean(input.project && input.project !== "all");
   const routePath = input.routePath ?? "/codex";
   const resetHref = input.resetHref ?? routePath;
@@ -2625,7 +2636,7 @@ function renderCodexPanel(input: {
     project: input.project,
     q: query,
     sort,
-    limit: Math.min(200, Math.max(desktopSessionLimit * 2, 100)),
+    limit: nextDesktopSessionLimit(desktopSessionLimit),
     userId: input.userId
   });
 
@@ -2643,11 +2654,11 @@ function renderCodexPanel(input: {
         <form method="GET" action="${escapeHtml(routePath)}" class="inline-form form-card">
           <input type="hidden" name="source" value="${escapeHtml(source)}">
           ${input.project ? `<input type="hidden" name="project" value="${escapeHtml(input.project)}">` : ""}
-          ${desktopSessionLimit !== 50 ? `<input type="hidden" name="limit" value="${escapeHtml(String(desktopSessionLimit))}">` : ""}
+          ${desktopSessionLimit !== defaultDesktopSessionLimit ? `<input type="hidden" name="limit" value="${escapeHtml(String(desktopSessionLimit))}">` : ""}
           ${input.userId ? `<input type="hidden" name="userId" value="${escapeHtml(input.userId)}">` : ""}
           <label><span class="eyebrow">Поиск</span><input name="q" value="${escapeHtml(query)}" placeholder="Сессия, проект или путь"></label>
           <div class="actions"><button class="button button-primary" type="submit">Найти</button>${linkButton("Сбросить", resetHref)}</div>
-          ${renderSourceSwitcher(source, { path: routePath, project: input.project, state: input.state, q: query, sort, limit: desktopSessionLimit !== 50 ? desktopSessionLimit : undefined, userId: input.userId })}
+          ${renderSourceSwitcher(source, { path: routePath, project: input.project, state: input.state, q: query, sort, limit: desktopSessionLimit !== defaultDesktopSessionLimit ? desktopSessionLimit : undefined, userId: input.userId })}
           <details class="meta-details">
             <summary>Фильтры</summary>
             <div class="form-row">
@@ -2670,7 +2681,7 @@ function renderCodexPanel(input: {
     <section class="panel">
       ${renderSectionTitle("Операционная очередь", renderBadge(`${visibleCards.length} visible`, "info"))}
       ${renderSessionCards(visibleCards)}
-      ${canLoadMoreDesktop ? `<div class="actions">${linkButton(`Показать до ${Math.min(200, Math.max(desktopSessionLimit * 2, 100))} Desktop sessions`, moreDesktopHref)}</div>` : ""}
+      ${canLoadMoreDesktop ? `<div class="actions">${linkButton(`Показать до ${nextDesktopSessionLimit(desktopSessionLimit)} Desktop sessions`, moreDesktopHref)}</div>` : ""}
     </section>
     <details class="panel meta-details">
       <summary>Проекты и счетчики</summary>
@@ -3206,9 +3217,9 @@ export function createMiniAppServer(dependencies: MiniAppDependencies = { fetchJ
   const desktopSessionLimitForRequest = (url: URL): number => {
     const rawLimit = Number(url.searchParams.get("limit"));
     if (Number.isInteger(rawLimit) && rawLimit > 0) {
-      return Math.min(Math.max(rawLimit, 50), 200);
+      return Math.min(Math.max(rawLimit, defaultDesktopSessionLimit), 200);
     }
-    return url.searchParams.get("project") && url.searchParams.get("source") !== "codex-cli" ? 100 : 50;
+    return url.searchParams.get("project") && url.searchParams.get("source") !== "codex-cli" ? 100 : defaultDesktopSessionLimit;
   };
   const fetchCodexForRequest = async (req: { headers: Record<string, string | string[] | undefined> }, url: URL) => {
     const desktopSessionLimit = desktopSessionLimitForRequest(url);

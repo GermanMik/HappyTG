@@ -1,0 +1,19 @@
+Baseline deployed container before the change:
+- happytg-miniapp-1 idle CPU: 0.01%; happytg-api-1: 0.03%.
+- /codex Desktop HTML: 121490 bytes; cold sample 7319ms.
+- Browser DOM: 1758 elements, 62 li nodes, 64 details nodes, 9070px scroll height.
+- Computed sticky topbar backdrop-filter: blur(16px).
+
+Changed checkout browser smoke:
+- Started apps/miniapp/src/index.ts on isolated port 3011 with API http://127.0.0.1:4001; production containers were not restarted.
+- Opened /codex?source=codex-desktop&userId=usr_1 in the in-app Chromium browser.
+- Browser DOM: 870 elements, 20 .session-card nodes, 34 details nodes, 4862px scroll height.
+- Computed topbar backdrop-filter: none; background: rgb(255, 255, 255).
+- Computed first card content-visibility: auto; contain-intrinsic-size: auto 180px.
+- Load-more text: "Показать до 50 Desktop sessions".
+- Load-more href: /codex?source=codex-desktop&limit=50&userId=usr_1.
+- Temporary browser tab and port-3011 listener were closed after proof.
+
+Observed reduction:
+- DOM elements: 1758 -> 870 (50.5% fewer).
+- Document scroll height: 9070 -> 4862 (46.4% lower).

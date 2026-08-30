@@ -1,0 +1,47 @@
+{
+  "task_id": "HTG-2026-08-30-miniapp-cpu-optimization",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "text": "The Telegram/mobile sticky top bar no longer uses backdrop-filter blur and keeps a readable opaque background.",
+      "status": "PASS",
+      "proof": [{"type": "browser", "path": ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/raw/test-integration.txt", "command": "isolated browser smoke on port 3011", "exit_code": 0, "summary": "Computed backdrop-filter was none and background was opaque white."}],
+      "gaps": []
+    },
+    {
+      "id": "AC2",
+      "text": "Broad Codex Desktop session views request 20 sessions by default while project-filtered views retain the 100-session fetch and five-card cap.",
+      "status": "PASS",
+      "proof": [{"type": "test", "path": ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/raw/test-unit.txt", "command": "pnpm --filter @happytg/miniapp test", "exit_code": 0, "summary": "Default-limit and preserved project-cap tests passed."}],
+      "gaps": []
+    },
+    {
+      "id": "AC3",
+      "text": "Broad Desktop session load-more stages 20 to 50 to 100 to 200 and explicit limits remain bounded to 20..200.",
+      "status": "PASS",
+      "proof": [{"type": "test", "path": ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/raw/test-unit.txt", "command": "pnpm --filter @happytg/miniapp test", "exit_code": 0, "summary": "Route test verified staged expansion and both explicit bounds."}],
+      "gaps": []
+    },
+    {
+      "id": "AC4",
+      "text": "Session cards use browser-native off-screen rendering containment without hiding content or controls.",
+      "status": "PASS",
+      "proof": [{"type": "browser", "path": ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/raw/test-integration.txt", "command": "isolated browser smoke on port 3011", "exit_code": 0, "summary": "Computed content-visibility auto and contain-intrinsic-size auto 180px on rendered cards."}],
+      "gaps": []
+    },
+    {
+      "id": "AC5",
+      "text": "Focused tests, typecheck, lint, build, diff check, and browser smoke pass.",
+      "status": "PASS",
+      "proof": [
+        {"type": "command", "path": ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/raw/build.txt", "command": "pnpm --filter @happytg/miniapp typecheck; pnpm --filter @happytg/miniapp build; git diff --check", "exit_code": 0, "summary": "Typecheck, build, and diff check passed."},
+        {"type": "command", "path": ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/raw/lint.txt", "command": "pnpm --filter @happytg/miniapp lint", "exit_code": 0, "summary": "Lint passed."}
+      ],
+      "gaps": []
+    }
+  ],
+  "changed_files": ["apps/miniapp/src/index.ts", "apps/miniapp/src/index.test.ts", ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/"],
+  "commands_for_fresh_verifier": ["pnpm --filter @happytg/miniapp test", "pnpm --filter @happytg/miniapp typecheck", "pnpm --filter @happytg/miniapp lint", "pnpm --filter @happytg/miniapp build", "git diff --check"],
+  "known_gaps": ["No exact Telegram WebView renderer flamegraph; browser DOM/style proof covers the requested implementation."]
+}

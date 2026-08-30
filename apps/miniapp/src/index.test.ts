@@ -218,6 +218,9 @@ test("overview page renders hosts, sessions, approvals, and tasks", async () => 
     assert.match(html, /href="\/session\/ses_1"/);
     assert.match(html, /href="\/task\/HTG-0001"/);
     assert.match(html, /happytg:miniapp:draft:v1/);
+    assert.match(html, /\.topbar\s*\{[^}]*background: var\(--surface\);[^}]*backdrop-filter: none;/s);
+    assert.doesNotMatch(html, /\.topbar\s*\{[^}]*backdrop-filter: blur/s);
+    assert.match(html, /\.session-card\s*\{[^}]*content-visibility: auto;[^}]*contain-intrinsic-size: auto 180px;/s);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
@@ -409,7 +412,7 @@ test("mini app forwards browser session cookie as bearer auth", async () => {
       if (pathname === "/api/v1/codex-desktop/projects") {
         return { projects: [] } as never;
       }
-      if (pathname === "/api/v1/codex-desktop/sessions?limit=50") {
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=20") {
         return { sessions: [] } as never;
       }
       throw new Error(`Unexpected path ${pathname}`);
@@ -440,7 +443,7 @@ test("mini app forwards browser session cookie as bearer auth", async () => {
         authorization: "Bearer mas_token"
       },
       {
-        pathname: "/api/v1/codex-desktop/sessions?limit=50",
+        pathname: "/api/v1/codex-desktop/sessions?limit=20",
         authorization: "Bearer mas_token"
       }
     ]);
@@ -486,7 +489,7 @@ test("codex panel renders source-aware Desktop and CLI sessions with disabled un
           ]
         } as never;
       }
-      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=20&userId=usr_1") {
         return {
           sessions: [
             {
@@ -606,7 +609,7 @@ test("codex panel renders readable timeout warning for slow Desktop sessions", a
         if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
           return { projects: [] } as never;
         }
-        if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+        if (pathname === "/api/v1/codex-desktop/sessions?limit=20&userId=usr_1") {
           const signal = init?.signal;
           await new Promise((resolve, reject) => {
             const abort = () => {
@@ -658,7 +661,7 @@ test("codex panel applies requested session sort order", async () => {
       if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
         return { projects: [] } as never;
       }
-      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=20&userId=usr_1") {
         return {
           sessions: [
             {
@@ -704,6 +707,66 @@ test("codex panel applies requested session sort order", async () => {
     assert.match(html, /name="sort"/);
     assert.match(html, /value="title-asc" selected/);
     assert.ok(html.indexOf("Alpha answer") < html.indexOf("Zeta answer"));
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("codex panel stages broad Desktop session expansion from 20 to 50, 100, and bounds explicit limits", async () => {
+  const calls: string[] = [];
+  const server = createMiniAppServer({
+    async fetchJson(pathname) {
+      calls.push(pathname);
+      if (pathname === "/health") {
+        return { ok: true } as never;
+      }
+      if (pathname === "/api/v1/miniapp/sessions?userId=usr_1") {
+        return { sessions: [] } as never;
+      }
+      if (pathname === "/api/v1/codex-desktop/projects?userId=usr_1") {
+        return { projects: [] } as never;
+      }
+      const match = pathname.match(/^\/api\/v1\/codex-desktop\/sessions\?limit=(\d+)&userId=usr_1$/u);
+      if (match) {
+        const limit = Number(match[1]);
+        return {
+          sessions: Array.from({ length: limit === 20 || limit === 50 ? limit : 0 }, (_, index) => ({
+            id: `desktop-${limit}-${index + 1}`,
+            title: `Desktop ${limit} task ${index + 1}`,
+            updatedAt: `2026-04-28T09:${String(index % 60).padStart(2, "0")}:00.000Z`,
+            status: "recent",
+            source: "codex-desktop",
+            canResume: true,
+            canContinue: true,
+            canStop: true,
+            canCreateTask: true
+          }))
+        } as never;
+      }
+      throw new Error(`Unexpected path ${pathname}`);
+    }
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Mini App server did not bind to a TCP port");
+  }
+
+  try {
+    const baseUrl = `http://127.0.0.1:${address.port}/codex?source=codex-desktop&userId=usr_1`;
+    const defaultHtml = await (await fetch(baseUrl)).text();
+    const expandedHtml = await (await fetch(`${baseUrl}&limit=50`)).text();
+    await fetch(`${baseUrl}&limit=1`);
+    await fetch(`${baseUrl}&limit=999`);
+
+    assert.ok(calls.includes("/api/v1/codex-desktop/sessions?limit=20&userId=usr_1"));
+    assert.ok(calls.includes("/api/v1/codex-desktop/sessions?limit=50&userId=usr_1"));
+    assert.ok(calls.includes("/api/v1/codex-desktop/sessions?limit=200&userId=usr_1"));
+    assert.match(defaultHtml, /Показать до 50 Desktop sessions/);
+    assert.match(defaultHtml, /limit=50/);
+    assert.match(expandedHtml, /Показать до 100 Desktop sessions/);
+    assert.match(expandedHtml, /limit=100/);
   } finally {
     await closeServer(server);
   }
@@ -1010,7 +1073,7 @@ test("mini app renders supported Desktop actions and forwards new Desktop task t
           ]
         } as never;
       }
-      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=20&userId=usr_1") {
         return { sessions: [desktopSession] } as never;
       }
       if (pathname === "/api/v1/codex-desktop/control?userId=usr_1") {
@@ -1300,7 +1363,7 @@ test("projects page renders workspaces and new task creates a Codex session", as
           ]
         } as never;
       }
-      if (pathname === "/api/v1/codex-desktop/sessions?limit=50&userId=usr_1") {
+      if (pathname === "/api/v1/codex-desktop/sessions?limit=20&userId=usr_1") {
         return { sessions: [] } as never;
       }
       throw new Error(`Unexpected path ${pathname}`);

@@ -1,0 +1,68 @@
+{
+  "task_id": "HTG-2026-08-30-miniapp-cpu-optimization",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-08-30T13:15:00+03:00",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "Current CSS sets the sticky Telegram/mobile .topbar to background: var(--surface), -webkit-backdrop-filter: none, and backdrop-filter: none. Fresh Chromium computed backdrop-filter as none and background-color as opaque rgb(255, 255, 255)."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "Current request logic defaults broad views to 20 and project-filtered non-CLI views to 100; renderCodexPanel preserves cards.slice(0, 5) for project filters. The fresh 28-test Mini App suite passed its default-limit and project-cap cases."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "Current nextDesktopSessionLimit implements 20->50->100->200 with a 200 ceiling, request parsing clamps explicit positive limits to 20..200, and load-more is disabled at 200. Fresh tests passed; fresh Chromium showed the 20->50 and 50->100 links with the expected hrefs."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "Current .session-card CSS uses content-visibility: auto and contain-intrinsic-size: auto 180px without changing card markup. Fresh Chromium computed both values, rendered 20 cards, and found three interactive controls plus visible text in the first card."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "Fresh reruns passed 28/28 Mini App tests, typecheck, lint, build, and git diff --check. Fresh isolated Chromium smoke on port 3011 verified 20 cards, 872 DOM elements, opaque no-blur topbar, containment styles, visible controls, and the staged load-more link."
+    }
+  ],
+  "commands_run": [
+    {
+      "command": "pnpm --filter @happytg/miniapp test",
+      "exit_code": 0,
+      "summary": "28 tests passed. Initial sandbox attempt failed on pnpm SQLite store access; bounded retry outside sandbox passed."
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp typecheck",
+      "exit_code": 0
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp lint",
+      "exit_code": 0
+    },
+    {
+      "command": "pnpm --filter @happytg/miniapp build",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "summary": "No whitespace errors; only existing CRLF-to-LF warnings for workflow files."
+    },
+    {
+      "command": "isolated Mini App listener on 127.0.0.1:3011 plus Playwright Chromium smoke",
+      "exit_code": 0,
+      "summary": "Default view: 20 cards, 872 DOM elements, backdrop none, opaque rgb(255,255,255), content-visibility auto, contain-intrinsic-size auto 180px, first-card text and controls present, load-more href limit=50. Expanded view: 50 cards and load-more href limit=100."
+    }
+  ],
+  "artifacts_used": [
+    ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/spec.md",
+    ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/evidence.md",
+    ".agent/tasks/HTG-2026-08-30-miniapp-cpu-optimization/evidence.json",
+    "apps/miniapp/src/index.ts",
+    "apps/miniapp/src/index.test.ts"
+  ]
+}
