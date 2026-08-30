@@ -1,0 +1,44 @@
+{
+  "task_id": "HTG-2026-08-30-curl-healthchecks-release",
+  "overall_status": "UNKNOWN",
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "text": "infra/Dockerfile.app installs curl in the shared runtime image with apt metadata cleanup.",
+      "status": "PASS",
+      "proof": ["infra/Dockerfile.app apt layer completed; curl 7.88.1 is present in the rebuilt API image."],
+      "gaps": []
+    },
+    {
+      "id": "AC2",
+      "text": "API, worker, bot, and Mini App Compose healthchecks use curl -fsS --max-time 4 against their existing /ready endpoints and run every 30s; no app healthcheck invokes node -e.",
+      "status": "PASS",
+      "proof": ["Compose source and docker inspect show four curl probes with interval 30s and no node -e app healthcheck."],
+      "gaps": []
+    },
+    {
+      "id": "AC3",
+      "text": "The changed Compose contract is covered by passing targeted tests, TypeScript validation, and docker compose config --quiet; the four rebuilt app containers are healthy and each /ready endpoint returns ok: true after restart.",
+      "status": "PASS",
+      "proof": ["12/12 infra tests passed; tsc passed; Compose config passed; all four images built; all four containers healthy and /ready returned ok true."],
+      "gaps": []
+    },
+    {
+      "id": "AC4",
+      "text": "All workspace package versions, CHANGELOG.md, and docs/releases/0.4.31.md are aligned for release 0.4.31, and release metadata validation passes.",
+      "status": "PASS",
+      "proof": ["16 package versions plus changelog/release notes aligned; node scripts/release/validate-release.mjs --version 0.4.31 passed."],
+      "gaps": []
+    },
+    {
+      "id": "AC5",
+      "text": "Changes are committed, pushed, merged into the default branch, and the guarded GitHub Release v0.4.31 is created from the latest default-branch commit.",
+      "status": "UNKNOWN",
+      "proof": [],
+      "gaps": ["Git lifecycle and GitHub Release are pending."]
+    }
+  ],
+  "changed_files": ["infra/Dockerfile.app", "infra/docker-compose.example.yml", "packages/bootstrap/src/infra-config.test.ts", "package.json", "apps/*/package.json", "packages/*/package.json", "CHANGELOG.md", "docs/releases/0.4.31.md"],
+  "commands_for_fresh_verifier": ["node scripts/release/validate-release.mjs --version 0.4.31", "tsx --test packages/bootstrap/src/infra-config.test.ts", "pnpm typecheck", "pnpm lint", "pnpm test", "pnpm build", "docker compose ... config --quiet", "git status --short"],
+  "known_gaps": ["AC5 is pending Git commit, push, merge, and release verification."]
+}

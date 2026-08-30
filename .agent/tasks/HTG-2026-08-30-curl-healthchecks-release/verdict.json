@@ -1,0 +1,13 @@
+{
+  "task_id": "HTG-2026-08-30-curl-healthchecks-release",
+  "overall_verdict": "UNKNOWN",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "UNKNOWN",
+      "reason": "Verifier has not run yet."
+    }
+  ],
+  "commands_run": [],
+  "artifacts_used": []
+}

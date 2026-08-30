@@ -17,15 +17,27 @@ test("compose keeps Mini App host port separate from container port for Caddy", 
 
   assert.match(compose, /HAPPYTG_MINIAPP_PORT:\s*3001/);
   assert.match(compose, /\$\{HAPPYTG_MINIAPP_PORT:-3001\}:3001/);
-  assert.match(compose, /fetch\('http:\/\/127\.0\.0\.1:3001\/ready'\)/);
+  assert.match(compose, /http:\/\/127\.0\.0\.1:3001\/ready/);
 });
 
 test("compose publishes bot readiness on the host without changing worker exposure", async () => {
   const compose = await readFile(new URL("../../../infra/docker-compose.example.yml", import.meta.url), "utf8");
 
   assert.match(compose, /\$\{HAPPYTG_BOT_PORT:-4100\}:4100/);
-  assert.match(compose, /fetch\('http:\/\/127\.0\.0\.1:4100\/ready'\)/);
+  assert.match(compose, /http:\/\/127\.0\.0\.1:4100\/ready/);
   assert.doesNotMatch(compose, /HAPPYTG_WORKER_PORT:-4200/);
+});
+
+test("compose uses lightweight curl readiness checks at a 30-second interval", async () => {
+  const compose = await readFile(new URL("../../../infra/docker-compose.example.yml", import.meta.url), "utf8");
+  const curlHealthchecks = compose.match(
+    /test: \["CMD", "curl", "-fsS", "--max-time", "4", "http:\/\/127\.0\.0\.1:\d+\/ready"\]/g
+  ) ?? [];
+  const thirtySecondIntervals = compose.match(/interval: 30s/g) ?? [];
+
+  assert.equal(curlHealthchecks.length, 4);
+  assert.equal(thirtySecondIntervals.length, 4);
+  assert.doesNotMatch(compose, /test: \["CMD", "node", "-e"/);
 });
 
 test("Caddy Mini App upstream is configurable and defaults to Docker network", async () => {

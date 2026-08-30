@@ -1,0 +1,55 @@
+--- status ---
+happytg-bot-1 Up 22 minutes (healthy)
+happytg-miniapp-1 Up 22 minutes (healthy)
+happytg-worker-1 Up 22 minutes (healthy)
+happytg-api-1 Up 22 minutes (healthy)
+--- healthcheck configs ---
+/happytg-api-1 interval=30s test=["CMD","curl","-fsS","--max-time","4","http://127.0.0.1:4000/ready"]
+/happytg-worker-1 interval=30s test=["CMD","curl","-fsS","--max-time","4","http://127.0.0.1:4200/ready"]
+/happytg-bot-1 interval=30s test=["CMD","curl","-fsS","--max-time","4","http://127.0.0.1:4100/ready"]
+/happytg-miniapp-1 interval=30s test=["CMD","curl","-fsS","--max-time","4","http://127.0.0.1:3001/ready"]
+--- ready ---
+{
+  "ok": true,
+  "service": "api",
+  "stateStorePath": "/app/apps/api/.happytg-dev/control-plane.json"
+}
+{
+  "ok": true,
+  "service": "worker",
+  "tickMs": 5000,
+  "staleAfterMs": 20000,
+  "orphanAfterMs": 300000,
+  "readyMaxLagMs": 15000,
+  "lastTickStatus": "ok",
+  "lastTickStartedAt": "2026-08-30T17:01:31.943Z",
+  "lastTickFinishedAt": "2026-08-30T17:01:31.944Z",
+  "lastTickLagMs": 2349
+}
+{
+  "ok": true,
+  "service": "bot",
+  "apiBaseUrl": "http://api:4000",
+  "telegram": {
+    "configuredMode": "auto",
+    "activeMode": "polling",
+    "status": "ready",
+    "detail": "Telegram polling is active; webhook delivery was disabled at the Telegram API.",
+    "publicUrl": "http://localhost:4000/",
+    "expectedWebhookUrl": "http://localhost:4000/telegram/webhook"
+  },
+  "miniAppLaunch": {
+    "status": "ready",
+    "url": "https://happytg.gerta.crazedns.ru:5083/miniapp",
+    "detail": "Telegram Mini App launch buttons are enabled with a public HTTPS URL."
+  }
+}
+{
+  "ok": true,
+  "service": "miniapp",
+  "apiBaseUrl": "http://api:4000"
+}
+--- control mode ---
+
+HAPPYTG_CODEX_DESKTOP_CONTROL=host-proxy
+

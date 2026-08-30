@@ -1,0 +1,11 @@
+Command: pnpm --filter @happytg/miniapp typecheck
+Exit code: 0
+Summary: tsc -p tsconfig.json --noEmit completed successfully.
+
+Command: pnpm --filter @happytg/miniapp build
+Exit code: 0
+Summary: tsc -p tsconfig.json completed successfully.
+
+Command: git diff --check
+Exit code: 0
+Summary: no whitespace errors; only CRLF-to-LF warnings for ProofLoop-managed guide/template files.
